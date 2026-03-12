@@ -1,0 +1,317 @@
+{
+  "sample_size_requested": 50,
+  "sample_size_used": 50,
+  "items": [
+    {
+      "barcode": "9300633714437",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0003
+    },
+    {
+      "barcode": "9300633391645",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0001
+    },
+    {
+      "barcode": "9300695008826",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0001
+    },
+    {
+      "barcode": "93552516",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0001
+    },
+    {
+      "barcode": "0062020000248",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0001
+    },
+    {
+      "barcode": "9338441010052",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0001
+    },
+    {
+      "barcode": "0089686170924",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0001
+    },
+    {
+      "barcode": "9342584072280",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "5060195907145",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0001
+    },
+    {
+      "barcode": "9339423001075",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0001
+    },
+    {
+      "barcode": "9323966105178",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0009542005948",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0009542005979",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0009542009984",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0011210006508",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0011210681101",
+      "ok": false,
+      "errors": [
+        "productName must be string"
+      ],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0011826800071",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0001
+    },
+    {
+      "barcode": "0012524702117",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0013409341155",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0013409516003",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0013409516027",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0013409516072",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0015205720301",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0015700050026",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0016229000561",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0016229001940",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0016229910907",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0016229910914",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0017869728150",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0020176790284",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0020662020154",
+      "ok": false,
+      "errors": [
+        "productName must be string"
+      ],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0022343917890",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0025616102504",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0025616107202",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0025616202501",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0030891052819",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0031146031511",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0031146212002",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0034000405688",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0034000441433",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0037014242256",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0037466018287",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0037600349536",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0037600415743",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0038000127786",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0038000136498",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0038000846502",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0038900013400",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0039047003880",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    },
+    {
+      "barcode": "0039047154391",
+      "ok": true,
+      "errors": [],
+      "time_s": 0.0
+    }
+  ],
+  "summary": {
+    "total_items": 50,
+    "errors": 2,
+    "error_rate": 0.04,
+    "total_time_s": 0.0025,
+    "avg_time_s": 4.9e-05
+  }
+}

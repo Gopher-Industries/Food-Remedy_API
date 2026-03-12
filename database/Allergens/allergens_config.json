@@ -1,0 +1,24 @@
+{
+  "metadata": {
+    "market": "AU/NZ",
+    "standard": "FSANZ – 14 Priority Allergens",
+    "version": "1.0.0",
+    "updated": "2025-12-24"
+  },
+  "allergens": [
+    { "name": "Gluten", "keywords": ["wheat","barley","rye","oats","triticale","gluten","malt","semolina","couscous"] },
+    { "name": "Crustacea", "keywords": ["crab","prawn","shrimp","lobster","crayfish","krill","yabby"] },
+    { "name": "Egg", "keywords": ["egg","albumen","ovo","ovum","meringue","mayonnaise"] },
+    { "name": "Fish", "keywords": ["fish","salmon","tuna","anchovy","cod","haddock","basa","sardine","fish oil","fish sauce"] },
+    { "name": "Milk", "keywords": ["milk","dairy","lactose","casein","whey","butter","cream","cheese","yoghurt"] },
+    { "name": "Peanuts", "keywords": ["peanut","groundnut","monkey nut","arachis"] },
+    { "name": "Soy", "keywords": ["soy","soya","soybean","tofu","edamame","miso","tempeh"] },
+    { "name": "Sesame", "keywords": ["sesame","tahini","sesame seed","sesame oil","gomashio"] },
+    { "name": "Tree Nuts", "keywords": ["almond","cashew","hazelnut","walnut","pecan","brazil nut","macadamia","pistachio","pine nut"] },
+    { "name": "Lupin", "keywords": ["lupin","lupine","lupini beans"] },
+    { "name": "Molluscs", "keywords": ["oyster","mussel","clam","scallop","squid","octopus","abalone"] },
+    { "name": "Celery", "keywords": ["celery","celeriac","celery salt"] },
+    { "name": "Mustard", "keywords": ["mustard","mustard powder","mustard seed"] },
+    { "name": "Sulphites", "keywords": ["sulphite","sulfite","220","221","222","223","224","225","228"] }
+  ]
+}

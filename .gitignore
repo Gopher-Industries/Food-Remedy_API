@@ -1,0 +1,52 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Docker volumes
+**/postgres-data/
+**/db-data/
+**/node_modules/
+
+# VSCode or IDE settings
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Build outputs
+dist/
+build/
+
+# env
+.env
+
+# Firebase Service Account Key
+**/serviceAccountKey.json
+
+# VS Code / backup history
+.history/
+
+# Firebase emulator state
+.firebase/
+
+# Checkpoint files (for Firestore seeding engine)
+*.checkpoint.json
+checkpoints/
+
+# Data Connect generated client code
+mobile-app/src/dataconnect-generated/
+
+# Local-only Data Connect artifacts and examples (internal cache, example files & seed data)
+dataconnect/.dataconnect/
+dataconnect/_dataconnect.schema/
+dataconnect/example/
+dataconnect/seed_data.gql
+data/

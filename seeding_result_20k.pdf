@@ -1,0 +1,15 @@
+
+        DB021 VALIDATION REPORT
+        =======================
+
+        Date: 2026-01-19 04:39:33.609536
+
+        Total Records: 20001
+
+        Schema Valid: True
+        Nutrients Valid: True
+        Allergens Valid: True
+        Accessibility: True
+
+        Duration: 0.59 seconds
+        

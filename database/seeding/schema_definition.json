@@ -1,0 +1,139 @@
+{
+  "collection": "products",
+  "document_id": "barcode",
+  "description": "Firestore schema for enriched product documents (V1)",
+  "fields": {
+    "barcode": {
+      "type": "string",
+      "required": true,
+      "description": "Unique GTIN/barcode (13 digits, no leading zeros)",
+      "constraints": "non-empty, alphanumeric"
+    },
+    "productName": {
+      "type": "string",
+      "required": true,
+      "description": "Primary product name (auto-filled fallback if missing)",
+      "constraints": "non-empty"
+    },
+    "brand": {
+      "type": "string",
+      "required": false,
+      "description": "Brand name (may be empty)"
+    },
+    "genericName": {
+      "type": "string",
+      "required": false
+    },
+    "additives": {
+      "type": "array",
+      "items": "string",
+      "required": false,
+      "description": "Additive codes (e.g., 'e202')"
+    },
+    "allergens": {
+      "type": "array",
+      "items": "string",
+      "required": false,
+      "description": "Detected allergens (e.g., 'Milk', 'Gluten')"
+    },
+    "ingredients": {
+      "type": "array",
+      "items": "string",
+      "required": false
+    },
+    "ingredientsText": {
+      "type": "string",
+      "required": false
+    },
+    "ingredientsAnalysis": {
+      "type": "array",
+      "items": "string",
+      "required": false
+    },
+    "categories": {
+      "type": "array",
+      "items": "string",
+      "required": false
+    },
+    "labels": {
+      "type": "array",
+      "items": "string",
+      "required": false
+    },
+    "nutrientLevels": {
+      "type": "object",
+      "required": false,
+      "description": "Qualitative levels (e.g., { 'fat': 'moderate' })"
+    },
+    "nutriments": {
+      "type": "object",
+      "required": false,
+      "description": "Normalized nutrition values (per 100g/serving)",
+      "example_keys": [
+        "energy-kcal_100g", "fat_100g", "carbohydrates_100g",
+        "proteins_100g", "salt_100g"
+      ]
+    },
+    "nutriscoreGrade": {
+      "type": "string",
+      "required": false,
+      "enum": ["a", "b", "c", "d", "e", "unknown"]
+    },
+    "productQuantity": {
+      "type": "number",
+      "required": false
+    },
+    "productQuantityUnit": {
+      "type": "string",
+      "required": false
+    },
+    "servingQuantity": {
+      "type": "number",
+      "required": false
+    },
+    "servingQuantityUnit": {
+      "type": "string",
+      "required": false
+    },
+    "traces": {
+      "type": "string",
+      "required": false
+    },
+    "tracesFromIngredients": {
+      "type": "string",
+      "required": false
+    },
+    "completeness": {
+      "type": "number",
+      "required": false,
+      "constraints": "0 to 1 (percentage)"
+    },
+    "images": {
+      "type": "object",
+      "required": false,
+      "required_subfields": ["root"],
+      "subfields": {
+        "root": { "type": "string" },
+        "primary": { "type": "string" },
+        "variants": { "type": "object" }
+      }
+    },
+    "enrichment": {
+      "type": "object",
+      "required": false,
+      "subfields": {
+        "nutrition": {
+          "type": "object",
+          "required_subfields": ["compositeScore", "scores"]
+        }
+      }
+    }
+  },
+  "indexes": [
+    { "fields": ["categories", "allergens"], "description": "Diet/allergen filtering" },
+    { "fields": ["enrichment.nutrition.compositeScore"], "direction": "DESCENDING", "description": "Nutrition quality sorting" },
+    { "fields": ["nutriscoreGrade"], "description": "Quick grade filter" },
+    { "fields": ["enrichment.tags"], "description": "Array-contains for diet/lifestyle tags" },
+    { "fields": ["brand", "nutriscoreGrade"], "description": "Brand + quality combo" }
+  ]
+}

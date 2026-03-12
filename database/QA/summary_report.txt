@@ -1,0 +1,23 @@
+Total products checked: 11
+Missing/Invalid barcode: 0
+Missing/Invalid brand: 0
+Missing/Invalid productName: 0
+Missing/Invalid genericName: 9
+Missing/Invalid additives: 3
+Missing/Invalid allergens: 2
+Missing/Invalid ingredients: 2
+Missing/Invalid ingredientsText: 2
+Missing/Invalid ingredientsAnalysis: 2
+Missing/Invalid categories: 0
+Missing/Invalid labels: 2
+Missing/Invalid nutrientLevels: 3
+Missing/Invalid nutriments: 1
+Missing/Invalid nutriscoreGrade: 0
+Missing/Invalid productQuantity: 0
+Missing/Invalid productQuantityUnit: 0
+Missing/Invalid servingQuantity: 0
+Missing/Invalid servingQuantityUnit: 0
+Missing/Invalid traces: 8
+Missing/Invalid tracesFromIngredients: 9
+Missing/Invalid completeness: 0
+Missing/Invalid images: 0

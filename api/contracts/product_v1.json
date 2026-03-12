@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProductDetailV1",
+  "type": "object",
+  "required": ["barcode", "productName"],
+  "properties": {
+    "barcode": { "type": "string", "description": "GTIN / barcode" },
+    "brand": { "type": ["string", "null"] },
+    "productName": { "type": "string" },
+    "genericName": { "type": ["string", "null"] },
+    "additives": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "allergens": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "ingredients": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "ingredientsText": { "type": ["string", "null"] },
+    "category": {
+      "type": ["string", "null"],
+      "description": "Primary normalized category (first from categories list)"
+    },
+    "categories": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [],
+      "description": "Full list of normalized categories (language prefixes removed, deduplicated, sorted)"
+    },
+    "labels": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "nutrientLevels": { "type": "object", "additionalProperties": { "type": "string" } },
+    "nutriments": { "type": "object", "additionalProperties": true, "description": "Raw nutriments from enriched payload" },
+    "nutriments_normalized": {
+      "type": "object",
+      "properties": {
+        "energy_kj": { "type": ["number", "null"] },
+        "energy_kcal": { "type": ["number", "null"] },
+        "fat_g": { "type": ["number", "null"] },
+        "saturated_fat_g": { "type": ["number", "null"] },
+        "carbohydrates_g": { "type": ["number", "null"] },
+        "sugars_g": { "type": ["number", "null"] },
+        "proteins_g": { "type": ["number", "null"] },
+        "salt_g": { "type": ["number", "null"] },
+        "sodium_mg": { "type": ["number", "null"] },
+        "fiber_g": { "type": ["number", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "nutriscoreGrade": { "type": ["string", "null"] },
+    "productQuantity": { "type": ["number", "null"] },
+    "productQuantityUnit": { "type": ["string", "null"] },
+    "servingQuantity": { "type": ["number", "null"] },
+    "servingQuantityUnit": { "type": ["string", "null"] },
+    "traces": { "type": ["string", "null"] },
+    "completeness": { "type": ["number", "null"] },
+    "images": {
+      "type": "object",
+      "properties": {
+        "root": { "type": "string" },
+        "primary": { "type": ["string", "null"] },
+        "variants": { "type": "object", "additionalProperties": { "type": "integer" } }
+      },
+      "required": ["root"]
+    },
+    "tags": {
+      "type": "object",
+      "properties": {
+        "final": { "type": "array", "items": { "type": "string" }, "default": [] },
+        "removed": { "type": "array", "items": { "type": "string" }, "default": [] }
+      }
+    },
+    "metadata": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": false
+}

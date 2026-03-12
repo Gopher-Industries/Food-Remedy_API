@@ -1,0 +1,33 @@
+{
+  "pipeline": {
+    "fail_on_error": true,
+    "outputs": {
+      "metadata": "/data/pipeline/pipeline_run_metadata.json",
+      "checkpoints": "/data/pipeline/pipeline_checkpoints.json"
+    },
+    "clean": {
+      "enabled": true,
+      "input": "database/data_investigation/exampleProductRaw.json",
+      "output": "database/data_investigation/exampleProductCleaned.json"
+    },
+    "enrich": {
+      "enabled": true,
+      "input": "database/data_investigation/exampleProductCleaned.json",
+      "output": "database/seeding/products_enriched.json",
+      "modules": [
+        {
+          "name": "ts_enrich_wrapper",
+          "path": "database/pipeline/modules/enrich_ts_wrapper.py",
+          "enabled": true,
+          "config": {
+            "ts_path": "mobile-app/services/nutrition/enrichProducts.ts"
+          }
+        }
+      ]
+    },
+    "seed": {
+      "enabled": false,
+      "input": "database/seeding/products_enriched.json"
+    }
+  }
+}

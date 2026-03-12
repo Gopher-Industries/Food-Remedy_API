@@ -1,0 +1,8 @@
+fastapi>=0.100
+uvicorn[standard]>=0.23
+pymongo>=4.6
+requests>=2.31
+python-dotenv>=1.0
+jsonschema>=4.0.0
+PyYAML>=5.3.1
+

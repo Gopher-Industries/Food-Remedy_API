@@ -1,0 +1,115 @@
+{
+  "barcode": "0062020000248",
+  "brand": "Ferrero,Nutella",
+  "productName": "Nutella",
+  "genericName": "",
+  "additives": [
+    "e322"
+  ],
+  "allergens": [
+    "milk",
+    "nuts",
+    "soybeans"
+  ],
+  "ingredients": [
+    "sugar",
+    "added-sugar",
+    "disaccharide",
+    "vegetable-oil",
+    "oil-and-fat",
+    "vegetable-oil-and-fat",
+    "hazelnut",
+    "nut",
+    "tree-nut",
+    "skimmed-milk-powder",
+    "dairy",
+    "milk-powder",
+    "fat-reduced-cocoa-powder",
+    "plant",
+    "cocoa",
+    "cocoa-powder",
+    "emulsifier",
+    "flavouring",
+    "total-milk-solids",
+    "palm",
+    "palm-oil-and-fat",
+    "palm-oil",
+    "e322",
+    "vanillin",
+    "total-cocoa-solids"
+  ],
+  "ingredientsText": "sugar, vegetable oil (palm*), hazelnuts (13%), skim milk powder (8.7%), fat-reduced cocoa powder (7.4%), emulsifier (lecithins) (soy), flavouring (vanillin). total milk solids: 8.7%. total cocoa solids: 7.4%. *sustainable and segregated certified palm oil contains hazelnuts, milk, soy.",
+  "ingredientsAnalysis": [
+    "palm-oil",
+    "non-vegan",
+    "vegetarian-status-unknown"
+  ],
+  "categories": [
+    "breakfasts",
+    "spreads",
+    "sweet-spreads",
+    "pates-a-tartiner",
+    "hazelnut-spreads",
+    "chocolate-spreads",
+    "cocoa-and-hazelnuts-spreads"
+  ],
+  "labels": [
+    "australian-made"
+  ],
+  "nutrientLevels": {
+    "salt": "low",
+    "saturated-fat": "high",
+    "sugars": "high",
+    "fat": "high"
+  },
+  "nutriments": {
+    "nova-group": 4,
+    "fat_unit": "g",
+    "energy_unit": "kcal",
+    "proteins_serving": 0.9,
+    "energy-kcal_serving": 79.3,
+    "carbohydrates_100g": 57.3333333333,
+    "salt_100g": 0.1,
+    "carbohydrates_serving": 8.6,
+    "salt_serving": 0.015,
+    "energy_100g": 2213,
+    "salt_unit": "g",
+    "energy_serving": 332,
+    "saturated-fat_unit": "g",
+    "energy-kcal_unit": "kcal",
+    "proteins_100g": 6,
+    "fat_100g": 30.6666666667,
+    "carbohydrates_unit": "g",
+    "sodium_serving": 0.006,
+    "sodium_100g": 0.04,
+    "proteins_unit": "g",
+    "sugars_unit": "g",
+    "energy-kcal_100g": 528.9994,
+    "sodium_unit": "g",
+    "sugars_100g": 56,
+    "saturated-fat_serving": 1.6,
+    "saturated-fat_100g": 10.6666666667,
+    "fat_serving": 4.6,
+    "sugars_serving": 8.4
+  },
+  "nutriscoreGrade": "e",
+  "productQuantity": 750.0,
+  "productQuantityUnit": "g",
+  "servingQuantity": 15.0,
+  "servingQuantityUnit": "g",
+  "traces": "",
+  "tracesFromIngredients": "",
+  "completeness": 0.9875,
+  "images": {
+    "root": "https:\/\/images.openfoodfacts.org\/images\/products\/006\/202\/000\/0248",
+    "variants": {
+      "front": 8,
+      "nutrition": 10,
+      "front_en": 25,
+      "ingredients": 9,
+      "ingredients_en": 9,
+      "nutrition_en": 33
+    },
+    "primary": "front_en"
+  }
+}

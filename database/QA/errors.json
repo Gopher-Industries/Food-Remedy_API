@@ -1,0 +1,207 @@
+{
+    "barcode": [],
+    "brand": [],
+    "productName": [],
+    "genericName": [
+        {
+            "row": 5,
+            "error": "missing/empty"
+        },
+        {
+            "row": 0,
+            "error": "missing/empty"
+        },
+        {
+            "row": 10,
+            "error": "missing/empty"
+        },
+        {
+            "row": 2,
+            "error": "missing/empty"
+        },
+        {
+            "row": 1,
+            "error": "missing/empty"
+        },
+        {
+            "row": 8,
+            "error": "missing/empty"
+        },
+        {
+            "row": 4,
+            "error": "missing/empty"
+        },
+        {
+            "row": 3,
+            "error": "missing/empty"
+        },
+        {
+            "row": 6,
+            "error": "missing/empty"
+        }
+    ],
+    "additives": [
+        {
+            "row": 0,
+            "error": "missing/empty"
+        },
+        {
+            "row": 1,
+            "error": "missing/empty"
+        },
+        {
+            "row": 3,
+            "error": "missing/empty"
+        }
+    ],
+    "allergens": [
+        {
+            "row": 0,
+            "error": "missing/empty"
+        },
+        {
+            "row": 1,
+            "error": "missing/empty"
+        }
+    ],
+    "ingredients": [
+        {
+            "row": 0,
+            "error": "missing/empty"
+        },
+        {
+            "row": 3,
+            "error": "missing/empty"
+        }
+    ],
+    "ingredientsText": [
+        {
+            "row": 0,
+            "error": "missing/empty"
+        },
+        {
+            "row": 3,
+            "error": "missing/empty"
+        }
+    ],
+    "ingredientsAnalysis": [
+        {
+            "row": 0,
+            "error": "missing/empty"
+        },
+        {
+            "row": 3,
+            "error": "missing/empty"
+        }
+    ],
+    "categories": [],
+    "labels": [
+        {
+            "row": 10,
+            "error": "missing/empty"
+        },
+        {
+            "row": 2,
+            "error": "missing/empty"
+        }
+    ],
+    "nutrientLevels": [
+        {
+            "row": 10,
+            "error": "missing/empty"
+        },
+        {
+            "row": 1,
+            "error": "missing/empty"
+        },
+        {
+            "row": 6,
+            "error": "missing/empty"
+        }
+    ],
+    "nutriments": [
+        {
+            "row": 1,
+            "error": "missing/empty"
+        }
+    ],
+    "nutriscoreGrade": [],
+    "productQuantity": [],
+    "productQuantityUnit": [],
+    "servingQuantity": [],
+    "servingQuantityUnit": [],
+    "traces": [
+        {
+            "row": 5,
+            "error": "missing/empty"
+        },
+        {
+            "row": 0,
+            "error": "missing/empty"
+        },
+        {
+            "row": 2,
+            "error": "missing/empty"
+        },
+        {
+            "row": 1,
+            "error": "missing/empty"
+        },
+        {
+            "row": 8,
+            "error": "missing/empty"
+        },
+        {
+            "row": 4,
+            "error": "missing/empty"
+        },
+        {
+            "row": 7,
+            "error": "missing/empty"
+        },
+        {
+            "row": 3,
+            "error": "missing/empty"
+        }
+    ],
+    "tracesFromIngredients": [
+        {
+            "row": 5,
+            "error": "missing/empty"
+        },
+        {
+            "row": 0,
+            "error": "missing/empty"
+        },
+        {
+            "row": 2,
+            "error": "missing/empty"
+        },
+        {
+            "row": 1,
+            "error": "missing/empty"
+        },
+        {
+            "row": 8,
+            "error": "missing/empty"
+        },
+        {
+            "row": 4,
+            "error": "missing/empty"
+        },
+        {
+            "row": 7,
+            "error": "missing/empty"
+        },
+        {
+            "row": 3,
+            "error": "missing/empty"
+        },
+        {
+            "row": 6,
+            "error": "missing/empty"
+        }
+    ],
+    "completeness": [],
+    "images": []
+}

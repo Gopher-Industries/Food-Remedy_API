@@ -1,0 +1,49 @@
+{
+  "total": 5000,
+  "invalid": 7,
+  "errors": [
+    {
+      "barcode": "0097744081372",
+      "errors": [
+        "productName missing; fallback applied: 'Product barcode 0097744081372'"
+      ]
+    },
+    {
+      "barcode": "9340784006708",
+      "errors": [
+        "productName missing; fallback applied: 'Product barcode 9340784006708'"
+      ]
+    },
+    {
+      "barcode": "9335695000204",
+      "errors": [
+        "productName missing; fallback applied: 'Product barcode 9335695000204'"
+      ]
+    },
+    {
+      "barcode": "9337824003773",
+      "errors": [
+        "productName missing; fallback applied: 'Product barcode 9337824003773'"
+      ]
+    },
+    {
+      "barcode": "4078700218830",
+      "errors": [
+        "productName missing; fallback applied: 'Product barcode 4078700218830'"
+      ]
+    },
+    {
+      "barcode": "9340955001143",
+      "errors": [
+        "productName missing; fallback applied: 'Product barcode 9340955001143'"
+      ]
+    },
+    {
+      "barcode": "9329000009976",
+      "errors": [
+        "productName missing; fallback applied: 'Product barcode 9329000009976'"
+      ]
+    }
+  ],
+  "avg_time_s": 4.718890190124512e-05
+}

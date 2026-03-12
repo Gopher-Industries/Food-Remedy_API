@@ -1,0 +1,5 @@
+# Project Python dependencies (minimal)
+jsonschema>=4.0.0
+PyYAML>=5.3.1
+
+# Add other project-specific deps as needed

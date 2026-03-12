@@ -1,0 +1,1447 @@
+additives_tags: NoneType, list
+allergens: NoneType, str
+allergens_tags: NoneType, list
+brands: NoneType, str
+categories_tags: NoneType, list
+code: str
+generic_name: NoneType, str
+id: NoneType, str
+ingredients_analysis_tags: NoneType, list
+ingredients_from_palm_oil_n: NoneType, int
+ingredients_tags: NoneType, list
+ingredients_text: NoneType, str
+labels_tags: NoneType, list
+nutrient_levels: NoneType, dict
+nutrient_levels.fat: str
+nutrient_levels.salt: str
+nutrient_levels.saturated-fat: str
+nutrient_levels.sugars: str
+nutriments: NoneType, dict
+nutriments.0: float
+nutriments.0_100g: float
+nutriments.0_label: str
+nutriments.0_serving: float
+nutriments.0_unit: str
+nutriments.0_value: int
+nutriments.a1-beta-casein: float
+nutriments.a1-beta-casein_100g: float
+nutriments.a1-beta-casein_label: str
+nutriments.a1-beta-casein_serving: int
+nutriments.a1-beta-casein_unit: str
+nutriments.a1-beta-casein_value: float
+nutriments.a2-beta-casein: float
+nutriments.a2-beta-casein_100g: float
+nutriments.a2-beta-casein_label: str
+nutriments.a2-beta-casein_serving: float
+nutriments.a2-beta-casein_unit: str
+nutriments.a2-beta-casein_value: float
+nutriments.added-sugars: float, int
+nutriments.added-sugars_100g: float, int
+nutriments.added-sugars_label: str
+nutriments.added-sugars_serving: float, int
+nutriments.added-sugars_unit: str
+nutriments.added-sugars_value: float, int
+nutriments.alcohol: float, int
+nutriments.alcohol_100g: float, int
+nutriments.alcohol_modifier: str
+nutriments.alcohol_prepared: int
+nutriments.alcohol_prepared_100g: int
+nutriments.alcohol_prepared_serving: int
+nutriments.alcohol_prepared_unit: str
+nutriments.alcohol_prepared_value: int
+nutriments.alcohol_serving: float, int
+nutriments.alcohol_unit: str
+nutriments.alcohol_value: float, int
+nutriments.alpha-linolenic-acid: float, int
+nutriments.alpha-linolenic-acid_100g: float, int
+nutriments.alpha-linolenic-acid_label: str
+nutriments.alpha-linolenic-acid_modifier: str
+nutriments.alpha-linolenic-acid_serving: float, int
+nutriments.alpha-linolenic-acid_unit: str
+nutriments.alpha-linolenic-acid_value: float, int
+nutriments.arachidic-acid: float, int
+nutriments.arachidic-acid_100g: float, int
+nutriments.arachidic-acid_serving: int
+nutriments.arachidic-acid_unit: str
+nutriments.arachidic-acid_value: int
+nutriments.arachidonic-acid: int
+nutriments.arachidonic-acid_100g: int
+nutriments.arachidonic-acid_serving: float, int
+nutriments.arachidonic-acid_unit: str
+nutriments.arachidonic-acid_value: int
+nutriments.bcaa: float
+nutriments.bcaa_100g: float
+nutriments.bcaa_label: str
+nutriments.bcaa_serving: float
+nutriments.bcaa_unit: str
+nutriments.bcaa_value: int
+nutriments.behenic-acid: float, int
+nutriments.behenic-acid_100g: float, int
+nutriments.behenic-acid_serving: float, int
+nutriments.behenic-acid_unit: str
+nutriments.behenic-acid_value: int
+nutriments.beta-alanine: float
+nutriments.beta-alanine_100g: float
+nutriments.beta-alanine_label: str
+nutriments.beta-alanine_serving: float
+nutriments.beta-alanine_unit: str
+nutriments.beta-alanine_value: int
+nutriments.beta-carotene: float
+nutriments.beta-carotene_100g: float
+nutriments.beta-carotene_label: str
+nutriments.beta-carotene_serving: float
+nutriments.beta-carotene_unit: str
+nutriments.beta-carotene_value: float
+nutriments.beta-glucan: int
+nutriments.beta-glucan_100g: int
+nutriments.beta-glucan_label: str
+nutriments.beta-glucan_serving: float
+nutriments.beta-glucan_unit: str
+nutriments.beta-glucan_value: int
+nutriments.bicarbonate: float
+nutriments.bicarbonate_100g: float
+nutriments.bicarbonate_label: str
+nutriments.bicarbonate_serving: float
+nutriments.bicarbonate_unit: str
+nutriments.bicarbonate_value: float, int
+nutriments.biotin: float, int
+nutriments.biotin_100g: float, int
+nutriments.biotin_label: str
+nutriments.biotin_serving: float
+nutriments.biotin_unit: str
+nutriments.biotin_value: float, int
+nutriments.butyric-acid: float
+nutriments.butyric-acid_100g: float
+nutriments.butyric-acid_serving: float
+nutriments.butyric-acid_unit: str
+nutriments.butyric-acid_value: int
+nutriments.caffeine: float, int
+nutriments.caffeine_100g: float, int
+nutriments.caffeine_label: str
+nutriments.caffeine_prepared: float
+nutriments.caffeine_prepared_100g: float
+nutriments.caffeine_prepared_serving: float
+nutriments.caffeine_prepared_unit: str
+nutriments.caffeine_prepared_value: float, int
+nutriments.caffeine_serving: float, int
+nutriments.caffeine_unit: str
+nutriments.caffeine_value: float, int
+nutriments.calcium: float, int
+nutriments.calcium_100g: float, int
+nutriments.calcium_label: str
+nutriments.calcium_prepared: float, int
+nutriments.calcium_prepared_100g: float, int
+nutriments.calcium_prepared_serving: float, int
+nutriments.calcium_prepared_unit: str
+nutriments.calcium_prepared_value: int
+nutriments.calcium_serving: float, int
+nutriments.calcium_unit: str
+nutriments.calcium_value: float, int
+nutriments.caprylic-acid: int
+nutriments.caprylic-acid_100g: int
+nutriments.caprylic-acid_serving: float
+nutriments.caprylic-acid_unit: str
+nutriments.caprylic-acid_value: int
+nutriments.carbohydrates: float, int
+nutriments.carbohydrates_100g: float, int
+nutriments.carbohydrates_modifier: str
+nutriments.carbohydrates_prepared: float, int
+nutriments.carbohydrates_prepared_100g: float, int
+nutriments.carbohydrates_prepared_modifier: str
+nutriments.carbohydrates_prepared_serving: float, int
+nutriments.carbohydrates_prepared_unit: str
+nutriments.carbohydrates_prepared_value: float, int
+nutriments.carbohydrates_serving: float, int
+nutriments.carbohydrates_unit: str
+nutriments.carbohydrates_value: float, int
+nutriments.carbon-footprint: float
+nutriments.carbon-footprint-from-known-ingredients_100g: float, int
+nutriments.carbon-footprint-from-known-ingredients_product: float, int
+nutriments.carbon-footprint-from-known-ingredients_serving: float, int
+nutriments.carbon-footprint-from-meat-or-fish_100g: float
+nutriments.carbon-footprint-from-meat-or-fish_product: float
+nutriments.carbon-footprint_100g: float
+nutriments.carbon-footprint_prepared_unit: str
+nutriments.carbon-footprint_unit: str
+nutriments.carbon-footprint_value: int
+nutriments.carnitine: float
+nutriments.carnitine_label: str
+nutriments.carnitine_prepared: float
+nutriments.carnitine_prepared_100g: float
+nutriments.carnitine_prepared_unit: str
+nutriments.carnitine_prepared_value: float
+nutriments.carnitine_serving: float
+nutriments.carnitine_unit: str
+nutriments.carnitine_value: float
+nutriments.carotenoids: float
+nutriments.carotenoids_100g: float
+nutriments.carotenoids_label: str
+nutriments.carotenoids_serving: float
+nutriments.carotenoids_unit: str
+nutriments.carotenoids_value: float
+nutriments.casein: float, int
+nutriments.casein_100g: float, int
+nutriments.casein_label: str
+nutriments.casein_serving: float, int
+nutriments.casein_unit: str
+nutriments.casein_value: float, int
+nutriments.chloride: float
+nutriments.chloride_100g: float
+nutriments.chloride_label: str
+nutriments.chloride_serving: float
+nutriments.chloride_unit: str
+nutriments.chloride_value: float, int
+nutriments.chlorophyl: float
+nutriments.chlorophyl-a: float
+nutriments.chlorophyl-a_100g: float
+nutriments.chlorophyl-a_label: str
+nutriments.chlorophyl-a_serving: float
+nutriments.chlorophyl-a_unit: str
+nutriments.chlorophyl-a_value: float
+nutriments.chlorophyl_100g: float
+nutriments.chlorophyl_label: str
+nutriments.chlorophyl_serving: float
+nutriments.chlorophyl_unit: str
+nutriments.chlorophyl_value: float, int
+nutriments.cholesterol: float, int
+nutriments.cholesterol_100g: float, int
+nutriments.cholesterol_label: str
+nutriments.cholesterol_modifier: str
+nutriments.cholesterol_prepared: int
+nutriments.cholesterol_prepared_100g: int
+nutriments.cholesterol_prepared_serving: int
+nutriments.cholesterol_prepared_unit: str
+nutriments.cholesterol_prepared_value: int
+nutriments.cholesterol_serving: float, int
+nutriments.cholesterol_unit: str
+nutriments.cholesterol_value: float, int
+nutriments.choline: float
+nutriments.choline_100g: float
+nutriments.choline_label: str
+nutriments.choline_serving: float
+nutriments.choline_unit: str
+nutriments.choline_value: float
+nutriments.chromium: float, int
+nutriments.chromium_100g: float, int
+nutriments.chromium_label: str
+nutriments.chromium_serving: float, int
+nutriments.chromium_unit: str
+nutriments.chromium_value: float, int
+nutriments.cocoa: float, int
+nutriments.cocoa_100g: float, int
+nutriments.cocoa_label: str
+nutriments.cocoa_serving: float, int
+nutriments.cocoa_unit: str
+nutriments.cocoa_value: float, int
+nutriments.collagen-meat-protein-ratio: float
+nutriments.collagen-meat-protein-ratio_100g: float
+nutriments.collagen-meat-protein-ratio_label: str
+nutriments.collagen-meat-protein-ratio_serving: float
+nutriments.collagen-meat-protein-ratio_unit: str
+nutriments.collagen-meat-protein-ratio_value: float
+nutriments.copper: float, int
+nutriments.copper_100g: float, int
+nutriments.copper_label: str
+nutriments.copper_serving: float, int
+nutriments.copper_unit: str
+nutriments.copper_value: float, int
+nutriments.dna-deoxyribonucleidic-acid: float
+nutriments.dna-deoxyribonucleidic-acid_100g: float
+nutriments.dna-deoxyribonucleidic-acid_label: str
+nutriments.dna-deoxyribonucleidic-acid_serving: float
+nutriments.dna-deoxyribonucleidic-acid_unit: str
+nutriments.dna-deoxyribonucleidic-acid_value: int
+nutriments.docosahexaenoic-acid: float
+nutriments.docosahexaenoic-acid_100g: float
+nutriments.docosahexaenoic-acid_label: str
+nutriments.docosahexaenoic-acid_prepared: float
+nutriments.docosahexaenoic-acid_prepared_100g: float
+nutriments.docosahexaenoic-acid_prepared_serving: float
+nutriments.docosahexaenoic-acid_prepared_unit: str
+nutriments.docosahexaenoic-acid_prepared_value: float
+nutriments.docosahexaenoic-acid_serving: float
+nutriments.docosahexaenoic-acid_unit: str
+nutriments.docosahexaenoic-acid_value: float, int
+nutriments.eicosapentaenoic-acid: float
+nutriments.eicosapentaenoic-acid_100g: float
+nutriments.eicosapentaenoic-acid_label: str
+nutriments.eicosapentaenoic-acid_modifier: str
+nutriments.eicosapentaenoic-acid_prepared: float
+nutriments.eicosapentaenoic-acid_prepared_100g: float
+nutriments.eicosapentaenoic-acid_prepared_serving: float
+nutriments.eicosapentaenoic-acid_prepared_unit: str
+nutriments.eicosapentaenoic-acid_prepared_value: float
+nutriments.eicosapentaenoic-acid_serving: float
+nutriments.eicosapentaenoic-acid_unit: str
+nutriments.eicosapentaenoic-acid_value: float, int
+nutriments.en-0: float
+nutriments.en-0_100g: float
+nutriments.en-0_label: str
+nutriments.en-0_prepared: float
+nutriments.en-0_prepared_100g: float
+nutriments.en-0_prepared_serving: float
+nutriments.en-0_prepared_unit: str
+nutriments.en-0_prepared_value: int
+nutriments.en-0_serving: float
+nutriments.en-0_unit: str
+nutriments.en-0_value: int
+nutriments.en-ash: float
+nutriments.en-ash_label: str
+nutriments.en-ash_serving: float
+nutriments.en-ash_unit: str
+nutriments.en-ash_value: float
+nutriments.en-bcaas: float
+nutriments.en-bcaas_100g: float
+nutriments.en-bcaas_label: str
+nutriments.en-bcaas_prepared: float
+nutriments.en-bcaas_prepared_100g: float
+nutriments.en-bcaas_prepared_serving: float
+nutriments.en-bcaas_prepared_unit: str
+nutriments.en-bcaas_prepared_value: float
+nutriments.en-bcaas_serving: float
+nutriments.en-bcaas_unit: str
+nutriments.en-bcaas_value: float
+nutriments.en-citrulline-malate: float
+nutriments.en-citrulline-malate_100g: float
+nutriments.en-citrulline-malate_label: str
+nutriments.en-citrulline-malate_serving: float
+nutriments.en-citrulline-malate_unit: str
+nutriments.en-citrulline-malate_value: int
+nutriments.en-echinacea: float
+nutriments.en-echinacea_100g: float
+nutriments.en-echinacea_label: str
+nutriments.en-echinacea_unit: str
+nutriments.en-echinacea_value: int
+nutriments.en-erythritol: float
+nutriments.en-erythritol_label: str
+nutriments.en-erythritol_prepared: float
+nutriments.en-erythritol_prepared_100g: float
+nutriments.en-erythritol_prepared_unit: str
+nutriments.en-erythritol_prepared_value: float
+nutriments.en-erythritol_serving: float
+nutriments.en-erythritol_unit: str
+nutriments.en-erythritol_value: float
+nutriments.en-flavonoids: float
+nutriments.en-flavonoids_100g: float
+nutriments.en-flavonoids_label: str
+nutriments.en-flavonoids_unit: str
+nutriments.en-flavonoids_value: int
+nutriments.en-galactose: int
+nutriments.en-galactose_100g: int
+nutriments.en-galactose_label: str
+nutriments.en-galactose_serving: int
+nutriments.en-galactose_unit: str
+nutriments.en-galactose_value: int
+nutriments.en-ginseng: float
+nutriments.en-ginseng_100g: float
+nutriments.en-ginseng_label: str
+nutriments.en-ginseng_prepared: float
+nutriments.en-ginseng_prepared_100g: float
+nutriments.en-ginseng_prepared_serving: float
+nutriments.en-ginseng_prepared_unit: str
+nutriments.en-ginseng_prepared_value: int
+nutriments.en-ginseng_serving: float
+nutriments.en-ginseng_unit: str
+nutriments.en-ginseng_value: int
+nutriments.en-glucuronolactone: float
+nutriments.en-glucuronolactone_100g: float
+nutriments.en-glucuronolactone_label: str
+nutriments.en-glucuronolactone_serving: float
+nutriments.en-glucuronolactone_unit: str
+nutriments.en-glucuronolactone_value: int
+nutriments.en-gluten: float, int
+nutriments.en-gluten_100g: float, int
+nutriments.en-gluten_label: str
+nutriments.en-gluten_prepared: int
+nutriments.en-gluten_prepared_100g: int
+nutriments.en-gluten_prepared_serving: int
+nutriments.en-gluten_prepared_unit: str
+nutriments.en-gluten_prepared_value: int
+nutriments.en-gluten_serving: float, int
+nutriments.en-gluten_unit: str
+nutriments.en-gluten_value: float, int
+nutriments.en-glycerol: float, int
+nutriments.en-glycerol_100g: float, int
+nutriments.en-glycerol_label: str
+nutriments.en-glycerol_prepared: float
+nutriments.en-glycerol_prepared_100g: float
+nutriments.en-glycerol_prepared_serving: float
+nutriments.en-glycerol_prepared_unit: str
+nutriments.en-glycerol_prepared_value: float
+nutriments.en-glycerol_serving: float
+nutriments.en-glycerol_unit: str
+nutriments.en-glycerol_value: float, int
+nutriments.en-glyerine: float
+nutriments.en-glyerine_100g: float
+nutriments.en-glyerine_label: str
+nutriments.en-glyerine_serving: float
+nutriments.en-glyerine_unit: str
+nutriments.en-glyerine_value: float
+nutriments.en-green-tea-leaf-extract: float
+nutriments.en-green-tea-leaf-extract_label: str
+nutriments.en-green-tea-leaf-extract_prepared: float
+nutriments.en-green-tea-leaf-extract_prepared_100g: float
+nutriments.en-green-tea-leaf-extract_prepared_unit: str
+nutriments.en-green-tea-leaf-extract_prepared_value: float
+nutriments.en-green-tea-leaf-extract_serving: float
+nutriments.en-green-tea-leaf-extract_unit: str
+nutriments.en-green-tea-leaf-extract_value: float
+nutriments.en-guarana: float
+nutriments.en-guarana-extract: float
+nutriments.en-guarana-extract_100g: float
+nutriments.en-guarana-extract_label: str
+nutriments.en-guarana-extract_unit: str
+nutriments.en-guarana-extract_value: int
+nutriments.en-guarana-seed-extract: float
+nutriments.en-guarana-seed-extract_label: str
+nutriments.en-guarana-seed-extract_prepared: float
+nutriments.en-guarana-seed-extract_prepared_100g: float
+nutriments.en-guarana-seed-extract_prepared_unit: str
+nutriments.en-guarana-seed-extract_prepared_value: float
+nutriments.en-guarana-seed-extract_serving: float
+nutriments.en-guarana-seed-extract_unit: str
+nutriments.en-guarana-seed-extract_value: float
+nutriments.en-guarana_100g: float
+nutriments.en-guarana_label: str
+nutriments.en-guarana_prepared: float
+nutriments.en-guarana_prepared_100g: float
+nutriments.en-guarana_prepared_serving: float
+nutriments.en-guarana_prepared_unit: str
+nutriments.en-guarana_prepared_value: int
+nutriments.en-guarana_serving: float
+nutriments.en-guarana_unit: str
+nutriments.en-guarana_value: int
+nutriments.en-isoflavones: float
+nutriments.en-isoflavones_100g: float
+nutriments.en-isoflavones_label: str
+nutriments.en-isoflavones_serving: float
+nutriments.en-isoflavones_unit: str
+nutriments.en-isoflavones_value: float
+nutriments.en-isomalt: float, int
+nutriments.en-isomalt_100g: float, int
+nutriments.en-isomalt_label: str
+nutriments.en-isomalt_serving: float
+nutriments.en-isomalt_unit: str
+nutriments.en-isomalt_value: float, int
+nutriments.en-l-alanine: float
+nutriments.en-l-alanine_100g: float
+nutriments.en-l-alanine_label: str
+nutriments.en-l-alanine_serving: float
+nutriments.en-l-alanine_unit: str
+nutriments.en-l-alanine_value: int
+nutriments.en-maltitol: float, int
+nutriments.en-maltitol_100g: float, int
+nutriments.en-maltitol_label: str
+nutriments.en-maltitol_prepared: float
+nutriments.en-maltitol_prepared_100g: float
+nutriments.en-maltitol_prepared_serving: float
+nutriments.en-maltitol_prepared_unit: str
+nutriments.en-maltitol_prepared_value: float
+nutriments.en-maltitol_serving: float, int
+nutriments.en-maltitol_unit: str
+nutriments.en-maltitol_value: float, int
+nutriments.en-mannitol: float, int
+nutriments.en-mannitol_100g: float, int
+nutriments.en-mannitol_label: str
+nutriments.en-mannitol_prepared: int
+nutriments.en-mannitol_prepared_serving: int
+nutriments.en-mannitol_prepared_unit: str
+nutriments.en-mannitol_prepared_value: int
+nutriments.en-mannitol_serving: float, int
+nutriments.en-mannitol_unit: str
+nutriments.en-mannitol_value: float, int
+nutriments.en-moisture: float
+nutriments.en-moisture_label: str
+nutriments.en-moisture_serving: float
+nutriments.en-moisture_unit: str
+nutriments.en-moisture_value: float
+nutriments.en-mono-trans-fat: float
+nutriments.en-mono-trans-fat_100g: float
+nutriments.en-mono-trans-fat_label: str
+nutriments.en-mono-trans-fat_modifier: str
+nutriments.en-mono-trans-fat_serving: float
+nutriments.en-mono-trans-fat_unit: str
+nutriments.en-mono-trans-fat_value: float
+nutriments.en-n-acetyl-l-tyrosine: float
+nutriments.en-n-acetyl-l-tyrosine_100g: float
+nutriments.en-n-acetyl-l-tyrosine_label: str
+nutriments.en-n-acetyl-l-tyrosine_serving: float
+nutriments.en-n-acetyl-l-tyrosine_unit: str
+nutriments.en-n-acetyl-l-tyrosine_value: int
+nutriments.en-niacin-b3: float
+nutriments.en-niacin-b3_100g: float
+nutriments.en-niacin-b3_label: str
+nutriments.en-niacin-b3_serving: float
+nutriments.en-niacin-b3_unit: str
+nutriments.en-niacin-b3_value: float
+nutriments.en-plant-sterols: float, int
+nutriments.en-plant-sterols_100g: int
+nutriments.en-plant-sterols_label: str
+nutriments.en-plant-sterols_serving: float
+nutriments.en-plant-sterols_unit: str
+nutriments.en-plant-sterols_value: float, int
+nutriments.en-poly-trans-fat: float
+nutriments.en-poly-trans-fat_100g: float
+nutriments.en-poly-trans-fat_label: str
+nutriments.en-poly-trans-fat_modifier: str
+nutriments.en-poly-trans-fat_serving: float
+nutriments.en-poly-trans-fat_unit: str
+nutriments.en-poly-trans-fat_value: float
+nutriments.en-riboflavin-b2: float
+nutriments.en-riboflavin-b2_100g: float
+nutriments.en-riboflavin-b2_label: str
+nutriments.en-riboflavin-b2_serving: float
+nutriments.en-riboflavin-b2_unit: str
+nutriments.en-riboflavin-b2_value: float
+nutriments.en-sorbitol: float, int
+nutriments.en-sorbitol_100g: float, int
+nutriments.en-sorbitol_label: str
+nutriments.en-sorbitol_prepared: float
+nutriments.en-sorbitol_prepared_100g: float
+nutriments.en-sorbitol_prepared_serving: float
+nutriments.en-sorbitol_prepared_unit: str
+nutriments.en-sorbitol_prepared_value: float
+nutriments.en-sorbitol_serving: float, int
+nutriments.en-sorbitol_unit: str
+nutriments.en-sorbitol_value: float, int
+nutriments.en-thiamin-b1: float
+nutriments.en-thiamin-b1_100g: float
+nutriments.en-thiamin-b1_label: str
+nutriments.en-thiamin-b1_serving: float
+nutriments.en-thiamin-b1_unit: str
+nutriments.en-thiamin-b1_value: float
+nutriments.en-uk-units: float
+nutriments.en-uk-units_100g: float
+nutriments.en-uk-units_label: str
+nutriments.en-uk-units_unit: str
+nutriments.en-uk-units_value: float
+nutriments.en-water: int
+nutriments.en-water_100g: int
+nutriments.en-water_label: str
+nutriments.en-water_unit: str
+nutriments.en-water_value: int
+nutriments.en-xylitol: float, int
+nutriments.en-xylitol_100g: float
+nutriments.en-xylitol_label: str
+nutriments.en-xylitol_serving: float, int
+nutriments.en-xylitol_unit: str
+nutriments.en-xylitol_value: float, int
+nutriments.en-zine: float
+nutriments.en-zine_100g: float
+nutriments.en-zine_label: str
+nutriments.en-zine_unit: str
+nutriments.en-zine_value: float
+nutriments.energy: float, int
+nutriments.energy-cal: int
+nutriments.energy-cal_serving: int
+nutriments.energy-cal_unit: str
+nutriments.energy-cal_value: int
+nutriments.energy-from-fat: int
+nutriments.energy-from-fat_100g: int
+nutriments.energy-from-fat_label: str
+nutriments.energy-from-fat_serving: float, int
+nutriments.energy-from-fat_unit: str
+nutriments.energy-from-fat_value: int
+nutriments.energy-g: int
+nutriments.energy-g_100g: int
+nutriments.energy-g_serving: int
+nutriments.energy-g_unit: str
+nutriments.energy-g_value: int
+nutriments.energy-kcal: float, int
+nutriments.energy-kcal_100g: float, int
+nutriments.energy-kcal_modifier: str
+nutriments.energy-kcal_prepared: float, int
+nutriments.energy-kcal_prepared_100g: float, int
+nutriments.energy-kcal_prepared_serving: float, int
+nutriments.energy-kcal_prepared_unit: str
+nutriments.energy-kcal_prepared_value: float, int
+nutriments.energy-kcal_serving: float, int
+nutriments.energy-kcal_unit: str
+nutriments.energy-kcal_value: float, int
+nutriments.energy-kcal_value_computed: float, int
+nutriments.energy-kj: float, int
+nutriments.energy-kj_100g: float, int
+nutriments.energy-kj_modifier: str
+nutriments.energy-kj_prepared: float, int
+nutriments.energy-kj_prepared_100g: float, int
+nutriments.energy-kj_prepared_serving: float, int
+nutriments.energy-kj_prepared_unit: str
+nutriments.energy-kj_prepared_value: float, int
+nutriments.energy-kj_serving: float, int
+nutriments.energy-kj_unit: str
+nutriments.energy-kj_value: float, int
+nutriments.energy-kj_value_computed: float, int
+nutriments.energy_100g: float, int
+nutriments.energy_modifier: str
+nutriments.energy_prepared: float, int
+nutriments.energy_prepared_100g: float, int
+nutriments.energy_prepared_serving: float, int
+nutriments.energy_prepared_unit: str
+nutriments.energy_prepared_value: float, int
+nutriments.energy_serving: float, int
+nutriments.energy_unit: str
+nutriments.energy_value: float, int
+nutriments.erythritol: float, int
+nutriments.erythritol_100g: float
+nutriments.erythritol_label: str
+nutriments.erythritol_serving: float, int
+nutriments.erythritol_unit: str
+nutriments.erythritol_value: float, int
+nutriments.fat: float, int
+nutriments.fat_100g: float, int
+nutriments.fat_label: str
+nutriments.fat_modifier: str
+nutriments.fat_prepared: float, int
+nutriments.fat_prepared_100g: float, int
+nutriments.fat_prepared_modifier: str
+nutriments.fat_prepared_serving: float, int
+nutriments.fat_prepared_unit: str
+nutriments.fat_prepared_value: float, int
+nutriments.fat_serving: float, int
+nutriments.fat_unit: str
+nutriments.fat_value: float, int
+nutriments.fiber: float, int
+nutriments.fiber_100g: float, int
+nutriments.fiber_modifier: str
+nutriments.fiber_prepared: float, int
+nutriments.fiber_prepared_100g: float, int
+nutriments.fiber_prepared_modifier: str
+nutriments.fiber_prepared_serving: float, int
+nutriments.fiber_prepared_unit: str
+nutriments.fiber_prepared_value: float, int
+nutriments.fiber_serving: float, int
+nutriments.fiber_unit: str
+nutriments.fiber_value: float, int
+nutriments.folates: float
+nutriments.folates_100g: float
+nutriments.folates_label: str
+nutriments.folates_prepared: float
+nutriments.folates_prepared_100g: float
+nutriments.folates_prepared_serving: float
+nutriments.folates_prepared_unit: str
+nutriments.folates_prepared_value: int
+nutriments.folates_serving: float
+nutriments.folates_unit: str
+nutriments.folates_value: float, int
+nutriments.fr-acid: int
+nutriments.fr-acid_100g: int
+nutriments.fr-acid_label: str
+nutriments.fr-acid_serving: float
+nutriments.fr-acid_unit: str
+nutriments.fr-acid_value: int
+nutriments.fr-glycerol: int
+nutriments.fr-glycerol_100g: int
+nutriments.fr-glycerol_label: str
+nutriments.fr-glycerol_prepared: float
+nutriments.fr-glycerol_prepared_serving: float
+nutriments.fr-glycerol_prepared_unit: str
+nutriments.fr-glycerol_prepared_value: float
+nutriments.fr-glycerol_serving: float
+nutriments.fr-glycerol_unit: str
+nutriments.fr-glycerol_value: int
+nutriments.fr-maltitol: float, int
+nutriments.fr-maltitol_100g: float, int
+nutriments.fr-maltitol_label: str
+nutriments.fr-maltitol_prepared: float
+nutriments.fr-maltitol_prepared_serving: float
+nutriments.fr-maltitol_prepared_unit: str
+nutriments.fr-maltitol_prepared_value: float
+nutriments.fr-maltitol_serving: float
+nutriments.fr-maltitol_unit: str
+nutriments.fr-maltitol_value: float, int
+nutriments.fr-mannitol: float, int
+nutriments.fr-mannitol_100g: float, int
+nutriments.fr-mannitol_label: str
+nutriments.fr-mannitol_prepared: int
+nutriments.fr-mannitol_prepared_serving: int
+nutriments.fr-mannitol_prepared_unit: str
+nutriments.fr-mannitol_prepared_value: int
+nutriments.fr-mannitol_serving: float
+nutriments.fr-mannitol_unit: str
+nutriments.fr-mannitol_value: float, int
+nutriments.fr-nitrate: float
+nutriments.fr-nitrate_100g: float
+nutriments.fr-nitrate_label: str
+nutriments.fr-nitrate_serving: float
+nutriments.fr-nitrate_unit: str
+nutriments.fr-nitrate_value: float
+nutriments.fr-sorbitol: float, int
+nutriments.fr-sorbitol_100g: float, int
+nutriments.fr-sorbitol_label: str
+nutriments.fr-sorbitol_prepared: float
+nutriments.fr-sorbitol_prepared_serving: float
+nutriments.fr-sorbitol_prepared_unit: str
+nutriments.fr-sorbitol_prepared_value: float
+nutriments.fr-sorbitol_serving: float
+nutriments.fr-sorbitol_unit: str
+nutriments.fr-sorbitol_value: float, int
+nutriments.fr-sulfate: float
+nutriments.fr-sulfate_100g: float
+nutriments.fr-sulfate_label: str
+nutriments.fr-sulfate_serving: float
+nutriments.fr-sulfate_unit: str
+nutriments.fr-sulfate_value: float
+nutriments.fr-xylitol: float
+nutriments.fr-xylitol_100g: float
+nutriments.fr-xylitol_label: str
+nutriments.fr-xylitol_serving: float
+nutriments.fr-xylitol_unit: str
+nutriments.fr-xylitol_value: float
+nutriments.fructose: float
+nutriments.fructose_100g: float
+nutriments.fructose_serving: float
+nutriments.fructose_unit: str
+nutriments.fructose_value: float
+nutriments.fruits-vegetables-legumes-estimate-from-ingredients_100g: float, int
+nutriments.fruits-vegetables-legumes-estimate-from-ingredients_serving: float, int
+nutriments.fruits-vegetables-nuts: float, int
+nutriments.fruits-vegetables-nuts-dried: int
+nutriments.fruits-vegetables-nuts-dried_100g: int
+nutriments.fruits-vegetables-nuts-dried_label: str
+nutriments.fruits-vegetables-nuts-dried_serving: int
+nutriments.fruits-vegetables-nuts-dried_unit: str
+nutriments.fruits-vegetables-nuts-dried_value: int
+nutriments.fruits-vegetables-nuts-estimate: float, int
+nutriments.fruits-vegetables-nuts-estimate-from-ingredients: int
+nutriments.fruits-vegetables-nuts-estimate-from-ingredients_100g: float, int
+nutriments.fruits-vegetables-nuts-estimate-from-ingredients_label: str
+nutriments.fruits-vegetables-nuts-estimate-from-ingredients_serving: float, int
+nutriments.fruits-vegetables-nuts-estimate-from-ingredients_unit: str
+nutriments.fruits-vegetables-nuts-estimate-from-ingredients_value: int
+nutriments.fruits-vegetables-nuts-estimate_100g: float, int
+nutriments.fruits-vegetables-nuts-estimate_label: str
+nutriments.fruits-vegetables-nuts-estimate_prepared: float
+nutriments.fruits-vegetables-nuts-estimate_prepared_100g: float
+nutriments.fruits-vegetables-nuts-estimate_prepared_serving: float
+nutriments.fruits-vegetables-nuts-estimate_prepared_unit: str
+nutriments.fruits-vegetables-nuts-estimate_prepared_value: float
+nutriments.fruits-vegetables-nuts-estimate_serving: float, int
+nutriments.fruits-vegetables-nuts-estimate_unit: str
+nutriments.fruits-vegetables-nuts-estimate_value: float, int
+nutriments.fruits-vegetables-nuts_100g: float, int
+nutriments.fruits-vegetables-nuts_label: str
+nutriments.fruits-vegetables-nuts_prepared_unit: str
+nutriments.fruits-vegetables-nuts_serving: float, int
+nutriments.fruits-vegetables-nuts_unit: str
+nutriments.fruits-vegetables-nuts_value: float, int
+nutriments.galactose: float, int
+nutriments.galactose_100g: float, int
+nutriments.galactose_label: str
+nutriments.galactose_serving: float, int
+nutriments.galactose_unit: str
+nutriments.galactose_value: float, int
+nutriments.glucose: float
+nutriments.glucose_100g: float
+nutriments.glucose_label: str
+nutriments.glucose_serving: float
+nutriments.glucose_unit: str
+nutriments.glucose_value: float, int
+nutriments.glucuronolactone: float
+nutriments.glucuronolactone_100g: float
+nutriments.glucuronolactone_label: str
+nutriments.glucuronolactone_serving: float
+nutriments.glucuronolactone_unit: str
+nutriments.glucuronolactone_value: int
+nutriments.gluten: int
+nutriments.gluten_100g: int
+nutriments.gluten_label: str
+nutriments.gluten_serving: int
+nutriments.gluten_unit: str
+nutriments.gluten_value: int
+nutriments.glycerol: float
+nutriments.glycerol_100g: float
+nutriments.glycerol_label: str
+nutriments.glycerol_prepared: float
+nutriments.glycerol_prepared_serving: float
+nutriments.glycerol_prepared_unit: str
+nutriments.glycerol_prepared_value: float
+nutriments.glycerol_serving: float
+nutriments.glycerol_unit: str
+nutriments.glycerol_value: float
+nutriments.guarana-seed-extract: float
+nutriments.guarana-seed-extract_100g: float
+nutriments.guarana-seed-extract_label: str
+nutriments.guarana-seed-extract_serving: float
+nutriments.guarana-seed-extract_unit: str
+nutriments.guarana-seed-extract_value: int
+nutriments.inositol: float, int
+nutriments.inositol_100g: float, int
+nutriments.inositol_label: str
+nutriments.inositol_serving: float, int
+nutriments.inositol_unit: str
+nutriments.inositol_value: float, int
+nutriments.insoluble-fiber: int
+nutriments.insoluble-fiber_100g: float
+nutriments.insoluble-fiber_serving: int
+nutriments.insoluble-fiber_unit: str
+nutriments.insoluble-fiber_value: int
+nutriments.inulin: float
+nutriments.inulin_100g: float
+nutriments.inulin_label: str
+nutriments.inulin_serving: float
+nutriments.inulin_unit: str
+nutriments.inulin_value: float
+nutriments.iodine: float
+nutriments.iodine_100g: float
+nutriments.iodine_label: str
+nutriments.iodine_serving: float
+nutriments.iodine_unit: str
+nutriments.iodine_value: float, int
+nutriments.iron: float, int
+nutriments.iron_100g: float, int
+nutriments.iron_label: str
+nutriments.iron_modifier: str
+nutriments.iron_prepared: float
+nutriments.iron_prepared_100g: float
+nutriments.iron_prepared_serving: float
+nutriments.iron_prepared_unit: str
+nutriments.iron_prepared_value: float
+nutriments.iron_serving: float, int
+nutriments.iron_unit: str
+nutriments.iron_value: float, int
+nutriments.l-alanine: float
+nutriments.l-alanine_100g: float
+nutriments.l-alanine_label: str
+nutriments.l-alanine_serving: float
+nutriments.l-alanine_unit: str
+nutriments.l-alanine_value: int
+nutriments.l-arginine: float
+nutriments.l-arginine_100g: float
+nutriments.l-arginine_label: str
+nutriments.l-arginine_serving: float
+nutriments.l-arginine_unit: str
+nutriments.l-arginine_value: int
+nutriments.l-aspartic-acid: float
+nutriments.l-aspartic-acid_100g: float
+nutriments.l-aspartic-acid_label: str
+nutriments.l-aspartic-acid_serving: float
+nutriments.l-aspartic-acid_unit: str
+nutriments.l-aspartic-acid_value: int
+nutriments.l-cystine: float
+nutriments.l-cystine_100g: float
+nutriments.l-cystine_label: str
+nutriments.l-cystine_serving: float
+nutriments.l-cystine_unit: str
+nutriments.l-cystine_value: int
+nutriments.l-glutamic-acis: float
+nutriments.l-glutamic-acis_100g: float
+nutriments.l-glutamic-acis_label: str
+nutriments.l-glutamic-acis_serving: float
+nutriments.l-glutamic-acis_unit: str
+nutriments.l-glutamic-acis_value: int
+nutriments.l-glutamine: int
+nutriments.l-glutamine_100g: int
+nutriments.l-glutamine_label: str
+nutriments.l-glutamine_serving: int
+nutriments.l-glutamine_unit: str
+nutriments.l-glutamine_value: int
+nutriments.l-glycine: float
+nutriments.l-glycine_100g: float
+nutriments.l-glycine_label: str
+nutriments.l-glycine_serving: float
+nutriments.l-glycine_unit: str
+nutriments.l-glycine_value: int
+nutriments.l-histidine: float
+nutriments.l-histidine_100g: float
+nutriments.l-histidine_label: str
+nutriments.l-histidine_serving: float
+nutriments.l-histidine_unit: str
+nutriments.l-histidine_value: int
+nutriments.l-isoleucine: float
+nutriments.l-isoleucine_100g: float
+nutriments.l-isoleucine_label: str
+nutriments.l-isoleucine_serving: float
+nutriments.l-isoleucine_unit: str
+nutriments.l-isoleucine_value: int
+nutriments.l-leucine: float
+nutriments.l-leucine_100g: float
+nutriments.l-leucine_label: str
+nutriments.l-leucine_serving: float
+nutriments.l-leucine_unit: str
+nutriments.l-leucine_value: int
+nutriments.l-lysine: float
+nutriments.l-lysine_100g: float
+nutriments.l-lysine_label: str
+nutriments.l-lysine_serving: float
+nutriments.l-lysine_unit: str
+nutriments.l-lysine_value: int
+nutriments.l-methionine: float
+nutriments.l-methionine_100g: float
+nutriments.l-methionine_label: str
+nutriments.l-methionine_serving: float
+nutriments.l-methionine_unit: str
+nutriments.l-methionine_value: int
+nutriments.l-phenylalanine: float
+nutriments.l-phenylalanine_100g: float
+nutriments.l-phenylalanine_label: str
+nutriments.l-phenylalanine_serving: float
+nutriments.l-phenylalanine_unit: str
+nutriments.l-phenylalanine_value: int
+nutriments.l-proline: float
+nutriments.l-proline_100g: float
+nutriments.l-proline_label: str
+nutriments.l-proline_serving: float
+nutriments.l-proline_unit: str
+nutriments.l-proline_value: int
+nutriments.l-serine: float
+nutriments.l-serine_100g: float
+nutriments.l-serine_label: str
+nutriments.l-serine_serving: float
+nutriments.l-serine_unit: str
+nutriments.l-serine_value: int
+nutriments.l-threonine: float
+nutriments.l-threonine_100g: float
+nutriments.l-threonine_label: str
+nutriments.l-threonine_serving: float
+nutriments.l-threonine_unit: str
+nutriments.l-threonine_value: int
+nutriments.l-tryptophan: float
+nutriments.l-tryptophan_100g: float
+nutriments.l-tryptophan_label: str
+nutriments.l-tryptophan_serving: float
+nutriments.l-tryptophan_unit: str
+nutriments.l-tryptophan_value: int
+nutriments.l-tyrosine: float
+nutriments.l-tyrosine_100g: float
+nutriments.l-tyrosine_label: str
+nutriments.l-tyrosine_serving: float
+nutriments.l-tyrosine_unit: str
+nutriments.l-tyrosine_value: int
+nutriments.l-valine: float
+nutriments.l-valine_100g: float
+nutriments.l-valine_label: str
+nutriments.l-valine_serving: float
+nutriments.l-valine_unit: str
+nutriments.l-valine_value: int
+nutriments.lactose: float, int
+nutriments.lactose_100g: float, int
+nutriments.lactose_label: str
+nutriments.lactose_modifier: str
+nutriments.lactose_serving: float, int
+nutriments.lactose_unit: str
+nutriments.lactose_value: float, int
+nutriments.lauric-acid: int
+nutriments.lauric-acid_100g: int
+nutriments.lauric-acid_serving: float
+nutriments.lauric-acid_unit: str
+nutriments.lauric-acid_value: int
+nutriments.lignoceric-acid: float
+nutriments.lignoceric-acid_100g: float
+nutriments.lignoceric-acid_unit: str
+nutriments.lignoceric-acid_value: int
+nutriments.linoleic-acid: float
+nutriments.linoleic-acid_100g: float
+nutriments.linoleic-acid_label: str
+nutriments.linoleic-acid_serving: float
+nutriments.linoleic-acid_unit: str
+nutriments.linoleic-acid_value: float
+nutriments.lycopene: float
+nutriments.lycopene_100g: float
+nutriments.lycopene_label: str
+nutriments.lycopene_serving: float
+nutriments.lycopene_unit: str
+nutriments.lycopene_value: float, int
+nutriments.magnesium: float, int
+nutriments.magnesium-beta-hydroxybutyrate: float
+nutriments.magnesium-beta-hydroxybutyrate_100g: float
+nutriments.magnesium-beta-hydroxybutyrate_label: str
+nutriments.magnesium-beta-hydroxybutyrate_serving: float
+nutriments.magnesium-beta-hydroxybutyrate_unit: str
+nutriments.magnesium-beta-hydroxybutyrate_value: int
+nutriments.magnesium_100g: float, int
+nutriments.magnesium_label: str
+nutriments.magnesium_prepared: float
+nutriments.magnesium_prepared_100g: float
+nutriments.magnesium_prepared_serving: float
+nutriments.magnesium_prepared_unit: str
+nutriments.magnesium_prepared_value: int
+nutriments.magnesium_serving: float, int
+nutriments.magnesium_unit: str
+nutriments.magnesium_value: float, int
+nutriments.maltitol: float
+nutriments.maltitol_100g: float
+nutriments.maltitol_label: str
+nutriments.maltitol_prepared: float
+nutriments.maltitol_prepared_serving: float
+nutriments.maltitol_prepared_unit: str
+nutriments.maltitol_prepared_value: float
+nutriments.maltitol_serving: float
+nutriments.maltitol_unit: str
+nutriments.maltitol_value: float
+nutriments.maltodextrins: float
+nutriments.maltodextrins_100g: float
+nutriments.maltodextrins_serving: float
+nutriments.maltodextrins_unit: str
+nutriments.maltodextrins_value: float
+nutriments.manganese: float, int
+nutriments.manganese_100g: float, int
+nutriments.manganese_label: str
+nutriments.manganese_serving: float, int
+nutriments.manganese_unit: str
+nutriments.manganese_value: float, int
+nutriments.mannitol_prepared: int
+nutriments.mannitol_prepared_serving: int
+nutriments.mannitol_prepared_unit: str
+nutriments.mannitol_prepared_value: int
+nutriments.mead-acid: float
+nutriments.mead-acid_100g: float
+nutriments.mead-acid_serving: float
+nutriments.mead-acid_unit: str
+nutriments.mead-acid_value: float
+nutriments.medium-chain-triglycerides: float
+nutriments.medium-chain-triglycerides_100g: float
+nutriments.medium-chain-triglycerides_label: str
+nutriments.medium-chain-triglycerides_serving: float
+nutriments.medium-chain-triglycerides_unit: str
+nutriments.medium-chain-triglycerides_value: float, int
+nutriments.melissic-acid: float
+nutriments.melissic-acid_100g: float
+nutriments.melissic-acid_serving: float
+nutriments.melissic-acid_unit: str
+nutriments.melissic-acid_value: float
+nutriments.molybdenum: float
+nutriments.molybdenum_100g: float
+nutriments.molybdenum_serving: float
+nutriments.molybdenum_unit: str
+nutriments.molybdenum_value: float
+nutriments.monounsaturated-fat: float, int
+nutriments.monounsaturated-fat_100g: float, int
+nutriments.monounsaturated-fat_label: str
+nutriments.monounsaturated-fat_modifier: str
+nutriments.monounsaturated-fat_prepared: float, int
+nutriments.monounsaturated-fat_prepared_100g: float, int
+nutriments.monounsaturated-fat_prepared_modifier: str
+nutriments.monounsaturated-fat_prepared_serving: float
+nutriments.monounsaturated-fat_prepared_unit: str
+nutriments.monounsaturated-fat_prepared_value: float, int
+nutriments.monounsaturated-fat_serving: float, int
+nutriments.monounsaturated-fat_unit: str
+nutriments.monounsaturated-fat_value: float, int
+nutriments.nervonic-acid: float
+nutriments.nervonic-acid_100g: float
+nutriments.nervonic-acid_unit: str
+nutriments.nervonic-acid_value: float
+nutriments.niacinamide: float
+nutriments.niacinamide_100g: float
+nutriments.niacinamide_label: str
+nutriments.niacinamide_serving: float
+nutriments.niacinamide_unit: str
+nutriments.niacinamide_value: int
+nutriments.nitrate: float
+nutriments.nitrate_100g: float
+nutriments.nitrate_label: str
+nutriments.nitrate_serving: float
+nutriments.nitrate_unit: str
+nutriments.nitrate_value: float
+nutriments.nova-group: int
+nutriments.nova-group_100g: int
+nutriments.nova-group_serving: int
+nutriments.nutrition-score-fr: int
+nutriments.nutrition-score-fr_100g: int
+nutriments.oleic-acid: float, int
+nutriments.oleic-acid_100g: float, int
+nutriments.oleic-acid_label: str
+nutriments.oleic-acid_serving: float
+nutriments.oleic-acid_unit: str
+nutriments.oleic-acid_value: float, int
+nutriments.omega-3-fat: float, int
+nutriments.omega-3-fat_100g: float, int
+nutriments.omega-3-fat_label: str
+nutriments.omega-3-fat_modifier: str
+nutriments.omega-3-fat_prepared: float
+nutriments.omega-3-fat_prepared_100g: float
+nutriments.omega-3-fat_prepared_serving: float
+nutriments.omega-3-fat_prepared_unit: str
+nutriments.omega-3-fat_prepared_value: int
+nutriments.omega-3-fat_serving: float, int
+nutriments.omega-3-fat_unit: str
+nutriments.omega-3-fat_value: float, int
+nutriments.omega-6-fat: float, int
+nutriments.omega-6-fat_100g: float, int
+nutriments.omega-6-fat_label: str
+nutriments.omega-6-fat_serving: float, int
+nutriments.omega-6-fat_unit: str
+nutriments.omega-6-fat_value: float, int
+nutriments.omega-9-fat: float, int
+nutriments.omega-9-fat_100g: float, int
+nutriments.omega-9-fat_label: str
+nutriments.omega-9-fat_serving: float
+nutriments.omega-9-fat_unit: str
+nutriments.omega-9-fat_value: float, int
+nutriments.panax-ginseng-extract: float
+nutriments.panax-ginseng-extract_100g: float
+nutriments.panax-ginseng-extract_label: str
+nutriments.panax-ginseng-extract_serving: float
+nutriments.panax-ginseng-extract_unit: str
+nutriments.panax-ginseng-extract_value: int
+nutriments.pantothenic-acid: float, int
+nutriments.pantothenic-acid_100g: float, int
+nutriments.pantothenic-acid_label: str
+nutriments.pantothenic-acid_serving: float, int
+nutriments.pantothenic-acid_unit: str
+nutriments.pantothenic-acid_value: float, int
+nutriments.ph: float, int
+nutriments.ph_100g: float, int
+nutriments.ph_label: str
+nutriments.ph_serving: float, int
+nutriments.ph_unit: str
+nutriments.ph_value: float, int
+nutriments.phosphorus: float, int
+nutriments.phosphorus_100g: float, int
+nutriments.phosphorus_label: str
+nutriments.phosphorus_serving: float, int
+nutriments.phosphorus_unit: str
+nutriments.phosphorus_value: float, int
+nutriments.phylloquinone: float
+nutriments.phylloquinone_100g: float
+nutriments.phylloquinone_label: str
+nutriments.phylloquinone_serving: float
+nutriments.phylloquinone_unit: str
+nutriments.phylloquinone_value: float
+nutriments.polydextrose: float
+nutriments.polydextrose_100g: float
+nutriments.polydextrose_label: str
+nutriments.polydextrose_serving: float
+nutriments.polydextrose_unit: str
+nutriments.polydextrose_value: float
+nutriments.polyols: float, int
+nutriments.polyols_100g: float, int
+nutriments.polyols_label: str
+nutriments.polyols_modifier: str
+nutriments.polyols_serving: float, int
+nutriments.polyols_unit: str
+nutriments.polyols_value: float, int
+nutriments.polyphenois: float
+nutriments.polyphenois_100g: float
+nutriments.polyphenois_label: str
+nutriments.polyphenois_serving: float
+nutriments.polyphenois_unit: str
+nutriments.polyphenois_value: float
+nutriments.polyunsaturated-fat: float, int
+nutriments.polyunsaturated-fat_100g: float, int
+nutriments.polyunsaturated-fat_label: str
+nutriments.polyunsaturated-fat_modifier: str
+nutriments.polyunsaturated-fat_prepared: float, int
+nutriments.polyunsaturated-fat_prepared_100g: float, int
+nutriments.polyunsaturated-fat_prepared_modifier: str
+nutriments.polyunsaturated-fat_prepared_serving: float, int
+nutriments.polyunsaturated-fat_prepared_unit: str
+nutriments.polyunsaturated-fat_prepared_value: float, int
+nutriments.polyunsaturated-fat_serving: float, int
+nutriments.polyunsaturated-fat_unit: str
+nutriments.polyunsaturated-fat_value: float, int
+nutriments.potassium: float, int
+nutriments.potassium_100g: float, int
+nutriments.potassium_label: str
+nutriments.potassium_modifier: str
+nutriments.potassium_prepared: float
+nutriments.potassium_prepared_100g: float
+nutriments.potassium_prepared_serving: float
+nutriments.potassium_prepared_unit: str
+nutriments.potassium_prepared_value: int
+nutriments.potassium_serving: float, int
+nutriments.potassium_unit: str
+nutriments.potassium_value: float, int
+nutriments.pro-vitamin-a: int
+nutriments.pro-vitamin-a_100g: int
+nutriments.pro-vitamin-a_label: str
+nutriments.pro-vitamin-a_serving: int
+nutriments.pro-vitamin-a_unit: str
+nutriments.pro-vitamin-a_value: int
+nutriments.proteins: float, int
+nutriments.proteins_100g: float, int
+nutriments.proteins_modifier: str
+nutriments.proteins_prepared: float, int
+nutriments.proteins_prepared_100g: float, int
+nutriments.proteins_prepared_modifier: str
+nutriments.proteins_prepared_serving: float, int
+nutriments.proteins_prepared_unit: str
+nutriments.proteins_prepared_value: float, int
+nutriments.proteins_serving: float, int
+nutriments.proteins_unit: str
+nutriments.proteins_value: float, int
+nutriments.rna-ribonucleinic-acid: float
+nutriments.rna-ribonucleinic-acid_100g: float
+nutriments.rna-ribonucleinic-acid_label: str
+nutriments.rna-ribonucleinic-acid_serving: float
+nutriments.rna-ribonucleinic-acid_unit: str
+nutriments.rna-ribonucleinic-acid_value: float
+nutriments.salt: float, int
+nutriments.salt_100g: float, int
+nutriments.salt_modifier: str
+nutriments.salt_prepared: float, int
+nutriments.salt_prepared_100g: float, int
+nutriments.salt_prepared_modifier: str
+nutriments.salt_prepared_serving: float, int
+nutriments.salt_prepared_unit: str
+nutriments.salt_prepared_value: float, int
+nutriments.salt_serving: float, int
+nutriments.salt_unit: str
+nutriments.salt_value: float, int
+nutriments.saturated-fat: float, int
+nutriments.saturated-fat_100g: float, int
+nutriments.saturated-fat_modifier: str
+nutriments.saturated-fat_prepared: float, int
+nutriments.saturated-fat_prepared_100g: float, int
+nutriments.saturated-fat_prepared_modifier: str
+nutriments.saturated-fat_prepared_serving: float, int
+nutriments.saturated-fat_prepared_unit: str
+nutriments.saturated-fat_prepared_value: float, int
+nutriments.saturated-fat_serving: float, int
+nutriments.saturated-fat_unit: str
+nutriments.saturated-fat_value: float, int
+nutriments.selenium: float, int
+nutriments.selenium_100g: float, int
+nutriments.selenium_label: str
+nutriments.selenium_serving: float, int
+nutriments.selenium_unit: str
+nutriments.selenium_value: float, int
+nutriments.serum-proteins: float
+nutriments.serum-proteins_100g: float
+nutriments.serum-proteins_unit: str
+nutriments.serum-proteins_value: float
+nutriments.silica: float
+nutriments.silica_100g: float
+nutriments.silica_label: str
+nutriments.silica_serving: float
+nutriments.silica_unit: str
+nutriments.silica_value: float, int
+nutriments.sodium: float, int
+nutriments.sodium-beta-hydroxybutyrate: float
+nutriments.sodium-beta-hydroxybutyrate_100g: float
+nutriments.sodium-beta-hydroxybutyrate_label: str
+nutriments.sodium-beta-hydroxybutyrate_serving: float
+nutriments.sodium-beta-hydroxybutyrate_unit: str
+nutriments.sodium-beta-hydroxybutyrate_value: int
+nutriments.sodium_100g: float, int
+nutriments.sodium_label: str
+nutriments.sodium_modifier: str
+nutriments.sodium_prepared: float, int
+nutriments.sodium_prepared_100g: float, int
+nutriments.sodium_prepared_modifier: str
+nutriments.sodium_prepared_serving: float, int
+nutriments.sodium_prepared_unit: str
+nutriments.sodium_prepared_value: float, int
+nutriments.sodium_serving: float, int
+nutriments.sodium_unit: str
+nutriments.sodium_value: float, int
+nutriments.sorbitol_prepared: float
+nutriments.sorbitol_prepared_serving: float
+nutriments.sorbitol_prepared_unit: str
+nutriments.sorbitol_prepared_value: float
+nutriments.starch: float, int
+nutriments.starch_100g: float
+nutriments.starch_serving: float, int
+nutriments.starch_unit: str
+nutriments.starch_value: float, int
+nutriments.stearic-acid: int
+nutriments.stearic-acid_100g: int
+nutriments.stearic-acid_serving: int
+nutriments.stearic-acid_unit: str
+nutriments.stearic-acid_value: int
+nutriments.sterco-di-mucca_prepared_unit: str
+nutriments.sucrose: float
+nutriments.sucrose_100g: float
+nutriments.sucrose_label: str
+nutriments.sucrose_serving: float
+nutriments.sucrose_unit: str
+nutriments.sucrose_value: float
+nutriments.sugar: float
+nutriments.sugar_100g: float
+nutriments.sugar_label: str
+nutriments.sugar_serving: float
+nutriments.sugar_unit: str
+nutriments.sugar_value: float
+nutriments.sugars: float, int
+nutriments.sugars_100g: float, int
+nutriments.sugars_modifier: str
+nutriments.sugars_prepared: float, int
+nutriments.sugars_prepared_100g: float, int
+nutriments.sugars_prepared_modifier: str
+nutriments.sugars_prepared_serving: float, int
+nutriments.sugars_prepared_unit: str
+nutriments.sugars_prepared_value: float, int
+nutriments.sugars_serving: float, int
+nutriments.sugars_unit: str
+nutriments.sugars_value: float, int
+nutriments.sulphate: float
+nutriments.sulphate_100g: float
+nutriments.sulphate_label: str
+nutriments.sulphate_serving: float
+nutriments.sulphate_unit: str
+nutriments.sulphate_value: float
+nutriments.sulphur: float
+nutriments.sulphur_100g: float
+nutriments.sulphur_label: str
+nutriments.sulphur_serving: float
+nutriments.sulphur_unit: str
+nutriments.sulphur_value: float
+nutriments.taurine: float, int
+nutriments.taurine_100g: float, int
+nutriments.taurine_label: str
+nutriments.taurine_serving: float, int
+nutriments.taurine_unit: str
+nutriments.taurine_value: float, int
+nutriments.tocopherol: float
+nutriments.tocopherol_100g: float
+nutriments.tocopherol_label: str
+nutriments.tocopherol_serving: float
+nutriments.tocopherol_unit: str
+nutriments.tocopherol_value: int
+nutriments.total-retinal-equivalents: float
+nutriments.total-retinal-equivalents_100g: float
+nutriments.total-retinal-equivalents_label: str
+nutriments.total-retinal-equivalents_serving: float
+nutriments.total-retinal-equivalents_unit: str
+nutriments.total-retinal-equivalents_value: int
+nutriments.trans-fat: float, int
+nutriments.trans-fat_100g: float, int
+nutriments.trans-fat_label: str
+nutriments.trans-fat_modifier: str
+nutriments.trans-fat_prepared: float, int
+nutriments.trans-fat_prepared_100g: float, int
+nutriments.trans-fat_prepared_modifier: str
+nutriments.trans-fat_prepared_serving: float, int
+nutriments.trans-fat_prepared_unit: str
+nutriments.trans-fat_prepared_value: float, int
+nutriments.trans-fat_serving: float, int
+nutriments.trans-fat_unit: str
+nutriments.trans-fat_value: float, int
+nutriments.vitamin-a: float, int
+nutriments.vitamin-a-a-carptene: float
+nutriments.vitamin-a-a-carptene_100g: float
+nutriments.vitamin-a-a-carptene_label: str
+nutriments.vitamin-a-a-carptene_serving: float
+nutriments.vitamin-a-a-carptene_unit: str
+nutriments.vitamin-a-a-carptene_value: float
+nutriments.vitamin-a-b-carotene: float
+nutriments.vitamin-a-b-carotene_100g: float
+nutriments.vitamin-a-b-carotene_label: str
+nutriments.vitamin-a-b-carotene_serving: float
+nutriments.vitamin-a-b-carotene_unit: str
+nutriments.vitamin-a-b-carotene_value: float
+nutriments.vitamin-a-retinal: float
+nutriments.vitamin-a-retinal_100g: float
+nutriments.vitamin-a-retinal_label: str
+nutriments.vitamin-a-retinal_serving: float
+nutriments.vitamin-a-retinal_unit: str
+nutriments.vitamin-a-retinal_value: float
+nutriments.vitamin-a_100g: float, int
+nutriments.vitamin-a_label: str
+nutriments.vitamin-a_serving: float, int
+nutriments.vitamin-a_unit: str
+nutriments.vitamin-a_value: float, int
+nutriments.vitamin-b1: float, int
+nutriments.vitamin-b12: float, int
+nutriments.vitamin-b12_100g: float, int
+nutriments.vitamin-b12_label: str
+nutriments.vitamin-b12_serving: float, int
+nutriments.vitamin-b12_unit: str
+nutriments.vitamin-b12_value: float, int
+nutriments.vitamin-b1_100g: float, int
+nutriments.vitamin-b1_label: str
+nutriments.vitamin-b1_modifier: str
+nutriments.vitamin-b1_prepared: float
+nutriments.vitamin-b1_prepared_100g: float
+nutriments.vitamin-b1_prepared_serving: float
+nutriments.vitamin-b1_prepared_unit: str
+nutriments.vitamin-b1_prepared_value: float
+nutriments.vitamin-b1_serving: float, int
+nutriments.vitamin-b1_unit: str
+nutriments.vitamin-b1_value: float, int
+nutriments.vitamin-b2: float, int
+nutriments.vitamin-b2_100g: float, int
+nutriments.vitamin-b2_label: str
+nutriments.vitamin-b2_prepared: float
+nutriments.vitamin-b2_prepared_100g: float
+nutriments.vitamin-b2_prepared_serving: float
+nutriments.vitamin-b2_prepared_unit: str
+nutriments.vitamin-b2_prepared_value: float
+nutriments.vitamin-b2_serving: float, int
+nutriments.vitamin-b2_unit: str
+nutriments.vitamin-b2_value: float, int
+nutriments.vitamin-b6: float, int
+nutriments.vitamin-b6_100g: float, int
+nutriments.vitamin-b6_label: str
+nutriments.vitamin-b6_serving: float, int
+nutriments.vitamin-b6_unit: str
+nutriments.vitamin-b6_value: float, int
+nutriments.vitamin-b9: float, int
+nutriments.vitamin-b9_100g: float, int
+nutriments.vitamin-b9_label: str
+nutriments.vitamin-b9_serving: float, int
+nutriments.vitamin-b9_unit: str
+nutriments.vitamin-b9_value: float, int
+nutriments.vitamin-c: float, int
+nutriments.vitamin-c_100g: float, int
+nutriments.vitamin-c_label: str
+nutriments.vitamin-c_prepared: float
+nutriments.vitamin-c_prepared_100g: float
+nutriments.vitamin-c_prepared_serving: float
+nutriments.vitamin-c_prepared_unit: str
+nutriments.vitamin-c_prepared_value: float, int
+nutriments.vitamin-c_serving: float, int
+nutriments.vitamin-c_unit: str
+nutriments.vitamin-c_value: float, int
+nutriments.vitamin-d: float, int
+nutriments.vitamin-d3: float
+nutriments.vitamin-d3_100g: float
+nutriments.vitamin-d3_label: str
+nutriments.vitamin-d3_serving: float
+nutriments.vitamin-d3_unit: str
+nutriments.vitamin-d3_value: float
+nutriments.vitamin-d_100g: float, int
+nutriments.vitamin-d_label: str
+nutriments.vitamin-d_serving: float, int
+nutriments.vitamin-d_unit: str
+nutriments.vitamin-d_value: float, int
+nutriments.vitamin-e: float, int
+nutriments.vitamin-e_100g: float, int
+nutriments.vitamin-e_label: str
+nutriments.vitamin-e_serving: float, int
+nutriments.vitamin-e_unit: str
+nutriments.vitamin-e_value: float, int
+nutriments.vitamin-k: float, int
+nutriments.vitamin-k3: float
+nutriments.vitamin-k3_100g: float
+nutriments.vitamin-k3_label: str
+nutriments.vitamin-k3_serving: float
+nutriments.vitamin-k3_unit: str
+nutriments.vitamin-k3_value: float
+nutriments.vitamin-k_100g: float, int
+nutriments.vitamin-k_label: str
+nutriments.vitamin-k_serving: float, int
+nutriments.vitamin-k_unit: str
+nutriments.vitamin-k_value: float, int
+nutriments.vitamin-pp: float, int
+nutriments.vitamin-pp_100g: float, int
+nutriments.vitamin-pp_label: str
+nutriments.vitamin-pp_prepared: float
+nutriments.vitamin-pp_prepared_100g: float
+nutriments.vitamin-pp_prepared_serving: float
+nutriments.vitamin-pp_prepared_unit: str
+nutriments.vitamin-pp_prepared_value: float
+nutriments.vitamin-pp_serving: float, int
+nutriments.vitamin-pp_unit: str
+nutriments.vitamin-pp_value: float, int
+nutriments.zinc: float, int
+nutriments.zinc_100g: float, int
+nutriments.zinc_label: str
+nutriments.zinc_prepared: float
+nutriments.zinc_prepared_100g: float
+nutriments.zinc_prepared_serving: float
+nutriments.zinc_prepared_unit: str
+nutriments.zinc_prepared_value: float
+nutriments.zinc_serving: float, int
+nutriments.zinc_unit: str
+nutriments.zinc_value: float, int
+nutriscore_grade: NoneType, str
+product_name: NoneType, str
+product_quantity: NoneType, float, int, str
+product_quantity_unit: NoneType, str
+quantity: NoneType, str
+serving_quantity: NoneType, float, int, str
+serving_quantity_unit: NoneType, str
+serving_size: NoneType, str
+traces: NoneType, str
+traces_from_ingredients: NoneType, str

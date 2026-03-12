@@ -1,0 +1,34 @@
+{
+  "run_started": "2026-01-06T06:38:46.176578",
+  "stages": {
+    "enrich": {
+      "processed": 5000,
+      "failures": 0,
+      "output": "/Users/macos/Desktop/Deakin/SIT764_Project A/Project (GitHub)/FoodRemedy new/database/seeding/products_5k_enriched.json",
+      "modules_run": [
+        {
+          "module": "nutrition_enrich",
+          "status": "ok",
+          "path": "/Users/macos/Desktop/Deakin/SIT764_Project A/Project (GitHub)/FoodRemedy new/database/pipeline/modules/nutrition_enrich.py",
+          "result": {
+            "processed": 5000,
+            "failures": 0,
+            "output": "/Users/macos/Desktop/Deakin/SIT764_Project A/Project (GitHub)/FoodRemedy new/database/seeding/products_5k_enriched.json"
+          }
+        },
+        {
+          "module": "schema_validator",
+          "status": "ok",
+          "path": "/Users/macos/Desktop/Deakin/SIT764_Project A/Project (GitHub)/FoodRemedy new/database/pipeline/modules/schema_validator.py",
+          "result": {
+            "processed": 5000,
+            "failures": null,
+            "output": "/Users/macos/Desktop/Deakin/SIT764_Project A/Project (GitHub)/FoodRemedy new/database/seeding/products_5k_enriched.json",
+            "report": "/Users/macos/Desktop/Deakin/SIT764_Project A/Project (GitHub)/FoodRemedy new/database/pipeline/test_reports/schema_report_1767681525.json"
+          }
+        }
+      ]
+    }
+  },
+  "run_finished": "2026-01-06T06:38:48.107450"
+}

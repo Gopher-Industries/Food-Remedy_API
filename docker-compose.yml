@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  pipeline:
+    build: .
+    image: foodremedy/pipeline:local
+    volumes:
+      - ./data:/data
+    environment:
+      - CONFIG=/app/database/pipeline/pipeline.config.json
+      - DB_HOST=${DB_HOST:-}
+      - DB_USER=${DB_USER:-}
+      - DB_PASS=${DB_PASS:-}
+    restart: 'no'
