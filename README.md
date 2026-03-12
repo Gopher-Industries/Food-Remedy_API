@@ -68,12 +68,12 @@ Install the following tools before starting:
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/Gopher-Industries/FoodRemedy
+git clone https://github.com/Gopher-Industries/Food_Remedy_Project
 ```
 
 ### Step 2: Create a New Branch
 ```bash
-cd FoodRemedy
+cd Food_Remedy_Project
 git checkout -b your-branch-name
 ```
 
