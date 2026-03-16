@@ -60,7 +60,8 @@ class DB021Runner:
             "schema_valid": self.validator.validate_schema(products),
             "nutrient_check": self.validator.validate_nutrients(products),
             "allergen_check": self.validator.validate_allergens(products),
-            "accessibility": self.validator.validate_access(products)
+            "accessibility": self.validator.validate_access(products),
+            "barcode_check": self.validator.validate_barcodes(products)
         }
 
         duration = round(time.time() - start, 2)
