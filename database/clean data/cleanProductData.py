@@ -71,6 +71,20 @@ def drop_exact_duplicates(df: pd.DataFrame) -> pd.DataFrame:
     dropped = initial_count - len(df)
     print(f"Dropped {dropped} duplicate rows based on 'code'.")
     return df
+    
+def drop_duplicate_ProductName(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Deduplicate by 'ProductName' field, keeping the first occurrence.
+    Reports how many duplicates were removed.
+    """
+    if 'product_name' not in df.columns:
+        raise KeyError("Missing required 'product_name' column for deduplication.")
+    initial_count = len(df)
+    # Keep only the first row for each product_name
+    df = df.drop_duplicates(subset=['product_name'], keep='first')
+    dropped = initial_count - len(df)
+    print(f"Dropped {dropped} duplicate rows based on 'product_name'.")
+    return df
 
 
 def ensure_code_field(df: pd.DataFrame) -> pd.DataFrame:
@@ -502,6 +516,7 @@ def main(input_path: str, output_path: str):
     """
     df = load_data(input_path)
     df = drop_exact_duplicates(df)
+    df = drop_duplicate_ProductName(df)
     df = ensure_code_field(df)
     df = clean_text_fields(df)
     df = clean_quantity_fields(df)
