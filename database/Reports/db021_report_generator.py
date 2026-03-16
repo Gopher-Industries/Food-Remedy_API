@@ -19,6 +19,7 @@ class DB021ReportGenerator:
         Nutrients Valid: {results['nutrient_check']}
         Allergens Valid: {results['allergen_check']}
         Accessibility: {results['accessibility']}
+        Barcode Valid: {results['barcode_check']}
 
         Duration: {results['duration_seconds']} seconds
         """
