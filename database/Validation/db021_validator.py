@@ -60,3 +60,23 @@ class DB021Validator:
         except Exception as e:
             logger.error(str(e))
             return False
+
+
+    def validate_barcodes(self, products):
+        errors = 0
+
+        for p in products:
+            barcode = p.get("barcode", "")
+
+            if not isinstance(barcode, str):
+                barcode = str(barcode)
+
+            try:
+                assert len(barcode) == 13 and barcode.isdigit(), "Barcode must be 13 digits"
+            except AssertionError as e:
+                errors += 1
+                logger.error(f"Barcode validation failed for {barcode!r}: {e}")
+
+        logger.info(f"Barcode errors: {errors}")
+        return errors == 0
+    
