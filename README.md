@@ -13,7 +13,7 @@ This project uses:
 - **Expo Go (React Native)** → mobile app development  
 - **Google Firebase** (Firestore + Authentication) → backend  
 
-> 🗓️ Last Updated: September 2025  
+> 🗓️ Last Updated: february 2025  
 
 <br/>
 
@@ -68,20 +68,20 @@ Install the following tools before starting:
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/Gopher-Industries/Food_Remedy_Project
+git clone https://github.com/Gopher-Industries/Food-Remedy_API.git
 ```
 
 ### Step 2: Create a New Branch
 ```bash
-cd Food_Remedy_Project
+cd Food-Remedy_API
 git checkout -b your-branch-name
 ```
 
 ### 🔖 Ticket Name 
 Naming Rule: Use ticket ID + title.  
-Example: For the following ticket `FE067-Fix-Filter-Functionality`  
+Example: For the following ticket `FE007-Integrate-and-Test-Week-3-Changes`  
 ```bash
-git checkout -b FE067-Fix-Filter-Functionality
+git checkout -b FE007 - Integrate and Test Week 3 Changes
 ```
 
 
