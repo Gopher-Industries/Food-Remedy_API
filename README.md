@@ -13,7 +13,7 @@ This project uses:
 - **Expo Go (React Native)** → mobile app development  
 - **Google Firebase** (Firestore + Authentication) → backend  
 
-> 🗓️ Last Updated: february 2025  
+> 🗓️ Last Updated: february 2026  
 
 <br/>
 
