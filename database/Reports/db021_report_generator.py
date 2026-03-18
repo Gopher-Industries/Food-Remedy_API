@@ -14,11 +14,13 @@ class DB021ReportGenerator:
         Date: {datetime.now()}
 
         Total Records: {results['total_records']}
+        Removed Barcodes: {results.get('removed_barcodes', 0)}
 
         Schema Valid: {results['schema_valid']}
         Nutrients Valid: {results['nutrient_check']}
         Allergens Valid: {results['allergen_check']}
         Accessibility: {results['accessibility']}
+        Barcode Valid: {results['barcode_check']}
 
         Duration: {results['duration_seconds']} seconds
         """
