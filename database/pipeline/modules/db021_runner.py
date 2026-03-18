@@ -54,13 +54,18 @@ class DB021Runner:
         start = time.time()
 
         products = self.load_products()
+        original_count = len(products)
+
+        products = self.validator.clean_barcodes(products)
+        removed = original_count - len(products)
 
         results = {
             "total_records": len(products),
             "schema_valid": self.validator.validate_schema(products),
             "nutrient_check": self.validator.validate_nutrients(products),
             "allergen_check": self.validator.validate_allergens(products),
-            "accessibility": self.validator.validate_access(products)
+            "accessibility": self.validator.validate_access(products),
+            "barcode_check": self.validator.validate_barcodes(products)
         }
 
         duration = round(time.time() - start, 2)
