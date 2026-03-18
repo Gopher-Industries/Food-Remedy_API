@@ -61,41 +61,118 @@ class DB021Validator:
             logger.error(str(e))
             return False
 
-    def validate_barcodes(self, products):
-        errors = 0
-        seen = set()
+    # def validate_barcodes(self, products):
+    #     errors = 0
+    #     seen = set()
 
-        for p in products:
-            barcode = str(p.get("barcode", "")).strip()
+    #     for p in products:
+    #         barcode = str(p.get("barcode", "")).strip()
             
-            if not (len(barcode) == 13 and barcode.isdigit()):
-                errors += 1
-                continue
+    #         if not (len(barcode) == 13 and barcode.isdigit()):
+    #             errors += 1
+    #             continue
 
-            if barcode in seen:
-                errors += 1
-                continue
+    #         if barcode in seen:
+    #             errors += 1
+    #             continue
 
-        seen.add(barcode)
+    #     seen.add(barcode)
 
-        logger.info(f"Barcode errors: {errors}")
-        return errors == 0
+    #     logger.info(f"Barcode errors: {errors}")
+    #     return errors == 0
 
-    def clean_barcodes(self, products):
+    # def clean_barcodes(self, products):
+    #     seen = set()
+    #     cleaned = []
+
+    #     for p in products:
+    #         barcode = str(p.get("barcode", "")).strip()
+
+    #         if not (len(barcode) == 13 and barcode.isdigit()):
+    #             continue
+
+    #         if barcode in seen:
+    #             continue
+
+    #         seen.add(barcode)
+    #         cleaned.append(p)
+
+    #     logger.info(f"Products after barcode cleaning: {len(cleaned)}")
+    #     return cleaned
+
+    def validate_barcodes(self, products):
+        empty = 0
+        invalid_format = 0
+        duplicates = 0
         seen = set()
-        cleaned = []
-
+    
         for p in products:
-            barcode = str(p.get("barcode", "")).strip()
-
-            if not (len(barcode) == 13 and barcode.isdigit()):
+            barcode_raw = p.get("barcode", "")
+            barcode = str(barcode_raw).strip()
+    
+            if not barcode:
+                empty += 1
                 continue
-
+    
+            if (len(barcode) != 13) or (not barcode.isdigit()):
+                invalid_format += 1
+                continue
+    
             if barcode in seen:
+                duplicates += 1
+            else:
+                seen.add(barcode)
+    
+        total_issues = empty + invalid_format + duplicates
+        logger.info(
+            f"Barcode issues: empty={empty}, invalid_format={invalid_format}, duplicates={duplicates}, total={total_issues}"
+        )
+    
+        return {
+            "ok": total_issues == 0,
+            "empty": empty,
+            "invalid_format": invalid_format,
+            "duplicates": duplicates,
+            "total_issues": total_issues,
+        }
+ 
+ 
+    def clean_barcodes(self, products):
+        cleaned = []
+        removed_empty = 0
+        removed_invalid_format = 0
+        removed_duplicates = 0
+        seen = set()
+    
+        for p in products:
+            barcode_raw = p.get("barcode", "")
+            barcode = str(barcode_raw).strip()
+    
+            if not barcode:
+                removed_empty += 1
                 continue
-
+    
+            if (len(barcode) != 13) or (not barcode.isdigit()):
+                removed_invalid_format += 1
+                continue
+    
+            if barcode in seen:
+                removed_duplicates += 1
+                continue
+    
             seen.add(barcode)
             cleaned.append(p)
-
-        logger.info(f"Products after barcode cleaning: {len(cleaned)}")
-        return cleaned
+    
+        removed_total = removed_empty + removed_invalid_format + removed_duplicates
+        logger.info(
+            "Barcode cleaning removed: "
+            f"empty={removed_empty}, invalid_format={removed_invalid_format}, duplicates={removed_duplicates}, total={removed_total}"
+        )
+    
+        return cleaned, removed_total, {
+            "removed_empty": removed_empty,
+            "removed_invalid_format": removed_invalid_format,
+            "removed_duplicates": removed_duplicates,
+            "removed_barcodes": removed_total,
+        }
+    
