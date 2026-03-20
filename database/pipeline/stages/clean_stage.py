@@ -1,7 +1,13 @@
 import os
 import json
+import sys
 
-def run_clean_stage(input_path: str, output_path: str):
+# Add the database/clean data path so we can import the normalisation module
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'clean data', 'normalization'))
+
+from NutrientUnitNormalisation import normalize_nutriments_dict
+
+def run_clean_stage(input_path: str, output_path: str, config: dict = None):
     """
     Robust clean stage that never crashes on nested OFF data.
     """
@@ -18,6 +24,10 @@ def run_clean_stage(input_path: str, output_path: str):
         if not isinstance(record, dict):
             continue
 
+        # DB003 - Normalise nutrient units before flattening
+        if 'nutriments' in record and isinstance(record['nutriments'], dict):
+            record['nutriments'] = normalize_nutriments_dict(record['nutriments'])
+
         flat = {}
         for k, v in record.items():
             if isinstance(v, (list, dict)):
@@ -32,7 +42,4 @@ def run_clean_stage(input_path: str, output_path: str):
         json.dump(cleaned, f, indent=2)
 
     print(f"[DB018] Cleaning complete: {output_path}")
-
-
-
-
+    print(f"[DB003] Nutrient unit normalisation applied to {len(cleaned)} products")
