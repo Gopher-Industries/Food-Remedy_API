@@ -9,8 +9,8 @@ import re
 # === Configuration constants ===
 # Edit these paths as needed
 # - Find Examples of Input and Output in IOExamples Folder
-INPUT_FILE = "data/demo data/rawSample.jsonl"
-OUTPUT_FILE = "data/demo data/cleanSample.json"
+INPUT_FILE = "database/clean data/IOExamples/rawSample.jsonl"
+OUTPUT_FILE = "database/clean_data/cleanSample.json"
 
 NUTRIENTS_TO_KEEP = {
     # Energy
@@ -431,8 +431,70 @@ def save_cleaned_data(df: pd.DataFrame, output_path: str):
     df.to_json(output_path, orient='records', lines=False, force_ascii=False)
     print(f"Cleaned data saved to: {output_path}")
     print(f"Total valid products: {len(df)}")
+# DB004: apply category standardisation (map raw tags → one primary category)
+def standardise_category(tags):
+    """
+    Map raw OFF category tags into one standard primary category
+    for filtering, recommendations, and UI grouping.
+    """
+    if not tags:
+        return "other"
 
+    tags = [t.lower() for t in tags]
 
+    # seafood
+    if any(t in tags for t in [
+        "seafood", "fishes", "fishes-and-their-products",
+        "canned-fishes", "tunas", "canned-tunas",
+        "crustaceans", "shrimps", "prawns"
+    ]):
+        return "seafood"
+
+    # oils
+    if any(t in tags for t in [
+        "fats", "vegetable-fats", "vegetable-oils"
+    ]):
+        return "oils"
+
+    # meal kits
+    if "meal-kits" in tags:
+        return "meal kits"
+
+    # spreads
+    if any(t in tags for t in [
+        "spreads", "sweet-spreads", "plant-based-spreads",
+        "nut-butters", "peanut-butters",
+        "hazelnut-spreads", "chocolate-spreads",
+        "cocoa-and-hazelnuts-spreads"
+    ]):
+        return "spreads"
+
+    # noodles & pasta
+    if any(t in tags for t in [
+        "pastas", "noodles", "instant-noodles"
+    ]):
+        return "noodles and pasta"
+
+    # beverages
+    if any(t in tags for t in [
+        "beverages", "dairy-drinks", "coffee-drinks",
+        "coffee-milks", "iced-coffees", "sweetened-beverages"
+    ]):
+        return "beverages"
+
+    # breads
+    if any(t in tags for t in [
+        "breads", "wholemeal-breads"
+    ]):
+        return "breads"
+
+    # snacks
+    if any(t in tags for t in [
+        "snacks", "sweet-snacks"
+    ]):
+        return "snacks and confectionery"
+
+    return "other"
 def main(input_path: str, output_path: str):
     df = load_data(input_path)
     df = drop_exact_duplicates(df)
@@ -443,7 +505,17 @@ def main(input_path: str, output_path: str):
     df = reduce_nutriments(df)
     df = clean_traces_fields(df)
     df = clean_all_tag_fields(df)
+    # DB004: inspect raw category tags before standardisation
+    print("\n=== Sample categories_tags ===")
+    print(df["categories_tags"].head(10))
 
+    print("\n=== Top category tags ===")
+    all_categories = df["categories_tags"].explode().dropna()
+    print(all_categories.value_counts().head(50))
+    df["standard_category"] = df["categories_tags"].apply(standardise_category)
+
+    print("\n=== Standard Categories ===")
+    print(df["standard_category"].value_counts())
     df = add_image_urls(df)
     df = reconvert_json_strings(df)
 
