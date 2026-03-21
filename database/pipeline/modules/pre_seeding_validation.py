@@ -71,8 +71,16 @@ def validate_record(record: Dict[str, Any]) -> List[str]:
             nut = record["enrichment"]["nutrition"]
             if not isinstance(nut, dict):
                 errors.append("enrichment.nutrition must be a dictionary")
-            if "compositeScore" in nut and not isinstance(nut["compositeScore"], (int, float)):
-                errors.append("compositeScore must be a number")
+            if "compositeScore" in nut and nut["compositeScore"] is not None and not isinstance(
+                nut["compositeScore"], (int, float)
+            ):
+                errors.append("compositeScore must be a number or null")
+            if "healthScore" in nut and nut["healthScore"] is not None and not isinstance(
+                nut["healthScore"], (int, float)
+            ):
+                errors.append("healthScore must be a number or null")
+            if "provisionalCompositeScore" in nut and not isinstance(nut["provisionalCompositeScore"], (int, float)):
+                errors.append("provisionalCompositeScore must be a number when present")
 
     # images: should have root if present
     if "images" in record and isinstance(record["images"], dict):

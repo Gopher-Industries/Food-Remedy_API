@@ -4,6 +4,19 @@ import shutil
 import types
 import json
 import traceback
+from typing import Any, Dict
+
+
+def compute_product_health_score(product: Dict[str, Any]) -> Dict[str, Any]:
+    """DB010 — Health score (0–100), Red/Amber/Green (or InsufficientData), and human-readable reasons.
+
+    Uses per-100g values from top-level fields, ``nutriments``, and optionally ``nutriments_normalized``.
+    ``compositeScore`` / ``healthScore`` are null when ``sufficientDataForScore`` is false; see
+    ``provisionalCompositeScore`` for the neutral-filled estimate used only internally / QA.
+    """
+    from database.pipeline.modules.nutrition_enrich import compute_health_score_for_record
+
+    return compute_health_score_for_record(product)
 
 
 def import_module_from_path(path: str) -> types.ModuleType:
