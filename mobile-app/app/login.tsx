@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from "react-native";
 import { Link } from "expo-router";
 import Input from "@/components/ui/UIInput";
@@ -87,19 +88,37 @@ export default function LoginPage() {
    * Send Password Reset Email
    */
   const resetPasswordWithEmail = async (email: string) => {
+    console.log("[PASSWORD RESET] Function called with:", email);
+    
     const validEmail = email.trim().toLowerCase();
 
+    // Check if email is empty
     if (!validEmail) {
-      addNotification("Enter a valid Email", "e");
-      return;
+      console.log("[PASSWORD RESET] Email is empty");
+      Alert.alert("Invalid Email", "Please enter an email address");
+      throw new Error("Empty email");
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(validEmail)) {
+      console.log("[PASSWORD RESET] Invalid email format:", validEmail);
+      Alert.alert("Invalid Email", "Please enter a valid email address (e.g., user@example.com)");
+      throw new Error("Invalid email format");
+    }
+
+    console.log("[PASSWORD RESET] Email is valid, sending reset email...");
+    Alert.alert("Sending...", "Please wait while we send the reset email...");
+    
     try {
       await sendPasswordReset(validEmail);
-      addNotification("An Email Has Been Sent", "s");
+      console.log("[PASSWORD RESET] Email sent successfully!");
+      Alert.alert("Success!", "Password reset email has been sent. Check your inbox.");
     } catch (error) {
-      console.error("Error Sending Password Reset Email:", error);
-      addNotification("Error Sending Reset Email", "e");
+      console.error("[PASSWORD RESET] Error:", error);
+      const errorMsg = error instanceof Error ? error.message : "Unknown error";
+      Alert.alert("Error", `Failed to send email: ${errorMsg}`);
+      throw error;
     }
   };
 
@@ -229,8 +248,8 @@ export default function LoginPage() {
             isInput={true}
             message="We will send a link to your email to reset your password. Enter account email address:"
             acceptLabel="Send Email"
-            onAccept={() => {
-              resetPasswordWithEmail;
+            onAccept={(email) => {
+              return resetPasswordWithEmail(email);
             }}
           />
         </ModalWrapper>
