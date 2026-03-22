@@ -6,6 +6,8 @@ import { View, Image, ScrollView, Pressable, KeyboardAvoidingView, Platform } fr
 import Input from "@/components/ui/UIInput";
 import Tt from "@/components/ui/UIText";
 import { useTheme } from "@/theme";
+import { auth } from "@/config/firebaseConfig";
+import { sendPasswordResetEmail } from "firebase/auth";
 
 
 export default function ForgotPasswordPage() {
@@ -14,13 +16,13 @@ export default function ForgotPasswordPage() {
   const theme = useTheme();
 
 
-  // TODO: Update handle reset link to use backend
+  // Update handle reset link to use backend
 
   /**
    * Handle Reset Link
    * @returns 
    */
-  const handleResetLink = () => {
+  const handleResetLink = async () => {
     setErrorMessage("");
 
     const emailRegex = /\S+@\S+\.\S+/;
@@ -30,8 +32,13 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    setErrorMessage("");
-    console.log("Send reset link to:", email);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      console.log("Reset email sent to:", email);
+    } catch (error: any){
+      console.log(error);
+      setErrorMessage("Something went wrong. Please try again.");
+    }
   };
 
 
