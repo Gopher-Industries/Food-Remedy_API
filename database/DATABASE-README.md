@@ -1,159 +1,168 @@
 # 🧠 Food Remedy Database Documentation
 
-This document explains how the **Food Remedy** database is structured, processed, and seeded.  
-It also describes the key scripts used to manage and clean product data for our **Food Remedy App**.
+This document is the **single place** for how the **database/** folder is organised, how data is processed (scrape → clean → enrich → seed), and where to find scripts and docs. No functionality is changed here—only documentation.
 
-📄 Future students should save and update any new database documentation in:  
-`Documents/Database/[Year-Trimester]`  
+📄 **Future docs:** Save new database documentation in `Documents/Database/[Year-Trimester]`.
 
+> **Firebase / Firestore:** [Firebase Access](../Documents/Guides/Leadership/firebase-access.md)
 
-> For Firebase and Firestore access details, refer to the following document:  
-> [Firebase Access](../Documents/Guides/Leadership/firebase-access.md)
+---
 
-<br/>
+## 📚 Table of Contents
 
+- [What the database folder is for](#what-the-database-folder-is-for)
+- [How data flows](#how-data-flows)
+- [Folder-by-folder](#folder-by-folder)
+- [Scraping](#-scraping)
+- [Cleaning](#-cleaning)
+- [Data investigation](#-data-investigation)
+- [Seeding](#-seeding)
+- [Pipeline summary](#-pipeline-summary)
+- [Root files in database/](#root-files-in-database)
+- [Quick reference: “Where do I…?”](#quick-reference-where-do-i)
 
-### 📚 Table of Contents
-- [📁 Folder Overview](#-folder-overview)
-- [🥄 Data Scraping](#-data-scraping)
-- [🧹 Data Cleaning](#-data-cleaning)
-- [🔎 Data Investigation](#-data-investigation)
-- [🌱 Database Seeding](#-database-seeding)
-- [⚙️ Pipeline Summary](#️-pipeline-summary)
+---
 
+## What the database folder is for
 
-<br />
+The **database/** folder holds everything that **prepares product data** for the Food Remedy app:
 
+1. **Getting** raw food product data (scraping).
+2. **Cleaning** it so it is consistent and usable.
+3. **Enriching** it with tags, scores, and categories.
+4. **Uploading** it to Firestore (seeding).
 
-## 📁 Folder Overview
+So: **raw data in → scripts in these folders turn it into clean, structured data → that data is sent to Firestore for the mobile app.**
 
-The `database/` directory manages all product data used by the Food Remedy App.  
-It contains scripts and data pipelines that prepare clean, structured product data for ingestion into **Firestore**.  
+---
 
-Each subfolder has a distinct role in the **data lifecycle** — from raw collection to production-ready ingestion.  
+## How data flows
 
+```
+Scraping  →  Clean  →  Enrich  →  Seed
+   ↓           ↓          ↓         ↓
+scraping/  clean data/  pipeline/  seeding/
+```
 
-<br />
+- **Scraping:** Get Australian products from Open Food Facts.
+- **Clean:** Fix duplicates, names, units, and structure.
+- **Enrich:** Add nutrition scores, tags, categories (done in pipeline).
+- **Seed:** Upload the final data to Firestore.
 
+The **pipeline/** folder runs clean → enrich → seed in one go using `pipeline.config.json`. Optional **Investigation** (e.g. `data_investigation/`) is for exploring and validating data outside the main pipeline.
 
-## 🥄 Data Scraping
+---
 
-**File:** `database\scraping\OpenFoodFacts-DataScrape.py`
+## Folder-by-folder
 
-This script streams and filters products from the **Open Food Facts** global dataset.  
-It extracts only the relevant **Australian** products to build our local dataset.
+| Folder | What it does | Key files |
+|--------|--------------|-----------|
+| **scraping/** | Gets raw Australian products from Open Food Facts. | `OpenFoodFacts-DataScrape.py` |
+| **clean data/** | Cleans and normalises product data (one canonical cleaning folder). | `cleanProductData.py`, `constants.py`, `normalization/`, `IOExamples/` |
+| **pipeline/** | Runs clean → enrich → seed from config. | `run_pipeline.py`, `pipeline.config.json`, `stages/`, `modules/` |
+| **seeding/** | Uploads product JSON to Firestore in batches. | `seed_firestore.py`, `seed_engine.py`, `seed_products.py`, `schema_definition.json`, product chunk files |
+| **Allergens/** | Allergen reference data and detection. | `allergens_config.json`, `load_allergens.py`, `seed_allergens_to_db.py`, `test_allergens.py` |
+| **QA/** | Quality assurance for cleaned data. | `DB006_QA_cleaning.py`, `summary_report.txt`, `errors.json` |
+| **Validation/** | Validates product schema/rules before use. | `db021_validator.py` |
+| **Reports/** | Generates validation/pipeline reports. | `db021_report_generator.py` |
+| **data_investigation/** | Exploratory analysis and samples (not production pipeline). | `exampleProductRaw.json`, `exampleProductCleaned.json`, `data_investigation.py` |
+| **logging_system/** | Shared logging for pipeline/scripts. | `logger.py`, `pipeline_logger_demo.py` |
+| **local_backend/** | Local scan/persistence helpers (Node/JS). | `scanPipeline.js`, `persistenceLayer.js`, `testScan.js`, `testPersistence.js` |
+| **output/** | Output chunks from pipeline runs. | `chunk_0_raw.json`, `chunk_0_clean.json`, `chunk_0_enriched.json` |
 
-### Main Functionality
-- Streams `.jsonl.gz` data directly from Open Food Facts (no full download needed - saves RAM).  
-- Filters products where `"countries_tags"` includes `"australia"`.  
-- Keeps only essential fields to reduce file size and focus on nutrition data.  
-- Saves results as `openfoodfacts-australia.jsonl`.
+---
 
-> Do not try to commit a full jsonl of the database as it cannot be housed on GitHub.  
-> Instead, the file is broken down into 10k-product chunks so that it can also be uploaded to Firestore in smaller batches, since the maximum write usage is 20k per day.
+## 🥄 Scraping
 
+**File:** `database/scraping/OpenFoodFacts-DataScrape.py`
 
-<br />
+- Streams `.jsonl.gz` from Open Food Facts (no full download).
+- Keeps only products where `countries_tags` includes `australia`.
+- Saves as `openfoodfacts-australia.jsonl`.
 
+> Do not commit a full jsonl to the repo. Use 10k-product chunks for Firestore (max 20k writes/day).
 
-## 🧹 Data Cleaning
+---
 
-**File:** `database\clean data\cleanProductData.py`
+## 🧹 Cleaning
 
-This script prepares the scraped data for database ingestion.  
-It standardises, deduplicates, renames, and structures product information.
+**File:** `database/clean data/cleanProductData.py`
 
-### Cleaning Steps
-1. **Load & Deduplicate**  
-   Reads the JSONL file and removes duplicate product entries by barcode.
+Prepares scraped data for ingestion: standardises, deduplicates, renames, and structures.
 
-2. **Text & Field Normalisation**  
-   Cleans product names, brands, and ensures valid barcodes.
+1. **Load & deduplicate** — Remove duplicate product entries by barcode.
+2. **Text & field normalisation** — Clean names, brands, valid barcodes.
+3. **Numeric standardisation** — Consistent units (e.g. grams).
+4. **Nutrient filtering** — Keep energy, fats, carbs, protein, salt/sodium, etc.
+5. **Tag cleaning** — Remove language prefixes (e.g. `en:`) from tags.
+6. **Image handling** — Generate image URLs from barcodes.
+7. **Schema refinement** — Drop unwanted columns, rename `code` → `barcode`, `brands` → `brand`, camelCase.
+8. **Save** — Export cleaned JSON for Firestore/pipeline.
 
-3. **Numeric Standardisation**  
-   Converts numeric fields (e.g. product quantity, serving size) to consistent units (grams).
+**Note:** `clean data/` (with a space) is the **only** cleaning folder. All cleaning scripts and examples live there.
 
-4. **Nutrient Filtering**  
-   Keeps only essential nutrient fields such as:
-   - Energy  
-   - Fats  
-   - Carbohydrates  
-   - Proteins  
-   - Salt / Sodium  
+---
 
-5. **Tag Cleaning**  
-   Removes language prefixes like `"en:"` from tag lists (e.g. allergens, labels).
-
-6. **Image Handling**  
-   Generates image URLs using product barcodes for easy front-end use.
-
-7. **Schema Refinement**  
-   - Drops unwanted columns (`id`, `serving_size`, etc.)  
-   - Renames key fields (`code` → `barcode`, `brands` → `brand`)  
-   - Converts column names to `camelCase`.
-
-8. **Save Cleaned Data**  
-   Exports the cleaned dataset as a readable JSON file ready for Firestore.
-
-
-<br />
-
-
-## 🔎 Data Investigation
+## 🔎 Data investigation
 
 **Folder:** `database/data_investigation/`
 
-This area is for exploratory data analysis (EDA) and validation.  
-Here, the team can:
-- Test different cleaning techniques.  
-- Explore data distributions and outliers.  
-- Compare cleaned versus raw data.  
-- Validate field consistency before seeding.
+Used for exploratory analysis and validation: test cleaning, compare raw vs cleaned, validate before seeding. For internal testing and reporting, not production pipeline scripts.
 
-> 💡 Use this folder for internal testing and reporting, not production scripts.
+---
 
+## 🌱 Seeding
 
-<br />
+**File:** `database/seeding/seed_firestore.py` (and `seed_engine.py`, `seed_products.py`)
 
+1. **Initialise Firebase** — Use `serviceAccountKey.json`.
+2. **Load cleaned data** — e.g. `products_XXk_XXk.json` (chunk range in filename).
+3. **Batch upload** — Writes in chunks of 500, with retries and timestamps (`dateAdded`, `lastUpdated`).
+4. **Store** — Products in Firestore `PRODUCTS` collection, keyed by barcode.
 
+---
 
-## 🌱 Database Seeding
+## ⚙️ Pipeline summary
 
-**File:** `database/seeding/seed_firestore.py`
+End-to-end flow:
 
-This script uploads cleaned product data into **Firebase Firestore** for app usage.  
-It uses **batch operations** with retry logic to handle large uploads efficiently.
+**Scraping → Cleaning → Enrichment → Seeding**
 
-### 🔥 Main Process
-1. **Initialise Firebase**  
-   Connects using a `serviceAccountKey.json` credential file.
+1. **Scrape** — Collect Australian food product data.
+2. **Clean** — Process and standardise (consistent schema).
+3. **Enrich** — Add tags, scores, categories (pipeline modules).
+4. **Seed** — Upload to Firestore.
 
-2. **Load Cleaned Data**  
-   Loads the cleaned JSON file (for example, `products_XXk_XXk.json`) from the dataset.  
-   The `XX` in the filename shows the batch range.  
-   For example, the second batch from 10,000 to 20,000 products is saved as `products_10k_20k.json`.
+Optional **Investigation** (e.g. `data_investigation/`) validates quality and accuracy outside the main pipeline. Run the full flow via `pipeline/run_pipeline.py` and `pipeline/pipeline.config.json`.
 
+---
 
-3. **Batch Uploading**  
-   - Writes in chunks of 500 (Firestore’s limit).  
-   - Adds `dateAdded` and `lastUpdated` timestamps for each document.  
-   - Uses exponential backoff to handle transient upload errors.
+## Root files in database/
 
-4. **Store in Firestore Collection**  
-   Products are saved in the `PRODUCTS` collection using their barcode as the document ID.
+| File | Purpose |
+|------|--------|
+| `DATABASE-README.md` | This file — structure, process, and quick reference. |
+| `DB006_sample1.py` | Sample script for DB006 (QA). |
+| `DB007-missing-values.md` | Notes on missing values (DB007). |
+| `pipeline_checkpoints.json`, `pipeline_run_metadata.json` | Pipeline state and metadata (used by `run_pipeline.py`). |
+| `__init__.py` | Makes `database` a Python package. |
 
+---
 
-<br />
+## Quick reference: “Where do I…?”
 
+| I want to… | Go to… |
+|------------|--------|
+| Get raw Australian products | `scraping/OpenFoodFacts-DataScrape.py` |
+| Clean raw data | `clean data/cleanProductData.py` and `clean data/normalization/` |
+| Run full flow (clean → enrich → seed) | `pipeline/run_pipeline.py` and `pipeline/pipeline.config.json` |
+| Upload products to Firestore | `seeding/` (e.g. `seed_firestore.py`, `seed_engine.py`) |
+| Work on allergens | `Allergens/` |
+| Run or improve cleaning QA | `QA/DB006_QA_cleaning.py` |
+| Validate schema/product shape | `Validation/`, `seeding/schema_definition.json` |
+| Explore data or examples | `data_investigation/`, `clean data/IOExamples/` |
+| Change pipeline logging | `logging_system/logger.py` |
 
-## ⚙️ Pipeline Summary
+---
 
-Below is the full end-to-end data pipeline for Food Remedy:
-
-Scraping → Cleaning → Investigation → Seeding
-
-
-1. **Scrape:** Collect Australian food product data.  
-2. **Clean:** Process and standardise it for consistent schema.  
-3. **Investigate:** Validate quality and accuracy.  
-4. **Seed:** Upload to Firestore for app integration.
+**Summary:** One cleaning folder (`clean data/`). One doc (this file). Flow: Scraping → Clean → Enrich → Seed. New team members can use this README to find scraping scripts, cleaning scripts, enrichment (pipeline), seeding scripts, and QA/Reports.
