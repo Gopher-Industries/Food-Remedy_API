@@ -18,8 +18,8 @@ from utils.detect_allergens import detect_allergens
 # === Configuration constants ===
 # Edit these paths as needed
 # - Find Examples of Input and Output in IOExamples Folder
-INPUT_FILE = "database/clean_data/IOExamples/rawSample.jsonl"
-OUTPUT_FILE = "database/clean_data/cleanSample.json"
+INPUT_FILE = "database/clean data/IOExamples/rawSample.jsonl"
+OUTPUT_FILE = "database/clean data/cleanSample.json"
 
 NUTRIENTS_TO_KEEP = {
     # Energy
@@ -117,18 +117,6 @@ def _merge_records(primary: pd.Series, candidate: pd.Series) -> pd.Series:
 
 
 def deduplicate_products(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Detect duplicate products and keep one best record per product.
-
-    Duplicate rules:
-    - Primary key: same barcode ('code').
-    - Secondary key (fallback): same normalized product_name + brands.
-
-    Keep strategy:
-    - Choose the most complete record using the source 'completeness' column.
-    - If completeness is missing/invalid, treat it as -1.
-    - Merge missing fields from other duplicates when possible.
-    """
     if 'code' not in df.columns:
         raise KeyError("Missing required 'code' column for deduplication.")
 
@@ -140,77 +128,47 @@ def deduplicate_products(df: pd.DataFrame) -> pd.DataFrame:
     grouped_records = []
     consumed_idx = set()
 
-    # Group by barcode first (most reliable).
-    for barcode, group in working[working['__barcode_key'] != ""].groupby('__barcode_key', sort=False):
+    # Barcode-based dedup 
+    for _, group in working[working['__barcode_key'] != ""].groupby('__barcode_key', sort=False):
         if len(group) == 1:
             idx = group.index[0]
             grouped_records.append(working.loc[idx])
             consumed_idx.add(idx)
             continue
 
-        if 'completeness' in group.columns:
-            completeness_series = pd.to_numeric(group['completeness'], errors='coerce').fillna(-1.0)
-        else:
-            completeness_series = pd.Series(-1.0, index=group.index)
+        completeness = pd.to_numeric(group.get('completeness', -1), errors='coerce').fillna(-1.0)
+        ranked_idx = completeness.sort_values(ascending=False).index.tolist()
 
-        ranked_indices = completeness_series.sort_values(ascending=False).index.tolist()
-        ranked = [working.loc[idx] for idx in ranked_indices]
-        merged = ranked[0].copy()
-        for candidate in ranked[1:]:
-            print(
-                f"Dropped record: code={candidate.get('code', '')}, product_name={candidate.get('product_name', '')}, "
-                f"brands={candidate.get('brands', '')}, reason=duplicate barcode ({barcode}), "
-                f"dropped_completeness={candidate.get('completeness', None)}, kept_completeness={merged.get('completeness', None)}"
-            )
-            merged = _merge_records(merged, candidate)
+        merged = working.loc[ranked_idx[0]].copy()
+        for idx in ranked_idx[1:]:
+            merged = _merge_records(merged, working.loc[idx])
+
         grouped_records.append(merged)
         consumed_idx.update(group.index)
 
-    # For rows without barcode, apply fallback dedup by name+brand.
+    # Fallback : name and brand
     no_barcode = working[(working['__barcode_key'] == "") & (~working.index.isin(consumed_idx))]
-    fallback_groups = no_barcode.groupby(['__name_key', '__brand_key'], sort=False)
 
-    for (name_key, brand_key), group in fallback_groups:
-        # Only treat as duplicates if both keys are present.
+    for (name_key, brand_key), group in no_barcode.groupby(['__name_key', '__brand_key'], sort=False):
         if name_key and brand_key and len(group) > 1:
-            if 'completeness' in group.columns:
-                completeness_series = pd.to_numeric(group['completeness'], errors='coerce').fillna(-1.0)
-            else:
-                completeness_series = pd.Series(-1.0, index=group.index)
+            completeness = pd.to_numeric(group.get('completeness', -1), errors='coerce').fillna(-1.0)
+            ranked_idx = completeness.sort_values(ascending=False).index.tolist()
 
-            ranked_indices = completeness_series.sort_values(ascending=False).index.tolist()
-            ranked = [working.loc[idx] for idx in ranked_indices]
-            merged = ranked[0].copy()
-            for candidate in ranked[1:]:
-                print(
-                    f"Dropped record: code={candidate.get('code', '')}, product_name={candidate.get('product_name', '')}, "
-                    f"brands={candidate.get('brands', '')}, reason=duplicate name+brand ({name_key} | {brand_key}), "
-                    f"dropped_completeness={candidate.get('completeness', None)}, kept_completeness={merged.get('completeness', None)}"
-                )
-                merged = _merge_records(merged, candidate)
+            merged = working.loc[ranked_idx[0]].copy()
+            for idx in ranked_idx[1:]:
+                merged = _merge_records(merged, working.loc[idx])
+
             grouped_records.append(merged)
         else:
             for idx in group.index:
                 grouped_records.append(working.loc[idx])
 
-    result = pd.DataFrame(grouped_records).drop(columns=['__barcode_key', '__name_key', '__brand_key'], errors='ignore')
-    dropped = len(df) - len(result)
-    print(f"Dropped or merged {dropped} duplicate rows using barcode/name-brand rules.")
-    return result.reset_index(drop=True)
+    result = pd.DataFrame(grouped_records).drop(
+        columns=['__barcode_key', '__name_key', '__brand_key'],
+        errors='ignore'
+    )
 
-# def drop_exact_duplicates(df: pd.DataFrame) -> pd.DataFrame:
-#     """
-#     Deduplicate by 'code' field, keeping the first occurrence.
-#     Reports how many duplicates were removed.
-#     """
-#     if 'code' not in df.columns:
-#         raise KeyError("Missing required 'code' column for deduplication.")
-#     initial_count = len(df)
-#     # Keep only the first row for each code
-#     df = df.drop_duplicates(subset=['code'], keep='first')
-#     dropped = initial_count - len(df)
-#     print(f"Dropped {dropped} duplicate rows based on 'code'.")
-#     return df
+    return result.reset_index(drop=True)
 
 
 def ensure_code_field(df: pd.DataFrame) -> pd.DataFrame:
