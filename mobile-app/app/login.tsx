@@ -228,8 +228,8 @@ export default function LoginPage() {
                 style={{ marginTop: 30 }}
               >
                 <Tt className="text-sm text-center">
-                  Forgot Your Password?{" "}
-                  <Tt className="text-sm underline">Reset</Tt>
+                  
+                  <Tt>Forgot Password</Tt>
                 </Tt>
               </Pressable>
             </>
