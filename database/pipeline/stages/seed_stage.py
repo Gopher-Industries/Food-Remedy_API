@@ -10,7 +10,7 @@ def import_module_from_path(path: str) -> types.ModuleType:
     return module
 
 
-def run_seed_stage(input_path: str, config: dict) -> dict:
+def run_seed_stage(input_path: str, output_path: str, config=None) -> dict:
     """
     Run the seeding module/script.
 

@@ -1,7 +1,7 @@
 import os
 import json
 
-def run_clean_stage(input_path: str, output_path: str):
+def run_clean_stage(input_path: str, output_path: str, config=None):
     """
     Robust clean stage that never crashes on nested OFF data.
     """
@@ -9,8 +9,10 @@ def run_clean_stage(input_path: str, output_path: str):
     with open(input_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    if not isinstance(data, list):
-        raise ValueError("Expected list of records")
+    if isinstance(data, dict):
+        data = [data]
+    elif not isinstance(data, list):
+        raise ValueError("Expected list or dict")
 
     cleaned = []
 
@@ -32,6 +34,13 @@ def run_clean_stage(input_path: str, output_path: str):
         json.dump(cleaned, f, indent=2)
 
     print(f"[DB018] Cleaning complete: {output_path}")
+
+    return {
+        "status": "completed",
+        "processed": len(cleaned),
+        "failures": 0,
+        "output": output_path
+    }
 
 
 
