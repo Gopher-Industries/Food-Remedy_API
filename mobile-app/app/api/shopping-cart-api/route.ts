@@ -109,7 +109,80 @@ Expected request body:
 */
 export async function POST(request: Request): Promise<Response> {
     try{
-        
+        // Read JSON body sent from the frontend
+        const body = (await request.json()) as CartRequestBody;
+        const { userId, productId, quantity } = body;
+
+        // Making sure all required fields are present and valid
+        if (!userId || !productId || !isValidQuantity(quantity)) {
+            return jsonResponse(
+                { error: "userId, productId, and a valid quantity are required." },
+                400
+            );
+        }
+
+        // Look up the product in the main PRODUCTS collection first
+        // This is to make sure users can only add real products to their cart
+        const productRef = doc(fdb, "PRODUCTS", productId);
+        const productSnap = await getDoc(productRef);
+
+        // If the product does not exist, return 404
+        if (!productSnap.exists()) {
+            return jsonResponse({ error: "Product not found."}, 404);
+        }
+
+        // Get the product data to save some potential display info
+        const productData = productSnap.data();
+
+        // Reference the cart item document
+        const cartItemRef = doc(fdb, "users", userId, "cart", productId);
+
+        // Checking whether this product is already in the user's cart
+        const existingCartItem = await getDoc(cartItemRef);
+
+        if (existingCartItem.exists()) {
+            // If the item already exists, increase the quantity instead of creating a duplicate
+            const existingData = existingCartItem.data();
+            const newQuantity = (existingData.quantity || 0) + quantity;
+
+            await setDoc(
+                cartItemRef,
+                {
+                    ...existingData,
+                    quantity: newQuantity,
+                    updatedAt: serverTimestamp(),
+                },
+                { merge: true }
+            );
+
+            return jsonResponse({
+                message: "Item quantity updated in cart.",
+                productId,
+                quantity: newQuantity, 
+            });
+        }
+
+        // If the item is not already in the cart, create it
+        // Product info is also stored so the fronted can display cart items easily
+        await setDoc(cartItemRef, {
+            productId,
+            quantity,
+            productName: productData.productName || null,
+            brand: productData.brand || null,
+            imageUrl: productData.imageUrl || null,
+            addedAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        });
+
+        return jsonResponse(
+            {
+                message: "Item added to cart.",
+                productId,
+                quantity,
+            },
+            201
+        );
+
     } catch (error: any) {
         return jsonResponse(
             { error: error.message || "Failed to add item to cart." },
