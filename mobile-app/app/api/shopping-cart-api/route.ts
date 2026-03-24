@@ -37,7 +37,7 @@ function jsonResponse(body: unknown, status = 200): Response {
 
 // Small helper function to check that quantity is a valid positive integer
 // Using this for POST and PATCH so users cannot send 0, negatives, or decimals
-function isValidQuanity(value: unknown): value is number {
+function isValidQuantity(value: unknown): value is number {
     return typeof value === "number" && Number.isInteger(value) && value > 0;
 }
 
@@ -51,6 +51,35 @@ Purpose: Retrieve all cart items for a specific user
 */
 export async function GET(request: Request): Promise<Response> {
     try{
+        // Reading the userId from the URL
+        // Example: /api/cart?userId=user123
+        const url = new URL(request.url);
+        const userId = url.searchParams.get("userId");
+
+        // UserId is required to know whose cart to load
+        if (!userId) {
+            return jsonResponse({ error: "userId is required." }, 400);
+        }
+
+        // Reference the user's cart subcollection
+        const cartRef = collection(fdb, "users", userId, "cart");
+
+        // Get all cart times for this user
+        const snapshot = await getDocs(cartRef);
+
+        // Convert Firestore docs into plain JSON objects
+        // Using document ID as productId
+        const items = snapshot.docs.map((docSnap) => ({
+            productId: docSnap.id,
+            ...docSnap.data(),
+        }));
+
+        // Sending the cart items back to the client
+        return jsonResponse({
+            message: "Cart retrieved successfully.",
+            userId,
+            items,
+        });
         
     } catch (error: any) {
         return jsonResponse(
