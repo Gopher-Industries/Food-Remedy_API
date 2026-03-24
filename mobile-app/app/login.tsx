@@ -229,7 +229,7 @@ export default function LoginPage() {
               >
                 <Tt className="text-sm text-center">
                   
-                  <Tt>Forgot Password</Tt>
+                  <Tt>Forgot Password?</Tt>
                 </Tt>
               </Pressable>
             </>
