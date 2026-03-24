@@ -1,5 +1,31 @@
 {
-  "run_started": "2026-01-06T05:54:31.909155",
-  "stages": {},
-  "run_finished": "2026-01-06T05:54:31.910636"
+  "run_started": "2026-03-24T12:56:42.754862",
+  "stages": {
+    "clean": {
+      "status": "completed",
+      "finished": "2026-03-24T12:53:54.981806",
+      "result": {
+        "processed": 1,
+        "failures": 0,
+        "output_path": "database/data_investigation/exampleProductCleaned.json"
+      }
+    },
+    "enrich": {
+      "status": "completed",
+      "finished": "2026-03-24T12:53:54.982582",
+      "result": {
+        "processed": 1,
+        "failures": null,
+        "output": "database/data_investigation/exampleProductCleaned.json",
+        "modules_run": [
+          {
+            "module": "ts_enrich_wrapper",
+            "status": "missing",
+            "path": "/workspaces/Food-Remedy_API/database/database/pipeline/modules/enrich_ts_wrapper.py"
+          }
+        ]
+      }
+    }
+  },
+  "run_finished": "2026-03-24T12:56:42.755069"
 }

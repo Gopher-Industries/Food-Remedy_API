@@ -2,8 +2,8 @@
   "pipeline": {
     "fail_on_error": true,
     "outputs": {
-      "metadata": "/data/pipeline/pipeline_run_metadata.json",
-      "checkpoints": "/data/pipeline/pipeline_checkpoints.json"
+      "metadata": "database/pipeline/pipeline_run_metadata.json",
+      "checkpoints": "database/pipeline/pipeline_checkpoints.json"
     },
     "clean": {
       "enabled": true,
