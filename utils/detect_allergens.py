@@ -5,8 +5,7 @@ import re
 # -------------------------------
 # Config Loading
 # -------------------------------
-CONFIG_PATH = Path(__file__).parent.parent / "database" / "Allergens" / "DB009_testing_allergens_config.json"
-# TODO: Update to "allergens_config.json" after DB008 merge
+CONFIG_PATH = Path(__file__).parent.parent / "database" / "Allergens" / "allergens_config.json"
 
 try:
     with open(CONFIG_PATH, "r", encoding="utf-8") as f:

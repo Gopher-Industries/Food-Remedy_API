@@ -5,7 +5,6 @@ import types
 import json
 import traceback
 
-
 def import_module_from_path(path: str) -> types.ModuleType:
     spec = importlib.util.spec_from_file_location("_enrich_module", path)
     module = importlib.util.module_from_spec(spec)
