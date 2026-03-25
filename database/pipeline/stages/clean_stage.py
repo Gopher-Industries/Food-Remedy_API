@@ -1,7 +1,7 @@
 import os
 import json
 
-def run_clean_stage(input_path: str, output_path: str):
+def run_clean_stage(input_path, output_path, config=None):
     """
     Robust clean stage that never crashes on nested OFF data.
     """
