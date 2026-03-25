@@ -1,5 +1,19 @@
 # 🧠 Food Remedy Database Documentation
+> **DB015 Documentation:** For full schema, data flow, cart/recommendation dependencies and deployment checklist, see [`docs/DB015-Schema-DataFlow-Documentation.md`](docs/DB015-Schema-DataFlow-Documentation.md)
+```
 
+Save it with `Ctrl + S`. Then let's commit and push everything:
+```
+cd "C:\Users\vivan\Food-Remedy_API"
+```
+```
+git add .
+```
+```
+git commit -m "Add schema, data flow and deployment documentation. See DB015"
+```
+```
+git push origin DB015-Document-Schema-Data-Flow
 This document is the **single place** for how the **database/** folder is organised, how data is processed (scrape → clean → enrich → seed), and where to find scripts and docs. No functionality is changed here—only documentation.
 
 📄 **Future docs:** Save new database documentation in `Documents/Database/[Year-Trimester]`.
