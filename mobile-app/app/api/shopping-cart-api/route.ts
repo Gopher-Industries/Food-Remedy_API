@@ -143,7 +143,7 @@ export async function POST(request: Request): Promise<Response> {
         if (existingCartItem.exists()) {
             // If the item already exists, increase the quantity instead of creating a duplicate
             const existingData = existingCartItem.data();
-            const newQuantity = (existingData.quantity || 0) + quantity;
+            const newQuantity = Number(existingData.quantity || 0) + quantity;
 
             await setDoc(
                 cartItemRef,
@@ -270,7 +270,35 @@ Expected request body:
 */
 export async function DELETE(request: Request): Promise<Response> {
     try{
-        
+        // Read JSON body sent from the frontend
+        const body = (await request.json()) as CartRequestBody;
+        const { userId, productId } = body;
+
+        // Both userId and product are needed to find the cart item
+        if (!userId || !productId) {
+            return jsonResponse(
+                { error: "userId, and productId are required." },
+                400
+            );
+        }
+
+        // Reference the cart item to remove
+        const cartItemRef = doc(fdb, "users", userId, "cart", productId);
+        const cartItemSnap = await getDoc(cartItemRef);
+
+        // Making sure the item exists before trying to delete it
+        if (!cartItemSnap.exists()) {
+            return jsonResponse({ error: "Cart item not found." }, 404);
+        }
+
+        // Delete the item from Firestore
+        await deleteDoc(cartItemRef);
+
+        return jsonResponse({
+            message: "Item removed from cart successfully.",
+            productId,
+        });
+
     } catch (error: any) {
         return jsonResponse(
             { error: error.message || "Failed to remove cart item." },
