@@ -209,7 +209,43 @@ Expected request body:
 */
 export async function PATCH(request: Request): Promise<Response> {
     try{
-        
+        // Read JSON body sent from the frontend
+        const body = (await request.json()) as CartRequestBody;
+        const { userId, productId, quantity } = body;
+
+        // Making sure all required fields are present and valid
+        if (!userId || !productId || !isValidQuantity(quantity)) {
+            return jsonResponse(
+                { error: "userId, productId, and a valid quantity are required." },
+                400
+            );
+        }
+
+        // Reference the existing cart item
+        const cartItemRef = doc(fdb, "users", userId, "cart", productId);
+        const cartItemSnap = await getDoc(cartItemRef);
+
+        // The item must already exist before it can be updated
+        if (!cartItemSnap.exists()) {
+            return jsonResponse({ error: "Cart item not found." }, 404);
+        }
+
+        // Update just the quantity and updated timestamp
+        await setDoc(
+            cartItemRef,
+            {
+                quantity,
+                updatedAt: serverTimestamp(),
+            },
+            { merge: true }
+        );
+
+        return jsonResponse({
+            message: "Cart item updated successfully.",
+            productId,
+            quantity,
+        });
+
     } catch (error: any) {
         return jsonResponse(
             { error: error.message || "Failed to update cart item." },
