@@ -17,6 +17,7 @@ const firebaseConfig = {
   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+
 const initializeFirebase = (): { firebaseApp: FirebaseApp, auth: Auth, fdb: Firestore, storage: FirebaseStorage } => {
   if (!getApps().length) {
     const app = initializeApp(firebaseConfig);
@@ -49,6 +50,9 @@ const initializeFirebase = (): { firebaseApp: FirebaseApp, auth: Auth, fdb: Fire
   }
 };
 
+console.log("THIS IS MY FIREBASE FILE");
+console.log("ENV direct:", process.env.EXPO_PUBLIC_FIREBASE_API_KEY);
+console.log("Firebase config runtime:", firebaseConfig);
 const { firebaseApp, auth, fdb, storage } = initializeFirebase();
 
 export { firebaseApp, auth, fdb, storage };
