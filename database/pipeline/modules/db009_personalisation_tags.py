@@ -1,17 +1,60 @@
 import json
 
 
+TAG_CONTRACT = {
+    "dietTags": ["vegan", "vegetarian", "pescatarian", "gluten_free"],
+    "lifestyleTags": ["fitness", "energy", "weight_management"],
+    "riskTags": [
+        "contains_allergens",
+        "contains_additives",
+        "high_sugar",
+        "high_salt",
+        "high_saturated_fat"
+    ]
+}
+
+
+def safe_list(value):
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    return [value]
+
+
+def safe_float(value, default=0.0):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def normalise_tags(tags):
+    """
+    Ensure tags are:
+    - lowercase
+    - snake_case
+    - unique
+    - sorted for consistency
+    """
+    cleaned = []
+    for tag in safe_list(tags):
+        if not isinstance(tag, str):
+            continue
+        tag = tag.strip().lower().replace("-", "_").replace(" ", "_")
+        if tag:
+            cleaned.append(tag)
+    return sorted(set(cleaned))
+
+
 def get_text_blob(record):
-    ingredients = record.get("ingredients", []) or []
-    allergens = record.get("allergensDetected", []) or record.get("allergens", []) or []
-    categories = record.get("categories", []) or []
+    ingredients = safe_list(record.get("ingredients", []))
+    allergens = safe_list(record.get("allergensDetected", [])) or safe_list(record.get("allergens", []))
+    categories = safe_list(record.get("categories", []))
 
     combined = []
     for field in [ingredients, allergens, categories]:
-        if isinstance(field, list):
-            combined.extend([str(x).lower() for x in field])
-        else:
-            combined.append(str(field).lower())
+        combined.extend([str(x).lower() for x in field])
 
     return " ".join(combined)
 
@@ -25,16 +68,20 @@ def get_diet_tags(record):
         "fish", "meat", "chicken", "beef", "pork",
         "shrimp", "prawn", "crustacea", "mollusc", "molluscs"
     ]
+
     non_vegetarian = [
         "fish", "tuna", "shrimp", "prawn",
         "meat", "chicken", "beef", "pork", "gelatin",
         "crustacea", "mollusc", "molluscs"
     ]
+
     non_pescatarian = [
         "chicken", "beef", "pork", "lamb", "meat"
     ]
+
     gluten_terms = [
-        "gluten", "wheat", "barley", "rye", "malt", "semolina", "couscous", "triticale"
+        "gluten", "wheat", "barley", "rye", "malt",
+        "semolina", "couscous", "triticale"
     ]
 
     if not any(term in text for term in non_vegan):
@@ -49,43 +96,18 @@ def get_diet_tags(record):
     if not any(term in text for term in gluten_terms):
         tags.append("gluten_free")
 
-    return tags
+    return normalise_tags(tags)
 
 
 def get_lifestyle_tags(record):
     tags = []
     nutriments = record.get("nutriments", {}) or {}
 
-    proteins = nutriments.get("proteins_100g", 0) or 0
-    sugars = nutriments.get("sugars_100g", 0) or 0
-    fat = nutriments.get("fat_100g", 0) or 0
-    energy = nutriments.get("energy-kcal_100g", 0) or 0
-    carbs = nutriments.get("carbohydrates_100g", 0) or 0
-
-    try:
-        proteins = float(proteins)
-    except Exception:
-        proteins = 0
-
-    try:
-        sugars = float(sugars)
-    except Exception:
-        sugars = 0
-
-    try:
-        fat = float(fat)
-    except Exception:
-        fat = 0
-
-    try:
-        energy = float(energy)
-    except Exception:
-        energy = 0
-
-    try:
-        carbs = float(carbs)
-    except Exception:
-        carbs = 0
+    proteins = safe_float(nutriments.get("proteins_100g", 0))
+    sugars = safe_float(nutriments.get("sugars_100g", 0))
+    fat = safe_float(nutriments.get("fat_100g", 0))
+    energy = safe_float(nutriments.get("energy-kcal_100g", 0))
+    carbs = safe_float(nutriments.get("carbohydrates_100g", 0))
 
     if proteins >= 10 and sugars <= 10:
         tags.append("fitness")
@@ -96,35 +118,20 @@ def get_lifestyle_tags(record):
     if energy <= 150 and sugars <= 5 and fat <= 5:
         tags.append("weight_management")
 
-    return tags
+    return normalise_tags(tags)
 
 
 def get_risk_tags(record):
     tags = []
 
-    additives = record.get("additives", []) or []
-    allergens_detected = record.get("allergensDetected", []) or []
-    nutrient_levels = record.get("nutrientLevels", {}) or {}
+    additives = safe_list(record.get("additives", [])) or safe_list(record.get("additives_tags", []))
+    allergens_detected = safe_list(record.get("allergensDetected", []))
+    nutrient_levels = record.get("nutrientLevels", {}) or record.get("nutrient_levels", {}) or {}
     nutriments = record.get("nutriments", {}) or {}
 
-    sugars = nutriments.get("sugars_100g", 0) or 0
-    salt = nutriments.get("salt_100g", 0) or 0
-    sat_fat = nutriments.get("saturated-fat_100g", 0) or 0
-
-    try:
-        sugars = float(sugars)
-    except Exception:
-        sugars = 0
-
-    try:
-        salt = float(salt)
-    except Exception:
-        salt = 0
-
-    try:
-        sat_fat = float(sat_fat)
-    except Exception:
-        sat_fat = 0
+    sugars = safe_float(nutriments.get("sugars_100g", 0))
+    salt = safe_float(nutriments.get("salt_100g", 0))
+    sat_fat = safe_float(nutriments.get("saturated-fat_100g", 0))
 
     if allergens_detected:
         tags.append("contains_allergens")
@@ -141,21 +148,32 @@ def get_risk_tags(record):
     if nutrient_levels.get("saturated-fat") == "high" or sat_fat > 5:
         tags.append("high_saturated_fat")
 
-    return tags
+    return normalise_tags(tags)
+
+
+def enrich_record(record):
+    record["dietTags"] = get_diet_tags(record)
+    record["lifestyleTags"] = get_lifestyle_tags(record)
+    record["riskTags"] = get_risk_tags(record)
+    return record
 
 
 def run(input_path, output_path, config):
     with open(input_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
+    if isinstance(data, dict):
+        data = [data]
+
+    if not isinstance(data, list):
+        raise ValueError("Expected input data to be a list of product records")
+
     processed = 0
     failures = 0
 
     for record in data:
         try:
-            record["dietTags"] = get_diet_tags(record)
-            record["lifestyleTags"] = get_lifestyle_tags(record)
-            record["riskTags"] = get_risk_tags(record)
+            enrich_record(record)
             processed += 1
         except Exception:
             failures += 1
@@ -165,5 +183,6 @@ def run(input_path, output_path, config):
 
     return {
         "processed": processed,
-        "failures": failures
+        "failures": failures,
+        "tag_contract": TAG_CONTRACT
     }
