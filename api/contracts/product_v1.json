@@ -64,7 +64,31 @@
         "removed": { "type": "array", "items": { "type": "string" }, "default": [] }
       }
     },
-    "metadata": { "type": "object", "additionalProperties": true }
+    "dateAdded": {
+      "type": ["string", "null"]
+    },
+    "lastUpdated": {
+      "type": ["string", "null"]
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "enrichmentSource": { "type": "string" },
+        "enrichmentTimestamp": { "type": ["string", "null"] },
+        "dataQualityScore": { "type": ["number", "null"] }
+      },
+      "additionalProperties": true
+    },
+    "enrichmentMetadata": {
+      "type": "object",
+      "properties": {
+        "recommendationScore": { "type": "number" },
+        "reasonTags": { "type": "array", "items": { "type": "string" } },
+        "similarityMetrics": { "type": "object" }
+      },
+      "additionalProperties": true
+    }
+    
   },
   "additionalProperties": false
 }
