@@ -99,6 +99,51 @@
       "type": "string",
       "required": false
     },
+    "tags": {
+      "type": "object",
+      "required": false,
+      "description": "Product tags for categorization",
+      "properties": {
+        "final": { "type": "array", "items": "string" },
+        "removed": { "type": "array", "items": "string" }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": false,
+      "description": "Enrichment tracking",
+      "properties": {
+        "enrichmentSource": { "type": "string", "enum": ["backend", "ml", "manual", "openfoodfacts"] },
+        "enrichmentTimestamp": { "type": "string" },
+        "dataQualityScore": { "type": "number" }
+      }
+    },
+    "enrichmentMetadata": {
+      "type": "object",
+      "required": false,
+      "description": "Recommendation enrichment",
+      "properties": {
+        "recommendationScore": { "type": "number" },
+        "reasonTags": { "type": "array", "items": "string" },
+        "similarityMetrics": { "type": "object" }
+      }
+    },
+    "dateAdded": {
+      "type": "string",
+      "required": false,
+      "description": "ISO timestamp when product was added"
+    },
+    "lastUpdated": {
+      "type": "string",
+      "required": false,
+      "description": "ISO timestamp when product was last updated"
+    },
+    "productJson": {
+      "type": "object",
+      "required": false,
+      "description": "Full serialized product for cart snapshots",
+      "additionalProperties": true
+    },
     "tracesFromIngredients": {
       "type": "string",
       "required": false
