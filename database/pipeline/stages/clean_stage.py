@@ -3,7 +3,6 @@ import json
 import sys
 import logging
 
-
 logger = logging.getLogger(__name__)
 if not logger.handlers:
     h = logging.StreamHandler()
@@ -36,14 +35,6 @@ def run_clean_stage(input_path: str, output_path: str, config=None):
         if not isinstance(record, dict):
             continue
 
-        # DB003 - Normalise nutrient units before flattening
-        if 'nutriments' in record and isinstance(record['nutriments'], dict):
-            try:
-                record['nutriments'] = normalize_nutriments_dict(record['nutriments'])
-                logger.info(f"Normalised nutriments for product: {record.get('code', 'unknown')}")
-            except Exception as e:
-                logger.warning(f"Failed to normalise nutriments for product {record.get('code', 'unknown')}: {e}")
-
         flat = {}
         for k, v in record.items():
             if isinstance(v, (list, dict)):
@@ -53,16 +44,10 @@ def run_clean_stage(input_path: str, output_path: str, config=None):
 
         cleaned.append(flat)
 
-    # Safely create output directory if it doesn't exist
-    output_dir = os.path.dirname(output_path)
-    if output_dir:
-        os.makedirs(output_dir, exist_ok=True)
-
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(cleaned, f, indent=2)
 
-    logger.info(f"[DB018] Cleaning complete: {output_path}")
-    logger.info(f"[DB003] Nutrient unit normalisation applied to {len(cleaned)} products")
     print(f"[DB018] Cleaning complete: {output_path}")
     print(f"[DB003] Nutrient unit normalisation applied to {len(cleaned)} products")
     
