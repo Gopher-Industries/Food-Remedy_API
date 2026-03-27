@@ -3,6 +3,7 @@ import json
 import time
 from datetime import datetime
 from typing import Optional
+from datetime import datetime, timezone
 
 try:
     import yaml
@@ -188,7 +189,7 @@ def runPipeline(
         # Non-fatal: if we cannot create/use /data, continue using configured outputs
         pass
     stats = {
-        "run_started": datetime.utcnow().isoformat(),
+        "run_started": datetime.now(timezone.utc).isoformat(),
         "stages": {},
     }
 
@@ -232,7 +233,7 @@ def runPipeline(
         print(f"Running clean stage: {in_path} -> {out_path}")
         # mark running in checkpoints
         checkpoints.setdefault("clean", {})["status"] = "running"
-        checkpoints["clean"]["started"] = datetime.utcnow().isoformat()
+        checkpoints["clean"]["started"] = datetime.now(timezone.utc).isoformat()
         # persist running checkpoint
         ensure_dir(checkpoint_path)
         with open(checkpoint_path, "w", encoding="utf-8") as cf:
@@ -241,7 +242,7 @@ def runPipeline(
             res = run_clean_stage(input_path=in_path, output_path=out_path, config=clean_cfg)
             stats["stages"]["clean"] = res
             # update checkpoint as completed
-            checkpoints["clean"] = {"status": "completed", "finished": datetime.utcnow().isoformat(), "result": res}
+            checkpoints["clean"] = {"status": "completed", "finished": datetime.now(timezone.utc).isoformat(), "result": res}
             with open(checkpoint_path, "w", encoding="utf-8") as cf:
                 json.dump(checkpoints, cf, indent=2)
             completed_count += 1
@@ -249,7 +250,7 @@ def runPipeline(
             print(f"Clean stage finished: processed={res.get('processed')}, failures={res.get('failures')}")
         except Exception as e:
             stats["stages"]["clean"] = {"error": str(e)}
-            checkpoints["clean"] = {"status": "failed", "error": str(e), "finished": datetime.utcnow().isoformat()}
+            checkpoints["clean"] = {"status": "failed", "error": str(e), "finished": datetime.now(timezone.utc).isoformat()}
             with open(checkpoint_path, "w", encoding="utf-8") as cf:
                 json.dump(checkpoints, cf, indent=2)
             if pipeline_cfg.get("fail_on_error", True):
@@ -276,7 +277,7 @@ def runPipeline(
         print(f"Running stage {stage_idx}/{total_stages} (enrich) — {pct}% complete")
         print(f"Running enrich stage: {in_path} -> {out_path}")
         checkpoints.setdefault("enrich", {})["status"] = "running"
-        checkpoints["enrich"]["started"] = datetime.utcnow().isoformat()
+        checkpoints["enrich"]["started"] = datetime.now(timezone.utc).isoformat()
         # persist running checkpoint
         ensure_dir(checkpoint_path)
         with open(checkpoint_path, "w", encoding="utf-8") as cf:
@@ -284,14 +285,14 @@ def runPipeline(
         try:
             res = run_enrich_stage(input_path=in_path, output_path=out_path, config=enrich_cfg)
             stats["stages"]["enrich"] = res
-            checkpoints["enrich"] = {"status": "completed", "finished": datetime.utcnow().isoformat(), "result": res}
+            checkpoints["enrich"] = {"status": "completed", "finished": datetime.now(timezone.utc).isoformat(), "result": res}
             with open(checkpoint_path, "w", encoding="utf-8") as cf:
                 json.dump(checkpoints, cf, indent=2)
             completed_count += 1
             print(f"Enrich stage finished: processed={res.get('processed')}, failures={res.get('failures')}")
         except Exception as e:
             stats["stages"]["enrich"] = {"error": str(e)}
-            checkpoints["enrich"] = {"status": "failed", "error": str(e), "finished": datetime.utcnow().isoformat()}
+            checkpoints["enrich"] = {"status": "failed", "error": str(e), "finished": datetime.now(timezone.utc).isoformat()}
             with open(checkpoint_path, "w", encoding="utf-8") as cf:
                 json.dump(checkpoints, cf, indent=2)
             if pipeline_cfg.get("fail_on_error", True):
@@ -317,7 +318,7 @@ def runPipeline(
         print(f"Running stage {stage_idx}/{total_stages} (seed) — {pct}% complete")
         print(f"Running seed stage with input: {in_path}")
         checkpoints.setdefault("seed", {})["status"] = "running"
-        checkpoints["seed"]["started"] = datetime.utcnow().isoformat()
+        checkpoints["seed"]["started"] = datetime.now(timezone.utc).isoformat()
         # persist running checkpoint
         ensure_dir(checkpoint_path)
         with open(checkpoint_path, "w", encoding="utf-8") as cf:
@@ -325,14 +326,14 @@ def runPipeline(
         try:
             res = run_seed_stage(input_path=in_path, config=seed_cfg)
             stats["stages"]["seed"] = res
-            checkpoints["seed"] = {"status": "completed", "finished": datetime.utcnow().isoformat(), "result": res}
+            checkpoints["seed"] = {"status": "completed", "finished": datetime.now(timezone.utc).isoformat(), "result": res}
             with open(checkpoint_path, "w", encoding="utf-8") as cf:
                 json.dump(checkpoints, cf, indent=2)
             completed_count += 1
             print(f"Seed stage finished: processed={res.get('processed')}, failures={res.get('failures')}")
         except Exception as e:
             stats["stages"]["seed"] = {"error": str(e)}
-            checkpoints["seed"] = {"status": "failed", "error": str(e), "finished": datetime.utcnow().isoformat()}
+            checkpoints["seed"] = {"status": "failed", "error": str(e), "finished": datetime.now(timezone.utc).isoformat()}
             with open(checkpoint_path, "w", encoding="utf-8") as cf:
                 json.dump(checkpoints, cf, indent=2)
             if pipeline_cfg.get("fail_on_error", True):
@@ -340,7 +341,7 @@ def runPipeline(
     else:
         print("Seed stage disabled by config")
 
-    stats["run_finished"] = datetime.utcnow().isoformat()
+    stats["run_finished"] = datetime.now(timezone.utc).isoformat()
     # Write metadata to outputs if configured
     meta_out = outputs.get("metadata", os.path.join(repo_root, "database", "pipeline_run_metadata.json"))
     ensure_dir(meta_out)
