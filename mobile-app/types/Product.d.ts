@@ -14,6 +14,15 @@ export interface Images {
   variants: Record<string, number>;     // e.g. { front_en: 3, nutrition_en: 5 }
 }
 
+export interface ProductMetadata {
+  enrichmentSource?: "backend" | "ml" | "manual" | "openfoodfacts";
+  enrichmentTimestamp?: string;
+  dataQualityScore?: number;
+  recommendationScore?: number;
+  reasonTags?: string[];
+  [key: string]: any;
+}
+
 export interface Product {
   barcode: string; // Unique ID
   id?: string; // optional explicit id (may be set from backend or fallback)
@@ -48,10 +57,18 @@ export interface Product {
   servingQuantityUnit: string | null;   // e.g. "g"
 
   // Meta
+
+  completeness: number;           // 0..1
+  metadata?: ProductMetadata;
+  enrichmentMetadata?: {
+    recommendationScore?: number;
+    reasonTags?: string[];
+    similarityMetrics?: Record<string, any>;
+  };
   dateAdded?: string;              // ISO string
   lastUpdated?: string;            // ISO string
-  completeness: number;           // 0..1
   imageURL?: Images; // legacy single-image object sometimes used by backend normalisers
+
 
   // Images
   images: Images;
