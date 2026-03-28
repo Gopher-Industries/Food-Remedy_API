@@ -23,7 +23,30 @@ def _safe_list(val):
 
 
 def map_enriched_to_product_detail(product: Dict[str, Any]) -> Dict[str, Any]:
-    """Map an enriched product record to ProductDetail V1 contract."""
+    """
+    Map an enriched product record to ProductDetail V1 contract.
+    
+    DESIGN NOTES (DB011-aligned, three-layer architecture):
+    
+    MAP: barcode, productName, brand, categories, allergens, nutriments, nutriscoreGrade, etc.
+    → From DB to API wire, with normalization for consistent format
+    
+    DO NOT MAP (intentionally omitted on wire):
+    1. enrichmentMetadata, dateAdded, lastUpdated: Hydrated by backend enrichment service after mapping
+       (not available at mapping time; added by enrichment middleware before sending to mobile)
+    2. tags (final/removed): DB-only product lifecycle tracking; not needed on mobile
+    3. productJson: Full snapshot stored in DB only for cart; mobile reconstructs from wire fields
+    4. enrichment object: Server-side enrichment data (nutrition scoring); not exposed to wire
+    
+    SENT ON WIRE:
+    - metadata with source="local-enriched": Tracks enrichment source as products flow through pipeline
+    - Core product fields: nutrition, allergens, categories, images, etc.
+    
+    WHY SPLIT?
+    - Smaller API payloads for performance (enrichment/productJson too large for every request)
+    - Clean separation: product core (always sent) vs enrichment (backend-only)
+    - Allows backend to add enrichmentMetadata via middleware without mapper knowing about it
+    """
     out: Dict[str, Any] = {}
 
     out["barcode"] = product.get("barcode")
