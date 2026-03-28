@@ -2,7 +2,24 @@
  * Product
  * 
  * This is for the frontend after converting the backend product into frontend
- * with a normalise function. This type is more strict
+ * with a normalise function. This type is more strict.
+ * 
+ * DESIGN NOTES (DB011-aligned, three-layer architecture):
+ * 
+ * FIELDS ON WIRE (from API): Core product data + metadata for enrichment tracking
+ * - barcode, productName, brand, categories, allergens, nutriments, nutriscoreGrade
+ * - metadata (enrichmentSource, enrichmentTimestamp, dataQualityScore) — general purpose enrichment tracking
+ * - enrichmentMetadata (recommendationScore, reasonTags, similarityMetrics) — recommendation-specific scoring
+ * - dateAdded, lastUpdated — for sorting, filtering, and cache invalidation on mobile
+ * 
+ * FIELDS NOT ON WIRE (DB-only, handled by backend/enrichment service):
+ * - productJson: Full snapshot stored in DB for cart; mobile reconstructs from wire fields
+ * - tags: Product-level tracking (final/removed); not needed on mobile
+ * - enrichment: Server-side nutrition scoring; not exposed to mobile
+ * 
+ * METADATA DESIGN: Intentionally split into two interfaces to keep concerns separate
+ * - ProductMetadata: Tracks data source and quality (enrichmentSource, timestamp, dataQualityScore)
+ * - enrichmentMetadata field: Tracks recommendation scoring (score, reasonTags, similarity metrics)
  */
 
 export type NutriScoreGrade = "A" | "B" | "C" | "D" | "E" | "UNKNOWN" | string;
