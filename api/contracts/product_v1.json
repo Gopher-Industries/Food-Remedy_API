@@ -3,6 +3,14 @@
   "title": "ProductDetailV1",
   "type": "object",
   "required": ["barcode", "productName"],
+  "description": "API contract for product detail responses. Implements three-layer architecture (DB011-aligned).",
+  "_design_notes": {
+    "scope": "Wire format sent from backend API to mobile",
+    "what_is_sent": "Core product data (barcode, names, nutrition, allergens, categories, metadata for enrichment source tracking, and enrichmentMetadata for recommendations)",
+    "what_is_not_sent": "DB-only fields (productJson [cart snapshots], tags [product tracking], enrichment [server-side scoring]) - too large/sensitive for wire. Mobile reconstructs productJson from wire fields.",
+    "metadata_vs_enrichmentMetadata": "metadata tracks enrichment source/quality (general purpose); enrichmentMetadata tracks recommendation scoring (rec-specific). Split intentionally to keep concerns separate.",
+    "why_indexed_fields_missing": "Tags and enrichment.nutrition not on wire; indexes in DB are for backend queries only, not mobile-driven."
+  },
   "properties": {
     "barcode": { "type": "string", "description": "GTIN / barcode" },
     "brand": { "type": ["string", "null"] },
