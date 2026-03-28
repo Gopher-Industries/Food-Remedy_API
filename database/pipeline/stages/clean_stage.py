@@ -3,6 +3,7 @@ import json
 import sys
 import logging
 
+
 logger = logging.getLogger(__name__)
 if not logger.handlers:
     h = logging.StreamHandler()
@@ -16,6 +17,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'clean data'
 from NutrientUnitNormalisation import normalize_nutriments_dict
 
 def run_clean_stage(input_path: str, output_path: str, config: dict = None):
+
     """
     Robust clean stage that never crashes on nested OFF data.
     """
