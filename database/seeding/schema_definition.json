@@ -2,7 +2,13 @@
   "collection": "products",
   "document_id": "barcode",
   "description": "Firestore schema for enriched product documents (V1)",
-  "fields": {
+  "_design_notes": {
+    "db_vs_wire": "THREE-LAYER ARCHITECTURE (DB011-aligned): Fields are categorized as follows:",
+    "sent_on_wire": "Core fields sent through API to mobile (barcode, productName, brand, categories, allergens, nutriscoreGrade, nutriments, images, etc.)",
+    "db_only_cart": "productJson: Stored in DB for cart snapshots (full product serialization); NOT sent on wire (too large); reconstructed from wire fields on mobile",
+    "db_only_enrichment": "enrichment, enrichmentMetadata, dateAdded, lastUpdated, tags, metadata: Stored in DB for server-side tracking; NOT sent on wire; enrichment is handled by backend enrichment service",
+    "index_strategy": "Indexes are split: (1) wire-eligible: categories, allergens, nutriscoreGrade, brand combos (for filtering/sorting); (2) DB-only: enrichment.nutrition.compositeScore, tags (server-side use only, not queried from mobile)"
+  },
     "barcode": {
       "type": "string",
       "required": true,
@@ -172,13 +178,12 @@
           "required_subfields": ["compositeScore", "scores"]
         }
       }
-    }
-  },
+    },
   "indexes": [
-    { "fields": ["categories", "allergens"], "description": "Diet/allergen filtering" },
-    { "fields": ["enrichment.nutrition.compositeScore"], "direction": "DESCENDING", "description": "Nutrition quality sorting" },
-    { "fields": ["nutriscoreGrade"], "description": "Quick grade filter" },
-    { "fields": ["enrichment.tags"], "description": "Array-contains for diet/lifestyle tags" },
-    { "fields": ["brand", "nutriscoreGrade"], "description": "Brand + quality combo" }
+    { "fields": ["categories", "allergens"], "description": "Diet/allergen filtering (sent on wire)" },
+    { "fields": ["nutriscoreGrade"], "description": "Quick grade filter (sent on wire)" },
+    { "fields": ["brand", "nutriscoreGrade"], "description": "Brand + quality combo (sent on wire)" },
+    { "fields": ["enrichment.nutrition.compositeScore"], "direction": "DESCENDING", "description": "NOTE: enrichment object is DB-only (not sent on wire); reserved for server-side enrichment service" },
+    { "fields": ["tags"], "description": "NOTE: tags object is DB-only (not sent on wire); used for product-level tracking, not recommendations" }
   ]
 }
