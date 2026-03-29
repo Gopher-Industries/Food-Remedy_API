@@ -17,17 +17,25 @@
       "modules": [
         {
           "name": "ts_enrich_wrapper",
-          "path": "database/pipeline/modules/enrich_ts_wrapper.py",
-          "enabled": true,
+          "path": "pipeline\\modules\\enrich_ts_wrapper.py",
+          "enabled": false,
           "config": {
-            "ts_path": "mobile-app/services/nutrition/enrichProducts.ts"
+            "ts_path": "mobile-app/services/nutrition/enrichProducts.ts" 
           }
+        },
+        {
+          "name": "allergens",
+          "path": "pipeline\\modules\\allergens_enrich.py",
+          "enabled": true,
+          "config": {}
         }
       ]
     },
     "seed": {
-      "enabled": false,
-      "input": "database/seeding/products_enriched.json"
+      "enabled": true,
+      "input": "database/seeding/products_enriched.json",
+      "output": "database/seeding/seeded_products.json",
+      "script_path": "database/seeding/seed_firestore.py"
     }
   }
 }
