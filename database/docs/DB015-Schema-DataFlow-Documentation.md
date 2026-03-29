@@ -20,7 +20,7 @@
 
 ## Product Schema
 
-**Firestore Collection:** `products`  
+**Firestore Collection:** `PRODUCTS`  
 **Document ID:** `barcode` (13-digit GTIN)
 
 | Field | Type | Required | Description |
@@ -142,7 +142,7 @@ The recommendation system depends on the following fields:
 
 ### USERS collection
 - Stores user authentication data
-- Links to PROFILES via `userId`
+- Each user has a profile stored in the PROFILES collection
 
 ### PROFILES collection
 Stores user preferences that feed recommendations:
@@ -201,4 +201,4 @@ SHOPPING_LISTS can reference products
 - **Service account key:** Never commit `serviceAccountKey.json` — store securely and share privately with team leads only
 - **Pipeline config:** `database/pipeline/pipeline.config.json` — update input/output paths before running
 - **Firestore limits:** Max 20k writes/day on free plan — seed in chunks and spread over multiple days if needed
-- **Schema changes:** Any changes to product schema must be updated in `seeding/schema_definition.json` and this document
+- **Schema changes:** Any changes to product schema must be updated in `seeding/schema_definition.json` and this documentation file
