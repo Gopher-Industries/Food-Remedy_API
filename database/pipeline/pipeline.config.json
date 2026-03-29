@@ -38,8 +38,10 @@
       ]
     },
     "seed": {
-      "enabled": false,
-      "input": "database/seeding/products_enriched.json"
+      "enabled": true,
+      "input": "database/seeding/products_enriched.json",
+      "output": "database/seeding/seeded_products.json",
+      "script_path": "database/seeding/seed_firestore.py"
     }
   }
 }

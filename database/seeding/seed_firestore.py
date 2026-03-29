@@ -126,6 +126,13 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
 
     print("Seeding complete!")
 
+    # Write the data to output_path so pipeline can track it
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+
+    print(f"Seeded data written to: {output_path}")
+    
     return {
         "processed": total_records,
         "failures": failures,
