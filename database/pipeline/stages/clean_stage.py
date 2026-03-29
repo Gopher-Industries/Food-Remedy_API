@@ -1,7 +1,25 @@
 import os
 import json
 
+<<<<<<< HEAD
 def run_clean_stage(input_path: str, output_path: str, config=None):
+=======
+
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    h = logging.StreamHandler()
+    h.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(h)
+    logger.setLevel(logging.INFO)
+
+# TODO: Remove sys.path workaround once NutrientUnitNormalisation is packaged as a proper module
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'clean data', 'normalization'))
+
+from NutrientUnitNormalisation import normalize_nutriments_dict
+
+def run_clean_stage(input_path: str, output_path: str, config: dict = None):
+
+>>>>>>> ba74b3e84e24b3c487b5286931ac408256b7f9a7
     """
     Robust clean stage that never crashes on nested OFF data.
     """
