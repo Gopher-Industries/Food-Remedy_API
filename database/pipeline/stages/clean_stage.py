@@ -12,7 +12,7 @@ if not logger.handlers:
     logger.setLevel(logging.INFO)
 
 # TODO: Remove sys.path workaround once NutrientUnitNormalisation is packaged as a proper module
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'clean data', 'normalization'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'clean_data', 'normalization'))
 
 from NutrientUnitNormalisation import normalize_nutriments_dict
 
