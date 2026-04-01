@@ -17,6 +17,7 @@ const firebaseConfig = {
   measurementId: process.env.EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
+
 const initializeFirebase = (): { firebaseApp: FirebaseApp, auth: Auth, fdb: Firestore, storage: FirebaseStorage } => {
   if (!getApps().length) {
     const app = initializeApp(firebaseConfig);

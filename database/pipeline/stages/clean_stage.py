@@ -30,9 +30,29 @@ from database.pipeline.modules.missing_field_handler import (
 
 def run_clean_stage(input_path: str, output_path: str, config: dict = None):
 
+
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    h = logging.StreamHandler()
+    h.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(h)
+    logger.setLevel(logging.INFO)
+
+# TODO: Remove sys.path workaround once NutrientUnitNormalisation is packaged as a proper module
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'clean data', 'normalization'))
+
+from NutrientUnitNormalisation import normalize_nutriments_dict
+
+def run_clean_stage(input_path: str, output_path: str, config: dict = None):
+
+    """
+    Robust clean stage that never crashes on nested OFF data.
+    """
+
     with open(input_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
+    # Handle both single object and list of records
     if isinstance(data, dict):
         data = [data]
 
@@ -48,6 +68,7 @@ def run_clean_stage(input_path: str, output_path: str, config: dict = None):
             continue
 
         # DB003: Nutrient Normalisation
+        # DB003 - Normalise nutrient units before flattening
         if 'nutriments' in record and isinstance(record['nutriments'], dict):
             try:
                 record['nutriments'] = normalize_nutriments_dict(record['nutriments'])
@@ -70,6 +91,7 @@ def run_clean_stage(input_path: str, output_path: str, config: dict = None):
         cleaned.append(flat)
 
     # Save safely
+    # Safely create output directory if it doesn't exist
     output_dir = os.path.dirname(output_path)
     if output_dir:
         os.makedirs(output_dir, exist_ok=True)
@@ -85,3 +107,5 @@ def run_clean_stage(input_path: str, output_path: str, config: dict = None):
         "failures": len(failures),
         "output_path": output_path
     }
+    print(f"[DB018] Cleaning complete: {output_path}")
+    print(f"[DB003] Nutrient unit normalisation applied to {len(cleaned)} products")
