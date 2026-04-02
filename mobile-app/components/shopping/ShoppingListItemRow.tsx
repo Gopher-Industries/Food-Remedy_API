@@ -25,6 +25,8 @@ interface ShoppingListItemRowProps {
   plannedPurchaseDate: string | null;
   isCompleted: boolean;
   isOverdue: boolean;
+  unitPrice?: number;
+  linePrice?: number;
   onToggleCompleted: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -45,6 +47,18 @@ const formatPlannedDate = (iso: string | null) => {
   });
 };
 
+const formatCurrency = (value: number) => {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: "AUD",
+      minimumFractionDigits: 2,
+    }).format(value);
+  } catch {
+    return `$${value.toFixed(2)}`;
+  }
+};
+
 // Width of the area we slide to reveal the actions
 const ACTION_WIDTH = 140;
 const SWIPE_THRESHOLD = 60;
@@ -57,6 +71,8 @@ export const ShoppingListItemRow: React.FC<ShoppingListItemRowProps> = ({
   plannedPurchaseDate,
   isCompleted,
   isOverdue,
+  unitPrice,
+  linePrice,
   onToggleCompleted,
   onEdit,
   onDelete,
@@ -68,6 +84,8 @@ export const ShoppingListItemRow: React.FC<ShoppingListItemRowProps> = ({
   const translateX = useSharedValue(0);
 
   const panGesture = Gesture.Pan()
+    .activeOffsetX([-15, 15])
+    .failOffsetY([-10, 10])
     .onUpdate(event => {
       // Allow swiping left only, clamped to -ACTION_WIDTH
       const translation = Math.min(0, event.translationX);
@@ -182,6 +200,16 @@ export const ShoppingListItemRow: React.FC<ShoppingListItemRowProps> = ({
                     </Pressable>
                   </View>
                 </View>
+                {unitPrice !== undefined && linePrice !== undefined && (
+                  <View className="flex-row items-center justify-between mt-2">
+                    <Tt className="text-xs text-hsl40 dark:text-hsl80">
+                      Unit {formatCurrency(unitPrice)}
+                    </Tt>
+                    <Tt className="text-xs font-interSemiBold text-hsl30 dark:text-hsl90">
+                      {formatCurrency(linePrice)}
+                    </Tt>
+                  </View>
+                )}
               </View>
 
               {/* Right: overdue tag + chevron */}

@@ -10,12 +10,14 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import Input from "@/components/ui/UIInput";
 import IconGeneral from "@/components/icons/IconGeneral";
 import Tt from "@/components/ui/UIText";
 import { Image } from "react-native";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { signInAnonymously } from "firebase/auth";
+import { auth } from "@/config/firebaseConfig";
 import { sendPasswordReset, signInWithEmail } from "@/services";
 import { useNotification } from "@/components/providers/NotificationProvider";
 import ModalWrapper from "@/components/modals/ModalAWrapper";
@@ -31,6 +33,7 @@ export default function LoginPage() {
   const { loading, handleSignIn } = useAuth();
   const { addNotification } = useNotification();
   const { openModal } = useModalManager();
+  const router = useRouter();
   const theme = useTheme();
   const [showPassword, setShowPassword] = useState<boolean>(true);
   const [email, setEmail] = useState<string>("");
@@ -72,6 +75,20 @@ export default function LoginPage() {
       return;
     }
     await proceedLogin();
+  };
+
+  const continueAsGuest = async () => {
+    setErrorMessage("");
+    setLoadingLogin(true);
+    try {
+      await signInAnonymously(auth);
+      router.replace("/(app)/(tabs)");
+    } catch (error) {
+      console.error("Error continuing as guest:", error);
+      addNotification("Could not continue as guest", "e");
+    } finally {
+      setLoadingLogin(false);
+    }
   };
 
   const onCaptchaVerified = async (token: string) => {
@@ -212,6 +229,21 @@ export default function LoginPage() {
                   </Tt>
                 )}
               </Pressable>
+
+              {/* {__DEV__ && (
+                <Pressable
+                  onPress={continueAsGuest}
+                  className="rounded-lg py-3 mt-4 border border-[#9CA3AF] bg-[#F3F4F6] active:bg-[#E5E7EB]"
+                >
+                  {({ pressed }) => (
+                    <Tt
+                      className={`text-center text-2xl font-interSemiBold ${pressed ? "text-primary" : "text-[#374151]"}`}
+                    >
+                      Continue as guest
+                    </Tt>
+                  )}
+                </Pressable>
+              )} */}
 
               <Tt className="text-sm mt-12 text-center">
                 Don't have an account?{" "}
