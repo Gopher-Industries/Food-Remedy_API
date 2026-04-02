@@ -1,12 +1,12 @@
 import json
 from pathlib import Path
 import re
+from typing import Any, Optional
 
 # -------------------------------
 # Config Loading
 # -------------------------------
 CONFIG_PATH = Path(__file__).parent.parent / "database" / "Allergens" / "allergens_config.json"
-
 try:
     with open(CONFIG_PATH, "r", encoding="utf-8") as f:
         ALLERGEN_CONFIG = json.load(f)["allergens"]
@@ -16,8 +16,6 @@ except FileNotFoundError:
         {"name": "Milk", "keywords": ["milk", "whey", "casein", "lactose"]},
         {"name": "Peanuts", "keywords": ["peanut", "groundnut", "arachis"]},
     ]
-
-print(f"Loaded {len(ALLERGEN_CONFIG)} allergens.") # checking if config loads correctly
 
 # -------------------------------
 # Strict Regex Variations
@@ -50,8 +48,16 @@ NEGATION_PATTERNS = {
 # -------------------------------
 # Detection Function
 # -------------------------------
-def detect_allergens(product: dict) -> list[str]:
-    """Detect allergens by scanning multiple text fields."""
+def detect_allergens(
+    product: dict,
+    keyword_entries: Optional[list[dict[str, Any]]] = None,
+) -> list[str]:
+    """Detect allergens by scanning multiple text fields.
+
+    ``keyword_entries`` should match ``load_allergens()`` output (name + keywords).
+    If omitted, uses module-level config from ``allergens_config.json``.
+    """
+    entries = keyword_entries if keyword_entries is not None else ALLERGEN_CONFIG
     
     # Collect all fields that may contain allergen info
     fields_to_check = [
@@ -88,7 +94,7 @@ def detect_allergens(product: dict) -> list[str]:
             detected.add(name)
 
     # Keyword fallback with word boundaries
-    for allergen in ALLERGEN_CONFIG:
+    for allergen in entries:
         for keyword in allergen["keywords"]:
             if re.search(r"\b" + re.escape(keyword.lower()) + r"\b", combined_text):
                 detected.add(allergen["name"])
