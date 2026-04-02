@@ -6,10 +6,9 @@ from database.Allergens.load_allergens import load_allergens  # official config 
 def run(input_path: str, output_path: str, config: dict) -> dict:
     """
     Pipeline module entry point (required by enrich_stage.py).
-    Reads input JSON, enriches each product with allergensDetected,
-    writes to output_path.
+    Reads input JSON, sets ``allergens`` (DB021 / API contract) and
+    ``allergensDetected`` (same values; kept for older consumers), then writes output.
     """
-    # Load official config
     allergen_config = load_allergens()
 
     # Read input
@@ -18,7 +17,8 @@ def run(input_path: str, output_path: str, config: dict) -> dict:
 
     # Enrich every product
     for product in data:
-        allergens = detect_allergens(product=product)
+        allergens = detect_allergens(product=product, keyword_entries=allergen_config)
+        product["allergens"] = allergens
         product["allergensDetected"] = allergens
 
     # Write output
