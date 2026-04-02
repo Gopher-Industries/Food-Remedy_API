@@ -204,4 +204,3 @@ SHOPPING_LISTS can reference products
 - **Pipeline config:** `database/pipeline/pipeline.config.json` — update input/output paths before running
 - **Firestore limits:** Max 20k writes/day on free plan — seed in chunks and spread over multiple days if needed
 - **Schema changes:** Any changes to product schema must be updated in `seeding/schema_definition.json` and in this documentation file
-
