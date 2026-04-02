@@ -17,7 +17,7 @@ import {
 // ==============================
 export const fetchProfilesFromFirebase = async (userId: string) => {
   try {
-    const ref = collection(fdb, "users", userId, "profiles");
+    const ref = collection(fdb, "USERS", userId, "PROFILES");
     const snapshot = await getDocs(ref);
 
     return snapshot.docs.map((docSnap) => ({
@@ -70,7 +70,7 @@ export const syncProfilesToCloud = async (userId: string) => {
 
     for (const profile of profiles) {
       await setDoc(
-        doc(fdb, "users", userId, "profiles", profile.profileId),
+        doc(fdb, "USERS", userId, "PROFILES", profile.profileId),
         {
           ...profile,
           updated_at: new Date().toISOString(),
@@ -126,7 +126,7 @@ export const syncProfiles = async (userId: string) => {
     // Push back to Firebase
     for (const profile of finalProfiles) {
       await setDoc(
-        doc(fdb, "users", userId, "profiles", profile.profileId),
+        doc(fdb, "USERS", userId, "PROFILES", profile.profileId),
         profile
       );
     }
