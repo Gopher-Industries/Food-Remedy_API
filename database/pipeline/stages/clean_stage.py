@@ -16,8 +16,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'clean data'
 
 from NutrientUnitNormalisation import normalize_nutriments_dict
 
-def run_clean_stage(input_path: str, output_path: str, config: dict = None):
-
+def run_clean_stage(input_path: str, output_path: str, config=None):
     """
     Robust clean stage that never crashes on nested OFF data.
     """
@@ -25,12 +24,11 @@ def run_clean_stage(input_path: str, output_path: str, config: dict = None):
     with open(input_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    # Handle both single object and list of records
+    # Normalising input to always be a list
     if isinstance(data, dict):
-        data = [data]
-
-    if not isinstance(data, list):
-        raise ValueError("Expected list of records or a single record dict")
+        data = [data]          # wrap dict as list
+    elif not isinstance(data, list):
+        raise ValueError(f"Expected list or dict, got {type(data)}")
 
     cleaned = []
 
@@ -67,3 +65,9 @@ def run_clean_stage(input_path: str, output_path: str, config: dict = None):
     logger.info(f"[DB003] Nutrient unit normalisation applied to {len(cleaned)} products")
     print(f"[DB018] Cleaning complete: {output_path}")
     print(f"[DB003] Nutrient unit normalisation applied to {len(cleaned)} products")
+    
+    return {
+        "processed": len(cleaned),
+        "failures": 0,
+        "output": output_path
+    }
