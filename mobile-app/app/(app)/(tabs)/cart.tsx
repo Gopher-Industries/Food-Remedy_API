@@ -291,18 +291,57 @@ export default function ShoppingCartPage() {
   );
   const isSelectionMode = selectedListIds.length > 0;
 
-  const activeCartItems = useMemo(() => {
-    const items = currentItems.length > 0 ? currentItems : dummyCartItems;
-    return items.map((item) => {
-      const unitPrice = estimateItemPrice(item);
+  const [activeCartItems, setActiveCartItems] = useState<Array<{
+    item: {
+      barcode: string;
+      quantity: number;
+      product?: { productQuantity: number | null };
+      productName: string;
+      brand: string | null;
+      note?: string | null;
+      isChecked?: boolean;
+      addedAt: string;
+    };
+    unitPrice: number;
+    linePrice: number;
+  }>>([]);
+
+  useEffect(() => {
+    const sourceItems = currentItems.length > 0 ? currentItems : dummyCartItems;
+    const rows = sourceItems.map((item) => {
+      const unitPrice = estimateItemPrice(item as any);
       const linePrice = Math.round(unitPrice * item.quantity * 100) / 100;
-      return {
-        item,
-        unitPrice,
-        linePrice,
-      };
+      return { item, unitPrice, linePrice };
     });
+    setActiveCartItems(rows);
   }, [currentItems]);
+
+  const adjustCartItemQuantity = useCallback(
+    async (barcode: string, delta: number) => {
+      setActiveCartItems((prev) =>
+        prev.map((row) => {
+          if (row.item.barcode !== barcode) return row;
+          const nextQuantity = Math.max(1, row.item.quantity + delta);
+          return {
+            ...row,
+            item: {
+              ...row.item,
+              quantity: nextQuantity,
+            },
+            linePrice: Math.round(row.unitPrice * nextQuantity * 100) / 100,
+          };
+        })
+      );
+
+      if (currentItems.length > 0 && activeListId) {
+        const existing = currentItems.find((item) => item.barcode === barcode);
+        if (existing) {
+          await updateQuantity(activeListId, barcode, Math.max(1, existing.quantity + delta));
+        }
+      }
+    },
+    [currentItems, activeListId, updateQuantity]
+  );
 
   const hasDummyCart = currentItems.length === 0;
   const activeCart = currentList ?? lists.find((list) => list.listId === activeListId) ?? dummyCartList;
@@ -448,7 +487,7 @@ export default function ShoppingCartPage() {
                         quantity={row.item.quantity}
                         note={row.item.note ?? null}
                         plannedPurchaseDate={null}
-                        isCompleted={row.item.isChecked}
+                        isCompleted={row.item.isChecked ?? false}
                         isOverdue={false}
                         unitPrice={row.unitPrice}
                         linePrice={row.linePrice}
@@ -456,8 +495,8 @@ export default function ShoppingCartPage() {
                         onEdit={() => {}}
                         onDelete={() => {}}
                         onPressItem={() => {}}
-                        onIncreaseQuantity={() => {}}
-                        onDecreaseQuantity={() => {}}
+                        onIncreaseQuantity={() => adjustCartItemQuantity(row.item.barcode, 1)}
+                        onDecreaseQuantity={() => adjustCartItemQuantity(row.item.barcode, -1)}
                         onEditNote={() => {}}
                       />
                     ))}
@@ -609,24 +648,24 @@ export default function ShoppingCartPage() {
               >
                 <View className="w-full rounded-3xl bg-white dark:bg-hsl15 border border-hsl90 dark:border-hsl20 p-4">
                   <Tt className="text-base font-interBold text-hsl10 dark:text-white mb-3">Sample Cart Preview</Tt>
-                  {dummyCartItems.map((row) => (
+                  {activeCartItems.map((row) => (
                     <ShoppingListItemRow
-                      key={row.addedAt}
-                      productName={row.productName}
-                      brand={row.brand}
-                      quantity={row.quantity}
-                      note={row.note ?? null}
+                      key={row.item.addedAt}
+                      productName={row.item.productName}
+                      brand={row.item.brand}
+                      quantity={row.item.quantity}
+                      note={row.item.note ?? null}
                       plannedPurchaseDate={null}
-                      isCompleted={row.isChecked}
+                      isCompleted={row.item.isChecked ?? false}
                       isOverdue={false}
-                      unitPrice={estimateItemPrice(row)}
-                      linePrice={Math.round(estimateItemPrice(row) * row.quantity * 100) / 100}
+                      unitPrice={row.unitPrice}
+                      linePrice={row.linePrice}
                       onToggleCompleted={() => {}}
                       onEdit={() => {}}
                       onDelete={() => {}}
                       onPressItem={() => {}}
-                      onIncreaseQuantity={() => {}}
-                      onDecreaseQuantity={() => {}}
+                      onIncreaseQuantity={() => adjustCartItemQuantity(row.item.barcode, 1)}
+                      onDecreaseQuantity={() => adjustCartItemQuantity(row.item.barcode, -1)}
                       onEditNote={() => {}}
                     />
                   ))}
