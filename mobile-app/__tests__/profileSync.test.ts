@@ -306,7 +306,79 @@ SUITE 4: CONFLICT RESOLUTION - LAST-WRITE-WINS
 When the same profileId exists in both Firebase and SQLite with different data, the sync must pick a winner.
 The resolveConflict() function inside syncProfilesServers.ts uses updated_at timestamps - whichever is more recent wins.
 ============================================================================================================*/
+describe('Conflict resolution - last-write-wins by updated_at', () => {
 
+    beforeEach(() => {
+        jest.clearAllMocks();
+        (initialiseSQLiteDatabase as jest.Mock).mockResolvedValue(mockDb);
+    });
+
+    it('keeps the cloud version when cloud updated_at is newer', async () => {
+        // ARRANGE: Cloud was updated in June, local was updated in January
+        // Cloud should win
+        const id = 'profile-conflict';
+        const cloud = makeProfile({ profileId: id, firstName: 'CloudName', updated_at: '2026-06-01T00:00:00.000Z' });
+        const local = makeProfile({ profileId: id, firstName: 'LocalName', updated_at: '2026-01-01T00:00:00.000Z' });
+
+        (collection as jest.Mock).mockReturnValue({});
+        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloud)] });
+        (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
+        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
+        (doc as jest.Mock).mockReturnValue({});
+        (setDoc as jest.Mock).mockResolvedValue(undefined);
+
+        // ACT
+        await syncProfiles('user-123');
+
+        // ASSERT: The profile saved to SQLite should have the cloud's firstName
+        const saved = (upsertProfile as jest.Mock).mock.calls[0][1];
+        expect(saved.firstName).toBe('CloudName');
+    });
+
+    it('keeps the local version when local updated_at is newer', async () => {
+        // ARRANGE: Local was updated in June, cloud was updated in January
+        // Local should win
+        const id = 'profile-conflict';
+        const cloud = makeProfile({ profileId: id, firstName: 'CloudName', updated_at: '2026-01-01T00:00:00.000Z' });
+        const local = makeProfile({ profileId: id, firstName: 'LocalName', updated_at: '2026-06-01T00:00:00.000Z' });
+
+        (collection as jest.Mock).mockReturnValue({});
+        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloud)] });
+        (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
+        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
+        (doc as jest.Mock).mockReturnValue({});
+        (setDoc as jest.Mock).mockResolvedValue(undefined);
+
+        // ACT
+        await syncProfiles('user-123');
+
+        // ASSERT: The profile saved to SQLite should have the local firstName
+        const saved = (upsertProfile as jest.Mock).mock.calls[0][1];
+        expect(saved.firstName).toBe('LocalName');
+    });
+
+    it('defaults to the cloud version when local has no updated_at', async () => {
+        //ARRANGE: Local profile has no timestamp (created before timestamps were added)
+        // resolveConflict() treats a missing timestamp as epoch 0 (1970), so cloud always wins in this case
+        const id = 'profile-conflict';
+        const cloud = makeProfile({ profileId: id, firstName: 'CloudName', updated_at: '2026-01-01T00:00:00.000Z' });
+        const local = makeProfile({ profileId: id, firstName: 'LocalName', updated_at: undefined });
+
+        (collection as jest.Mock).mockReturnValue({});
+        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloud)] });
+        (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
+        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
+        (doc as jest.Mock).mockReturnValue({});
+        (setDoc as jest.Mock).mockResolvedValue(undefined);
+        
+        // ACT
+        await syncProfiles('user-123');
+
+        // ASSERT
+        const saved = (upsertProfile as jest.Mock).mock.calls[0][1];
+        expect(saved.firstName).toBe('CloudName');
+    });
+});
 
 
 /* =========================================================================================================
