@@ -168,67 +168,67 @@ with the right paths and timestamps.
 ============================================================================================================*/
 describe('Upstream sync - SQLite → Firebase', () => {
  
-  beforeEach(() => {
-    jest.clearAllMocks();
-    (initialiseSQLiteDatabase as jest.Mock).mockResolvedValue(mockDb);
-  });
+    beforeEach(() => {
+        jest.clearAllMocks();
+        (initialiseSQLiteDatabase as jest.Mock).mockResolvedValue(mockDb);
+    });
  
-  it('reads all local profiles and pushes each one to Firestore', async () => {
-    // ARRANGE: Two profiles in SQLite
-    const profiles = [
-      makeProfile({ profileId: 'p-001' }),
-      makeProfile({ profileId: 'p-002' }),
-    ];
-    (listProfilesForUser as jest.Mock).mockResolvedValue(profiles);
-    (doc as jest.Mock).mockReturnValue({});
-    (setDoc as jest.Mock).mockResolvedValue(undefined);
+    it('reads all local profiles and pushes each one to Firestore', async () => {
+        // ARRANGE: Two profiles in SQLite
+        const profiles = [
+            makeProfile({ profileId: 'p-001' }),
+            makeProfile({ profileId: 'p-002' }),
+        ];
+        (listProfilesForUser as jest.Mock).mockResolvedValue(profiles);
+        (doc as jest.Mock).mockReturnValue({});
+        (setDoc as jest.Mock).mockResolvedValue(undefined);
  
-    // ACT: Push local profiles up to Firebase
-    await syncProfilesToCloud('user-123');
+        // ACT: Push local profiles up to Firebase
+        await syncProfilesToCloud('user-123');
  
-    // ASSERT: Should have read from SQLite for user-123
-    expect(listProfilesForUser).toHaveBeenCalledWith(mockDb, 'user-123');
-    // And pushed both profiles to Firestore
-    expect(setDoc).toHaveBeenCalledTimes(2);
-  });
+        // ASSERT: Should have read from SQLite for user-123
+        expect(listProfilesForUser).toHaveBeenCalledWith(mockDb, 'user-123');
+        // And pushed both profiles to Firestore
+        expect(setDoc).toHaveBeenCalledTimes(2);
+    });
  
-  it('pushes each profile to the correct Firestore path', async () => {
-    // ARRANGE: One profile in SQLite
-    const profile = makeProfile({ profileId: 'p-001' });
-    (listProfilesForUser as jest.Mock).mockResolvedValue([profile]);
-    (doc as jest.Mock).mockReturnValue({});
-    (setDoc as jest.Mock).mockResolvedValue(undefined);
+    it('pushes each profile to the correct Firestore path', async () => {
+        // ARRANGE: One profile in SQLite
+        const profile = makeProfile({ profileId: 'p-001' });
+        (listProfilesForUser as jest.Mock).mockResolvedValue([profile]);
+        (doc as jest.Mock).mockReturnValue({});
+        (setDoc as jest.Mock).mockResolvedValue(undefined);
  
-    // ACT
-    await syncProfilesToCloud('user-123');
+        // ACT
+        await syncProfilesToCloud('user-123');
  
-    // ASSERT: The Firestore document path must be:
-    //   USERS / {userId} / PROFILES / {profileId}
-    // If the path is wrong, the data ends up in the wrong place in Firestore.
-    expect(doc).toHaveBeenCalledWith(
-      {},                                        // fdb (mocked Firebase instance)
-      'USERS', 'user-123', 'PROFILES', 'p-001'
-    );
-  });
+        // ASSERT: The Firestore document path must be:
+        //   USERS / {userId} / PROFILES / {profileId}
+        // If the path is wrong, the data ends up in the wrong place in Firestore.
+        expect(doc).toHaveBeenCalledWith(
+            {}, // fdb (mocked Firebase instance)
+            'USERS', 'user-123', 'PROFILES', 'p-001'
+        );
+    });
  
-  it('stamps an updated_at timestamp on every profile pushed to Firebase', async () => {
-    // ARRANGE
-    const profile = makeProfile();
-    (listProfilesForUser as jest.Mock).mockResolvedValue([profile]);
-    (doc as jest.Mock).mockReturnValue({});
-    (setDoc as jest.Mock).mockResolvedValue(undefined);
+    it('stamps an updated_at timestamp on every profile pushed to Firebase', async () => {
+        // ARRANGE
+        const profile = makeProfile();
+        (listProfilesForUser as jest.Mock).mockResolvedValue([profile]);
+        (doc as jest.Mock).mockReturnValue({});
+        (setDoc as jest.Mock).mockResolvedValue(undefined);
  
-    // ACT
-    await syncProfilesToCloud('user-123');
+        // ACT
+        await syncProfilesToCloud('user-123');
  
-    // ASSERT: Grab what was actually passed to setDoc and check the timestamp.
-    // updated_at is critical, this is what conflict resolution uses to decide
-    // which version of a profile is the most recent.
-    const pushedPayload = (setDoc as jest.Mock).mock.calls[0][1];
-    expect(pushedPayload.updated_at).toBeDefined();
-    expect(typeof pushedPayload.updated_at).toBe('string');
-    expect(new Date(pushedPayload.updated_at).toString()).not.toBe('Invalid Date');
-  });
+        // ASSERT: Grab what was actually passed to setDoc and check the timestamp.
+        // updated_at is what conflict resolution uses to decide
+        // which version of a profile is the most recent.
+        const pushedPayload = (setDoc as jest.Mock).mock.calls[0][1];
+        expect(pushedPayload.updated_at).toBeDefined();
+        expect(typeof pushedPayload.updated_at).toBe('string');
+        expect(new Date(pushedPayload.updated_at).toString()).not.toBe('Invalid Date');
+    });
 });
 
 
@@ -237,7 +237,67 @@ SUITE 3: DUPLICATE PROFILE PREVENTION
 
 These tests verify that the sync does not create multiple rows for the same profile. 
 ============================================================================================================*/
-
+describe('Duplicate profile prevention', () => {
+ 
+    beforeEach(() => {
+        jest.clearAllMocks();
+        (initialiseSQLiteDatabase as jest.Mock).mockResolvedValue(mockDb);
+    });
+ 
+    it('upserting the same profileId twice does not create two entries', async () => {
+        // ARRANGE: One profile that we will save twice
+        const profile = makeProfile();
+        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
+ 
+        // ACT: Save the same profile twice (simulates two sync cycles running)
+        await saveProfilesToSQLite([profile]);
+        await saveProfilesToSQLite([profile]);
+ 
+        // ASSERT: upsertProfile is called twice (once per save call)
+        const calledWithIds = (upsertProfile as jest.Mock).mock.calls.map((c) => c[1].profileId);
+        expect(calledWithIds).toEqual(['profile-001', 'profile-001']);
+    });
+ 
+    it('syncProfiles produces exactly one upsert when the same profileId exists in both sources', async () => {
+        // ARRANGE: The same profileId exists in both Firebase and SQLite.
+        const sharedId = 'profile-shared';
+        const cloud    = makeProfile({ profileId: sharedId, updated_at: '2026-06-01T00:00:00.000Z' });
+        const local    = makeProfile({ profileId: sharedId, updated_at: '2026-01-01T00:00:00.000Z' });
+ 
+        (collection as jest.Mock).mockReturnValue({});
+        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloud)] });
+        (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
+        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
+        (doc as jest.Mock).mockReturnValue({});
+        (setDoc as jest.Mock).mockResolvedValue(undefined);
+ 
+        // ACT: Run the full two-way sync
+        await syncProfiles('user-123');
+ 
+        // ASSERT: The Map inside syncProfiles deduplicates by profileId,
+        // only one upsert should be fired (the winning version of the profile)
+        expect(upsertProfile).toHaveBeenCalledTimes(1);
+    });
+ 
+    it('syncProfiles fires one setDoc per unique profileId - no extra pushes', async () => {
+        // ARRANGE: Two distinct profileIds, one in each source
+        const p1 = makeProfile({ profileId: 'p-001' });
+        const p2 = makeProfile({ profileId: 'p-002' });
+ 
+        (collection as jest.Mock).mockReturnValue({});
+        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(p1)] });
+        (listProfilesForUser as jest.Mock).mockResolvedValue([p2]);
+        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
+        (doc as jest.Mock).mockReturnValue({});
+        (setDoc as jest.Mock).mockResolvedValue(undefined);
+ 
+        // ACT
+        await syncProfiles('user-123');
+ 
+        // ASSERT: Two unique profiles -> exactly two setDoc calls, no duplicates
+        expect(setDoc).toHaveBeenCalledTimes(2);
+    });
+});
 
 
 /* =========================================================================================================
