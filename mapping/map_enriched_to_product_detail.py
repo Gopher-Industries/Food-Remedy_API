@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Any, Dict, List
 import logging
 
 from database.clean_data.normalization.NutrientUnitNormalisation import normalize_nutriments_dict
@@ -22,6 +22,46 @@ def _safe_list(val):
     return [val]
 
 
+def _normalize_tag_name_list(items: Any) -> List[str]:
+    """Coerce tag entries to string names (strings or {'tag': ...} dicts)."""
+    if not items:
+        return []
+    if not isinstance(items, list):
+        items = _safe_list(items)
+    out: List[str] = []
+    for x in items:
+        if isinstance(x, str) and x:
+            out.append(x)
+        elif isinstance(x, dict):
+            t = x.get("tag")
+            if t:
+                out.append(str(t))
+    return out
+
+
+def _tags_to_wire(product: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Build ProductDetail tags {final, removed}.
+    Accepts DB shape {final, removed} (strings or tag dicts) or a raw list for resolve_conflicts.
+    """
+    raw = product.get("tags")
+    if raw is None:
+        return {"final": [], "removed": []}
+    if isinstance(raw, dict) and set(raw.keys()) & {"final", "removed"}:
+        return {
+            "final": _normalize_tag_name_list(raw.get("final")),
+            "removed": _normalize_tag_name_list(raw.get("removed")),
+        }
+    if isinstance(raw, list):
+        if not raw:
+            return {"final": [], "removed": []}
+        resolved = resolve_conflicts(raw)
+        final = [t.get("tag") for t in resolved.get("final_tags", []) if t and t.get("tag")]
+        removed = [t.get("tag") for t in resolved.get("removed", []) if t and t.get("tag")]
+        return {"final": final, "removed": removed}
+    return {"final": [], "removed": []}
+
+
 def map_enriched_to_product_detail(product: Dict[str, Any]) -> Dict[str, Any]:
     """
     Map an enriched product record to ProductDetail V1 contract.
@@ -32,14 +72,13 @@ def map_enriched_to_product_detail(product: Dict[str, Any]) -> Dict[str, Any]:
     → From DB to API wire, with normalization for consistent format
     
     DO NOT MAP (intentionally omitted on wire):
-    1. enrichmentMetadata, dateAdded, lastUpdated: Hydrated by backend enrichment service after mapping
-       (not available at mapping time; added by enrichment middleware before sending to mobile)
-    2. tags (final/removed): DB-only product lifecycle tracking; not needed on mobile
-    3. productJson: Full snapshot stored in DB only for cart; mobile reconstructs from wire fields
-    4. enrichment object: Server-side enrichment data (nutrition scoring); not exposed to wire
-    
-    SENT ON WIRE:
-    - metadata with source="local-enriched": Tracks enrichment source as products flow through pipeline
+    1. enrichmentMetadata, dateAdded, lastUpdated: Hydrated by backend after mapping when available.
+    2. productJson: DB-only cart snapshot; mobile reconstructs from wire fields.
+    3. enrichment object: Server-side nutrition scoring tree; not exposed on wire.
+
+    SENT ON WIRE (from this mapper):
+    - tags as {final, removed}: from stored tag list (resolve_conflicts) or passthrough from DB object shape.
+    - metadata with source="local-enriched": pipeline provenance.
     - Core product fields: nutrition, allergens, categories, images, etc.
     
     WHY SPLIT?
@@ -102,17 +141,7 @@ def map_enriched_to_product_detail(product: Dict[str, Any]) -> Dict[str, Any]:
         "variants": images.get("variants") or {},
     }
 
-    # Tags: use resolver if tags present; otherwise empty lists
-    raw_tags = product.get("tags") or []
-    if raw_tags:
-        resolved = resolve_conflicts(raw_tags)
-        final = [t.get("tag") for t in resolved.get("final_tags", [])]
-        removed = [t.get("tag") for t in resolved.get("removed", [])]
-    else:
-        final = []
-        removed = []
-
-    out["tags"] = {"final": final, "removed": removed}
+    out["tags"] = _tags_to_wire(product)
 
     out["metadata"] = {"source": "local-enriched"}
 
