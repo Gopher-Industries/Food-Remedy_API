@@ -1,5 +1,5 @@
 # 🧠 Food Remedy Database Documentation
-> **DB015 Documentation:** For full schema, data flow, cart/recommendation dependencies and deployment checklist, see [`docs/DB015-Schema-DataFlow-Documentation.md`](docs/DB015-Schema-DataFlow-Documentation.md)
+> **DB015 Documentation:** For full schema, data flow, cart/recommendation dependencies and deployment checklist, see [`Documents/Database/2026 Trimester 1/DB015-Schema-DataFlow-Documentation.md`](Documents/Database/2026 Trimester 1/DB015-Schema-DataFlow-Documentation.md)
 ```
 
 Save it with `Ctrl + S`. Then let's commit and push everything:
