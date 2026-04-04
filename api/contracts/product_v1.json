@@ -6,10 +6,10 @@
   "description": "API contract for product detail responses. Implements three-layer architecture (DB011-aligned).",
   "_design_notes": {
     "scope": "Wire format sent from backend API to mobile",
-    "what_is_sent": "Core product data (barcode, names, nutrition, allergens, categories, metadata for enrichment source tracking, and enrichmentMetadata for recommendations)",
-    "what_is_not_sent": "DB-only fields (productJson [cart snapshots], tags [product tracking], enrichment [server-side scoring]) - too large/sensitive for wire. Mobile reconstructs productJson from wire fields.",
+    "what_is_sent": "Core product fields, category + categories, nutriments + nutriments_normalized, images, tags {final, removed} (resolved/passthrough from mapper), metadata, enrichmentMetadata, dateAdded, lastUpdated when the backend attaches them.",
+    "what_is_not_sent": "productJson (cart snapshot blob) and the full enrichment scoring object — too large for typical product-detail payloads; mobile reconstructs cart JSON from wire fields. Server still uses enrichment.* in DB for ranking/indexes.",
     "metadata_vs_enrichmentMetadata": "metadata tracks enrichment source/quality (general purpose); enrichmentMetadata tracks recommendation scoring (rec-specific). Split intentionally to keep concerns separate.",
-    "why_indexed_fields_missing": "Tags and enrichment.nutrition not on wire; indexes in DB are for backend queries only, not mobile-driven."
+    "why_indexed_fields_missing": "enrichment.nutrition.* is not on wire; Firestore indexes on enrichment/tags are for backend pipelines, not for mobile-driven queries."
   },
   "properties": {
     "barcode": { "type": "string", "description": "GTIN / barcode" },
