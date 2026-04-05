@@ -38,10 +38,16 @@ jest.mock('firebase/firestore', () => ({
     getDoc: jest.fn, // Used to read a single document
 }));
 
+// Replacing the SQLite initialisation function
+// This opens a database file on the device, in tests it returns a fake empty object instead
+jest.mock('../config/sqlConfig', () => ({
+    initialiseSQLiteDatabase: jest.fn().mockResolvedValue({}),
+}));
+
 // Replacing the SQLite Data Access Object functions.
 jest.mock('../services/sqlDatabase/profiles.dao', () => ({
-    upsertProfile: jest.fn(), // INSERT OR UPDATE a profile row
-    listProfilesForUser: jest.fn, // SELECT all profiles for a given userId
+    upsertProfile: jest.fn().mockResolvedValue(undefined), // INSERT OR UPDATE a profile row
+    listProfilesForUser: jest.fn().mockResolvedValue([]), // SELECT all profiles for a given userId
 }));
 
 // Importing the mocked versions to set return values and
