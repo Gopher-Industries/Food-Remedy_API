@@ -387,3 +387,105 @@ SUITE 5: DATA CONSISTENCY
 These tests verify that no data is lost, corrupted, or silently dropped during the sync process. 
 Every field in a profile should survive the trip from Firebase -> merge -> SQLite -> Firebase intact.
 ============================================================================================================*/
+describe('Data consistency', () => {
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        (initialiseSQLiteDatabase as jest.Mock).mockResolvedValue(mockDb);
+    });
+
+    it('preserves all profile fields intact after a sync round-trip', async () => {
+        // ARRANGE: A profile with non-default values in every field
+        const profile = makeProfile({
+        firstName: 'Alice',
+        lastName: 'Smith',
+        age: 25,
+        relationship: 'child',
+        allergies: ['peanuts', 'dairy'], // array fields stored as JSON in SQLite
+        dietaryForm: ['vegan'],
+        intolerances: ['gluten'],
+        additives: ['E330'],
+        });
+
+        (collection as jest.Mock).mockReturnValue({});
+        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(profile)] });
+        (listProfilesForUser as jest.Mock).mockResolvedValue([]); // nothing in SQLite yet
+        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
+        (doc as jest.Mock).mockReturnValue({});
+        (setDoc as jest.Mock).mockResolvedValue(undefined);
+
+        // ACT
+        await syncProfiles('user-123');
+
+        // ASSERT: Everything that came from Firebase should be saved to SQLite
+        // exactly as is, no fields dropped, no type coercion issues
+        const saved = (upsertProfile as jest.Mock).mock.calls[0][1];
+        expect(saved.firstName).toBe('Alice');
+        expect(saved.lastName).toBe('Smith');
+        expect(saved.age).toBe(25);
+        expect(saved.relationship).toBe('child');
+        expect(saved.allergies).toEqual(['peanuts', 'dairy']);
+        expect(saved.dietaryForm).toEqual(['vegan']);
+        expect(saved.intolerances).toEqual(['gluten']);
+        expect(saved.additives).toEqual(['E330']);
+    });
+
+    it('saves profiles from both Firebase and SQLite sources after a full sync', async () => {
+        // ARRANGE: One profile only in Firebase, one profile only in SQLite
+        // Simulates two different devices adding a profile each while offline
+        const cloudProfile = makeProfile({ profileId: 'cloud-only', firstName: 'CloudOnly' });
+        const localProfile = makeProfile({ profileId: 'local-only', firstName: 'LocalOnly' });
+
+        (collection as jest.Mock).mockReturnValue({});
+        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloudProfile)] });
+        (listProfilesForUser as jest.Mock).mockResolvedValue([localProfile]);
+        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
+        (doc as jest.Mock).mockReturnValue({});
+        (setDoc as jest.Mock).mockResolvedValue(undefined);
+
+        // ACT
+        await syncProfiles('user-123');
+
+        // ASSERT: Both profiles should end up saved in SQLite, neither is dropped
+        const savedIds = (upsertProfile as jest.Mock).mock.calls.map((c) => c[1].profileId);
+        expect(savedIds).toContain('cloud-only');
+        expect(savedIds).toContain('local-only');
+        expect(savedIds).toHaveLength(2);
+    });
+
+    it('pushes all merged profiles back to Firebase after sync', async () => {
+        // ARRANGE: Same setup as above - profiles from two different sources
+        const cloudProfile = makeProfile({ profileId: 'cloud-only' });
+        const localProfile = makeProfile({ profileId: 'local-only' });
+
+        (collection as jest.Mock).mockReturnValue({});
+        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloudProfile)] });
+        (listProfilesForUser as jest.Mock).mockResolvedValue([localProfile]);
+        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
+        (doc as jest.Mock).mockReturnValue({});
+        (setDoc as jest.Mock).mockResolvedValue(undefined);
+
+        // ACT
+        await syncProfiles('user-123')
+
+        // ASSERT: After merging, all profiles (from both sources) must be pushed back to 
+        // Firestore so the cloud stays in sync too
+        expect(setDoc).toHaveBeenCalledTimes(2);
+    });
+
+    it('handles a user with no profiles in either source without throwing', async () => {
+        // ARRANGE: Empty state - new user with no profiles yet
+        (collection as jest.Mock).mockReturnValue({});
+        (getDocs as jest.Mock).mockResolvedValue({ docs: [] }); // nothing in Firebase
+        (listProfilesForUser as jest.Mock).mockResolvedValue([]); // nothing in SQLite
+        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
+        (doc as jest.Mock).mockReturnValue({});
+        (setDoc as jest.Mock).mockResolvedValue(undefined);
+
+        // ACT + ASSERT: Should complete without throwing, and not attempt to save or push anything
+        // (nothing to sync)
+        await expect(syncProfiles('user-123')).resolves.not.toThrow();
+        expect(upsertProfile).not.toHaveBeenCalled();
+        expect(setDoc).not.toHaveBeenCalled();
+    });
+});
