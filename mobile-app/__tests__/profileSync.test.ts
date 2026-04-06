@@ -235,6 +235,32 @@ describe('Upstream sync - SQLite → Firebase', () => {
         expect(typeof pushedPayload.updated_at).toBe('string');
         expect(new Date(pushedPayload.updated_at).toString()).not.toBe('Invalid Date');
     });
+
+    it('syncs a profile created offline (only in SQLite) up to Firebase when online', async () => {
+        // ARRANGE: Simulate a profile that was created while offline
+        // it exists in SQLite but not yet in Firebase (Firebase returns empty)
+        const offlineProfile = makeProfile({
+            profileId: 'offline-profile',
+            firstName: 'OfflineUser',
+        });
+
+         (collection as jest.Mock).mockReturnValue({});
+        (getDocs as jest.Mock).mockResolvedValue({ docs: [] }); // nothing in Firebase yet
+        (listProfilesForUser as jest.Mock).mockResolvedValue([offlineProfile]);
+        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
+        (doc as jest.Mock).mockReturnValue({});
+        (setDoc as jest.Mock).mockResolvedValue(undefined);
+
+        // ACT: User comes back online and sync runs
+        await syncProfiles('user-123');
+
+        // ASSERT: The offline profile should be pushed up to Firebase
+        expect(setDoc).toHaveBeenCalledTimes(1);
+        expect(doc).toHaveBeenCalledWith(
+            {},
+            'USERS', 'user-123', 'PROFILES', 'offline-profile'
+        );
+    });
 });
 
 
@@ -384,6 +410,89 @@ describe('Conflict resolution - last-write-wins by updated_at', () => {
         const saved = (upsertProfile as jest.Mock).mock.calls[0][1];
         expect(saved.firstName).toBe('CloudName');
     });
+
+    it('resolves a conflict where both sources have different allergies lists', async () => {
+        // ARRANGE: Both devices updated the allergies list at different times
+        const profileId = 'p-conflict';
+        const cloud = makeProfile({
+            profileId,
+            allergies: ['peanuts'],
+            updated_at: '2026-06-01T00:00:00.000Z', // cloud is newer
+        });
+        const local = makeProfile ({
+            profileId,
+            allergies: ['dairy', 'gluten'],
+            updated_at: '2026-01-01T00:00:00.000Z',
+        });
+
+        (collection as jest.Mock).mockReturnValue({});
+        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloud)] });
+        (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
+        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
+        (doc as jest.Mock).mockReturnValue({});
+        (setDoc as jest.Mock).mockResolvedValue(undefined);
+
+        // ACT
+        await syncProfiles('user-123');
+
+        // ASSERT: Cloud is newer so cloud's allergies list should win
+        const saved = (upsertProfile as jest.Mock).mock.calls[0][1];
+        expect(saved.allergies).toEqual(['peanuts']);
+    });
+
+    it('resolves a conflict where both sources have different dietary preferences', async () => {
+        // ARRANGE: Local device has a more recent dietary update
+        const profileId = 'p-conflict-diet';
+        const cloud = makeProfile({
+            profileId,
+            dietaryForm: ['vegetarian'],
+            updated_at: '2026-01-01T00:00:00.000Z',
+        });
+        const local = makeProfile({
+            profileId,
+            dietaryForm: ['vegan'],
+            updated_at: '2026-06-01T00:00:00.000Z', // local is newer
+        });
+ 
+        (collection as jest.Mock).mockReturnValue({});
+        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloud)] });
+        (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
+        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
+        (doc as jest.Mock).mockReturnValue({});
+        (setDoc as jest.Mock).mockResolvedValue(undefined);
+
+        // ACT
+        await syncProfiles('user-123');
+
+        // ASSERT: Local is newer so local's dietary preference should win
+        const saved = (upsertProfile as jest.Mock).mock.calls[0][1];
+        expect(saved.dietaryForm).toEqual(['vegan']);
+    });
+
+    it('handles a conflict where both timestamps are identical by keeping the cloud version', async () => {
+        // ARRANGE: Exact same timestamps on both - this is an edge case that can happen
+        // if two devices sync at exactly the same millisecond.
+        // The resolveConflict function should retun cloud because locolTime is not greater than
+        // cloudTime when they are equal.
+        const profileId = 'p-tie';
+        const sameTime = '2026-06-01T00:00:00.000Z';
+        const cloud = makeProfile({ profileId, firstName: 'CloudWins', updated_at: sameTime });
+        const local = makeProfile({ profileId, firstName: 'LocalLoses', updated_at: sameTime });
+        
+        (collection as jest.Mock).mockReturnValue({});
+        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloud)] });
+        (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
+        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
+        (doc as jest.Mock).mockReturnValue({});
+        (setDoc as jest.Mock).mockResolvedValue(undefined);
+ 
+        // ACT
+        await syncProfiles('user-123');
+
+        // ASSERT: Tie goes to cloud (local is not strictly greater than cloud)
+        const saved = (upsertProfile as jest.Mock).mock.calls[0][1];
+        expect(saved.firstName).toBe('CloudWins');
+    });
 });
 
 
@@ -459,26 +568,6 @@ describe('Data consistency', () => {
         expect(savedIds).toHaveLength(2);
     });
 
-    it('pushes all merged profiles back to Firebase after sync', async () => {
-        // ARRANGE: Same setup as above - profiles from two different sources
-        const cloudProfile = makeProfile({ profileId: 'cloud-only' });
-        const localProfile = makeProfile({ profileId: 'local-only' });
-
-        (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloudProfile)] });
-        (listProfilesForUser as jest.Mock).mockResolvedValue([localProfile]);
-        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
-        (doc as jest.Mock).mockReturnValue({});
-        (setDoc as jest.Mock).mockResolvedValue(undefined);
-
-        // ACT
-        await syncProfiles('user-123')
-
-        // ASSERT: After merging, all profiles (from both sources) must be pushed back to 
-        // Firestore so the cloud stays in sync too
-        expect(setDoc).toHaveBeenCalledTimes(2);
-    });
-
     it('handles a user with no profiles in either source without throwing', async () => {
         // ARRANGE: Empty state - new user with no profiles yet
         (collection as jest.Mock).mockReturnValue({});
@@ -493,5 +582,26 @@ describe('Data consistency', () => {
         await expect(syncProfiles('user-123')).resolves.not.toThrow();
         expect(upsertProfile).not.toHaveBeenCalled();
         expect(setDoc).not.toHaveBeenCalled();
+    });
+
+    it('handles multiple profiles being updated at once across both sources', async () => {
+        // ARRANGE: Three profiles updated across both sources simultaneoulsy
+        const p1 = makeProfile({ profileId: 'p-001', firstName: 'Alice', updated_at: '2026-01-01T00:00:00.000Z' });
+        const p2 = makeProfile({ profileId: 'p-002', firstName: 'Bob', updated_at: '2026-01-01T00:00:00.000Z' });
+        const p3 = makeProfile({ profileId: 'p-003', firstName: 'Tom', updated_at: '2026-01-01T00:00:00.000Z' });
+
+        (collection as jest.Mock).mockReturnValue({});
+        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(p1), makeFirestoreDoc(p2)] });
+        (listProfilesForUser as jest.Mock).mockResolvedValue([p3]);
+        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
+        (doc as jest.Mock).mockReturnValue({});
+        (setDoc as jest.Mock).mockResolvedValue(undefined);
+
+        // ACT
+        await syncProfiles('user-123');
+
+        // ASSERT: All three profiles should be saved and pushed - none dropped
+        expect(upsertProfile).toHaveBeenCalledTimes(3);
+        expect(setDoc).toHaveBeenCalledTimes(3);
     });
 });
