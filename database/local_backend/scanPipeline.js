@@ -8,9 +8,23 @@ const SEVERITY_WEIGHTS = {
   high: 3
 };
 
-const PIPELINE_VERSION = "1.4.0";
+const PIPELINE_VERSION = "1.4.1";
+const CACHE_LIMIT = 50;
 
-// Simple in-memory cache for repeated evaluations
+const NON_VEGAN_INGREDIENTS = [
+  "milk",
+  "egg",
+  "honey",
+  "gelatin",
+  "cheese",
+  "butter",
+  "cream",
+  "whey",
+  "casein"
+];
+
+const GLUTEN_SOURCES = ["wheat", "barley", "rye", "malt"];
+
 const recommendationCache = new Map();
 
 function cleanData(raw) {
@@ -37,15 +51,13 @@ function buildProcessedUserProfile(userProfile) {
 
   return {
     id: safeUserProfile.id || null,
-    allergies: safeUserProfile.allergies || [],
-    avoidAdditives: safeUserProfile.avoidAdditives || [],
+    allergies: (safeUserProfile.allergies || []).map((item) =>
+      item.toLowerCase()
+    ),
+    avoidAdditives: (safeUserProfile.avoidAdditives || []).map((item) =>
+      item.toLowerCase()
+    ),
     dietPreferences: safeUserProfile.dietPreferences || [],
-    allergiesSet: new Set(
-      (safeUserProfile.allergies || []).map((item) => item.toLowerCase())
-    ),
-    avoidAdditivesSet: new Set(
-      (safeUserProfile.avoidAdditives || []).map((item) => item.toLowerCase())
-    ),
     dietPreferencesSet: new Set(safeUserProfile.dietPreferences || [])
   };
 }
@@ -58,81 +70,53 @@ function buildProductLookupSets(cleaned) {
 }
 
 function createCacheKey(cleaned, processedUserProfile) {
-  return JSON.stringify({
-    barcode: cleaned.barcode,
-    ingredients: cleaned.ingredients,
-    additives: cleaned.additives,
-    nutrition: cleaned.nutrition,
-    allergies: processedUserProfile.allergies,
-    avoidAdditives: processedUserProfile.avoidAdditives,
-    dietPreferences: processedUserProfile.dietPreferences
-  });
+  const barcode = cleaned.barcode || "no-barcode";
+  const userId = processedUserProfile.id || "anonymous";
+  return `${barcode}_${userId}`;
 }
 
-function containsMatchingValue(setValues, candidates) {
-  for (const value of setValues) {
-    for (const candidate of candidates) {
-      if (value.includes(candidate) || candidate.includes(value)) {
-        return candidate;
-      }
-    }
-  }
-  return null;
+function hasIngredientMatch(ingredients, targets) {
+  return ingredients.some((ingredient) =>
+    targets.some((target) => ingredient.includes(target))
+  );
 }
 
-function getWarnings(cleaned, processedUserProfile, productSets) {
+function hasAdditiveMatch(additives, targets) {
+  return additives.some((additive) =>
+    targets.some((target) => additive.includes(target))
+  );
+}
+
+function getWarnings(cleaned, processedUserProfile) {
   const warnings = [];
+  const ingredients = cleaned.ingredients || [];
+  const additives = cleaned.additives || [];
   const nutrition = cleaned.nutrition || {};
 
-  const nonVeganList = [
-    "milk",
-    "egg",
-    "honey",
-    "gelatin",
-    "cheese",
-    "butter",
-    "cream",
-    "whey",
-    "casein"
-  ];
+  processedUserProfile.allergies.forEach((allergen) => {
+    if (ingredients.some((ingredient) => ingredient.includes(allergen))) {
+      warnings.push({
+        type: "allergen",
+        code: `ALLERGEN_${allergen.toUpperCase()}`,
+        message: `Contains ${allergen}`,
+        severity: "high"
+      });
+    }
+  });
 
-  const glutenSources = ["wheat", "barley", "rye", "malt"];
-
-  const matchedAllergen = containsMatchingValue(
-    productSets.ingredientSet,
-    [...processedUserProfile.allergiesSet]
-  );
-
-  if (matchedAllergen) {
-    warnings.push({
-      type: "allergen",
-      code: `ALLERGEN_${matchedAllergen.toUpperCase()}`,
-      message: `Contains ${matchedAllergen}`,
-      severity: "high"
-    });
-  }
-
-  const matchedAdditive = containsMatchingValue(
-    productSets.additiveSet,
-    [...processedUserProfile.avoidAdditivesSet]
-  );
-
-  if (matchedAdditive) {
-    warnings.push({
-      type: "additive",
-      code: `ADDITIVE_${matchedAdditive}`,
-      message: `Contains additive ${matchedAdditive}, which you prefer to avoid`,
-      severity: "medium"
-    });
-  }
+  processedUserProfile.avoidAdditives.forEach((additive) => {
+    if (additives.some((item) => item.includes(additive))) {
+      warnings.push({
+        type: "additive",
+        code: `ADDITIVE_${additive}`,
+        message: `Contains additive ${additive}, which you prefer to avoid`,
+        severity: "medium"
+      });
+    }
+  });
 
   if (processedUserProfile.dietPreferencesSet.has("vegan")) {
-    const hasNonVeganIngredient = containsMatchingValue(
-      productSets.ingredientSet,
-      nonVeganList
-    );
-
-    if (hasNonVeganIngredient) {
+    if (hasIngredientMatch(ingredients, NON_VEGAN_INGREDIENTS)) {
       warnings.push({
         type: "diet",
         code: "DIET_VEGAN_UNSUITABLE",
@@ -143,12 +127,7 @@ function getWarnings(cleaned, processedUserProfile, productSets) {
   }
 
   if (processedUserProfile.dietPreferencesSet.has("glutenFree")) {
-    const hasGluten = containsMatchingValue(
-      productSets.ingredientSet,
-      glutenSources
-    );
-
-    if (hasGluten) {
+    if (hasIngredientMatch(ingredients, GLUTEN_SOURCES)) {
       warnings.push({
         type: "diet",
         code: "DIET_GLUTEN_UNSUITABLE",
@@ -174,8 +153,8 @@ function getWarnings(cleaned, processedUserProfile, productSets) {
 }
 
 function classifyProduct(warnings) {
-  const hasHigh = warnings.some((w) => w.severity === "high");
-  const hasMedium = warnings.some((w) => w.severity === "medium");
+  const hasHigh = warnings.some((warning) => warning.severity === "high");
+  const hasMedium = warnings.some((warning) => warning.severity === "medium");
 
   if (hasHigh) return "red";
   if (hasMedium) return "grey";
@@ -185,55 +164,34 @@ function classifyProduct(warnings) {
 function calculateRiskScore(warnings) {
   if (!warnings.length) return 0;
 
-  const total = warnings.reduce((sum, w) => {
-    return sum + (SEVERITY_WEIGHTS[w.severity] || 1);
+  const total = warnings.reduce((sum, warning) => {
+    return sum + (SEVERITY_WEIGHTS[warning.severity] || 1);
   }, 0);
 
   return Math.min(100, total * 20);
 }
 
-function calculateRecommendationScore(cleaned, processedUserProfile, warnings, productSets) {
+function calculateRecommendationScore(cleaned, processedUserProfile, warnings) {
   let score = 100;
+  const ingredients = cleaned.ingredients || [];
   const nutrition = cleaned.nutrition || {};
-
-  const nonVeganList = [
-    "milk",
-    "egg",
-    "honey",
-    "gelatin",
-    "cheese",
-    "butter",
-    "cream",
-    "whey",
-    "casein"
-  ];
-
-  const glutenSources = ["wheat", "barley", "rye", "malt"];
 
   warnings.forEach((warning) => {
     score -= (SEVERITY_WEIGHTS[warning.severity] || 1) * 15;
   });
 
-  if (processedUserProfile.dietPreferencesSet.has("vegan")) {
-    const hasNonVeganIngredient = containsMatchingValue(
-      productSets.ingredientSet,
-      nonVeganList
-    );
-
-    if (!hasNonVeganIngredient) {
-      score += 10;
-    }
+  if (
+    processedUserProfile.dietPreferencesSet.has("vegan") &&
+    !hasIngredientMatch(ingredients, NON_VEGAN_INGREDIENTS)
+  ) {
+    score += 10;
   }
 
-  if (processedUserProfile.dietPreferencesSet.has("glutenFree")) {
-    const hasGluten = containsMatchingValue(
-      productSets.ingredientSet,
-      glutenSources
-    );
-
-    if (!hasGluten) {
-      score += 10;
-    }
+  if (
+    processedUserProfile.dietPreferencesSet.has("glutenFree") &&
+    !hasIngredientMatch(ingredients, GLUTEN_SOURCES)
+  ) {
+    score += 10;
   }
 
   if (typeof nutrition.sugarG === "number" && nutrition.sugarG <= 5) {
@@ -243,7 +201,7 @@ function calculateRecommendationScore(cleaned, processedUserProfile, warnings, p
   return Math.max(0, Math.min(100, score));
 }
 
-function getAlternatives(cleaned, classification, processedUserProfile) {
+function getAlternatives(classification, processedUserProfile) {
   const base = [
     {
       name: "Dark Chocolate 85%",
@@ -282,11 +240,7 @@ function getAlternatives(cleaned, classification, processedUserProfile) {
     filtered = base;
   }
 
-  if (classification === "green") {
-    return filtered.slice(0, 2);
-  }
-
-  return filtered;
+  return classification === "green" ? filtered.slice(0, 2) : filtered;
 }
 
 function generateRecommendationReason(item, processedUserProfile) {
@@ -314,6 +268,12 @@ function generateRecommendationReason(item, processedUserProfile) {
   return reasons.length ? reasons : ["General healthier alternative"];
 }
 
+function enforceCacheLimit() {
+  if (recommendationCache.size >= CACHE_LIMIT) {
+    recommendationCache.clear();
+  }
+}
+
 function buildScanResult(rawData, userProfile) {
   const cleaned = cleanData(rawData || {});
   const processedUserProfile = buildProcessedUserProfile(userProfile);
@@ -331,19 +291,16 @@ function buildScanResult(rawData, userProfile) {
     };
   }
 
-  const productSets = buildProductLookupSets(cleaned);
-  const warnings = getWarnings(cleaned, processedUserProfile, productSets);
+  const warnings = getWarnings(cleaned, processedUserProfile);
   const classification = classifyProduct(warnings);
   const riskScore = calculateRiskScore(warnings);
   const recommendationScore = calculateRecommendationScore(
     cleaned,
     processedUserProfile,
-    warnings,
-    productSets
+    warnings
   );
 
   const alternatives = getAlternatives(
-    cleaned,
     classification,
     processedUserProfile
   ).map((item) => ({
@@ -357,7 +314,7 @@ function buildScanResult(rawData, userProfile) {
     warnings,
     suitability: {
       isSafe: classification !== "red",
-      reasons: warnings.map((w) => w.message),
+      reasons: warnings.map((warning) => warning.message),
       riskScore,
       recommendationScore,
       matchedPreferences: processedUserProfile.dietPreferences
@@ -371,7 +328,9 @@ function buildScanResult(rawData, userProfile) {
     }
   };
 
+  enforceCacheLimit();
   recommendationCache.set(cacheKey, result);
+
   return result;
 }
 
@@ -380,7 +339,6 @@ module.exports = {
   buildProcessedUserProfile,
   buildProductLookupSets,
   createCacheKey,
-  containsMatchingValue,
   getWarnings,
   classifyProduct,
   calculateRiskScore,
@@ -406,9 +364,16 @@ if (require.main === module) {
     dietPreferences: ["vegan", "glutenFree"]
   };
 
+  const firstRun = buildScanResult(testRaw, testUser);
+  const secondRun = buildScanResult(testRaw, testUser);
+
   console.log("Structured Scan Result:");
-  console.log(JSON.stringify(buildScanResult(testRaw, testUser), null, 2));
+  console.log(JSON.stringify(firstRun, null, 2));
 
   console.log("\nRunning same input again to test cache:");
-  console.log(JSON.stringify(buildScanResult(testRaw, testUser), null, 2));
+  console.log(JSON.stringify(secondRun, null, 2));
+
+  console.log("\nBasic cache check:");
+  console.log("First run servedFromCache:", firstRun.metadata.servedFromCache);
+  console.log("Second run servedFromCache:", secondRun.metadata.servedFromCache);
 }
