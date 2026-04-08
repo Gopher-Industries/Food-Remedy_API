@@ -1,7 +1,9 @@
 import os
 import json
-import sys
-import logging
+
+<<<<<<< HEAD
+def run_clean_stage(input_path: str, output_path: str, config=None):
+=======
 
 logger = logging.getLogger(__name__)
 if not logger.handlers:
@@ -67,10 +69,18 @@ def run_clean_stage(input_path: str, output_path: str, config: dict = None):
         json.dump(cleaned, f, indent=2)
 
     print(f"[DB018] Cleaning complete: {output_path}")
+<<<<<<< HEAD
     print(f"[DB003] Nutrient unit normalisation applied to {len(cleaned)} products")
     
+=======
+
+>>>>>>> f55aacc5a3972d5be16696df30590c596dbb0ab1
     return {
         "processed": len(cleaned),
         "failures": 0,
         "output": output_path
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> f55aacc5a3972d5be16696df30590c596dbb0ab1
