@@ -17,24 +17,21 @@
       "modules": [
         {
           "name": "ts_enrich_wrapper",
-<<<<<<< HEAD
-          "path": "pipeline\\modules\\enrich_ts_wrapper.py",
-=======
           "path": "pipeline/modules/enrich_ts_wrapper.py",
->>>>>>> ba74b3e84e24b3c487b5286931ac408256b7f9a7
           "enabled": false,
           "config": {
             "ts_path": "mobile-app/services/nutrition/enrichProducts.ts" 
           }
         },
         {
-<<<<<<< HEAD
           "name": "allergens",
-          "path": "pipeline\\modules\\allergens_enrich.py",
-=======
+          "path": "pipeline/modules/allergens_enrich.py",
+          "enabled": true,
+          "config": {}
+        },
+        {
           "name": "db009_personalisation_tags",
           "path": "pipeline/modules/db009_personalisation_tags.py",
->>>>>>> ba74b3e84e24b3c487b5286931ac408256b7f9a7
           "enabled": true,
           "config": {}
         }
