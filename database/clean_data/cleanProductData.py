@@ -6,11 +6,20 @@ import json
 import pandas as pd
 import re
 
+from utils.missing_value_utils import (
+    normalize_string,
+    normalize_list,
+    normalize_dict,
+    clean_numeric
+)
+
+from utils.detect_allergens import detect_allergens  
+
 # === Configuration constants ===
 # Edit these paths as needed
 # - Find Examples of Input and Output in IOExamples Folder
-INPUT_FILE = "data/demo data/rawSample.jsonl"
-OUTPUT_FILE = "data/demo data/cleanSample.json"
+INPUT_FILE = "database/clean_data/IOExamples/rawSample.jsonl"
+OUTPUT_FILE = "database/clean_data/cleanSample.json"
 
 NUTRIENTS_TO_KEEP = {
     # Energy
@@ -48,20 +57,118 @@ def load_data(file_path: str) -> pd.DataFrame:
         raise RuntimeError(f"Failed to read JSONL file: {e}")
     return df
 
+def _is_missing_value(value) -> bool:
+    """Return True when a value is effectively empty for merge/completeness logic."""
+    if value is None:
+        return True
+    if isinstance(value, float) and pd.isna(value):
+        return True
+    if pd.isna(value) if not isinstance(value, (list, dict, tuple, set)) else False:
+        return True
+    if isinstance(value, str) and value.strip() == "":
+        return True
+    if isinstance(value, (list, tuple, set, dict)) and len(value) == 0:
+        return True
+    return False
 
-def drop_exact_duplicates(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Deduplicate by 'code' field, keeping the first occurrence.
-    Reports how many duplicates were removed.
-    """
+
+def _normalize_text_key(value) -> str:
+    """Create a comparable key from free text (name/brand)."""
+    if _is_missing_value(value):
+        return ""
+    text = str(value).strip().lower()
+    text = re.sub(r"\s+", " ", text)
+    return text
+
+
+def _merge_records(primary: pd.Series, candidate: pd.Series) -> pd.Series:
+    """Fill missing fields in primary record using values from candidate."""
+    for col in primary.index:
+        p_val = primary.get(col)
+        c_val = candidate.get(col)
+
+        if _is_missing_value(c_val):
+            continue
+
+        # Fill scalar missing values directly.
+        if _is_missing_value(p_val):
+            primary[col] = c_val
+            continue
+
+        # Merge lists while preserving order and uniqueness.
+        if isinstance(p_val, list) and isinstance(c_val, list):
+            merged = []
+            seen = set()
+            for item in p_val + c_val:
+                key = json.dumps(item, sort_keys=True) if isinstance(item, (dict, list)) else str(item)
+                if key not in seen:
+                    seen.add(key)
+                    merged.append(item)
+            primary[col] = merged
+            continue
+
+        # Merge dicts by keeping primary keys and filling missing keys from candidate.
+        if isinstance(p_val, dict) and isinstance(c_val, dict):
+            merged = dict(c_val)
+            merged.update(p_val)
+            primary[col] = merged
+
+    return primary
+
+
+def deduplicate_products(df: pd.DataFrame) -> pd.DataFrame:
     if 'code' not in df.columns:
         raise KeyError("Missing required 'code' column for deduplication.")
-    initial_count = len(df)
-    # Keep only the first row for each code
-    df = df.drop_duplicates(subset=['code'], keep='first')
-    dropped = initial_count - len(df)
-    print(f"Dropped {dropped} duplicate rows based on 'code'.")
-    return df
+
+    working = df.copy()
+    working['__barcode_key'] = working['code'].astype(str).str.replace(r'\D', '', regex=True).str.strip()
+    working['__name_key'] = working.get('product_name', pd.Series(index=working.index, dtype=object)).apply(_normalize_text_key)
+    working['__brand_key'] = working.get('brands', pd.Series(index=working.index, dtype=object)).apply(_normalize_text_key)
+
+    grouped_records = []
+    consumed_idx = set()
+
+    # Barcode-based dedup 
+    for _, group in working[working['__barcode_key'] != ""].groupby('__barcode_key', sort=False):
+        if len(group) == 1:
+            idx = group.index[0]
+            grouped_records.append(working.loc[idx])
+            consumed_idx.add(idx)
+            continue
+
+        completeness = pd.to_numeric(group.get('completeness', -1), errors='coerce').fillna(-1.0)
+        ranked_idx = completeness.sort_values(ascending=False).index.tolist()
+
+        merged = working.loc[ranked_idx[0]].copy()
+        for idx in ranked_idx[1:]:
+            merged = _merge_records(merged, working.loc[idx])
+
+        grouped_records.append(merged)
+        consumed_idx.update(group.index)
+
+    # Fallback : name and brand
+    no_barcode = working[(working['__barcode_key'] == "") & (~working.index.isin(consumed_idx))]
+
+    for (name_key, brand_key), group in no_barcode.groupby(['__name_key', '__brand_key'], sort=False):
+        if name_key and brand_key and len(group) > 1:
+            completeness = pd.to_numeric(group.get('completeness', -1), errors='coerce').fillna(-1.0)
+            ranked_idx = completeness.sort_values(ascending=False).index.tolist()
+
+            merged = working.loc[ranked_idx[0]].copy()
+            for idx in ranked_idx[1:]:
+                merged = _merge_records(merged, working.loc[idx])
+
+            grouped_records.append(merged)
+        else:
+            for idx in group.index:
+                grouped_records.append(working.loc[idx])
+
+    result = pd.DataFrame(grouped_records).drop(
+        columns=['__barcode_key', '__name_key', '__brand_key'],
+        errors='ignore'
+    )
+
+    return result.reset_index(drop=True)
 
 
 def ensure_code_field(df: pd.DataFrame) -> pd.DataFrame:
@@ -140,6 +247,13 @@ def clean_quantity_fields(df: pd.DataFrame) -> pd.DataFrame:
     )
     df['serving_quantity_unit'] = df['serving_quantity_unit'].astype(
         str).str.lower()
+
+    # Serving size text
+    # df['serving_size'] = (
+    #     df['serving_size']
+    #     .fillna('Not Specified') if 'serving_size' in df.columns else 'Not Specified'
+    # )
+    # df['serving_size'] = df['serving_size'].astype(str)
 
     return df
 
@@ -240,7 +354,87 @@ def clean_all_tag_fields(df: pd.DataFrame) -> pd.DataFrame:
         else:
             df[col] = []
     return df
+# DB004: Category Harmonisation
 
+CATEGORY_MAPPING = {
+    "seafood": [
+        "seafood", "fishes", "fishes-and-their-products",
+        "canned-fishes", "tunas", "canned-tunas",
+        "crustaceans", "shrimps", "prawns"
+    ],
+    "oils": [
+        "fats", "vegetable-fats", "vegetable-oils"
+    ],
+    "meal kits": [
+        "meal-kits"
+    ],
+    "spreads": [
+        "spreads", "sweet-spreads", "plant-based-spreads",
+        "nut-butters", "peanut-butters",
+        "hazelnut-spreads", "chocolate-spreads",
+        "cocoa-and-hazelnuts-spreads", "oilseed-purees",
+        "legume-butters"
+    ],
+    "noodles and pasta": [
+        "pastas", "noodles", "instant-noodles"
+    ],
+    "beverages": [
+        "beverages", "dairy-drinks", "coffee-drinks",
+        "coffee-milks", "iced-coffees", "sweetened-beverages",
+        "evaporated-milks"
+    ],
+    "breads": [
+        "breads", "wholemeal-breads"
+    ],
+    "snacks and confectionery": [
+        "snacks", "sweet-snacks", "confectioneries",
+        "chocolates", "chocolate-candies", "bonbons"
+    ]
+}
+
+
+def clean_category_tags(tags) -> list[str]:
+    """
+    DB004: Clean category tags before matching.
+    - Remove language prefixes like 'en:' or 'fr:'
+    - Convert to lowercase
+    - Strip whitespace
+    """
+    if not tags:
+        return []
+
+    if isinstance(tags, str):
+        tags = [t.strip() for t in tags.split(",") if t.strip()]
+
+    cleaned = []
+    for tag in tags:
+        if not tag or not isinstance(tag, str):
+            continue
+        if ":" in tag:
+            tag = tag.split(":", 1)[1]
+        tag = tag.strip().lower()
+        if tag:
+            cleaned.append(tag)
+
+    return cleaned
+
+
+def standardise_category(tags) -> str:
+    """
+    DB004: Map raw OFF category tags into one standard primary category.
+    """
+    cleaned_tags = clean_category_tags(tags)
+
+    if not cleaned_tags:
+        return "other"
+
+    for standard_category, keywords in CATEGORY_MAPPING.items():
+        for tag in cleaned_tags:
+            for keyword in keywords:
+                if keyword in tag:
+                    return standard_category
+
+    return "other"
 
 IMAGE_BASE = "https://images.openfoodfacts.org/images/products"
 # will only emit sizes that exist in the JSON
@@ -284,11 +478,13 @@ def build_image_urls(code: str, images_obj: dict) -> dict:
         rev = str(info.get("rev") or info.get("rev_en") or "").strip()
         if not rev:
             continue
+        # keep revision as int if possible, else keep string
         try:
             variants[image_type] = int(rev)
         except ValueError:
             variants[image_type] = rev
 
+    # choose primary
     primary = None
     for key in ("front_en", "front", "front_au", "front_en_GB"):
         if key in variants:
@@ -307,6 +503,7 @@ def add_image_urls(df: pd.DataFrame) -> pd.DataFrame:
         images_obj = row.get("images", {})
         spec = build_image_urls(code, images_obj)
 
+        # optional convenience: precompute a 400px primary URL for quick listing views
         primary_url_400 = None
         if spec["primary"]:
             rev = spec["variants"].get(spec["primary"])
@@ -316,6 +513,7 @@ def add_image_urls(df: pd.DataFrame) -> pd.DataFrame:
         return spec, primary_url_400
 
     spec_and_primary = df.apply(per_row, axis=1, result_type="expand")
+    # replace with compact spec
     df["images"] = spec_and_primary[0]
     return df
 
@@ -325,13 +523,13 @@ def reconvert_json_strings(df: pd.DataFrame) -> pd.DataFrame:
         if not isinstance(x, str):
             return x
         s = x.strip()
-        if not s:
+        if not s:   # skip empty strings
             return x
         if (s.startswith("{") and s.endswith("}")) or (s.startswith("[") and s.endswith("]")):
             try:
                 return json.loads(s)
             except json.JSONDecodeError:
-                return x
+                return x  # leave as-is if broken
         return x
 
     for col in df.columns:
@@ -340,6 +538,10 @@ def reconvert_json_strings(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def drop_unwanted_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Drop columns that should not be emitted.
+    Currently drops 'id' if present.
+    """
     if 'id' in df.columns:
         df = df.drop(columns=['id'])
     if 'ingredients_from_palm_oil_n' in df.columns:
@@ -351,6 +553,11 @@ def drop_unwanted_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def rename_specific_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Apply specific renames prior to camelCase conversion.
+    - 'code' -> 'barcode'
+    - 'brands' -> 'branch'
+    """
     rename_map = {}
     if 'code' in df.columns:
         rename_map['code'] = 'barcode'
@@ -373,6 +580,10 @@ def rename_specific_columns(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def to_camel_case(name: str) -> str:
+    """
+    Convert snake_case column names to lower camelCase.
+    Leaves already camel, single words, or names with hyphens as-is.
+    """
     if not isinstance(name, str):
         return name
     if '_' not in name:
@@ -384,58 +595,91 @@ def to_camel_case(name: str) -> str:
 
 
 def camelise_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Convert all top-level column names to camelCase,
+    except nested dict keys inside fields like 'nutriments'.
+    """
+    # Build mapping
     mapping = {col: to_camel_case(col) for col in df.columns}
     return df.rename(columns=mapping)
 
 
-def ensure_output_fields(df: pd.DataFrame) -> pd.DataFrame:
-    n = len(df)
-    defaults = {
-        "barcode": "",
-        "brand": "",
-        "productName": "",
-        "genericName": "",
-        "additives": [],
-        "allergens": [],
-        "ingredients": [],
-        "ingredientsText": "",
-        "ingredientsAnalysis": [],
-        "categories": [],
-        "labels": [],
-        "nutrientLevels": None,
-        "nutriments": {},
-        "nutriscoreGrade": "",
-        "productQuantity": 0,
-        "productQuantityUnit": "",
-        "servingQuantity": 0,
-        "servingQuantityUnit": "",
-        "traces": "",
-        "tracesFromIngredients": "",
-        "completeness": 0,
-        "images": {},
-    }
-
-    for col, default in defaults.items():
-        if col not in df.columns:
-            if isinstance(default, list):
-                df[col] = [list(default) for _ in range(n)]
-            elif isinstance(default, dict):
-                df[col] = [dict(default) for _ in range(n)]
-            else:
-                df[col] = [default for _ in range(n)]
-
-    return df
-
-
 def save_cleaned_data(df: pd.DataFrame, output_path: str):
+    """
+    Write the cleaned DataFrame to a JSONL file and log a summary.
+    """
     df.to_json(output_path, orient='records', lines=False, force_ascii=False)
     print(f"Cleaned data saved to: {output_path}")
     print(f"Total valid products: {len(df)}")
 
 
+TYPO_FIX = {
+    "citiric-acid": "citric-acid",
+    # DB002: open to adding new fix(es)
+}
+
+
+def fix_common_typos(tag: str) -> str:
+    """DB002: Fix known ingredient tag spelling mistakes."""
+    if not tag or not isinstance(tag, str):
+        return ""
+    return TYPO_FIX.get(tag.lower().strip(), tag.lower().strip())
+
+
+def clean_ingredients_text(text) -> str | None:
+    """DB002: Convert empty/whitespace ingredientsText → None, otherwise clean."""
+    if not text or str(text).strip() == "":
+        return None
+    return str(text).strip()
+
+
+def clean_ingredients_list(tags) -> list | None: 
+    """
+    DB002: Full ingredient tag cleaning:
+    - Remove lang: prefixes
+    - Lowercase + strip
+    - Fix known typos
+    - Deduplicate
+    - Return None if result is empty
+    """
+    if not tags:
+        return None
+
+    if isinstance(tags, str):
+        tags = [t.strip() for t in tags.split(",") if t.strip()]
+
+    cleaned = set()
+    for tag in tags:
+        if not tag or not isinstance(tag, str):
+            continue
+        # removing lang: prefix
+        if ":" in tag:
+            tag = tag.split(":", 1)[1]
+        tag = fix_common_typos(tag)
+        if tag:
+            cleaned.add(tag)
+    
+    return list(cleaned) if cleaned else None
+
+
+def validate_record(record: dict) -> list[str]:
+    warnings = []
+    if not len(record['barcode']) == 13 and record['barcode'].isdigit(): warnings.append("Barcode must be 13 digits")
+    if not isinstance(record['nutriments'], dict): warnings.append("Nutriments must be a dictionary")
+    if not record['productQuantity'] >= 0: warnings.append("Product quantity cannot be negative")
+    if not record['servingQuantity'] >= 0: warnings.append("Serving quantity cannot be negative")
+    if not record['productQuantityUnit'] in ["g", "ml", "l", "kg"]: warnings.append("Invalid product quantity unit")
+    if not record['servingQuantityUnit'] in ["g", "ml", "l", "kg"]: warnings.append("Invalid serving quantity unit")
+    if not 0 <= record['completeness'] <= 1: warnings.append("Completeness must be between 0 and 1")
+    return warnings
+
+
 def main(input_path: str, output_path: str):
+    """
+    Execute the full cleaning pipeline from raw JSONL to cleaned JSONL.
+    """
     df = load_data(input_path)
-    df = drop_exact_duplicates(df)
+    df = deduplicate_products(df)
     df = ensure_code_field(df)
     df = clean_text_fields(df)
     df = clean_quantity_fields(df)
@@ -443,17 +687,50 @@ def main(input_path: str, output_path: str):
     df = reduce_nutriments(df)
     df = clean_traces_fields(df)
     df = clean_all_tag_fields(df)
+    # DB004: apply category standardisation
+    df["standard_category"] = df["categories_tags"].apply(standardise_category)
+    # DB002: Enhanced ingredient cleaning
+    if 'ingredientsText' in df.columns:
+        df['ingredientsText'] = df['ingredientsText'].apply(clean_ingredients_text)
+    if 'ingredients_tags' in df.columns:
+        df['ingredients_tags'] = df['ingredients_tags'].apply(clean_ingredients_list)    
 
+    for idx, record in df.iterrows():
+        # String fields
+        record["ingredientsText"] = normalize_string(record.get("ingredientsText"))
+        record["traces"] = normalize_string(record.get("traces"))
+        
+        # List fields
+        record["ingredients"] = normalize_list(record.get("ingredients"))
+        record["categories"] = normalize_list(record.get("categories"))
+        
+        # Dict fields (nutriments with recursive + default 0)
+        record["nutriments"] = normalize_dict(record.get("nutriments", {}), default=0, recurse=True)
+        
+        # Numeric fields
+        record["productQuantity"] = clean_numeric(record.get("productQuantity"))
+        record["servingQuantity"] = clean_numeric(record.get("servingQuantity"))
+        
+        record["allergensDetected"] = detect_allergens(record) # new allergen detection field for DB009
+        df.at[idx, "allergensDetected"] = record["allergensDetected"]
+        
+        df.loc[idx] = record  # write back
+        
     df = add_image_urls(df)
     df = reconvert_json_strings(df)
 
     df = rename_specific_columns(df)
     df = drop_unwanted_columns(df)
     df = camelise_columns(df)
-    df = ensure_output_fields(df)
+
+    for _, record in df.iterrows():
+        record_warnings = validate_record(record.to_dict())
+        if record_warnings:
+            print(f"WARNING [{record['barcode']}]: {'; '.join(record_warnings)}")
 
     save_cleaned_data(df, output_path)
 
 
 if __name__ == "__main__":
+    # Run the cleaning process
     main(INPUT_FILE, OUTPUT_FILE)

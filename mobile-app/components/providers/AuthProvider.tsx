@@ -8,6 +8,10 @@ import { onAuthStateChanged, sendEmailVerification, User } from "firebase/auth";
 import { auth } from "@/config/firebaseConfig";
 import { router } from "expo-router";
 
+import { syncProfiles } from "../../services/sync/syncProfilesServices";
+
+
+
 type AuthContextType = {
   user: User | null;
   loading: boolean;
@@ -41,6 +45,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+  if (user?.uid) {
+    syncProfiles(user.uid);
+  }
+}, [user]);
 
   /**
    * Resend Email Verification

@@ -55,6 +55,11 @@
       "items": "string",
       "required": false
     },
+    "category": {
+      "type": "string",
+      "required": false,
+      "description": "Primary category (optional denormalised field; may mirror first categories[] entry)"
+    },
     "labels": {
       "type": "array",
       "items": "string",
@@ -73,6 +78,11 @@
         "energy-kcal_100g", "fat_100g", "carbohydrates_100g",
         "proteins_100g", "salt_100g"
       ]
+    },
+    "nutriments_normalized": {
+      "type": "object",
+      "required": false,
+      "description": "Optional stored per-100g-style block; API may also derive from nutriments"
     },
     "nutriscoreGrade": {
       "type": "string",
@@ -117,6 +127,50 @@
         "primary": { "type": "string" },
         "variants": { "type": "object" }
       }
+    },
+    "tags": {
+      "type": "object",
+      "required": false,
+      "description": "Product tags: resolved {final, removed} and/or raw list input for pipelines",
+      "subfields": {
+        "final": { "type": "array", "items": "string" },
+        "removed": { "type": "array", "items": "string" }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": false,
+      "description": "Enrichment provenance / quality (general)",
+      "subfields": {
+        "enrichmentSource": { "type": "string" },
+        "enrichmentTimestamp": { "type": "string" },
+        "dataQualityScore": { "type": "number" }
+      }
+    },
+    "enrichmentMetadata": {
+      "type": "object",
+      "required": false,
+      "description": "Recommendation-facing metadata (lighter than full enrichment tree)",
+      "subfields": {
+        "recommendationScore": { "type": "number" },
+        "reasonTags": { "type": "array", "items": "string" },
+        "similarityMetrics": { "type": "object" }
+      }
+    },
+    "dateAdded": {
+      "type": "string",
+      "required": false,
+      "description": "ISO timestamp when product document was created"
+    },
+    "lastUpdated": {
+      "type": "string",
+      "required": false,
+      "description": "ISO timestamp when product document was last updated"
+    },
+    "productJson": {
+      "type": "object",
+      "required": false,
+      "description": "Optional cart snapshot blob (full serialised product); keep in sync with wire fields when used"
     },
     "enrichment": {
       "type": "object",

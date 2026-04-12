@@ -1,2 +1,1 @@
-"""Clean data package (moved from 'clean data' folder)."""
-
+"""Clean and normalise Open Food Facts product records."""
