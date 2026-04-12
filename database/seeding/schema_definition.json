@@ -2,13 +2,7 @@
   "collection": "products",
   "document_id": "barcode",
   "description": "Firestore schema for enriched product documents (V1)",
-  "_design_notes": {
-    "db_vs_wire": "THREE-LAYER ARCHITECTURE (DB011-aligned): Fields are categorized as follows:",
-    "sent_on_wire": "Product detail API sends: core fields (barcode, productName, brand, categories, category, allergens, nutriscoreGrade, nutriments, nutriments_normalized, images, etc.), tags as resolved {final, removed} (from stored tag list or passthrough if already that shape), metadata, enrichmentMetadata, dateAdded, lastUpdated when present.",
-    "db_only_cart": "productJson: Stored in DB for cart snapshots (full product serialization); NOT sent on wire (too large); mobile reconstructs cart snapshot from wire fields.",
-    "db_only_wire_excluded": "enrichment (full nutrition scoring tree): Stored in DB for indexing and server-side recommendations; NOT sent on wire. Middleware may attach enrichmentMetadata separately.",
-    "index_strategy": "Indexes: (1) categories, allergens, nutriscoreGrade, brand (filtering/sorting, align with wire). (2) enrichment.nutrition.compositeScore, tags — backend/recommendation queries; not required for mobile to query Firestore directly."
-  },
+  "fields": {
     "barcode": {
       "type": "string",
       "required": true,
@@ -61,6 +55,11 @@
       "items": "string",
       "required": false
     },
+    "category": {
+      "type": "string",
+      "required": false,
+      "description": "Primary category (optional denormalised field; may mirror first categories[] entry)"
+    },
     "labels": {
       "type": "array",
       "items": "string",
@@ -79,6 +78,11 @@
         "energy-kcal_100g", "fat_100g", "carbohydrates_100g",
         "proteins_100g", "salt_100g"
       ]
+    },
+    "nutriments_normalized": {
+      "type": "object",
+      "required": false,
+      "description": "Optional stored per-100g-style block; API may also derive from nutriments"
     },
     "nutriscoreGrade": {
       "type": "string",
@@ -105,51 +109,6 @@
       "type": "string",
       "required": false
     },
-    "tags": {
-      "type": "object",
-      "required": false,
-      "description": "Product tags for categorization",
-      "properties": {
-        "final": { "type": "array", "items": "string" },
-        "removed": { "type": "array", "items": "string" }
-      }
-    },
-    "metadata": {
-      "type": "object",
-      "required": false,
-      "description": "Enrichment tracking",
-      "properties": {
-        "enrichmentSource": { "type": "string", "enum": ["backend", "ml", "manual", "openfoodfacts"] },
-        "enrichmentTimestamp": { "type": "string" },
-        "dataQualityScore": { "type": "number" }
-      }
-    },
-    "enrichmentMetadata": {
-      "type": "object",
-      "required": false,
-      "description": "Recommendation enrichment",
-      "properties": {
-        "recommendationScore": { "type": "number" },
-        "reasonTags": { "type": "array", "items": "string" },
-        "similarityMetrics": { "type": "object" }
-      }
-    },
-    "dateAdded": {
-      "type": "string",
-      "required": false,
-      "description": "ISO timestamp when product was added"
-    },
-    "lastUpdated": {
-      "type": "string",
-      "required": false,
-      "description": "ISO timestamp when product was last updated"
-    },
-    "productJson": {
-      "type": "object",
-      "required": false,
-      "description": "Full serialized product for cart snapshots",
-      "additionalProperties": true
-    },
     "tracesFromIngredients": {
       "type": "string",
       "required": false
@@ -169,6 +128,50 @@
         "variants": { "type": "object" }
       }
     },
+    "tags": {
+      "type": "object",
+      "required": false,
+      "description": "Product tags: resolved {final, removed} and/or raw list input for pipelines",
+      "subfields": {
+        "final": { "type": "array", "items": "string" },
+        "removed": { "type": "array", "items": "string" }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "required": false,
+      "description": "Enrichment provenance / quality (general)",
+      "subfields": {
+        "enrichmentSource": { "type": "string" },
+        "enrichmentTimestamp": { "type": "string" },
+        "dataQualityScore": { "type": "number" }
+      }
+    },
+    "enrichmentMetadata": {
+      "type": "object",
+      "required": false,
+      "description": "Recommendation-facing metadata (lighter than full enrichment tree)",
+      "subfields": {
+        "recommendationScore": { "type": "number" },
+        "reasonTags": { "type": "array", "items": "string" },
+        "similarityMetrics": { "type": "object" }
+      }
+    },
+    "dateAdded": {
+      "type": "string",
+      "required": false,
+      "description": "ISO timestamp when product document was created"
+    },
+    "lastUpdated": {
+      "type": "string",
+      "required": false,
+      "description": "ISO timestamp when product document was last updated"
+    },
+    "productJson": {
+      "type": "object",
+      "required": false,
+      "description": "Optional cart snapshot blob (full serialised product); keep in sync with wire fields when used"
+    },
     "enrichment": {
       "type": "object",
       "required": false,
@@ -178,12 +181,13 @@
           "required_subfields": ["compositeScore", "scores"]
         }
       }
-    },
+    }
+  },
   "indexes": [
-    { "fields": ["categories", "allergens"], "description": "Diet/allergen filtering (sent on wire)" },
-    { "fields": ["nutriscoreGrade"], "description": "Quick grade filter (sent on wire)" },
-    { "fields": ["brand", "nutriscoreGrade"], "description": "Brand + quality combo (sent on wire)" },
-    { "fields": ["enrichment.nutrition.compositeScore"], "direction": "DESCENDING", "description": "NOTE: enrichment object is DB-only (not sent on wire); reserved for server-side enrichment service" },
-    { "fields": ["tags"], "description": "NOTE: tags object is DB-only (not sent on wire); used for product-level tracking, not recommendations" }
+    { "fields": ["categories", "allergens"], "description": "Diet/allergen filtering" },
+    { "fields": ["enrichment.nutrition.compositeScore"], "direction": "DESCENDING", "description": "Nutrition quality sorting" },
+    { "fields": ["nutriscoreGrade"], "description": "Quick grade filter" },
+    { "fields": ["enrichment.tags"], "description": "Array-contains for diet/lifestyle tags" },
+    { "fields": ["brand", "nutriscoreGrade"], "description": "Brand + quality combo" }
   ]
 }
