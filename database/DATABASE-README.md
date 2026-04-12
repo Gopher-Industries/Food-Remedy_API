@@ -1,4 +1,5 @@
 # 🧠 Food Remedy Database Documentation
+> **DB015 Documentation:** For full schema, data flow, cart/recommendation dependencies and deployment checklist, see [`Documents/Database/2026 Trimester 1/DB015-Schema-DataFlow-Documentation.md`](Documents/Database/2026 Trimester 1/DB015-Schema-DataFlow-Documentation.md)
 
 This document is the **single place** for how the **database/** folder is organised, how data is processed (scrape → clean → enrich → seed), and where to find scripts and docs. No functionality is changed here—only documentation.
 
@@ -41,7 +42,7 @@ So: **raw data in → scripts in these folders turn it into clean, structured da
 ```
 Scraping  →  Clean  →  Enrich  →  Seed
    ↓           ↓          ↓         ↓
-scraping/  clean data/  pipeline/  seeding/
+scraping/  clean_data/  pipeline/  seeding/
 ```
 
 - **Scraping:** Get Australian products from Open Food Facts.
@@ -58,7 +59,7 @@ The **pipeline/** folder runs clean → enrich → seed in one go using `pipelin
 | Folder | What it does | Key files |
 |--------|--------------|-----------|
 | **scraping/** | Gets raw Australian products from Open Food Facts. | `OpenFoodFacts-DataScrape.py` |
-| **clean data/** | Cleans and normalises product data (one canonical cleaning folder). | `cleanProductData.py`, `constants.py`, `normalization/`, `IOExamples/` |
+| **clean_data/** | Cleans and normalises product data (one canonical cleaning folder). | `cleanProductData.py`, `constants.py`, `normalization/`, `IOExamples/` |
 | **pipeline/** | Runs clean → enrich → seed from config. | `run_pipeline.py`, `pipeline.config.json`, `stages/`, `modules/` |
 | **seeding/** | Uploads product JSON to Firestore in batches. | `seed_firestore.py`, `seed_engine.py`, `seed_products.py`, `schema_definition.json`, product chunk files |
 | **Allergens/** | Allergen reference data and detection. | `allergens_config.json`, `load_allergens.py`, `seed_allergens_to_db.py`, `test_allergens.py` |
@@ -86,7 +87,7 @@ The **pipeline/** folder runs clean → enrich → seed in one go using `pipelin
 
 ## 🧹 Cleaning
 
-**File:** `database/clean data/cleanProductData.py`
+**File:** `database/clean_data/cleanProductData.py`
 
 Prepares scraped data for ingestion: standardises, deduplicates, renames, and structures.
 
@@ -99,7 +100,7 @@ Prepares scraped data for ingestion: standardises, deduplicates, renames, and st
 7. **Schema refinement** — Drop unwanted columns, rename `code` → `barcode`, `brands` → `brand`, camelCase.
 8. **Save** — Export cleaned JSON for Firestore/pipeline.
 
-**Note:** `clean data/` (with a space) is the **only** cleaning folder. All cleaning scripts and examples live there.
+**Note:** `clean_data/` is the **only** cleaning folder. All cleaning scripts and examples live there.
 
 ---
 
@@ -154,15 +155,17 @@ Optional **Investigation** (e.g. `data_investigation/`) validates quality and ac
 | I want to… | Go to… |
 |------------|--------|
 | Get raw Australian products | `scraping/OpenFoodFacts-DataScrape.py` |
-| Clean raw data | `clean data/cleanProductData.py` and `clean data/normalization/` |
+| Clean raw data | `clean_data/cleanProductData.py` and `clean_data/normalization/` |
 | Run full flow (clean → enrich → seed) | `pipeline/run_pipeline.py` and `pipeline/pipeline.config.json` |
 | Upload products to Firestore | `seeding/` (e.g. `seed_firestore.py`, `seed_engine.py`) |
 | Work on allergens | `Allergens/` |
 | Run or improve cleaning QA | `QA/DB006_QA_cleaning.py` |
 | Validate schema/product shape | `Validation/`, `seeding/schema_definition.json` |
-| Explore data or examples | `data_investigation/`, `clean data/IOExamples/` |
+| Explore data or examples | `data_investigation/`, `clean_data/IOExamples/` |
 | Change pipeline logging | `logging_system/logger.py` |
 
 ---
 
-**Summary:** One cleaning folder (`clean data/`). One doc (this file). Flow: Scraping → Clean → Enrich → Seed. New team members can use this README to find scraping scripts, cleaning scripts, enrichment (pipeline), seeding scripts, and QA/Reports.
+**Summary:** One cleaning folder (`clean_data/`). One doc (this file). Flow: Scraping → Clean → Enrich → Seed. New team members can use this README to find scraping scripts, cleaning scripts, enrichment (pipeline), seeding scripts, and QA/Reports.
+
+**Trimester 2026 T1 — full local workflow (mobile app, captcha, env vars):** [`Documents/Guides/General/t1-2026-workflow-and-local-development.md`](../Documents/Guides/General/t1-2026-workflow-and-local-development.md)

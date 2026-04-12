@@ -76,7 +76,7 @@ The “database” work in this repo is about **product data**: getting Australi
    - Saves as something like `openfoodfacts-australia.jsonl`.
 
 2. **Cleaning**  
-   - Script: `database/clean data/cleanProductData.py` (and there is also `database/clean_data/` with normalisation).  
+   - Script: `database/clean_data/cleanProductData.py` (canonical cleaning folder for T1 2026 onward).  
    - Removes duplicates, fixes names and numbers, keeps important nutrients, cleans tags, builds image URLs, renames fields (e.g. `code` → `barcode`).  
    - Output: cleaned JSON ready for the next step.
 
@@ -267,7 +267,7 @@ This is for **preparing and seeding product data** (scraping, cleaning, enrichin
    - Output is a `.jsonl` file (e.g. `openfoodfacts-australia.jsonl`).
 
 3. **Cleaning**:
-   - Run the cleaning script (e.g. `database/clean data/cleanProductData.py`) with the scraped file as input.  
+   - Run the cleaning script (e.g. `database/clean_data/cleanProductData.py`) with the scraped file as input.  
    - Output is cleaned JSON (often then split into chunks like `products_0k_10k.json` in `database/seeding/`).
 
 4. **Pipeline (clean → enrich → seed)**:
@@ -294,8 +294,7 @@ FoodRemedy/
 ├── .github/              # GitHub templates
 ├── database/             # Scraping, cleaning, pipeline, seeding, QA, allergens
 │   ├── scraping/         # Open Food Facts Australian data
-│   ├── clean data/       # cleanProductData.py and normalisation
-│   ├── clean_data/       # Alternative clean + normalisation
+│   ├── clean_data/       # cleanProductData.py, constants, normalisation (single canonical path)
 │   ├── pipeline/         # run_pipeline.py, clean/enrich/seed stages, config
 │   ├── seeding/         # Seed scripts and product JSON chunks
 │   ├── Allergens/       # Allergen lists and DB seeding

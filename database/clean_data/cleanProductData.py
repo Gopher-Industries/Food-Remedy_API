@@ -18,8 +18,8 @@ from utils.detect_allergens import detect_allergens
 # === Configuration constants ===
 # Edit these paths as needed
 # - Find Examples of Input and Output in IOExamples Folder
-INPUT_FILE = "database/clean data/IOExamples/rawSample.jsonl"
-OUTPUT_FILE = "database/clean data/cleanSample.json"
+INPUT_FILE = "database/clean_data/IOExamples/rawSample.jsonl"
+OUTPUT_FILE = "database/clean_data/cleanSample.json"
 
 NUTRIENTS_TO_KEEP = {
     # Energy

@@ -18,7 +18,6 @@ def compute_product_health_score(product: Dict[str, Any]) -> Dict[str, Any]:
 
     return compute_health_score_for_record(product)
 
-
 def import_module_from_path(path: str) -> types.ModuleType:
     spec = importlib.util.spec_from_file_location("_enrich_module", path)
     module = importlib.util.module_from_spec(spec)
