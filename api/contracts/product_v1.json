@@ -3,14 +3,6 @@
   "title": "ProductDetailV1",
   "type": "object",
   "required": ["barcode", "productName"],
-  "description": "API contract for product detail responses. Implements three-layer architecture (DB011-aligned).",
-  "_design_notes": {
-    "scope": "Wire format sent from backend API to mobile",
-    "what_is_sent": "Core product fields, category + categories, nutriments + nutriments_normalized, images, tags {final, removed} (resolved/passthrough from mapper), metadata, enrichmentMetadata, dateAdded, lastUpdated when the backend attaches them.",
-    "what_is_not_sent": "productJson (cart snapshot blob) and the full enrichment scoring object — too large for typical product-detail payloads; mobile reconstructs cart JSON from wire fields. Server still uses enrichment.* in DB for ranking/indexes.",
-    "metadata_vs_enrichmentMetadata": "metadata tracks enrichment source/quality (general purpose); enrichmentMetadata tracks recommendation scoring (rec-specific). Split intentionally to keep concerns separate.",
-    "why_indexed_fields_missing": "enrichment.nutrition.* is not on wire; Firestore indexes on enrichment/tags are for backend pipelines, not for mobile-driven queries."
-  },
   "properties": {
     "barcode": { "type": "string", "description": "GTIN / barcode" },
     "brand": { "type": ["string", "null"] },
@@ -72,31 +64,19 @@
         "removed": { "type": "array", "items": { "type": "string" }, "default": [] }
       }
     },
-    "dateAdded": {
-      "type": ["string", "null"]
-    },
-    "lastUpdated": {
-      "type": ["string", "null"]
-    },
-    "metadata": {
-      "type": "object",
-      "properties": {
-        "enrichmentSource": { "type": "string" },
-        "enrichmentTimestamp": { "type": ["string", "null"] },
-        "dataQualityScore": { "type": ["number", "null"] }
-      },
-      "additionalProperties": true
-    },
+    "metadata": { "type": "object", "additionalProperties": true },
     "enrichmentMetadata": {
       "type": "object",
+      "description": "Recommendation scoring/metadata (subset of server enrichment; optional on responses)",
       "properties": {
         "recommendationScore": { "type": "number" },
         "reasonTags": { "type": "array", "items": { "type": "string" } },
-        "similarityMetrics": { "type": "object" }
+        "similarityMetrics": { "type": "object", "additionalProperties": true }
       },
       "additionalProperties": true
-    }
-    
+    },
+    "dateAdded": { "type": ["string", "null"] },
+    "lastUpdated": { "type": ["string", "null"] }
   },
   "additionalProperties": false
 }
