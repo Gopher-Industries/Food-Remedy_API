@@ -1,5 +1,5 @@
 """
-DB021 / DB014 - dataset structure validation.
+DB021 / DB014 — dataset structure validation.
 
 - Basic checks: required columns for pipeline use (legacy + stricter optional mode).
 - Full checks: walk ``schema_definition.json`` for types, enums, arrays, nested objects.
