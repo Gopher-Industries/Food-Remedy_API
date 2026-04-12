@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Any, Dict, List
 import logging
 
 from database.clean_data.normalization.NutrientUnitNormalisation import normalize_nutriments_dict
@@ -20,6 +20,46 @@ def _safe_list(val):
     if isinstance(val, list):
         return val
     return [val]
+
+
+def _normalize_tag_name_list(items: Any) -> List[str]:
+    """Coerce tag entries to string names (strings or {'tag': ...} dicts)."""
+    if not items:
+        return []
+    if not isinstance(items, list):
+        items = _safe_list(items)
+    out: List[str] = []
+    for x in items:
+        if isinstance(x, str) and x:
+            out.append(x)
+        elif isinstance(x, dict):
+            t = x.get("tag")
+            if t:
+                out.append(str(t))
+    return out
+
+
+def _tags_to_wire(product: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Build ProductDetail tags {final, removed}.
+    Accepts DB shape {final, removed} (strings or tag dicts) or a raw list for resolve_conflicts.
+    """
+    raw = product.get("tags")
+    if raw is None:
+        return {"final": [], "removed": []}
+    if isinstance(raw, dict) and set(raw.keys()) & {"final", "removed"}:
+        return {
+            "final": _normalize_tag_name_list(raw.get("final")),
+            "removed": _normalize_tag_name_list(raw.get("removed")),
+        }
+    if isinstance(raw, list):
+        if not raw:
+            return {"final": [], "removed": []}
+        resolved = resolve_conflicts(raw)
+        final = [t.get("tag") for t in resolved.get("final_tags", []) if t and t.get("tag")]
+        removed = [t.get("tag") for t in resolved.get("removed", []) if t and t.get("tag")]
+        return {"final": final, "removed": removed}
+    return {"final": [], "removed": []}
 
 
 def map_enriched_to_product_detail(product: Dict[str, Any]) -> Dict[str, Any]:
@@ -83,18 +123,17 @@ def map_enriched_to_product_detail(product: Dict[str, Any]) -> Dict[str, Any]:
         "variants": dict(images.get("variants") or {}),
     }
 
-    # Tags: use resolver if tags present; otherwise empty lists
-    raw_tags = product.get("tags") or []
-    if raw_tags:
-        resolved = resolve_conflicts(raw_tags)
-        final = [t.get("tag") for t in resolved.get("final_tags", [])]
-        removed = [t.get("tag") for t in resolved.get("removed", [])]
-    else:
-        final = []
-        removed = []
-    out["tags"] = {"final": final, "removed": removed}
+    out["tags"] = _tags_to_wire(product)
 
     # Metadata (always present, can be extended)
     out["metadata"] = dict(product.get("metadata") or {"source": "local-enriched"})
+
+    em = product.get("enrichmentMetadata")
+    if isinstance(em, dict) and em:
+        out["enrichmentMetadata"] = em
+    if product.get("dateAdded") is not None:
+        out["dateAdded"] = product.get("dateAdded")
+    if product.get("lastUpdated") is not None:
+        out["lastUpdated"] = product.get("lastUpdated")
 
     return out
