@@ -4,7 +4,7 @@ import json
 import os
 
 
-def default_schema_path() -> str:
+def default_schema_path():
     return os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         "seeding",
@@ -12,7 +12,7 @@ def default_schema_path() -> str:
     )
 
 
-def load_schema(schema_path: str | None = None) -> dict:
+def load_schema(schema_path=None):
     path = schema_path or default_schema_path()
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
