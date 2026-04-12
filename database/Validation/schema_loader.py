@@ -1,15 +1,18 @@
+"""Load Firestore product schema JSON for DB014 / DB021 validation."""
+
 import json
 import os
 
-def load_schema(schema_path=None):
-    if schema_path is None:
-        schema_path = os.path.join(
-            "database", "seeding", "schema_definition.json"
-        )
 
-    try:
-        with open(schema_path, "r") as file:
-            schema = json.load(file)
-        return schema
-    except Exception as e:
-        raise Exception(f"Error loading schema: {e}")
+def default_schema_path() -> str:
+    return os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "seeding",
+        "schema_definition.json",
+    )
+
+
+def load_schema(schema_path: str | None = None) -> dict:
+    path = schema_path or default_schema_path()
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
