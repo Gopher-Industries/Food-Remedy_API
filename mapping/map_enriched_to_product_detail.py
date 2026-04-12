@@ -23,7 +23,7 @@ def _safe_list(val):
 
 
 def _normalize_tag_name_list(items: Any) -> List[str]:
-    """Coerce tag entries to string names (plain strings or {'tag': ...} dicts)."""
+    """Coerce tag entries to string names (strings or {'tag': ...} dicts)."""
     if not items:
         return []
     if not isinstance(items, list):
@@ -41,10 +41,8 @@ def _normalize_tag_name_list(items: Any) -> List[str]:
 
 def _tags_to_wire(product: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Build API tags {final, removed}.
-
-    - List input: same behaviour as main — pass through resolve_conflicts.
-    - Dict with final/removed: normalise entries (strings or tag dicts), no resolver.
+    Build ProductDetail tags {final, removed}.
+    Accepts DB shape {final, removed} (strings or tag dicts) or a raw list for resolve_conflicts.
     """
     raw = product.get("tags")
     if raw is None:
@@ -54,13 +52,12 @@ def _tags_to_wire(product: Dict[str, Any]) -> Dict[str, Any]:
             "final": _normalize_tag_name_list(raw.get("final")),
             "removed": _normalize_tag_name_list(raw.get("removed")),
         }
-    # Same as main: only lists go through resolve_conflicts
     if isinstance(raw, list):
         if not raw:
             return {"final": [], "removed": []}
         resolved = resolve_conflicts(raw)
-        final = [t.get("tag") for t in resolved.get("final_tags", [])]
-        removed = [t.get("tag") for t in resolved.get("removed", [])]
+        final = [t.get("tag") for t in resolved.get("final_tags", []) if t and t.get("tag")]
+        removed = [t.get("tag") for t in resolved.get("removed", []) if t and t.get("tag")]
         return {"final": final, "removed": removed}
     return {"final": [], "removed": []}
 
@@ -130,5 +127,13 @@ def map_enriched_to_product_detail(product: Dict[str, Any]) -> Dict[str, Any]:
 
     # Metadata (always present, can be extended)
     out["metadata"] = dict(product.get("metadata") or {"source": "local-enriched"})
+
+    em = product.get("enrichmentMetadata")
+    if isinstance(em, dict) and em:
+        out["enrichmentMetadata"] = em
+    if product.get("dateAdded") is not None:
+        out["dateAdded"] = product.get("dateAdded")
+    if product.get("lastUpdated") is not None:
+        out["lastUpdated"] = product.get("lastUpdated")
 
     return out
