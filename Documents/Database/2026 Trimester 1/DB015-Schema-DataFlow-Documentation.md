@@ -2,7 +2,7 @@
 
 **Ticket:** DB015  
 **Author:** Vivan  
-**Last Updated:** March 2026  
+**Last Updated:** April 2026  
 **Trimester:** 2026/T1
 
 ---
@@ -16,6 +16,7 @@
 - [USERS, PROFILES & SHOPPING_LISTS](#users-profiles--shopping_lists)
 - [Deployment Checklist](#deployment-checklist)
 - [Data Handover Notes](#data-handover-notes)
+- [Related T1 2026 documentation](#related-t1-2026-documentation)
 
 ---
 
@@ -82,7 +83,7 @@ Open Food Facts (raw)
         ↓
   Scraping (scraping/)
         ↓
-  Cleaning (clean data/cleanProductData.py)
+  Cleaning (clean_data/cleanProductData.py)
   - Deduplication
   - Text normalisation
   - Nutrient unit normalisation (DB003)
@@ -204,3 +205,13 @@ SHOPPING_LISTS can reference products
 - **Pipeline config:** `database/pipeline/pipeline.config.json` — update input/output paths before running
 - **Firestore limits:** Max 20k writes/day on free plan — seed in chunks and spread over multiple days if needed
 - **Schema changes:** Any changes to product schema must be updated in `seeding/schema_definition.json` and in this documentation file
+
+---
+
+## Related T1 2026 documentation
+
+| Document | Purpose |
+|----------|---------|
+| [T1 2026 workflow and local development](../../Guides/General/t1-2026-workflow-and-local-development.md) | How to run the app locally, captcha and environment variables, database folder overview, and links to other guides |
+| [Database progress and handover alignment](DATABASE_PROGRESS_AND_HANDOVER_ALIGNMENT.md) | How database work in this repo compares to the prior repo and the Trimester 3 handover |
+| [Database README](../../../database/DATABASE-README.md) | Folder-by-folder map of `database/` and quick reference table |
