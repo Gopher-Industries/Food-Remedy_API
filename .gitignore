@@ -37,6 +37,10 @@ build/
 # Firebase emulator state
 .firebase/
 
+# DB014 / DB021 generated validation report (run locally or in CI artifact)
+database/Validation/schema_validation_report.json
+
+
 # Checkpoint files (for Firestore seeding engine)
 *.checkpoint.json
 checkpoints/
