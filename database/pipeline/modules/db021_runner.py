@@ -58,7 +58,17 @@ class DB021Runner:
         
         products, removed_barcodes, barcode_details = self.validator.clean_barcodes(products)
         barcode_check = self.validator.validate_barcodes(products)
-        
+
+        # DB014: full bundle (set DB014_WRITE_REPORT=1 to write schema_validation_report.json)
+        _write = os.environ.get("DB014_WRITE_REPORT", "0") == "1"
+        validation_bundle = self.validator.run_all_validations(
+            products, write_report=_write, report_path=None
+        )
+
+        schema_strict_ok = validation_bundle["basic_schema"] and validation_bundle[
+            "schema_validation"
+        ]["valid"]
+
         results = {
             "total_records": len(products),
             "original_records": original_count,
@@ -66,9 +76,13 @@ class DB021Runner:
             "barcode_details": barcode_details,
             "barcode_check": barcode_check,
             "schema_valid": self.validator.validate_schema(products),
+            "schema_basic_valid": validation_bundle["basic_schema"],
+            "schema_full_valid": validation_bundle["schema_validation"]["valid"],
+            "schema_strict_valid": schema_strict_ok,
             "nutrient_check": self.validator.validate_nutrients(products),
             "allergen_check": self.validator.validate_allergens(products),
             "accessibility": self.validator.validate_access(products),
+            "db014_validation": validation_bundle,
         }
 
         duration = round(time.time() - start, 2)
