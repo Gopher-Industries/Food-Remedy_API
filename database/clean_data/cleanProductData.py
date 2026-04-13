@@ -695,6 +695,12 @@ def main(input_path: str, output_path: str):
         df['ingredientsText'] = df['ingredientsText'].apply(clean_ingredients_text)
     if 'ingredients_tags' in df.columns:
         df['ingredients_tags'] = df['ingredients_tags'].apply(clean_ingredients_list)    
+        
+    # DB003: Harmonise raw category tags into a single canonical primary category.
+    df = harmonise_categories_df(df, source_col='categories_tags')
+
+    # Ensure list assignments to allergensDetected are stored as object dtype.
+    df["allergensDetected"] = pd.Series([[] for _ in range(len(df))], dtype="object")
 
     for idx, record in df.iterrows():
         # String fields
