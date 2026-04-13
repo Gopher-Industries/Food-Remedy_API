@@ -1,3 +1,4 @@
+const BE011_TEST = true;
 const NUTRITION_LIMITS = {
   sugarHighG: 20
 };
