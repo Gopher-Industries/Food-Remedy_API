@@ -14,6 +14,7 @@ from utils.missing_value_utils import (
 )
 
 from utils.detect_allergens import detect_allergens  
+from database.clean_data.normalization.CategoryHarmonisation import harmonise_categories_df
 
 # === Configuration constants ===
 # Edit these paths as needed
