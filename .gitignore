@@ -50,3 +50,19 @@ dataconnect/_dataconnect.schema/
 dataconnect/example/
 dataconnect/seed_data.gql
 data/
+
+
+# =========================
+# DB007 CLEANUP
+# =========================
+
+# Ignore pipeline outputs
+database/QA/
+database/output/
+
+# Ignore pipeline runtime files
+database/pipeline/pipeline_checkpoints.json
+database/pipeline/pipeline_run_metadata.json
+
+# Ignore logs
+*.log

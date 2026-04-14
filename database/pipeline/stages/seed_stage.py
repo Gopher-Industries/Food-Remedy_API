@@ -1,6 +1,9 @@
 import importlib.util
 import os
 import types
+import json
+
+from database.pipeline.modules.missing_field_handler import is_product_usable
 
 
 def import_module_from_path(path: str) -> types.ModuleType:
@@ -10,15 +13,66 @@ def import_module_from_path(path: str) -> types.ModuleType:
     return module
 
 
-def run_seed_stage(input_path: str, output_path: str, config=None) -> dict:
+def save_rejected_products(rejected_products):
+    os.makedirs("database/QA", exist_ok=True)
+
+    # Structured QA output (clear reasons)
+    qa_output = []
+    for p in rejected_products:
+        qa_output.append({
+            "code": p.get("code"),
+            "status": p.get("_status"),
+            "missing": p.get("_missing")
+        })
+
+    with open("database/QA/errors.json", "w", encoding="utf-8") as f:
+        json.dump(qa_output, f, indent=2)
+
+
+def run_seed_stage(input_path: str, config: dict) -> dict:
     """
     Run the seeding module/script.
-
-    If `script_path` is provided in config, it will be used.
-    Otherwise defaults to: database/seeding/seed_products.py
+    Filters incomplete products using DB007.
     """
 
-    # FIXED: correct repo root (FoodRemedy)
+    # -----------------------------
+    # Load enriched products
+    # -----------------------------
+    with open(input_path, "r", encoding="utf-8") as f:
+        products = json.load(f)
+
+    valid_products = []
+    rejected_products = []
+
+    # -----------------------------
+    # Apply DB007 filtering
+    # -----------------------------
+    for product in products:
+        if is_product_usable(product):
+            valid_products.append(product)
+        else:
+            rejected_products.append(product)
+
+    # -----------------------------
+    # Save rejected products for QA
+    # -----------------------------
+    save_rejected_products(rejected_products)
+
+    print(f"[DB007] Valid products: {len(valid_products)}")
+    print(f"[DB007] Rejected products: {len(rejected_products)}")
+
+    # -----------------------------
+    # Save ONLY valid products (important for seeding)
+    # -----------------------------
+    filtered_input_path = "database/seeding/filtered_products.json"
+    os.makedirs("database/seeding", exist_ok=True)
+
+    with open(filtered_input_path, "w", encoding="utf-8") as f:
+        json.dump(valid_products, f, indent=2)
+
+    # -----------------------------
+    # Run original seed script
+    # -----------------------------
     repo_root = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "..", "..", "..")
     )
@@ -32,14 +86,18 @@ def run_seed_stage(input_path: str, output_path: str, config=None) -> dict:
 
     module = import_module_from_path(seed_script)
 
-    # Prefer seed_products()
+    # -----------------------------
+    # SAFE FUNCTION CALL (FINAL FIX)
+    # -----------------------------
     if hasattr(module, "seed_products"):
-        module.seed_products()
+        try:
+            module.seed_products(filtered_input_path)  # try with input
+        except TypeError:
+            module.seed_products()  # fallback if no args
 
-    # Fallback to main()
     elif hasattr(module, "main"):
         try:
-            module.main(input_path)
+            module.main(filtered_input_path)
         except TypeError:
             module.main()
 
@@ -48,8 +106,11 @@ def run_seed_stage(input_path: str, output_path: str, config=None) -> dict:
             "Seed script exposes neither seed_products() nor main()"
         )
 
+    # -----------------------------
+    # Return pipeline result
+    # -----------------------------
     return {
-        "processed": None,
-        "failures": None,
-        "output": input_path
+        "processed": len(valid_products),
+        "failures": len(rejected_products),
+        "output": filtered_input_path
     }

@@ -1,61 +1,116 @@
+import importlib.util
 import os
-import subprocess
-import shutil
+import types
 import json
-from typing import Optional
+
+from database.pipeline.modules.missing_field_handler import is_product_usable
 
 
-def run(input_path: str, output_path: str, config: dict):
-    """Run the TypeScript enrichment script as a subprocess.
+def import_module_from_path(path: str) -> types.ModuleType:
+    spec = importlib.util.spec_from_file_location("_seed_module", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
-    Expects the TS script `enrichProducts.ts` to accept two args: <input.json> <output.json>
 
-    The config may include `ts_path` (path to the .ts file). If absent, the wrapper
-    will look for `mobile-app/services/nutrition/enrichProducts.ts` under the repo root.
+def save_rejected_products(rejected_products):
+    os.makedirs("database/QA", exist_ok=True)
+
+    # Structured QA output (clear reasons)
+    qa_output = []
+    for p in rejected_products:
+        qa_output.append({
+            "code": p.get("code"),
+            "status": p.get("_status"),
+            "missing": p.get("_missing")
+        })
+
+    with open("database/QA/errors.json", "w", encoding="utf-8") as f:
+        json.dump(qa_output, f, indent=2)
+
+
+def run_seed_stage(input_path: str, config: dict) -> dict:
     """
-    # compute repo root (modules -> pipeline -> database -> repo root)
-    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+    Run the seeding module/script.
+    Filters incomplete products using DB007.
+    """
 
-    ts_path = None
-    if config and isinstance(config, dict):
-        ts_path = config.get("ts_path")
-    if not ts_path:
-        ts_path = os.path.join(repo_root, "mobile-app", "services", "nutrition", "enrichProducts.ts")
-    if not os.path.isabs(ts_path):
-        ts_path = os.path.join(repo_root, ts_path)
+    # -----------------------------
+    # Load enriched products
+    # -----------------------------
+    with open(input_path, "r", encoding="utf-8") as f:
+        products = json.load(f)
 
-    if not os.path.exists(ts_path):
-        raise FileNotFoundError(f"TypeScript enrichment script not found: {ts_path}")
+    valid_products = []
+    rejected_products = []
 
-    # Respect dry-run
-    dry = False
-    if config and isinstance(config, dict):
-        dry = bool(config.get("dry_run"))
-    if dry:
-        print(f"DRY-RUN: skipping TypeScript enrichment subprocess for {ts_path}")
-        return {"processed": None, "failures": None, "output": None, "module": os.path.basename(__file__)}
+    # -----------------------------
+    # Apply DB007 filtering
+    # -----------------------------
+    for product in products:
+        if is_product_usable(product):
+            valid_products.append(product)
+        else:
+            rejected_products.append(product)
 
-    # Ensure output directory exists
-    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+    # -----------------------------
+    # Save rejected products for QA
+    # -----------------------------
+    save_rejected_products(rejected_products)
 
-    # Prefer npx ts-node if available; fall back to node if a .js build exists
-    npx = shutil.which("npx")
-    node = shutil.which("node")
+    print(f"[DB007] Valid products: {len(valid_products)}")
+    print(f"[DB007] Rejected products: {len(rejected_products)}")
 
-    # If a compiled .js sibling exists, prefer running node on it
-    js_candidate = os.path.splitext(ts_path)[0] + ".js"
+    # -----------------------------
+    # Save ONLY valid products (important for seeding)
+    # -----------------------------
+    filtered_input_path = "database/seeding/filtered_products.json"
+    os.makedirs("database/seeding", exist_ok=True)
 
-    if os.path.exists(js_candidate) and node:
-        cmd = [node, js_candidate, input_path, output_path]
-    elif npx:
-        cmd = [npx, "ts-node", ts_path, input_path, output_path]
+    with open(filtered_input_path, "w", encoding="utf-8") as f:
+        json.dump(valid_products, f, indent=2)
+
+    # -----------------------------
+    # Run original seed script
+    # -----------------------------
+    repo_root = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "..")
+    )
+
+    seed_script = config.get("script_path") or os.path.join(
+        repo_root, "database", "seeding", "seed_products.py"
+    )
+
+    if not os.path.exists(seed_script):
+        raise FileNotFoundError(f"Seed script not found: {seed_script}")
+
+    module = import_module_from_path(seed_script)
+
+    # -----------------------------
+    # SAFE FUNCTION CALL (FINAL FIX)
+    # -----------------------------
+    if hasattr(module, "seed_products"):
+        try:
+            module.seed_products(filtered_input_path)  # try with input
+        except TypeError:
+            module.seed_products()  # fallback if no args
+
+    elif hasattr(module, "main"):
+        try:
+            module.main(filtered_input_path)
+        except TypeError:
+            module.main()
+
     else:
-        raise RuntimeError("Neither 'npx' nor a compiled JS file is available to run the TypeScript enrich script")
+        raise RuntimeError(
+            "Seed script exposes neither seed_products() nor main()"
+        )
 
-    try:
-        subprocess.run(cmd, check=True)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Enrichment subprocess failed: {e}")
-
-    # Return a minimal result dict expected by the pipeline
-    return {"processed": None, "failures": None, "output": output_path, "module": os.path.basename(__file__)}
+    # -----------------------------
+    # Return pipeline result
+    # -----------------------------
+    return {
+        "processed": len(valid_products),
+        "failures": len(rejected_products),
+        "output": filtered_input_path
+    }
