@@ -7,7 +7,7 @@ CRITICAL_FIELDS = [
     "code",
     "product_name",
     "ingredients_text",
-    "categories"
+    "categories_tags"
 ]
 
 OPTIONAL_FIELDS = [
@@ -38,9 +38,14 @@ def handle_missing_fields(product: dict) -> dict:
 
     # Add metadata
     product["_missing"] = {
-        "critical": missing_critical,
-        "optional": missing_optional
-    }
+    "critical": missing_critical,
+    "optional": missing_optional,
+    "reason": (
+        "Missing critical fields: " + ", ".join(missing_critical)
+        if missing_critical
+        else "Only optional fields missing"
+    )
+}
 
     # Add status
     if missing_critical:

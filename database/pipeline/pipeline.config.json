@@ -32,8 +32,8 @@
       ]
     },
     "seed": {
-      "enabled": false,
-      "input": "database/seeding/products_enriched.json"
+      "enabled": true,
+      "input": "database/seeding/validated_enriched.json"
     }
   }
 }

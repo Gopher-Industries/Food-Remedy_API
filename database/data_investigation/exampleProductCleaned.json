@@ -14,7 +14,7 @@
     "categories_tags": "[\"en:plant-based-foods-and-beverages\", \"en:plant-based-foods\", \"en:breakfasts\", \"en:cereals-and-potatoes\", \"en:cereals-and-their-products\", \"en:baby-foods\", \"en:breakfast-cereals\", \"en:mueslis\", \"en:cereals-for-babies\"]",
     "labels_tags": null,
     "nutrient_levels": "{}",
-    "nutriments": "{\"fiber_value\": 0, \"sodium_serving\": 0.000441, \"energy-kj_unit\": \"kJ\", \"nova-group\": 4, \"sodium_value\": 0.0021000000000000003, \"fat_value\": 0.6, \"vitamin-b6_100g\": 4.1e-05, \"vitamin-c\": 0.0027, \"energy-kj_value_computed\": 301, \"saturated-fat_100g\": 0, \"vitamin-b1_value\": 0.04, \"salt_unit\": \"g\", \"sodium\": 0.0021000000000000003, \"saturated-fat_unit\": \"g\", \"fiber_unit\": \"g\", \"energy-kj_100g\": 310, \"proteins_100g\": 1.9, \"salt_100g\": 0.00525, \"energy-kcal\": 74, \"nova-group_serving\": 4, \"energy_unit\": \"kJ\", \"salt_serving\": 0.0011, \"energy-kj_serving\": 65.1, \"energy-kcal_value_computed\": 71, \"vitamin-pp_value\": 0.41, \"energy-kcal_100g\": 74, \"vitamin-b6_serving\": 8.61e-06, \"sodium_unit\": \"g\", \"fat_serving\": 0.126, \"alcohol\": 0, \"vitamin-b6_unit\": \"mg\", \"proteins_value\": 1.9, \"saturated-fat_value\": 0, \"carbohydrates\": 14.5, \"fat_unit\": \"g\", \"sugars_100g\": 4.3, \"vitamin-c_value\": 2.7, \"energy\": 310, \"fruits-vegetables-nuts-estimate-from-ingredients_serving\": 16.6, \"alcohol_100g\": 0, \"proteins\": 1.9, \"alcohol_serving\": 0, \"fiber_100g\": 0, \"proteins_serving\": 0.399, \"saturated-fat_serving\": 0, \"energy_value\": 310, \"nova-group_100g\": 4, \"vitamin-b6\": 4.1e-05, \"energy_serving\": 65.1, \"proteins_unit\": \"g\", \"vitamin-b1_100g\": 4e-05, \"sugars\": 4.3, \"fruits-vegetables-nuts-estimate-from-ingredients_100g\": 16.6, \"vitamin-b6_value\": 0.041, \"energy-kcal_unit\": \"kcal\", \"vitamin-c_unit\": \"mg\", \"sugars_value\": 4.3, \"carbohydrates_serving\": 3.04, \"energy-kj\": 310, \"sugars_serving\": 0.903, \"vitamin-c_serving\": 0.000567, \"saturated-fat\": 0, \"fat_100g\": 0.6, \"vitamin-pp_100g\": 0.00041, \"carbohydrates_value\": 14.5, \"fruits-vegetables-legumes-estimate-from-ingredients_serving\": 16.6, \"energy_100g\": 310, \"energy-kcal_value\": 74, \"vitamin-c_100g\": 0.0027, \"vitamin-b1_serving\": 8.4e-06, \"alcohol_value\": 0, \"energy-kcal_serving\": 15.5, \"vitamin-b1_unit\": \"mg\", \"energy-kj_value\": 310, \"sodium_100g\": 0.0021000000000000003, \"fat\": 0.6, \"alcohol_unit\": \"% vol / *\", \"vitamin-pp\": 0.00041, \"sugars_unit\": \"g\", \"fiber\": 0, \"fiber_serving\": 0, \"vitamin-pp_unit\": \"mg\", \"fruits-vegetables-legumes-estimate-from-ingredients_100g\": 16.6, \"carbohydrates_unit\": \"g\", \"salt\": 0.00525, \"vitamin-pp_serving\": 8.61e-05, \"vitamin-b1\": 4e-05, \"salt_value\": 0.00525, \"carbohydrates_100g\": 14.5}",
+    "nutriments": "{\"energy_kj\": 310.0, \"energy_kcal\": 74.092, \"fat_g\": 0.6, \"saturated_fat_g\": 0.0, \"carbohydrates_g\": 14.5, \"sugars_g\": 4.3, \"proteins_g\": 1.9, \"salt_g\": 0.005, \"sodium_mg\": 2.1, \"fiber_g\": 0.0}",
     "nutriscore_grade": "not-applicable",
     "product_quantity": "200",
     "product_quantity_unit": "g",
@@ -27,15 +27,14 @@
     "quantity": null,
     "serving_size": null,
     "_missing": {
-      "critical": [
-        "categories"
-      ],
+      "critical": [],
       "optional": [
         "labels_tags",
         "quantity",
         "serving_size"
-      ]
+      ],
+      "reason": "Only optional fields missing"
     },
-    "_status": "incomplete"
+    "_status": "valid"
   }
 ]
