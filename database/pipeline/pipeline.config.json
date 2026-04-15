@@ -20,7 +20,7 @@
           "path": "pipeline/modules/enrich_ts_wrapper.py",
           "enabled": false,
           "config": {
-            "ts_path": "mobile-app/services/nutrition/enrichProducts.ts" 
+            "ts_path": "mobile-app/services/nutrition/enrichProducts.ts"
           }
         },
         {
