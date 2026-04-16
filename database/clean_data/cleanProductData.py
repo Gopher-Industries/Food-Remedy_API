@@ -392,6 +392,21 @@ CATEGORY_MAPPING = {
     ]
 }
 
+# DB017: Tag Harmonisation
+TAG_MAPPING = {
+    "vegan ": "vegan",
+    "Vegan": "vegan",
+    "vegan-friendly": "vegan",
+
+    "gluten free": "gluten-free",
+    "gluten-free": "gluten-free",
+
+    "low sugar": "low-sugar",
+    "low-sugar": "low-sugar",
+
+    "high protein": "high-protein",
+    "high-protein": "high-protein"
+}
 
 def clean_category_tags(tags) -> list[str]:
     """
@@ -435,6 +450,39 @@ def standardise_category(tags) -> str:
                     return standard_category
 
     return "other"
+def standardise_tags(tags) -> list[str]:
+    """
+    DB017: Standardise tags for Firestore filtering.
+    - remove lang prefixes
+    - lowercase
+    - trim
+    - apply synonym mapping
+    - deduplicate
+    """
+    cleaned = clean_category_tags(tags)
+    result = []
+
+    for tag in cleaned:
+        mapped = TAG_MAPPING.get(tag, tag)
+        if mapped not in result:
+            result.append(mapped)
+
+    return result
+def apply_conflict_rules(category: str, tags: list[str]) -> list[str]:
+    """
+    DB017: Remove conflicting tags based on category rules.
+    """
+    cleaned_tags = list(tags)
+
+    # Example: beverages should not contain bakery tag
+    if category == "beverages" and "bakery" in cleaned_tags:
+        cleaned_tags.remove("bakery")
+
+    # Example: seafood should not contain vegan
+    if category == "seafood" and "vegan" in cleaned_tags:
+        cleaned_tags.remove("vegan")
+
+    return cleaned_tags
 
 IMAGE_BASE = "https://images.openfoodfacts.org/images/products"
 # will only emit sizes that exist in the JSON
@@ -689,6 +737,17 @@ def main(input_path: str, output_path: str):
     df = clean_all_tag_fields(df)
     # DB004: apply category standardisation
     df["standard_category"] = df["categories_tags"].apply(standardise_category)
+    # DB017: Standardise labels/tags
+    df["search_tags"] = df["labels_tags"].apply(standardise_tags)
+
+    # DB017: Apply conflict rules
+    df["search_tags"] = df.apply(
+    lambda row: apply_conflict_rules(
+        row["standard_category"],
+        row["search_tags"]
+        ),
+    axis=1
+    )
     # DB002: Enhanced ingredient cleaning
     if 'ingredientsText' in df.columns:
         df['ingredientsText'] = df['ingredientsText'].apply(clean_ingredients_text)
