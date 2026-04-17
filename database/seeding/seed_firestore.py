@@ -6,6 +6,7 @@ import os
 import argparse
 from google.api_core import retry
 from typing import Any
+from database.pipeline.stages.seed_stage import run_seed_stage
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CHECKPOINT_FILE = os.path.join(BASE_DIR, "checkpoint.json")
@@ -45,6 +46,7 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
     rate limiting, retry, and checkpoint support.
     """
     start_time = time.time()
+    print(f"[seed_firestore.run] Received dry_run={config.get('dry_run')}, batch_size={config.get('batch_size')}, writes_per_second_limit={config.get('writes_per_second_limit')}")
     failures = 0
     total_written = 0
 
@@ -95,7 +97,7 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
                 last_second = time.time()
 
             doc_ref = db.collection("products").document(barcode)
-            batch.set(doc_ref, product)
+            batch.set(doc_ref, product, merge=True)
             writes_this_second += 1
             total_written += 1
 
@@ -143,15 +145,25 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
 # ==================== For seed_stage.py compatibility ====================
 def seed_products():
     """Entry point expected by run_seed_stage.py"""
-    # Call the pipeline-compatible run function with default settings
+    # Use the config passed from pipeline if available, otherwise default
     default_input = os.path.join(BASE_DIR, "products_enriched.json")
-    default_output = os.path.join(BASE_DIR, "seeded_products.json")
+    default_output = os.path.join(BASE_DIR, "seeded_products.json") # outdated early testing file not to be used
     
+    # default settings
     config = {
         "dry_run": False,
-        "batch_size": 500
+        "batch_size": 500,
+        "writes_per_second_limit": 400
     }
     
+    # If run_seed_stage passes a config dict, use it
+    if hasattr(run_seed_stage, 'config') and isinstance(run_seed_stage.config, dict):
+        config.update(run_seed_stage.config)
+    elif hasattr(seed_products, 'config') and isinstance(seed_products.config, dict):
+        config.update(seed_products.config)
+
+    print(f"[seed_products] Final config passed to run(): dry_run={config.get('dry_run')}, batch_size={config.get('batch_size')}, writes_per_second_limit={config.get('writes_per_second_limit')}")
+
     return run(default_input, default_output, config)
 
 
