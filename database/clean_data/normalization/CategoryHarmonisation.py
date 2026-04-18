@@ -1,4 +1,4 @@
-## Category Harmonisation
+## Category Harmonisation (DB027 — Product Category Harmonisation)
 
 from __future__ import annotations
 from dataclasses import dataclass
@@ -26,7 +26,7 @@ if not logger.handlers:
 @dataclass
 class CategoryConfig:
     """
-    Configuration for DB003 category harmonisation.
+    Configuration for DB027 category harmonisation (raw labels → unified taxonomy).
 
     Attributes
     ----------
@@ -106,6 +106,15 @@ RAW_TO_UNIFIED: Dict[str, str] = {
     "confectioneries": "Chocolates & Confectionery",
     "chocolates": "Chocolates & Confectionery",
     "chocolate-candies": "Chocolates & Confectionery",
+    "bonbons": "Chocolates & Confectionery",
+
+    # Extra OFF-style tags (formerly covered by legacy keyword matching)
+    "dairy-drinks": "Beverages",
+    "sweetened-beverages": "Soft Drinks",
+    "evaporated-milks": "Beverages",
+    "cocoa-and-hazelnuts-spreads": "Chocolate & Sweet Spreads",
+    "oilseed-purees": "Nut & Seed Spreads",
+    "legume-butters": "Nut & Seed Spreads",
 }
 
 # Allowed unified categories (used for validation)
@@ -139,26 +148,28 @@ DEFAULT_CONFIG = CategoryConfig(
 )
 
 # Priority-based selection for primary category. Higher number = higher priority.
+# Every ALLOWED_UNIFIED label has an explicit priority so specificity wins consistently.
 CATEGORY_PRIORITY: Dict[str, int] = {
-    # Assign priorities so more semantically meaningful categories are chosen as primary
     "Canned Tuna": 90,
-    "Canned Fish": 85,
+    "Canned Fish": 88,
+    "Seafood – Prawns": 86,
     "Seafood": 80,
-    "Meal Kits": 70,
-    "Pasta & Noodles": 60,
-    "Instant Noodles": 60,
-    "Iced Coffee Drinks": 55,
-    "Wholemeal Bread": 55,
-    "Beverages": 50,
+    "Canned Foods": 76,
+    "Meal Kits": 72,
+    "Instant Noodles": 65,
+    "Pasta & Noodles": 62,
+    "Iced Coffee Drinks": 58,
+    "Wholemeal Bread": 56,
+    "Beverages": 52,
     "Bread": 50,
-    "Soft Drinks": 45,
-    "Snacks": 40,
-    "Sweet Snacks": 35,
-    "Chocolates & Confectionery": 30,
-    "Spreads": 25,
-    "Nut & Seed Spreads": 25,
-    "Chocolate & Sweet Spreads": 25,
-    "Cooking Oils & Fats": 20,
+    "Soft Drinks": 48,
+    "Snacks": 42,
+    "Sweet Snacks": 38,
+    "Chocolates & Confectionery": 34,
+    "Spreads": 28,
+    "Nut & Seed Spreads": 28,
+    "Chocolate & Sweet Spreads": 28,
+    "Cooking Oils & Fats": 22,
     "Other": 0,
 }
 
@@ -168,6 +179,8 @@ CATEGORY_TO_PROFILE: Dict[str, str] = {
     "Soft Drinks": "Beverage",
     "Iced Coffee Drinks": "Beverage",
     "Seafood": "Meal",
+    "Seafood – Prawns": "Meal",
+    "Canned Foods": "Meal",
     "Canned Fish": "Meal",
     "Canned Tuna": "Meal",
     "Meal Kits": "Meal",
@@ -339,7 +352,7 @@ def harmonise_categories_df(
     config: CategoryConfig = DEFAULT_CONFIG,
 ) -> pd.DataFrame:  # Applies harmonisation to an entire DataFrame.
     if source_col not in df.columns:
-        logger.warning(f"Column '{source_col}' not found. DB003 skipped.")
+        logger.warning(f"Column '{source_col}' not found. DB027 harmonisation skipped.")
         return df
 
     logger.info(
@@ -386,3 +399,4 @@ def dump_unknowns(path: str):
         logger.info(f"Wrote unknown categories to {path}")
     except Exception as e:
         logger.warning(f"Failed to write unknown categories to {path}: {e}")
+
