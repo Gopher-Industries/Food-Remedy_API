@@ -24,6 +24,12 @@
           }
         },
         {
+          "name": "allergens",
+          "path": "pipeline/modules/allergens_enrich.py",
+          "enabled": true,
+          "config": {}
+        },
+        {
           "name": "db009_personalisation_tags",
           "path": "pipeline/modules/db009_personalisation_tags.py",
           "enabled": true,
@@ -33,7 +39,7 @@
     },
     "seed": {
       "enabled": true,
-      "input": "database/seeding/validated_enriched.json"
+      "input": "database/seeding/products_enriched.json"
     }
   }
 }
