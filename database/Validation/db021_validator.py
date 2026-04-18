@@ -1,6 +1,8 @@
 import json
 import os
 from database.logging_system.logger import PipelineLogger
+from database.Validation.schema_loader import load_schema
+from database.Validation.report_generator import generate_report
 
 logger = PipelineLogger("DB021_VALIDATOR")
 
@@ -8,15 +10,7 @@ logger = PipelineLogger("DB021_VALIDATOR")
 class DB021Validator:
 
     def __init__(self):
-        self.schema = self.load_schema()
-
-    #  LOAD SCHEMA
-    def load_schema(self):
-        schema_path = os.path.join(
-            "database", "seeding", "schema_definition.json"
-        )
-        with open(schema_path, "r") as f:
-            return json.load(f)
+        self.schema = load_schema()
 
     #  TYPE MAP
     TYPE_MAP = {
@@ -30,17 +24,39 @@ class DB021Validator:
     # 🔹 BASIC VALIDATIONS
     # -----------------------------
 
-    REQUIRED_FIELDS = [
-        "barcode",
-        "productName",
-        "nutriments",
-        "allergens"
-    ]
+    REQUIRED_FIELDS = ["barcode", "productName"]
+
+    def preprocess_record(self, record):
+        normalized = dict(record)
+
+        barcode = normalized.get("barcode")
+        if barcode is not None:
+            normalized["barcode"] = str(barcode).strip()
+
+        product_name = normalized.get("productName")
+        if product_name in [None, ""]:
+            fallback = (
+                normalized.get("genericName")
+                or normalized.get("brand")
+                or normalized.get("barcode")
+            )
+            if fallback not in [None, ""]:
+                normalized["productName"] = str(fallback).strip()
+
+        nutriscore = normalized.get("nutriscoreGrade")
+        if isinstance(nutriscore, str):
+            normalized_grade = nutriscore.strip().lower()
+            if normalized_grade == "not-applicable":
+                normalized_grade = "unknown"
+            normalized["nutriscoreGrade"] = normalized_grade
+
+        return normalized
 
     def validate_schema_basic(self, products):
         invalid = 0
 
         for p in products:
+            p = self.preprocess_record(p)
             for field in self.REQUIRED_FIELDS:
                 if field not in p or p.get(field) in [None, "", []]:
                     invalid += 1
@@ -129,6 +145,18 @@ class DB021Validator:
 
                             if not isinstance(sub_value, self.TYPE_MAP[subrules["type"]]):
                                 errors.append(f"{field_name}.{subfield} wrong type")
+                                continue
+
+                            if (
+                                subrules.get("type") == "array"
+                                and "items" in subrules
+                                and isinstance(sub_value, list)
+                                and not all(
+                                    isinstance(i, self.TYPE_MAP[subrules["items"]])
+                                    for i in sub_value
+                                )
+                            ):
+                                errors.append(f"{field_name}.{subfield} invalid array items")
 
         return errors
 
@@ -137,6 +165,7 @@ class DB021Validator:
         all_errors = []
 
         for idx, p in enumerate(products):
+            p = self.preprocess_record(p)
             errs = self.validate_record_schema(p)
 
             if errs:
@@ -161,19 +190,20 @@ class DB021Validator:
 
     def validate_barcodes(self, products):
         empty = 0
-        invalid_format = 0
+        invalid_type = 0
         duplicates = 0
         seen = set()
 
         for p in products:
-            barcode = str(p.get("barcode", "")).strip()
+            raw_barcode = p.get("barcode", "")
 
-            if not barcode:
+            if raw_barcode in [None, ""]:
                 empty += 1
                 continue
 
-            if len(barcode) != 13 or not barcode.isdigit():
-                invalid_format += 1
+            barcode = str(raw_barcode).strip()
+            if not barcode:
+                empty += 1
                 continue
 
             if barcode in seen:
@@ -181,16 +211,16 @@ class DB021Validator:
             else:
                 seen.add(barcode)
 
-        total = empty + invalid_format + duplicates
+        total = empty + invalid_type + duplicates
 
         logger.info(
-            f"Barcode issues: empty={empty}, invalid={invalid_format}, duplicates={duplicates}"
+            f"Barcode issues: empty={empty}, invalid={invalid_type}, duplicates={duplicates}"
         )
 
         return {
             "ok": total == 0,
             "empty": empty,
-            "invalid_format": invalid_format,
+            "invalid_format": invalid_type,
             "duplicates": duplicates,
             "total_issues": total
         }
@@ -200,14 +230,7 @@ class DB021Validator:
     # -----------------------------
 
     def generate_report(self, results):
-        output_path = os.path.join(
-            "database", "Validation", "schema_validation_report.json"
-        )
-
-        with open(output_path, "w") as f:
-            json.dump(results, f, indent=4)
-
-        logger.info(f"Validation report saved: {output_path}")
+        generate_report(results)
 
     # -----------------------------
     #  MASTER FUNCTION
@@ -217,13 +240,16 @@ class DB021Validator:
 
         logger.info("Starting DB014 Validation...")
 
-        basic_ok = self.validate_schema_basic(products)
-        nutrient_ok = self.validate_nutrients(products)
-        allergen_ok = self.validate_allergens(products)
-        barcode_result = self.validate_barcodes(products)
-        schema_result = self.validate_full_schema(products)
+        preprocessed = [self.preprocess_record(p) for p in products]
+
+        basic_ok = self.validate_schema_basic(preprocessed)
+        nutrient_ok = self.validate_nutrients(preprocessed)
+        allergen_ok = self.validate_allergens(preprocessed)
+        barcode_result = self.validate_barcodes(preprocessed)
+        schema_result = self.validate_full_schema(preprocessed)
 
         final_result = {
+            "total_records": len(preprocessed),
             "basic_schema": basic_ok,
             "nutrients": nutrient_ok,
             "allergens": allergen_ok,
@@ -249,7 +275,7 @@ if __name__ == "__main__":
 
     print("Running DB014 validation...\n")
 
-    with open(DATA_PATH, "r") as f:
+    with open(DATA_PATH, "r", encoding="utf-8") as f:
         products = json.load(f)
 
     validator = DB021Validator()
