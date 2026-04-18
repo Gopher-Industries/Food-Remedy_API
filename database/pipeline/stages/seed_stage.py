@@ -1,116 +1,136 @@
-import importlib.util
-import os
-import types
-import json
+import logging
+from typing import Any, List, Mapping, Tuple
 
-from database.pipeline.modules.missing_field_handler import is_product_usable
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    _h = logging.StreamHandler()
+    _h.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(_h)
+    logger.setLevel(logging.INFO)
 
+# Canonical names (used in _missing lists) → possible keys on a record (OFF snake_case or cleaned camelCase).
+CRITICAL_FIELD_ALIASES: List[Tuple[str, Tuple[str, ...]]] = [
+    ("code", ("code", "barcode")),
+    ("product_name", ("product_name", "productName")),
+    ("ingredients_text", ("ingredients_text", "ingredientsText")),
+    ("categories_tags", ("categories_tags", "categories")),
+]
 
-def import_module_from_path(path: str) -> types.ModuleType:
-    spec = importlib.util.spec_from_file_location("_seed_module", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-def save_rejected_products(rejected_products):
-    os.makedirs("database/QA", exist_ok=True)
-
-    # Structured QA output (clear reasons)
-    qa_output = []
-    for p in rejected_products:
-        qa_output.append({
-            "code": p.get("code"),
-            "status": p.get("_status"),
-            "missing": p.get("_missing")
-        })
-
-    with open("database/QA/errors.json", "w", encoding="utf-8") as f:
-        json.dump(qa_output, f, indent=2)
+OPTIONAL_FIELD_ALIASES: List[Tuple[str, Tuple[str, ...]]] = [
+    ("nutriments", ("nutriments",)),
+    ("labels_tags", ("labels_tags", "labels")),
+    ("brands", ("brands", "brand")),
+    ("quantity", ("quantity", "product_quantity")),
+    ("serving_size", ("serving_size", "serving_size_text")),
+]
 
 
-def run_seed_stage(input_path: str, config: dict) -> dict:
+def _is_nonempty_scalar_or_collection(val: Any) -> bool:
+    if val is None:
+        return False
+    if isinstance(val, str):
+        return bool(val.strip())
+    if isinstance(val, (list, tuple, set)):
+        return len(val) > 0
+    if isinstance(val, dict):
+        return len(val) > 0
+    return True
+
+
+def _first_value_for_aliases(product: Mapping[str, Any], aliases: Tuple[str, ...]) -> Any:
+    for key in aliases:
+        if key in product:
+            return product.get(key)
+    return None
+
+
+def _critical_missing(product: Mapping[str, Any]) -> List[str]:
+    missing: List[str] = []
+    for canonical, aliases in CRITICAL_FIELD_ALIASES:
+        if not any(_is_nonempty_scalar_or_collection(product.get(k)) for k in aliases):
+            missing.append(canonical)
+    return missing
+
+
+def _nutriments_is_missing(product: Mapping[str, Any]) -> bool:
+    """True when there is no usable nutrient dict (missing key, None, or empty dict). Non-empty dict counts as present even if values are zero."""
+    n = _first_value_for_aliases(product, ("nutriments",))
+    if n is None:
+        return True
+    if not isinstance(n, dict):
+        return True
+    return len(n) == 0
+
+
+def _optional_missing(product: Mapping[str, Any]) -> List[str]:
+    missing: List[str] = []
+    for canonical, aliases in OPTIONAL_FIELD_ALIASES:
+        if canonical == "nutriments":
+            if _nutriments_is_missing(product):
+                missing.append(canonical)
+            continue
+        if not any(_is_nonempty_scalar_or_collection(product.get(k)) for k in aliases):
+            missing.append(canonical)
+    return missing
+
+
+def _standardise_optional_placeholders(product: dict) -> None:
+    """Explicit null for missing nutriments only (empty dict ≠ real zeros once keys exist)."""
+    if _nutriments_is_missing(product):
+        product["nutriments"] = None
+
+
+def handle_missing_fields(product: dict) -> dict:
     """
-    Run the seeding module/script.
-    Filters incomplete products using DB007.
+    Annotate product with _missing and _status (DB007).
+    Critical vs optional use alias-aware checks; nutriments {} is missing, nutriments with keys may include zeros.
     """
+    missing_critical = _critical_missing(product)
+    missing_optional = _optional_missing(product)
+    _standardise_optional_placeholders(product)
 
-    # -----------------------------
-    # Load enriched products
-    # -----------------------------
-    with open(input_path, "r", encoding="utf-8") as f:
-        products = json.load(f)
-
-    valid_products = []
-    rejected_products = []
-
-    # -----------------------------
-    # Apply DB007 filtering
-    # -----------------------------
-    for product in products:
-        if is_product_usable(product):
-            valid_products.append(product)
-        else:
-            rejected_products.append(product)
-
-    # -----------------------------
-    # Save rejected products for QA
-    # -----------------------------
-    save_rejected_products(rejected_products)
-
-    print(f"[DB007] Valid products: {len(valid_products)}")
-    print(f"[DB007] Rejected products: {len(rejected_products)}")
-
-    # -----------------------------
-    # Save ONLY valid products (important for seeding)
-    # -----------------------------
-    filtered_input_path = "database/seeding/filtered_products.json"
-    os.makedirs("database/seeding", exist_ok=True)
-
-    with open(filtered_input_path, "w", encoding="utf-8") as f:
-        json.dump(valid_products, f, indent=2)
-
-    # -----------------------------
-    # Run original seed script
-    # -----------------------------
-    repo_root = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "..", "..", "..")
-    )
-
-    seed_script = config.get("script_path") or os.path.join(
-        repo_root, "database", "seeding", "seed_products.py"
-    )
-
-    if not os.path.exists(seed_script):
-        raise FileNotFoundError(f"Seed script not found: {seed_script}")
-
-    module = import_module_from_path(seed_script)
-
-    # -----------------------------
-    # SAFE FUNCTION CALL (FINAL FIX)
-    # -----------------------------
-    if hasattr(module, "seed_products"):
-        try:
-            module.seed_products(filtered_input_path)  # try with input
-        except TypeError:
-            module.seed_products()  # fallback if no args
-
-    elif hasattr(module, "main"):
-        try:
-            module.main(filtered_input_path)
-        except TypeError:
-            module.main()
-
-    else:
-        raise RuntimeError(
-            "Seed script exposes neither seed_products() nor main()"
-        )
-
-    # -----------------------------
-    # Return pipeline result
-    # -----------------------------
-    return {
-        "processed": len(valid_products),
-        "failures": len(rejected_products),
-        "output": filtered_input_path
+    product["_missing"] = {
+        "critical": missing_critical,
+        "optional": missing_optional,
+        "reason": (
+            "Missing critical fields: " + ", ".join(missing_critical)
+            if missing_critical
+            else (
+                "Optional fields missing or empty"
+                if missing_optional
+                else "All required fields present"
+            )
+        ),
     }
+
+    if missing_critical:
+        product["_status"] = "incomplete"
+    else:
+        product["_status"] = "valid"
+
+    return product
+
+
+def is_product_usable(product: dict) -> bool:
+    """True when there are no missing critical fields (prefer running handle_missing_fields first)."""
+    if "_missing" not in product:
+        handle_missing_fields(product)
+    return len(product.get("_missing", {}).get("critical", [])) == 0
+
+
+def log_missing_fields(product: dict) -> None:
+    if "_missing" not in product:
+        handle_missing_fields(product)
+    miss = product["_missing"]
+    if miss["critical"]:
+        logger.warning(
+            "[DB007][CRITICAL MISSING] %s -> %s",
+            product.get("code") or product.get("barcode"),
+            miss["critical"],
+        )
+    if miss["optional"]:
+        logger.info(
+            "[DB007][OPTIONAL MISSING] %s -> %s",
+            product.get("code") or product.get("barcode"),
+            miss["optional"],
+        )
