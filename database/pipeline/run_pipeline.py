@@ -1,5 +1,12 @@
 import os
+import sys
 import json
+
+# Running as `python database\pipeline\run_pipeline.py` puts `database/pipeline` on
+# sys.path, not the project root — add the repo root so `database` resolves.
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 import time
 from datetime import datetime
 from typing import Optional
@@ -17,9 +24,9 @@ try:
 except Exception:
     JSONSCHEMA_AVAILABLE = False
 
-from .stages.clean_stage import run_clean_stage
-from .stages.enrich_stage import run_enrich_stage
-from .stages.seed_stage import run_seed_stage
+from database.pipeline.stages.clean_stage import run_clean_stage
+from database.pipeline.stages.enrich_stage import run_enrich_stage
+from database.pipeline.stages.seed_stage import run_seed_stage
 
 
 def read_config(path: str) -> dict:
@@ -155,10 +162,15 @@ def runPipeline(
     # metadata/checkpoints under /data/pipeline so container runs persist
     # outputs outside the image. Only override when configured outputs
     # appear to point to repo-local paths (or are empty/relative).
+    # Only redirect to a container /data mount on non-Windows hosts. On Windows, a stray
+    # writable "data" path can steal metadata away from the repo and confuse local runs.
     data_mount_root = "/data"
     data_pipeline_dir = os.path.join(data_mount_root, "pipeline")
     try:
-        if os.path.isdir(data_mount_root) and os.access(data_mount_root, os.W_OK):
+        use_data_mount = sys.platform != "win32" and os.path.isdir(data_mount_root) and os.access(
+            data_mount_root, os.W_OK
+        )
+        if use_data_mount:
             # create dir if missing
             os.makedirs(data_pipeline_dir, exist_ok=True)
             def _looks_like_repo_path(p: str) -> bool:
