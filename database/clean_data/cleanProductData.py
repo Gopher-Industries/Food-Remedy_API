@@ -2,6 +2,14 @@
 Clean OpenFoodFacts Australia dataset for database ingestion.
 """
 
+import os
+import sys
+
+# Allow `from utils...` when running this file directly (project root must be on path).
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
 import json
 import pandas as pd
 import re
@@ -13,8 +21,8 @@ from utils.missing_value_utils import (
     clean_numeric
 )
 
-from utils.detect_allergens import detect_allergens  
-from database.clean_data.normalization.CategoryHarmonisation import harmonise_categories_df
+from utils.detect_allergens import detect_allergens
+from utils.category_normalizer import normalize_categories
 
 # === Configuration constants ===
 # Edit these paths as needed
@@ -355,6 +363,160 @@ def clean_all_tag_fields(df: pd.DataFrame) -> pd.DataFrame:
         else:
             df[col] = []
     return df
+# DB004: Category Harmonisation — ordered most-specific first (see CATEGORY_TAG_RULES.md).
+# Match using whole hyphen segments only (never raw substring) to avoid
+# e.g. "beverages" matching inside "plant-based-foods-and-beverages".
+CATEGORY_RULES_ORDERED: list[tuple[str, tuple[str, ...]]] = [
+    ("meal kits", ("meal-kits",)),
+    ("breads", ("breads", "wholemeal-breads", "baguettes", "sliced-breads")),
+    ("noodles and pasta", ("pastas", "noodles", "instant-noodles")),
+    ("seafood", (
+        "seafood", "fishes", "fishes-and-their-products",
+        "canned-fishes", "tunas", "canned-tunas",
+        "crustaceans", "shrimps", "prawns",
+    )),
+    ("oils", ("fats", "vegetable-fats", "vegetable-oils")),
+    ("spreads", (
+        "spreads", "sweet-spreads", "plant-based-spreads",
+        "nut-butters", "peanut-butters",
+        "hazelnut-spreads", "chocolate-spreads",
+        "cocoa-and-hazelnuts-spreads", "oilseed-purees",
+        "legume-butters",
+    )),
+    # Beverages: do NOT use the bare token "beverages" (appears inside plant-based-foods-and-beverages).
+    ("beverages", (
+        "dairy-drinks", "coffee-drinks", "coffee-milks", "iced-coffees",
+        "sweetened-beverages", "evaporated-milks", "plant-milks",
+        "teas", "waters", "carbonated-drinks", "fruit-juices",
+    )),
+    ("snacks and confectionery", (
+        "snacks", "sweet-snacks", "confectioneries",
+        "chocolates", "chocolate-candies", "bonbons",
+    )),
+]
+
+# OFF slugs that look beverage-like but are umbrella paths for non-drinks — never classify as beverages alone.
+BEVERAGE_TAG_DENYLIST: frozenset[str] = frozenset({
+    "plant-based-foods-and-beverages",
+})
+
+# DB017: Tag Harmonisation (synonyms → canonical slug)
+TAG_MAPPING: dict[str, str] = {
+    "vegan": "vegan",
+    "vegan-friendly": "vegan",
+    "gluten free": "gluten-free",
+    "gluten-free": "gluten-free",
+    "low sugar": "low-sugar",
+    "low-sugar": "low-sugar",
+    "high protein": "high-protein",
+    "high-protein": "high-protein",
+}
+
+def clean_category_tags(tags) -> list[str]:
+    """
+    DB004: Clean category tags before matching.
+    - Remove language prefixes like 'en:' or 'fr:'
+    - Convert to lowercase
+    - Strip whitespace
+    """
+    if not tags:
+        return []
+
+    if isinstance(tags, str):
+        tags = [t.strip() for t in tags.split(",") if t.strip()]
+
+    cleaned = []
+    for tag in tags:
+        if not tag or not isinstance(tag, str):
+            continue
+        if ":" in tag:
+            tag = tag.split(":", 1)[1]
+        tag = tag.strip().lower()
+        if tag:
+            cleaned.append(tag)
+
+    return cleaned
+
+
+def _keyword_matches_tag(tag: str, keyword: str) -> bool:
+    """
+    True if keyword matches the full OFF slug or a whole hyphen segment (not a substring of a segment).
+    """
+    if not tag or not keyword:
+        return False
+    if tag == keyword:
+        return True
+    segments = tag.split("-")
+    return keyword in segments
+
+
+def standardise_category(tags) -> str:
+    """
+    DB004: Map raw OFF category tags into one harmonised primary category bucket.
+    Uses ordered rules and segment-safe matching (fixes bread vs umbrella beverage slug).
+    """
+    cleaned_tags = clean_category_tags(tags)
+
+    if not cleaned_tags:
+        return "other"
+
+    for standard_name, keywords in CATEGORY_RULES_ORDERED:
+        for tag in cleaned_tags:
+            if standard_name == "beverages" and tag in BEVERAGE_TAG_DENYLIST:
+                continue
+            for keyword in keywords:
+                if _keyword_matches_tag(tag, keyword):
+                    return standard_name
+
+    return "other"
+
+
+def standardise_tags(tags) -> list[str]:
+    """
+    DB017: Standardise label/tags for filtering (trim, lower, synonyms, dedupe).
+    """
+    cleaned = clean_category_tags(tags)
+    result: list[str] = []
+
+    for tag in cleaned:
+        key = tag.strip().lower()
+        mapped = TAG_MAPPING.get(key, key)
+        if mapped not in result:
+            result.append(mapped)
+
+    return result
+
+
+def apply_conflict_rules(category: str, tags: list[str]) -> tuple[list[str], list[str]]:
+    """
+    DB017: Remove label/tag tokens that contradict the harmonised category or diet logic.
+    Returns (tags_for_queries, removed_tags) for audit (product_v1.tags.removed).
+    Documented in CATEGORY_TAG_RULES.md — keep in sync.
+    """
+    cleaned_tags = list(tags) if tags else []
+    removed: list[str] = []
+
+    def _remove(tag: str) -> None:
+        if tag in cleaned_tags:
+            cleaned_tags.remove(tag)
+            removed.append(tag)
+
+    if category == "beverages":
+        for t in ("bakery", "breads", "cereals"):
+            if t in cleaned_tags:
+                _remove(t)
+
+    if category == "seafood":
+        for t in ("vegan", "vegetarian"):
+            if t in cleaned_tags:
+                _remove(t)
+
+    if category == "oils":
+        for t in ("low-fat", "fat-free"):
+            if t in cleaned_tags:
+                _remove(t)
+
+    return cleaned_tags, removed
 
 IMAGE_BASE = "https://images.openfoodfacts.org/images/products"
 # will only emit sizes that exist in the JSON
@@ -607,17 +769,32 @@ def main(input_path: str, output_path: str):
     df = reduce_nutriments(df)
     df = clean_traces_fields(df)
     df = clean_all_tag_fields(df)
-    # DB00X: Enhanced ingredient cleaning
+    # DB004: apply category standardisation
+    df["standard_category"] = df["categories_tags"].apply(standardise_category)
+    # DB017: Standardise labels/tags
+    df["search_tags"] = df["labels_tags"].apply(standardise_tags)
+
+    def _apply_conflicts(row) -> pd.Series:
+        final, removed = apply_conflict_rules(row["standard_category"], row["search_tags"])
+        return pd.Series({"search_tags": final, "tags_removed": removed})
+
+    _conf = df.apply(_apply_conflicts, axis=1)
+    df["search_tags"] = _conf["search_tags"]
+    df["tags_removed"] = _conf["tags_removed"]
+    # product_v1: primary category string + structured tags (final / removed)
+    df["category"] = df["standard_category"]
+    df["tags"] = df.apply(
+        lambda r: {"final": r["search_tags"], "removed": r["tags_removed"]},
+        axis=1,
+    )
+    # DB002: Enhanced ingredient cleaning
     if 'ingredientsText' in df.columns:
         df['ingredientsText'] = df['ingredientsText'].apply(clean_ingredients_text)
     if 'ingredients_tags' in df.columns:
         df['ingredients_tags'] = df['ingredients_tags'].apply(clean_ingredients_list)    
-        
-    # DB027: Harmonise category tags → unified list, one primaryCategory, nutritionProfileType.
-    df = harmonise_categories_df(df, source_col='categories_tags')
 
-    # Ensure list assignments to allergensDetected are stored as object dtype.
-    df["allergensDetected"] = pd.Series([[] for _ in range(len(df))], dtype="object")
+    # Store list[str]; pandas StringDtype columns reject list assignment via .at / .loc cell writes.
+    df["allergensDetected"] = pd.Series(index=df.index, dtype=object)
 
     for idx, record in df.iterrows():
         # String fields
@@ -626,7 +803,8 @@ def main(input_path: str, output_path: str):
         
         # List fields
         record["ingredients"] = normalize_list(record.get("ingredients"))
-        record["categories"] = normalize_list(record.get("categories"))
+        # OpenFoodFacts category slugs → contract: sorted, deduped (product_v1.categories)
+        record["categories_tags"] = normalize_categories(record.get("categories_tags"))
         
         # Dict fields (nutriments with recursive + default 0)
         record["nutriments"] = normalize_dict(record.get("nutriments", {}), default=0, recurse=True)
@@ -635,10 +813,8 @@ def main(input_path: str, output_path: str):
         record["productQuantity"] = clean_numeric(record.get("productQuantity"))
         record["servingQuantity"] = clean_numeric(record.get("servingQuantity"))
         
-        record["allergensDetected"] = detect_allergens(record) # new allergen detection field for DB009
-        df.at[idx, "allergensDetected"] = record["allergensDetected"]
-        
-        df.loc[idx] = record  # write back
+        record["allergensDetected"] = detect_allergens(record)  # DB009: list[str]
+        df.loc[idx] = record  # write back (includes allergensDetected)
         
     df = add_image_urls(df)
     df = reconvert_json_strings(df)
@@ -646,6 +822,9 @@ def main(input_path: str, output_path: str):
     df = rename_specific_columns(df)
     df = drop_unwanted_columns(df)
     df = camelise_columns(df)
+    # tagsRemoved is only used to build tags.{final,removed}; omit duplicate top-level field
+    if "tagsRemoved" in df.columns:
+        df = df.drop(columns=["tagsRemoved"])
 
     for _, record in df.iterrows():
         record_warnings = validate_record(record.to_dict())
