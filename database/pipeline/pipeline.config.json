@@ -20,7 +20,7 @@
           "path": "pipeline/modules/enrich_ts_wrapper.py",
           "enabled": false,
           "config": {
-            "ts_path": "mobile-app/services/nutrition/enrichProducts.ts" 
+            "ts_path": "mobile-app/services/nutrition/enrichProducts.ts"
           }
         },
         {
@@ -32,6 +32,12 @@
         {
           "name": "db009_personalisation_tags",
           "path": "pipeline/modules/db009_personalisation_tags.py",
+          "enabled": true,
+          "config": {}
+        },
+        {
+          "name": "db021_mood_tags",
+          "path": "pipeline/modules/db021_mood_tags.py",
           "enabled": true,
           "config": {}
         }
