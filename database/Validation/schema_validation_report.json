@@ -1,0 +1,284 @@
+{
+    "basic_schema": false,
+    "nutrients": true,
+    "allergens": true,
+    "barcode": {
+        "ok": false,
+        "empty": 0,
+        "invalid_format": 118,
+        "duplicates": 0,
+        "total_issues": 118
+    },
+    "schema_validation": {
+        "valid": false,
+        "invalid_count": 38,
+        "errors": [
+            {
+                "index": 205,
+                "barcode": "9344844002204",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 227,
+                "barcode": "9311866011620",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 241,
+                "barcode": "9354628000685",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 280,
+                "barcode": "0097744081372",
+                "errors": [
+                    "productName missing"
+                ]
+            },
+            {
+                "index": 309,
+                "barcode": "9358432010816",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 416,
+                "barcode": "9354628000326",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 419,
+                "barcode": "0227159250432",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 446,
+                "barcode": "0068958034096",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 462,
+                "barcode": "9340784006708",
+                "errors": [
+                    "productName missing"
+                ]
+            },
+            {
+                "index": 463,
+                "barcode": "9320000100069",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 470,
+                "barcode": "9350848008517",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 482,
+                "barcode": "9335695000204",
+                "errors": [
+                    "productName missing"
+                ]
+            },
+            {
+                "index": 498,
+                "barcode": "9337824003773",
+                "errors": [
+                    "productName missing"
+                ]
+            },
+            {
+                "index": 567,
+                "barcode": "4078700218830",
+                "errors": [
+                    "productName missing"
+                ]
+            },
+            {
+                "index": 596,
+                "barcode": "9340955001143",
+                "errors": [
+                    "productName missing"
+                ]
+            },
+            {
+                "index": 661,
+                "barcode": "9338973000040",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 733,
+                "barcode": "9348378001603",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 1043,
+                "barcode": "9319133338357",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 1232,
+                "barcode": "9350002000364",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 1407,
+                "barcode": "9316417002348",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 1488,
+                "barcode": "9329982024998",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 1604,
+                "barcode": "9350465010214",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 1680,
+                "barcode": "9400581052848",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 1698,
+                "barcode": "3306682022284",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 1777,
+                "barcode": "9354628000692",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 1864,
+                "barcode": "9329000009976",
+                "errors": [
+                    "productName missing"
+                ]
+            },
+            {
+                "index": 2101,
+                "barcode": "9314807087586",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 2293,
+                "barcode": "9320000119122",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 2302,
+                "barcode": "0931803323235",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 3278,
+                "barcode": "9353333005817",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 3313,
+                "barcode": "9358432021966",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 3398,
+                "barcode": "9311890250095",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 3562,
+                "barcode": "9300657225759",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 3606,
+                "barcode": "5201083350258",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 4350,
+                "barcode": "9329982024936",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 4525,
+                "barcode": "93239707",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 4849,
+                "barcode": "9310022102509",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            },
+            {
+                "index": 4868,
+                "barcode": "9310645315850",
+                "errors": [
+                    "nutriscoreGrade invalid enum"
+                ]
+            }
+        ]
+    }
+}

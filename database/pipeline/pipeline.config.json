@@ -20,7 +20,7 @@
           "path": "pipeline/modules/enrich_ts_wrapper.py",
           "enabled": false,
           "config": {
-            "ts_path": "mobile-app/services/nutrition/enrichProducts.ts" 
+            "ts_path": "mobile-app/services/nutrition/enrichProducts.ts"
           }
         },
         {
@@ -38,8 +38,12 @@
       ]
     },
     "seed": {
-      "enabled": false,
-      "input": "database/seeding/products_enriched.json"
+      "enabled": true,
+      "input": "database/seeding/products_enriched.json",
+      "output": "database/seeding/seeded_products.json",
+      "script_path": "database/seeding/seed_firestore.py",
+      "batch_size": 500,
+      "writes_per_second_limit": 400
     }
   }
 }
