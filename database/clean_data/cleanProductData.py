@@ -14,12 +14,13 @@ from utils.missing_value_utils import (
 )
 
 from utils.detect_allergens import detect_allergens  
+from database.clean_data.normalization.CategoryHarmonisation import harmonise_categories_df
 
 # === Configuration constants ===
 # Edit these paths as needed
 # - Find Examples of Input and Output in IOExamples Folder
-INPUT_FILE = "database/clean data/IOExamples/rawSample.jsonl"
-OUTPUT_FILE = "database/clean data/cleanSample.json"
+INPUT_FILE = "database/clean_data/IOExamples/rawSample.jsonl"
+OUTPUT_FILE = "database/clean_data/cleanSample.json"
 
 NUTRIENTS_TO_KEEP = {
     # Energy
@@ -354,87 +355,6 @@ def clean_all_tag_fields(df: pd.DataFrame) -> pd.DataFrame:
         else:
             df[col] = []
     return df
-# DB004: Category Harmonisation
-
-CATEGORY_MAPPING = {
-    "seafood": [
-        "seafood", "fishes", "fishes-and-their-products",
-        "canned-fishes", "tunas", "canned-tunas",
-        "crustaceans", "shrimps", "prawns"
-    ],
-    "oils": [
-        "fats", "vegetable-fats", "vegetable-oils"
-    ],
-    "meal kits": [
-        "meal-kits"
-    ],
-    "spreads": [
-        "spreads", "sweet-spreads", "plant-based-spreads",
-        "nut-butters", "peanut-butters",
-        "hazelnut-spreads", "chocolate-spreads",
-        "cocoa-and-hazelnuts-spreads", "oilseed-purees",
-        "legume-butters"
-    ],
-    "noodles and pasta": [
-        "pastas", "noodles", "instant-noodles"
-    ],
-    "beverages": [
-        "beverages", "dairy-drinks", "coffee-drinks",
-        "coffee-milks", "iced-coffees", "sweetened-beverages",
-        "evaporated-milks"
-    ],
-    "breads": [
-        "breads", "wholemeal-breads"
-    ],
-    "snacks and confectionery": [
-        "snacks", "sweet-snacks", "confectioneries",
-        "chocolates", "chocolate-candies", "bonbons"
-    ]
-}
-
-
-def clean_category_tags(tags) -> list[str]:
-    """
-    DB004: Clean category tags before matching.
-    - Remove language prefixes like 'en:' or 'fr:'
-    - Convert to lowercase
-    - Strip whitespace
-    """
-    if not tags:
-        return []
-
-    if isinstance(tags, str):
-        tags = [t.strip() for t in tags.split(",") if t.strip()]
-
-    cleaned = []
-    for tag in tags:
-        if not tag or not isinstance(tag, str):
-            continue
-        if ":" in tag:
-            tag = tag.split(":", 1)[1]
-        tag = tag.strip().lower()
-        if tag:
-            cleaned.append(tag)
-
-    return cleaned
-
-
-def standardise_category(tags) -> str:
-    """
-    DB004: Map raw OFF category tags into one standard primary category.
-    """
-    cleaned_tags = clean_category_tags(tags)
-
-    if not cleaned_tags:
-        return "other"
-
-    for standard_category, keywords in CATEGORY_MAPPING.items():
-        for tag in cleaned_tags:
-            for keyword in keywords:
-                if keyword in tag:
-                    return standard_category
-
-    return "other"
 
 IMAGE_BASE = "https://images.openfoodfacts.org/images/products"
 # will only emit sizes that exist in the JSON
@@ -687,13 +607,17 @@ def main(input_path: str, output_path: str):
     df = reduce_nutriments(df)
     df = clean_traces_fields(df)
     df = clean_all_tag_fields(df)
-    # DB004: apply category standardisation
-    df["standard_category"] = df["categories_tags"].apply(standardise_category)
-    # DB002: Enhanced ingredient cleaning
+    # DB00X: Enhanced ingredient cleaning
     if 'ingredientsText' in df.columns:
         df['ingredientsText'] = df['ingredientsText'].apply(clean_ingredients_text)
     if 'ingredients_tags' in df.columns:
         df['ingredients_tags'] = df['ingredients_tags'].apply(clean_ingredients_list)    
+        
+    # DB027: Harmonise category tags → unified list, one primaryCategory, nutritionProfileType.
+    df = harmonise_categories_df(df, source_col='categories_tags')
+
+    # Ensure list assignments to allergensDetected are stored as object dtype.
+    df["allergensDetected"] = pd.Series([[] for _ in range(len(df))], dtype="object")
 
     for idx, record in df.iterrows():
         # String fields

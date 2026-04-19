@@ -41,7 +41,9 @@
       "enabled": true,
       "input": "database/seeding/products_enriched.json",
       "output": "database/seeding/seeded_products.json",
-      "script_path": "database/seeding/seed_firestore.py"
+      "script_path": "database/seeding/seed_firestore.py",
+      "batch_size": 500,
+      "writes_per_second_limit": 400
     }
   }
 }
