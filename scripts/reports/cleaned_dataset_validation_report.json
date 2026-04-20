@@ -1,0 +1,44 @@
+{
+  "source": "database\\clean_data\\cleanSample.json",
+  "total_records": 11,
+  "ok": true,
+  "checks": {
+    "missing_product_fields": {
+      "ok": true,
+      "issue_count": 1,
+      "field_counts": {
+        "nutriments": 1
+      },
+      "issues": [
+        {
+          "index": 1,
+          "barcode": "9300633391645",
+          "field": "nutriments",
+          "message": "recommended integration field is missing or empty"
+        }
+      ]
+    },
+    "category_validation": {
+      "ok": true,
+      "issue_count": 0,
+      "standard_category_counts": {
+        "seafood": 2,
+        "oils": 1,
+        "meal kits": 1,
+        "spreads": 2,
+        "noodles and pasta": 1,
+        "beverages": 3,
+        "snacks and confectionery": 1
+      },
+      "unknown_standard_categories": {},
+      "issues": []
+    },
+    "inconsistency_detection": {
+      "ok": true,
+      "issue_count": 0,
+      "field_counts": {},
+      "duplicate_barcodes": {},
+      "issues": []
+    }
+  }
+}
