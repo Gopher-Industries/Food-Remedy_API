@@ -1,7 +1,7 @@
 {
   "source": "database\\clean_data\\cleanSample.json",
   "total_records": 11,
-  "ok": false,
+  "ok": true,
   "checks": {
     "missing_product_fields": {
       "ok": true,
@@ -34,20 +34,11 @@
       "issues": []
     },
     "inconsistency_detection": {
-      "ok": false,
-      "issue_count": 1,
-      "field_counts": {
-        "completeness": 1
-      },
+      "ok": true,
+      "issue_count": 0,
+      "field_counts": {},
       "duplicate_barcodes": {},
-      "issues": [
-        {
-          "index": 8,
-          "barcode": "5060195907145",
-          "field": "completeness",
-          "message": "completeness must be between 0 and 1"
-        }
-      ]
+      "issues": []
     }
   }
 }
