@@ -1,4 +1,4 @@
-import { useRouter, useFocusEffect } from "expo-router";
+import { useRouter, useFocusEffect, Link } from "expo-router";
 import { Pressable, ScrollView, View, Image } from "react-native";
 import { useState, useEffect, useCallback } from "react";
 import Tt from "@/components/ui/UIText";
@@ -412,7 +412,7 @@ export default function UpdateUserSettingsScreen() {
               )}
             </View>
           </View>
-
+          
           {/* Buttons on Right Side */}
           <View className="flex-row justify-end gap-2 mt-4">
             {/* Sync Button */}
