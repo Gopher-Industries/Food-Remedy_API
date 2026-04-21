@@ -98,7 +98,6 @@ const DemographicsForm = () => {
   const { user } = useAuth();
   const { addNotification } = useNotification();
 
-  // Form state
   const [ageBand, setAgeBand] = useState<string>("36-50");
   const [sex, setSex] = useState<string>("female");
   const [guardrailLevel, setGuardrailLevel] = useState<string>("moderate");
@@ -119,7 +118,7 @@ const DemographicsForm = () => {
         guardrailLevel,
       };
 
-      // TODO: Collaborate with backend team to save demographics to database
+      // TODO: Save information to Database
 
       console.log("Saving demographics:", demographicsData);
 
@@ -133,7 +132,6 @@ const DemographicsForm = () => {
   };
 
   const handleNext = () => {
-    // Navigate to nutritional profiles page
     router.push("/(app)/nutritionalProfiles");
   };
 
