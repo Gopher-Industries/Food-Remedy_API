@@ -117,7 +117,8 @@ export default function ShoppingCartDetailPage() {
       {/* ── Page title + progress ── */}
       <View className="mt-4 px-4">
         <Tt className="text-xl font-interBold text-center">
-          {currentList?.listName ?? "Shopping Cart"}
+          {/* {currentList?.listName ?? "Shopping Cart"} */}
+          Shopping Cart
         </Tt>
         <Tt className="text-center text-hsl50 dark:text-hsl70 text-xs mt-1">
           {shoppedCount} of {totalCount} items shopped
