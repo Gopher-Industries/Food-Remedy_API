@@ -21,6 +21,7 @@ interface ShoppingListItemRowProps {
   plannedPurchaseDate: string | null;
   isSelected: boolean;
   isOverdue: boolean;
+  isInCart: boolean;
   onToggleSelected: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -54,6 +55,7 @@ export const ShoppingListItemRow: React.FC<ShoppingListItemRowProps> = ({
   plannedPurchaseDate,
   isSelected,
   isOverdue,
+  isInCart,
   onToggleSelected,
   onEdit,
   onDelete,
@@ -206,10 +208,10 @@ export const ShoppingListItemRow: React.FC<ShoppingListItemRowProps> = ({
                   <Pressable
                     onPress={onAddToShoppingCart}
                     hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                    className="px-3 py-2 rounded-xl bg-[#FF3F3F] mr-2"
+                    className={`px-3 py-2 rounded-xl mr-2 ${isInCart ? "bg-green-500" : "bg-[#FF3F3F]"}`}
                   >
                     <Tt className="text-xs font-interSemiBold text-white">
-                      Add to Cart
+                      {isInCart ? "In Cart" : "Add to Cart"}
                     </Tt>
                   </Pressable>
                 
