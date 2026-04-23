@@ -1,6 +1,9 @@
 const config = require("./config");
+<<<<<<< HEAD
 const { addToQueue } = require("./syncQueue");
 const { processQueue, resolveConflict } = require("./syncService");
+=======
+>>>>>>> 392c9f6a9b2f6980ca36d32b20c0052ca553156a
 
 const PIPELINE_VERSION = config.pipeline.version;
 

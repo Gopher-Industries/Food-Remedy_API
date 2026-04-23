@@ -20,7 +20,7 @@
           "path": "pipeline/modules/enrich_ts_wrapper.py",
           "enabled": false,
           "config": {
-            "ts_path": "mobile-app/services/nutrition/enrichProducts.ts" 
+            "ts_path": "mobile-app/services/nutrition/enrichProducts.ts"
           }
         },
         {
@@ -34,12 +34,39 @@
           "path": "pipeline/modules/db009_personalisation_tags.py",
           "enabled": true,
           "config": {}
+        },
+        {
+          "name": "db021_mood_tags",
+          "path": "pipeline/modules/db021_mood_tags.py",
+          "enabled": true,
+          "config": {}
+        },
+        {
+          "name": "db019_alternative_product_mapping",
+          "path": "pipeline/modules/db019_alternative_product_mapping.py",
+          "enabled": true,
+          "config": {
+            "max_similar": 5,
+            "max_healthier": 5,
+            "max_peers_scan": 400,
+            "healthier_min_score_delta": 2,
+            "max_nutrient_distance_healthier": 0.55,
+            "healthier_allow_any_score_gain": true,
+            "healthier_use_sugar_proxy": true,
+            "healthier_use_fiber_proxy": true,
+            "rng_seed": 20260419,
+            "sidecar_index_path": "database/seeding/product_alternatives_index.json"
+          }
         }
       ]
     },
     "seed": {
-      "enabled": false,
-      "input": "database/seeding/products_enriched.json"
+      "enabled": true,
+      "input": "database/seeding/products_enriched.json",
+      "output": "database/seeding/seeded_products.json",
+      "script_path": "database/seeding/seed_firestore.py",
+      "batch_size": 500,
+      "writes_per_second_limit": 400
     }
   }
 }
