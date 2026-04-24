@@ -85,7 +85,7 @@ export const ShoppingListItemRow: React.FC<ShoppingListItemRowProps> = ({
   }));
 
   const textClassName = isCompleted
-    ? "text-hsl40 dark:text-hsl80 line-through"
+    ? "text-hsl40 dark:text-hsl80"
     : "text-hsl30 dark:text-hsl90";
 
   return (

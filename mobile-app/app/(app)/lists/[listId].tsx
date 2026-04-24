@@ -8,6 +8,7 @@ import Tt from '@/components/ui/UIText';
 import IconGeneral from '@/components/icons/IconGeneral';
 import { useShoppingList } from '@/hooks/useShoppingList';
 import { useProduct } from '@/components/providers/ProductProvider';
+import { useNotification } from '@/components/providers/NotificationProvider';
 import { ShoppingListItemRow } from '@/components/shopping/ShoppingListItemRow';
 import ModalWrapper from '@/components/modals/ModalAWrapper';
 import ModalResponse from '@/components/modals/ModalResponse';
@@ -35,9 +36,15 @@ export default function ShoppingListDetailPage() {
     updateNote,
     clearChecked,
     deleteList,
+    addItem,
+    createList,
   } = useShoppingList();
 
+  const { addNotification } = useNotification();
+
   const [refreshing, setRefreshing] = useState(false);
+  const [shoppingListId, setShoppingListId] = useState<string | null>(null);
+  const [showViewButton, setShowViewButton] = useState(false);
 
   type LocalState = Record<string, { plannedPurchaseDate: string | null }>; 
   const [localState, setLocalState] = useState<LocalState>({});
@@ -87,6 +94,30 @@ export default function ShoppingListDetailPage() {
 
   const setPlannedDate = (barcode: string, date: Date | null) => setLocalState(prev => ({ ...prev, [barcode]: { plannedPurchaseDate: date ? date.toISOString() : null } }));
   const handleEditItem = (barcode: string) => { const it = currentItems.find(i => i.barcode === barcode); if (!it) return; setEditingItem({ barcode: it.barcode, productName: it.productName }); openModal('editPlannedDate'); };
+
+  const handleAddToShoppingList = useCallback(async () => {
+    try {
+      // Get or create Shopping List
+      let shoppingList = lists.find(l => l.listName === 'Shopping List');
+      if (!shoppingList) {
+        const newList = await createList('Shopping List', '#4ECDC4', '💚');
+        if (newList) shoppingList = newList;
+      }
+      
+      if (shoppingList) {
+        setShoppingListId(shoppingList.listId);
+        const checkedItems = currentItems.filter(it => it.isChecked);
+        for (const item of checkedItems) {
+          await addItem(shoppingList.listId, item.product, item.quantity, item.note);
+        }
+        addNotification(`✓ Added ${checkedItems.length} item(s) to Shopping List`, 's');
+        setShowViewButton(true);
+      }
+    } catch (e) {
+      console.warn('Failed to add to Shopping List:', e);
+      addNotification('Failed to add to Shopping List', 'e');
+    }
+  }, [lists, currentItems, createList, addItem, addNotification]);
 
   const viewItems = useMemo(() => currentItems.map(it => ({ ...it, plannedPurchaseDate: (localState[it.barcode]?.plannedPurchaseDate ?? null), isCompleted: it.isChecked })), [currentItems, localState]);
   const sortedItems = useMemo(() => {
@@ -167,6 +198,33 @@ export default function ShoppingListDetailPage() {
           ))}
 
           <View className="mt-6 mb-4">
+            {hasChecked && currentList?.listName !== 'Shopping List' && (
+              <Pressable
+                onPress={handleAddToShoppingList}
+                className="w-full py-3 rounded-lg bg-primary items-center mb-3"
+              >
+                {({ pressed }) => (
+                  <Tt className={`font-interSemiBold ${pressed ? 'text-white/80' : 'text-white'}`}>
+                    Add to Shopping List
+                  </Tt>
+                )}
+              </Pressable>
+            )}
+            {showViewButton && shoppingListId && (
+              <Pressable
+                onPress={() => {
+                  router.push(`/lists/${shoppingListId}`);
+                  setShowViewButton(false);
+                }}
+                className="w-full py-3 rounded-lg bg-green-600 items-center mb-3"
+              >
+                {({ pressed }) => (
+                  <Tt className={`font-interSemiBold ${pressed ? 'text-white/80' : 'text-white'}`}>
+                    View Shopping List 💚
+                  </Tt>
+                )}
+              </Pressable>
+            )}
             <Pressable
               onPress={() => openModal('deleteList')}
               className="w-full py-3 rounded-lg border border-primary bg-white dark:bg-hsl15 items-center"
