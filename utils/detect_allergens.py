@@ -61,16 +61,16 @@ def detect_allergens(
     
     # Collect all fields that may contain allergen info
     fields_to_check = [
-        product.get("ingredients_text"),
+        product.get("ingredientsText") or product.get("ingredients_text"),
         product.get("traces"),
-        product.get("traces_from_ingredients"),
-        product.get("product_name"),
-        product.get("generic_name"),
+        product.get("tracesFromIngredients") or product.get("traces_from_ingredients"),
+        product.get("productName") or product.get("product_name"),
+        product.get("genericName") or product.get("generic_name"),
     ]
 
     # List-like fields
     list_fields = [
-        product.get("ingredients_tags"),
+        product.get("ingredients") or product.get("ingredients_tags"),
         product.get("allergens_tags"),
         product.get("categories_tags"),
         product.get("labels_tags"),
@@ -131,53 +131,3 @@ def detect_allergens(
 
     return sorted(detected)
 
-
-'''
-# ----------------------------- 
-# UPDATED Quick ALLERGEN TEST  
-# ----------------------------- 
-if __name__ == "__main__":
-    sample_product = {
-        "ingredients_text": "Milk, whey, peanut butter, eggs",
-        "traces": "",
-        "traces_from_ingredients": "",
-        "product_name": "",
-        "generic_name": "",
-        "ingredients_tags": [],
-        "allergens_tags": [],
-        "categories_tags": [],
-        "labels_tags": [],
-    }
-
-    print(detect_allergens(sample_product))  
-'''
-
-'''
-# ----------------------------- 
-# UPDATED Full ALLERGEN TEST  
-# ----------------------------- 
-if __name__ == "__main__":
-    sample_text = (
-        "semolina, prawn, mayonnaise, anchovy, yoghurt, groundnut, tofu, "
-        "tahini, pistachio, lupini beans, scallop, celeriac, mustard seed, 223"
-    )
-
-    sample_product = {
-        "ingredients_text": sample_text,
-        "traces": "",
-        "traces_from_ingredients": "",
-        "product_name": "",
-        "generic_name": "",
-        "ingredients_tags": [],
-        "allergens_tags": [],
-        "categories_tags": [],
-        "labels_tags": [],
-    }
-
-    print("Test ingredients:")
-    print(sample_text)
-
-    detected = detect_allergens(sample_product)
-    print("Detected allergens:")
-    print(detected)
-'''
