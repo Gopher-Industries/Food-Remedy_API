@@ -11,7 +11,7 @@ import IconLogoHoriz from "@/components/icons/IconLogoHoriz";
 import { useShoppingList } from "@/hooks/useShoppingList";
 
 export default function CheckoutPage() {
-  const { listId } = useLocalSearchParams<{ listId: string }>();
+  const { listId, shoppedBarcodes } = useLocalSearchParams<{ listId: string; shoppedBarcodes: string }>();
   const insets = useSafeAreaInsets();
   const { ready, loading, currentItems, loadList } = useShoppingList();
 
@@ -21,7 +21,35 @@ export default function CheckoutPage() {
     }
   }, [ready, listId, loadList]);
 
-  const cartItems = currentItems.filter((i) => i.isChecked);
+  const checkedItems = currentItems.filter((i) => i.isChecked);
+  const shoppedSet = new Set(JSON.parse(shoppedBarcodes || '[]'));
+  const boughtItems = currentItems.filter((i) => shoppedSet.has(i.barcode));
+  const pendingItems = checkedItems.filter((i) => !shoppedSet.has(i.barcode));
+
+  const renderProductCard = (item: any) => {
+    const highlight = getHighlight(item);
+
+    return (
+      <View key={item.barcode} className="flex-row items-center py-3.5 px-4 bg-white rounded-3xl shadow-sm dark:shadow-none">
+        <View className="flex-1">
+          <Tt className="font-interSemiBold text-sm text-hsl30 dark:text-hsl90" numberOfLines={2}>
+            {item.productName}
+          </Tt>
+          <Tt className="text-hsl50 dark:text-hsl70 text-xs mt-0.5">
+            Qty: {item.quantity}
+          </Tt>
+        </View>
+
+        {highlight !== "" && (
+          <View className="ml-3 px-3 py-1 rounded-lg bg-hsl90 dark:bg-hsl20">
+            <Tt className="text-hsl30 dark:text-hsl90 text-xs font-interSemiBold">
+              {highlight}
+            </Tt>
+          </View>
+        )}
+      </View>
+    );
+  };
 
   // Analyze product data to determine highlight
   const getHighlight = (item: any) => {
@@ -196,54 +224,41 @@ export default function CheckoutPage() {
         <Tt className="text-lg font-interSemiBold text-hsl30 dark:text-hsl90">Product List</Tt>
       </View>
 
-      {/* Items list */}
-      <FlatList
-        className="mt-4"
-        data={cartItems}
-        keyExtractor={(item) => item.barcode}
-        contentContainerStyle={{ paddingBottom: 120, paddingHorizontal: 16 }}
-        ItemSeparatorComponent={() => <View className="h-2" />}
-        renderItem={({ item, index }) => {
-          const highlight = getHighlight(item);
-          return (
-            <View className="flex-row items-center py-3.5 px-4 bg-white rounded-3xl shadow-sm dark:shadow-none">
-              {/* Product info */}
-              <View className="flex-1">
-                <Tt
-                  className="font-interSemiBold text-sm text-hsl30 dark:text-hsl90"
-                  numberOfLines={2}
-                >
-                  {item.productName}
-                </Tt>
-                <Tt className="text-hsl50 dark:text-hsl70 text-xs mt-0.5">
-                  Qty: {item.quantity}
-                </Tt>
-              </View>
+      <View className="px-4 mt-4 space-y-6">
+        <View>
+          <Tt className="text-sm font-interSemiBold text-hsl30 dark:text-hsl90">Items bought</Tt>
+          <View className="mt-3 space-y-6">
+            {boughtItems.length > 0 ? (
+              boughtItems.map(renderProductCard)
+            ) : (
+              <Tt className="text-hsl50 dark:text-hsl70 text-sm">No items bought yet</Tt>
+            )}
+          </View>
+        </View>
 
-              {/* Highlight badge - only show if not N/A */}
-              {highlight !== "N/A" && highlight !== "" && (
-                <View className="ml-3 px-3 py-1 rounded-lg bg-hsl90 dark:bg-hsl20">
-                  <Tt className="text-hsl30 dark:text-hsl90 text-xs font-interSemiBold">
-                    {highlight}
-                  </Tt>
-                </View>
-              )}
-            </View>
-          );
-        }}
-      />
+        <View>
+          <Tt className="text-sm font-interSemiBold text-hsl30 dark:text-hsl90">Items pending</Tt>
+          <View className="mt-3 space-y-6">
+            {pendingItems.length > 0 ? (
+              pendingItems.map(renderProductCard)
+            ) : (
+              <Tt className="text-hsl50 dark:text-hsl70 text-sm">No items</Tt>
+            )}
+          </View>
+        </View>
+      </View>
 
-      {/* Finish Shopping button */}
+      {/* Go Home button */}
       <View
         className="absolute bottom-0 left-0 right-0 px-4 py-3 bg-white dark:bg-hsl15 border-t border-hsl90 dark:border-hsl20"
         style={{ paddingBottom: insets.bottom + 8 }}
       >
         <Pressable
-          onPress={() => alert("Shopping completed!")} // Or navigate to home or something
+          onPress={() => router.replace("/")}
           className="flex-row items-center justify-center py-3 rounded-xl bg-primary active:bg-red-600"
         >
           <Tt className="text-white font-interSemiBold text-sm">
-            Finish Shopping
+            Go Home
           </Tt>
         </Pressable>
       </View>
