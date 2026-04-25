@@ -242,7 +242,7 @@ export default function ShoppingCartDetailPage() {
         </Pressable>
 
         <Pressable
-          onPress={() => alert("Checkout coming soon!")}
+          onPress={() => router.push({ pathname: '/checkout', params: { listId } })}
           className="flex-1 ml-2 flex-row items-center justify-center py-3 rounded-xl
             bg-primary active:bg-red-600"
         >
