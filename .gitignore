@@ -19,14 +19,237 @@ __pycache__/
 Thumbs.db
 
 # Logs
+*.log# =========================
+# Python
+# =========================
+.venv/
+__pycache__/# =========================
+# Python
+# =========================
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# =========================
+# Node / Backend
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Docker volumes / local DB
+# =========================
+**/postgres-data/
+**/db-data/
+
+# =========================
+# Build outputs
+# =========================
+dist/
+build/
+
+# =========================
+# Logs
+# =========================
 *.log
+logs/
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+.history/
+
+# =========================
+# Environment variables (CRITICAL)
+# =========================
+.env
+.env.local
+.env.development
+.env.development.local
+.env.production
+.env.production.local
+.env.test
+.env.test.local
+
+# allow template for team
+!.env.example
+
+# =========================
+# Firebase / Secrets
+# =========================
+**/serviceAccountKey.json
+*.pem
+*.key
+
+# =========================
+# Firebase Emulator
+# =========================
+.firebase/
+
+# =========================
+# Checkpoints / temp data
+# =========================
+*.checkpoint.json
+checkpoints/
+
+# =========================
+# Data Connect (generated + local artifacts)
+# =========================
+mobile-app/src/dataconnect-generated/
+dataconnect/.dataconnect/
+dataconnect/_dataconnect.schema/
+dataconnect/example/
+dataconnect/seed_data.gql
+
+# =========================
+# Misc local data
+# =========================
+data/
+tmp/
+temp/
+
+# =========================
+# Coverage / testing
+# =========================
+coverage/
+.nyc_output/
+
+# =========================
+# Optional system files
+# =========================
+*.swp
+*.swo
+*.pyc
+*.pyo
+*.pyd
+
+# =========================
+# Node / Backend
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Docker volumes / local DB
+# =========================
+**/postgres-data/
+**/db-data/
+
+# =========================
+# Build outputs
+# =========================
+dist/
+build/
+
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+.history/
+
+# =========================
+# Environment variables (CRITICAL)
+# =========================
+.env
+.env.local
+.env.development
+.env.development.local
+.env.production
+.env.production.local
+.env.test
+.env.test.local
+
+# allow template for team
+!.env.example
+
+# =========================
+# Firebase / Secrets
+# =========================
+**/serviceAccountKey.json
+*.pem
+*.key
+
+# =========================
+# Firebase Emulator
+# =========================
+.firebase/
+
+# =========================
+# Checkpoints / temp data
+# =========================
+*.checkpoint.json
+checkpoints/
+
+# =========================
+# Data Connect (generated + local artifacts)
+# =========================
+mobile-app/src/dataconnect-generated/
+dataconnect/.dataconnect/
+dataconnect/_dataconnect.schema/
+dataconnect/example/
+dataconnect/seed_data.gql
+
+# =========================
+# Misc local data
+# =========================
+data/
+tmp/
+temp/
+
+# =========================
+# Coverage / testing
+# =========================
+coverage/
+.nyc_output/
+
+# =========================
+# Optional system files
+# =========================
+*.swp
+*.swo
 
 # Build outputs
 dist/
 build/
 
 # env
+# env
 .env
+.env.local
+.env.development
+.env.development.local
+.env.production
+.env.production.local
+.env.test
+.env.test.local
+!.env.example
 
 # Firebase Service Account Key
 **/serviceAccountKey.json
@@ -50,3 +273,5 @@ dataconnect/_dataconnect.schema/
 dataconnect/example/
 dataconnect/seed_data.gql
 data/
+
+*.db

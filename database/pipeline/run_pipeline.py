@@ -29,6 +29,37 @@ from database.pipeline.stages.enrich_stage import run_enrich_stage
 from database.pipeline.stages.seed_stage import run_seed_stage
 
 
+def _run_db018_quality_report(repo_root: str, seeded_input_path: Optional[str] = None) -> dict:
+    """
+    Generate DB018 dataset quality report after a successful seed stage.
+    Returns a status dict for pipeline metadata.
+    """
+    from database.Reports.dataset_quality_report import generate_quality_report
+
+    input_path = seeded_input_path or os.path.join(repo_root, "database", "seeding", "seeded_products.json")
+    if not os.path.isabs(input_path):
+        input_path = os.path.join(repo_root, input_path)
+    input_path = os.path.abspath(input_path)
+
+    output_md = os.path.join(repo_root, "database", "Reports", "dataset_quality_report.md")
+    output_md = os.path.abspath(output_md)
+
+    if not os.path.exists(input_path):
+        return {
+            "status": "skipped",
+            "reason": f"Seed output not found: {input_path}",
+            "input": input_path,
+            "output": output_md,
+        }
+
+    generate_quality_report(input_path=input_path, output_md=output_md)
+    return {
+        "status": "completed",
+        "input": input_path,
+        "output": output_md,
+    }
+
+
 def read_config(path: str) -> dict:
     if not os.path.exists(path):
         raise FileNotFoundError(f"Config not found: {path}")
@@ -352,6 +383,30 @@ def runPipeline(
                 raise
     else:
         print("Seed stage disabled by config")
+
+    # DB018 report generation (after seed stage)
+    report_should_run = pipeline_cfg.get("seed", {}).get("enabled", True) and not dry_run
+    report_status = {
+        "status": "skipped",
+        "reason": "seed stage disabled or dry-run mode",
+    }
+    if report_should_run:
+        seed_stage = stats["stages"].get("seed", {})
+        seed_result = seed_stage.get("result") if isinstance(seed_stage.get("result"), dict) else seed_stage
+        seed_output = seed_result.get("output") if isinstance(seed_result, dict) else None
+        try:
+            report_status = _run_db018_quality_report(repo_root=repo_root, seeded_input_path=seed_output)
+            print(f"DB018 report generation: {report_status.get('status')}")
+        except Exception as e:
+            report_status = {
+                "status": "failed",
+                "error": str(e),
+                "input": seed_output,
+            }
+            print(f"DB018 report generation failed: {e}")
+            if pipeline_cfg.get("fail_on_error", True):
+                raise
+    stats["reports"] = {"db018_dataset_quality_report": report_status}
 
     stats["run_finished"] = datetime.now(timezone.utc).isoformat()
     # Write metadata to outputs if configured
