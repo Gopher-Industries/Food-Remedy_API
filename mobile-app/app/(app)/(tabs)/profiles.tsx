@@ -108,13 +108,18 @@ export default function MembersPage() {
               </>
             )}
           </Pressable>
-
+              
           <Pressable
             onPress={() => router.push("/(app)/nutritionalProfiles")}
+            
+            
             className={`flex-row justify-between items-center px-4 py-6 active:bg-hsl98 ${hcRow(
               highContrast
             )}`}
           >
+            
+            
+            
             {({ pressed }) => (
               <>
                 <View className="flex-row items-center gap-3">
@@ -136,6 +141,38 @@ export default function MembersPage() {
               </>
             )}
           </Pressable>
+
+          <Pressable
+  onPress={() => router.push("/(app)/demographics")}
+  className={`flex-row justify-between items-center px-4 py-6 active:bg-hsl98 ${hcRow(
+    highContrast
+  )}`}
+>
+  {({ pressed }) => (
+    <>
+      <View className="flex-row items-center gap-3">
+        <IconGeneral
+          type="user"
+          fill="hsl(0, 0%, 40%)"
+          size={32}
+        />
+        <View>
+          <Tt className="font-interMedium">Demographics</Tt>
+          <Tt className="text-sm">
+            Personalisation settings
+          </Tt>
+        </View>
+      </View>
+      <IconGeneral
+        type="arrow-forward"
+        fill={pressed ? "#FF3F3F" : "hsl(0, 0%, 50%)"}
+        size={24}
+      />
+    </>
+  )}
+</Pressable>
+          
+          
 
           {/* {profiles.map((member) => (
             <Pressable
