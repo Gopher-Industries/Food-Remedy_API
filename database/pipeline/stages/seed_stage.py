@@ -10,7 +10,7 @@ def import_module_from_path(path: str) -> types.ModuleType:
     return module
 
 
-def run_seed_stage(input_path: str, output_path: str, config=None) -> dict:
+def run_seed_stage(input_path: str, config: dict) -> dict:
     """
     Run the seeding module/script.
 
@@ -24,7 +24,7 @@ def run_seed_stage(input_path: str, output_path: str, config=None) -> dict:
     )
 
     seed_script = config.get("script_path") or os.path.join(
-        repo_root, "database", "seeding", "seed_products.py"
+        repo_root, "database", "seeding", "seed_products.py" # outdated early testing file not to be used
     )
 
     if not os.path.exists(seed_script):
@@ -34,21 +34,22 @@ def run_seed_stage(input_path: str, output_path: str, config=None) -> dict:
 
     # Prefer seed_products()
     if hasattr(module, "seed_products"):
-        module.seed_products()
+        module.seed_products.config = config
+        result = module.seed_products()
 
     # Fallback to main()
     elif hasattr(module, "main"):
         try:
-            module.main(input_path)
+            result = module.main(input_path)
         except TypeError:
-            module.main()
+            result = module.main()
 
     else:
         raise RuntimeError(
             "Seed script exposes neither seed_products() nor main()"
         )
 
-    return {
+    return result or {
         "processed": None,
         "failures": None,
         "output": input_path

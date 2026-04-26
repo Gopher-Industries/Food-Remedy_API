@@ -179,6 +179,10 @@
         "nutrition": {
           "type": "object",
           "required_subfields": ["compositeScore", "scores"]
+        },
+        "alternatives": {
+          "type": "object",
+          "description": "DB019 similar/healthier peer lists (see database/pipeline/modules/DB019_README.md)"
         }
       }
     }
