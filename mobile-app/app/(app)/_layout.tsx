@@ -24,6 +24,10 @@ export default function AppLayout() {
     return <Redirect href="/onboarding" />;
   }
 
+  if (gate === 'needs-demographics' && pathname !== '/demographics' && pathname !== '/nutritionalProfiles') {
+  return <Redirect href="/demographics" />;
+}
+
   // If a profile exists and user somehow navigates to onboarding, kick them to history
   if (gate === 'ready' && pathname === '/onboarding') {
     return <Redirect href="/(app)/(tabs)" />;
@@ -35,6 +39,8 @@ export default function AppLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="onboarding" />
+          <Stack.Screen name="demographics" />
+          <Stack.Screen name="nutritionalProfiles" />
           <Stack.Screen name="settings/notification" />
           <Stack.Screen name="settings/about" />
           <Stack.Screen name="settings/contact" />
