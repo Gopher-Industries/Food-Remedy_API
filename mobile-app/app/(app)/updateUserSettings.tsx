@@ -412,7 +412,7 @@ export default function UpdateUserSettingsScreen() {
               )}
             </View>
           </View>
-          
+        
           {/* Buttons on Right Side */}
           <View className="flex-row justify-end gap-2 mt-4">
             {/* Sync Button */}

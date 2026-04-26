@@ -10,6 +10,7 @@ import Tt from "@/components/ui/UIText";
 import { router } from "expo-router";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useNotification } from "@/components/providers/NotificationProvider";
+import { useProfile } from "@/components/providers/ProfileProvider";
 
 // Option Types
 type Option = {
@@ -97,6 +98,7 @@ const SingleSelectField = ({
 const DemographicsForm = () => {
   const { user } = useAuth();
   const { addNotification } = useNotification();
+  const { refresh } = useProfile();
 
   const [ageBand, setAgeBand] = useState<string>("36-50");
   const [sex, setSex] = useState<string>("female");
@@ -167,6 +169,7 @@ const DemographicsForm = () => {
         guardrailLevel,
       });
 
+      await refresh();
       addNotification("Demographics saved!", "s");
     } catch (err: any) {
       console.error(err);
@@ -176,14 +179,14 @@ const DemographicsForm = () => {
     }
   };
 
-  const handleNext = () => {
-    router.push("/(app)/nutritionalProfiles");
-  };
+const handleNext = () => {
+  router.push("/(app)/nutritionalProfiles");
+};
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      className="flex-1"
+      className="flex-1 bg-white p-safe"
     >
       <ScrollView keyboardShouldPersistTaps="handled">
         <View className="flex-1 w-[90%] self-center">
