@@ -184,6 +184,26 @@ def commit_batch(batch):
     """Commit a Firestore batch with retry."""
     batch.commit()
 
+def commit_batch_with_retry(batch, batch_number: int, max_retries: int = 3, delay_seconds: int = 2):
+    """
+    DB025: Detect failed insert operations and retry automatically.
+    """
+    for attempt in range(1, max_retries + 1):
+        try:
+            commit_batch(batch)
+            print(f"Batch {batch_number} committed successfully on attempt {attempt}")
+            return True
+
+        except Exception as e:
+            print(f"Batch {batch_number} failed on attempt {attempt}: {e}")
+
+            if attempt < max_retries:
+                time.sleep(delay_seconds)
+            else:
+                print(f"Batch {batch_number} skipped after maximum retries.")
+                return False
+
+
 
 def load_checkpoint() -> int:
     """Load last successful batch index from checkpoint file."""
@@ -317,14 +337,14 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
             writes_this_second += 1
             total_written += 1
 
-        try:
-            commit_batch(batch)
+        success = commit_batch_with_retry(batch, batch_number)
+
+        if success:
             print(f"Wrote batch {batch_number} ({len(chunk)} docs)")
             save_checkpoint(batch_number)
             batches_this_run += 1
-        except Exception as e:
-            print(f"Batch {batch_number} failed: {e}")
-            failures += 1
+        else:
+            failures += 1  
 
         if total_written > 20000:
             print("Warning: Approaching daily write quota (20k) — stopping")
