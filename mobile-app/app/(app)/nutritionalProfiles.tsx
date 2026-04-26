@@ -135,7 +135,35 @@ export default function NutritionalProfilesScreen() {
           ))}
         </View>
       </ScrollView>
+      
+      {/* EDIT DEMOGRAPHICS */}
+      <View className="w-[95%] mx-auto">
+        <Pressable
+          onPress={() => router.push("/demographics" as any)}
+          hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+          className="mt-4 flex-row justify-between items-center py-3 px-4 rounded-lg 
+                border border-hsl90 active:border-primary bg-white self-center"
+        >
+        {({ pressed }) => (
+          <>
+            <Tt
+              className={`text-lg font-interSemiBold flex-grow ${pressed ? "text-primary" : "text-hsl30"}`}
+            >
+              Edit Demographics
+            </Tt>
+            <IconGeneral
+              type="edit"
+              fill={pressed ? color.primary : color.iconDefault}
+              size={spacing.xl}
+            />
+          </>
+        )}
+      </Pressable>
+  </View>
+  
 
+{/* ADD MEMBER */}
+      
       {/* ADD MEMBER */}
       <View className="w-[95%] mx-auto">
         <Pressable
@@ -160,6 +188,25 @@ export default function NutritionalProfilesScreen() {
           )}
         </Pressable>
       </View>
+
+      {/* SAVE BUTTON */}
+      <View className="w-[95%] mx-auto">
+        <Pressable
+          onPress={async () => {
+            await refresh();
+            router.replace("/(app)/(tabs)");
+          }}
+          hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+          className="py-3 px-4 mb-16 rounded-lg border bg-primary border-hsl90 dark:border-hsl20 active:bg-transparent active:border-primary"
+        >
+          {({ pressed }) => (
+            <Tt className={`text-lg text-center font-interSemiBold ${pressed ? "text-primary" : "text-white"}`}>
+              Save
+            </Tt>
+          )}
+        </Pressable>
+      </View>
     </View>
   );
 }
+       
