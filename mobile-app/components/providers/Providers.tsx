@@ -12,6 +12,7 @@ import { SearchProductProvider } from "@/components/providers/SearchProductProvi
 import { PreferencesProvider } from "@/components/providers/PreferencesProvider";
 import { SessionPreferencesProvider } from "@/components/providers/SessionPreferencesProvider";
 import ThemeBridge from "@/components/providers/ThemeBridge";
+import { RecommendationAddToListProvider } from "@/components/providers/RecommendationAddToListProvider";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -28,9 +29,11 @@ const Providers = ({ children }: ProvidersProps) => {
                 <ProfileProvider>
                   <ProductProvider>
                     <SearchProductProvider>
-                      {children}
-                      <ModalLoader />
-                      <ThemeBridge />
+                      <RecommendationAddToListProvider>
+                        {children}
+                        <ModalLoader />
+                        <ThemeBridge />
+                      </RecommendationAddToListProvider>
                     </SearchProductProvider>
                   </ProductProvider>
                 </ProfileProvider>
