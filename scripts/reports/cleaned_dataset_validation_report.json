@@ -1,6 +1,6 @@
 {
-  "source": "database\\clean_data\\cleanSample.json",
-  "total_records": 11,
+  "source": "C:\\Users\\aarya\\Documents\\Deakin\\2026\\T1\\SIT374\\git\\Food-Remedy_API\\database\\clean_data\\cleanSample.json",
+  "total_records": 10,
   "ok": true,
   "checks": {
     "missing_product_fields": {
@@ -25,9 +25,10 @@
         "seafood": 2,
         "oils": 1,
         "meal kits": 1,
-        "spreads": 2,
+        "spreads": 1,
         "noodles and pasta": 1,
-        "beverages": 3,
+        "beverages": 1,
+        "breads": 2,
         "snacks and confectionery": 1
       },
       "unknown_standard_categories": {},

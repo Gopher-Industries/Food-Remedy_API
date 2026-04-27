@@ -1,3 +1,26 @@
+import pandas as pd
+
+def remove_outliers(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Remove or flag outliers in numeric fields (e.g., product_quantity, serving_quantity, nutriments).
+    Outlier thresholds are domain-specific; here we use broad, reasonable limits.
+    """
+    # Remove products with extreme product_quantity or serving_quantity
+    df = df[(df['product_quantity'] <= 10000) & (df['serving_quantity'] <= 5000)]
+    # Remove negative values (should already be handled, but double-check)
+    df = df[(df['product_quantity'] >= 0) & (df['serving_quantity'] >= 0)]
+    # Remove nutriment outliers (e.g., energy_100g > 5000 kcal)
+    if 'nutriments' in df.columns:
+        def nutriment_ok(n):
+            if not isinstance(n, dict):
+                return False
+            energy = n.get('energy_100g')
+            if energy is not None and isinstance(energy, (int, float)):
+                if energy > 5000 or energy < 0:
+                    return False
+            return True
+        df = df[df['nutriments'].apply(nutriment_ok)]
+    return df
 """
 Clean OpenFoodFacts Australia dataset for database ingestion.
 """
@@ -190,7 +213,8 @@ def ensure_code_field(df: pd.DataFrame) -> pd.DataFrame:
         raise KeyError("Missing required 'code' column in dataset.")
     # Strip whitespace and drop empty values
     df['code'] = df['code'].astype(str).str.strip()
-    df = df[df['code'] != ""]
+    # Remove codes that are not 13 digits or not numeric
+    df = df[df['code'].str.isdigit() & (df['code'].str.len() == 13)]
     return df
 
 
@@ -206,7 +230,8 @@ def clean_text_fields(df: pd.DataFrame) -> pd.DataFrame:
             df['product_name']
             .astype(str)
             .str.strip()
-                .replace({'': pd.NA})
+            .str.lower()
+            .replace({'': pd.NA})
         )
     else:
         # If missing entirely, add column with NA
@@ -766,6 +791,7 @@ def main(input_path: str, output_path: str):
     df = ensure_code_field(df)
     df = clean_text_fields(df)
     df = clean_quantity_fields(df)
+    df = remove_outliers(df)
     df = clean_nutriments(df)
     df = reduce_nutriments(df)
     df = clean_traces_fields(df)

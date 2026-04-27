@@ -163,6 +163,26 @@ def check_categories(products: list[dict[str, Any]]) -> dict[str, Any]:
 
 def check_inconsistencies(products: list[dict[str, Any]]) -> dict[str, Any]:
     issues = []
+    # Outlier and barcode validity checks
+    for idx, product in enumerate(products):
+        barcode = product.get("barcode")
+        # Barcode must be 13 digits and numeric
+        if not (isinstance(barcode, str) and barcode.isdigit() and len(barcode) == 13):
+            issues.append(issue(idx, barcode, "barcode", "barcode must be a 13-digit numeric string"))
+        # Outlier checks for productQuantity and servingQuantity
+        pq = product.get("productQuantity")
+        sq = product.get("servingQuantity")
+        if isinstance(pq, (int, float)) and pq > 10000:
+            issues.append(issue(idx, barcode, "productQuantity", "productQuantity is an outlier (> 10000)"))
+        if isinstance(sq, (int, float)) and sq > 5000:
+            issues.append(issue(idx, barcode, "servingQuantity", "servingQuantity is an outlier (> 5000)"))
+        # Outlier check for energy_100g in nutriments
+        nutriments = product.get("nutriments")
+        if isinstance(nutriments, dict):
+            energy = nutriments.get("energy_100g")
+            if isinstance(energy, (int, float)) and (energy > 5000 or energy < 0):
+                issues.append(issue(idx, barcode, "nutriments.energy_100g", "energy_100g is an outlier (not in 0-5000)"))
+
     barcodes = Counter(str(p.get("barcode", "")).strip() for p in products if not is_missing(p.get("barcode")))
     duplicated_barcodes = {barcode: count for barcode, count in barcodes.items() if count > 1}
 
