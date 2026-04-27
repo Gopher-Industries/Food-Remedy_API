@@ -18,6 +18,7 @@ export default function NutritionalProfilesScreen() {
   const { profiles, startEdit, startEditForNew, clearEdit, refresh, selfDisplayName } = useProfile();
   const [refreshing, setRefreshing] = useState(false);
   const [firebaseUserName, setFirebaseUserName] = useState<string>("");
+  const [profileReady, setProfileReady] = useState(false);
 
   useEffect(() => {
     const fetchUserName = async () => {
@@ -31,6 +32,7 @@ export default function NutritionalProfilesScreen() {
     };
     fetchUserName();
   }, [user?.uid]);
+
 
   useFocusEffect(
     useCallback(() => {
@@ -181,7 +183,7 @@ export default function NutritionalProfilesScreen() {
         {/* MAIN MENU BUTTON */}
         <View className="w-[95%] mx-auto">
           <Pressable
-            onPress={() => router.replace("/(app)/(tabs)" as any)}
+            onPress={() => router.push("/(app)/(tabs)" as any)}
             hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
             className="mt-4 mb-16 py-3 px-4 rounded-lg border bg-primary border-hsl90 dark:border-hsl20 active:bg-transparent active:border-primary"
           >
