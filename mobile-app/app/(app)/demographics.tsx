@@ -104,6 +104,7 @@ const DemographicsForm = () => {
   const [ageBand, setAgeBand] = useState<string>("36-50");
   const [sex, setSex] = useState<string>("female");
   const [guardrailLevel, setGuardrailLevel] = useState<string>("moderate");
+  const [submitting, setSubmitting] = useState(false);
 
   // Prefill demographic data on mount
   useEffect(() => {
@@ -125,8 +126,6 @@ const DemographicsForm = () => {
     fetchDemographics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.uid]);
-
-  const [submitting, setSubmitting] = useState(false);
 
   const handleSave = async () => {
     if (!ageBand || !sex || !guardrailLevel) {

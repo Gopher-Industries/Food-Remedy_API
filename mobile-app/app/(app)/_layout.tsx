@@ -24,12 +24,9 @@ export default function AppLayout() {
     return <Redirect href="/onboarding" />;
   }
 
-  if (
-  gate === 'needs-demographics' && 
-  pathname !== '/demographics' && !pathname.includes('nutritionalProfiles') && !pathname.includes('tabs')) {
-    return <Redirect href="/demographics" />;
+  if (gate === 'needs-demographics' && pathname !== '/demographics' && pathname !== '/nutritionalProfiles') {
+  return <Redirect href="/demographics" />;
 }
-
   // If a profile exists and user somehow navigates to onboarding, kick them to history
   if (gate === 'ready' && pathname === '/onboarding') {
     return <Redirect href="/(app)/(tabs)" />;
