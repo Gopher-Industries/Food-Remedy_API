@@ -49,7 +49,6 @@ import {
 import { ProductTag } from "@/components/shared/ProductTag";
 import { getProductTags } from "@/services/utils/productTags";
 
-
 const COMPLETENESS_BOUND = 0.7;
 
 function formatUnsuitableReason(reasons?: string[] | null): string {
@@ -297,7 +296,10 @@ export default function ProductPage() {
     console.log("[ProductPage] barcode:", String(currentProduct.barcode));
     console.log("[ProductPage] activeProfile:", activeProfile);
     console.log("[ProductPage] avoidAllergens:", avoidAllergens);
-    console.log("[ProductPage] Using profiles:", activeProfile ? "active profile only" : "all profiles");
+    console.log(
+      "[ProductPage] Using profiles:",
+      activeProfile ? "active profile only" : "all profiles",
+    );
 
     setAltChecked(false);
     setAltAvoidAllergens(avoidAllergens);
@@ -443,7 +445,6 @@ export default function ProductPage() {
     <Screen className={`p-safe ${pageBg}`}>
       <Header />
 
-
       {/* TOP ACTION BAR */}
       <View className="w-[95%] self-center mb-6">
         <View className="flex-row justify-between items-center">
@@ -473,13 +474,11 @@ export default function ProductPage() {
                     Add to List
                   </Tt>
                 </>
-
               )}
             </Pressable>
           </View>
         </View>
       </View>
-
 
       {/* MISSING INFORMATION WARNING */}
       {currentProduct.completeness <= COMPLETENESS_BOUND && (
@@ -577,7 +576,6 @@ export default function ProductPage() {
               productAllergens={productAllergens}
             />
           </View>
-
 
           {/* PROFILE COMPATIBILITY CHECKS - Show active profile or all profiles if none selected */}
           {activeProfile ? (
@@ -773,7 +771,7 @@ export default function ProductPage() {
           <View className="mb-6">
             <View className="flex-row justify-between items-center mb-3">
               <Tt className={`font-interBold text-lg ${titleText}`}>
-                Ingredients
+                Ingredientsss
               </Tt>
               <Pressable
                 onPress={() => openModal("accessibleIngredients")}
@@ -813,7 +811,6 @@ export default function ProductPage() {
             </View>
           )}
 
-
           {/* ADD TO SHOPPING LIST BUTTON */}
           <Pressable
             onPress={() => openModal("addToList")}
@@ -828,9 +825,6 @@ export default function ProductPage() {
               </>
             )}
           </Pressable>
-
-
-
         </View>
       </ScrollView>
     </Screen>
