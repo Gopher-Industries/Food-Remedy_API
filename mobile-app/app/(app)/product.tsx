@@ -117,13 +117,21 @@ export default function ProductTabsScreen() {
         return <NutrientsTab product={currentProduct} />;
 
       case "Ingredients":
+<<<<<<< FE022_enhance_product_detail_recommendations
         return <IngredientsTab product={currentProduct} />;
+=======
+        return <IngredientsTab />;
+>>>>>>> main
 
       case "For you":
         return <ForYouTab product={currentProduct} />;
 
       case "Compare":
+<<<<<<< FE022_enhance_product_detail_recommendations
         return <RecommendationsTab product={currentProduct} />;
+=======
+        return <CompareTab product={currentProduct} />;
+>>>>>>> main
 
       default:
         return null;
@@ -162,7 +170,7 @@ export default function ProductTabsScreen() {
                 <>
                   <IconGeneral type="cart-add" fill="white" size={20} />
                   <Tt className={`${primaryBtnText} font-interSemiBold ml-2`}>
-                    Add to List
+                    Add to Lists
                   </Tt>
                 </>
               )}
