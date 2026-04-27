@@ -223,13 +223,26 @@ export function useShoppingList() {
    */
   const addItem = useCallback(
     async (listId: string, product: Product, quantity: number = 1, note?: string) => {
-      if (!db) return;
-      await addItemToList(db, listId, product, quantity, note);
+      if (!db) {
+        console.error('[useShoppingList] addItem called but db is not ready!', { listId, product: product.productName, quantity });
+        throw new Error('Database not ready');
+      }
+      console.log('[useShoppingList] addItem called:', { listId, productName: product.productName, quantity, note });
+      try {
+        await addItemToList(db, listId, product, quantity, note);
+        console.log('[useShoppingList] Successfully added item to database');
+      } catch (err) {
+        console.error('[useShoppingList] Failed to add item to database:', err);
+        throw err;
+      }
 
       // Sync to Firestore (non-blocking)
       try {
         const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
-        if (uid) await addItemToListFirestore(uid, listId, product, quantity, note);
+        if (uid) {
+          console.log('[useShoppingList] Syncing to Firestore:', { uid, listId });
+          await addItemToListFirestore(uid, listId, product, quantity, note);
+        }
       } catch (e) {
         console.warn("Failed to sync item add to Firestore:", e);
       }
@@ -240,7 +253,7 @@ export function useShoppingList() {
         setCurrentItems(items);
       }
     },
-    [db, currentList]
+    [db, currentList, lists, ensureUid]
   );
 
   /**
@@ -248,12 +261,26 @@ export function useShoppingList() {
    */
   const updateQuantity = useCallback(
     async (listId: string, barcode: string, quantity: number) => {
-      if (!db) return;
-      await updateItemQuantity(db, listId, barcode, quantity);
+      if (!db) {
+        console.error('[useShoppingList] updateQuantity called but db is not ready!', { listId, barcode, quantity });
+        throw new Error('Database not ready');
+      }
+      console.log('[useShoppingList] updateQuantity called:', { listId, barcode, quantity });
+      
+      try {
+        await updateItemQuantity(db, listId, barcode, quantity);
+        console.log('[useShoppingList] Successfully updated quantity in database');
+      } catch (err) {
+        console.error('[useShoppingList] Failed to update quantity in database:', err);
+        throw err;
+      }
 
       try {
         const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
-        if (uid) await updateItemQuantityFirestore(uid, listId, barcode, quantity);
+        if (uid) {
+          console.log('[useShoppingList] Syncing quantity to Firestore');
+          await updateItemQuantityFirestore(uid, listId, barcode, quantity);
+        }
       } catch (e) {
         console.warn("Failed to sync quantity to Firestore:", e);
       }
@@ -266,7 +293,7 @@ export function useShoppingList() {
         );
       }
     },
-    [db, currentList]
+    [db, currentList, lists, ensureUid]
   );
 
   /**
@@ -406,8 +433,14 @@ export function useShoppingList() {
    */
   const getItem = useCallback(
     async (listId: string, barcode: string) => {
-      if (!db) return null;
-      return await getItemInList(db, listId, barcode);
+      if (!db) {
+        console.warn('[useShoppingList] getItem called but db is not ready, returning null', { listId, barcode });
+        return null;
+      }
+      console.log('[useShoppingList] getItem called:', { listId, barcode });
+      const item = await getItemInList(db, listId, barcode);
+      console.log('[useShoppingList] getItem result:', { barcode, exists: !!item, quantity: item?.quantity });
+      return item;
     },
     [db]
   );
