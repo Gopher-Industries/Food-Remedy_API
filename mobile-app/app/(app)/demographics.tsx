@@ -13,6 +13,7 @@ import IconGeneral from "@/components/icons/IconGeneral";
 import Header from "@/components/layout/Header";
 import { color, spacing } from "@/app/design/token";
 
+
 // Option Types
 type Option = {
   label: string;
@@ -68,18 +69,16 @@ const SingleSelectField = ({
             <Pressable
               key={option.value}
               onPress={() => onSelect(option.value)}
-              className={`px-4 py-2 rounded-full border ${
-                isSelected
-                  ? "bg-primary border-primary"
-                  : "bg-transparent border-hsl80 dark:border-hsl30"
-              }`}
+              className={`px-4 py-2 rounded-full border ${isSelected
+                ? "bg-primary border-primary"
+                : "bg-transparent border-hsl80 dark:border-hsl30"
+                }`}
             >
               <Tt
-                className={`font-interMedium text-sm ${
-                  isSelected
-                    ? "text-white"
-                    : "text-hsl30 dark:text-hsl90"
-                }`}
+                className={`font-interMedium text-sm ${isSelected
+                  ? "text-white"
+                  : "text-hsl30 dark:text-hsl90"
+                  }`}
               >
                 {option.label}
               </Tt>
@@ -99,7 +98,7 @@ const SingleSelectField = ({
 const DemographicsForm = () => {
   const { user } = useAuth();
   const { addNotification } = useNotification();
-  const { refresh } = useProfile();
+  const { refresh, profiles } = useProfile();
 
   const [ageBand, setAgeBand] = useState<string>("36-50");
   const [sex, setSex] = useState<string>("female");
@@ -162,10 +161,17 @@ const DemographicsForm = () => {
         ageBand,
         sex,
         guardrailLevel,
+
       });
 
       await refresh();
+
+
+      console.log("PROFILES AFTER SAVE:", profiles);//////
+
       addNotification("Demographics saved!", "s");
+
+      router.replace("/(app)/(tabs)");
     } catch (err: any) {
       console.error(err);
       addNotification("Failed to save demographics.", "e");

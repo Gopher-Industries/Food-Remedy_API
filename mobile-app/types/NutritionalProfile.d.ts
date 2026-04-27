@@ -18,4 +18,5 @@ export interface NutritionalProfile {
   ageBand?: string;
   sex?: string;
   guardrailLevel?: string;
+  profileCompleted?: boolean;
 }

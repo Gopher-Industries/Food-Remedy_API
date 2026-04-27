@@ -9,7 +9,7 @@ import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 
 export default function AppLayout() {
   const { loading: authLoading, user } = useAuth();
-  const { gate } = useProfileGate(); // 'loading' | 'needs-onboarding' | 'ready'
+  const { gate, profiles } = useProfileGate(); // 'loading' | 'needs-onboarding' | 'ready'
   const pathname = usePathname();
 
   // 1) Auth gate
@@ -24,9 +24,23 @@ export default function AppLayout() {
     return <Redirect href="/onboarding" />;
   }
 
-  if (gate === 'needs-demographics' && pathname !== '/demographics' && pathname !== '/nutritionalProfiles') {
-  return <Redirect href="/demographics" />;
-}
+  const demographicsProfile = profiles.find(
+    p => p.profileId === 'demographics'
+  );
+
+  const isDemographicsFilled =
+    demographicsProfile?.ageBand &&
+    demographicsProfile?.sex &&
+    demographicsProfile?.guardrailLevel;
+
+  if (
+    gate === 'needs-demographics' &&
+    !isDemographicsFilled &&
+    pathname !== '/demographics' &&
+    pathname !== '/nutritionalProfiles'
+  ) {
+    return <Redirect href="/demographics" />;
+  }
   // If a profile exists and user somehow navigates to onboarding, kick them to history
   if (gate === 'ready' && pathname === '/onboarding') {
     return <Redirect href="/(app)/(tabs)" />;

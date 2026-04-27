@@ -85,6 +85,7 @@ export async function upsertUserProfile(
     userId: uid,
     profileId,
     updatedAt: nowIso(),
+    profileCompleted: (data as any).profileCompleted ?? false,/////
   };
   
   // Only delete firstName/lastName fields for Self profiles
