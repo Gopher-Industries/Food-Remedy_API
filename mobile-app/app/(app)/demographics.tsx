@@ -3,14 +3,15 @@ import {
   ScrollView,
   View,
   Pressable,
-  KeyboardAvoidingView,
-  Platform,
 } from "react-native";
 import Tt from "@/components/ui/UIText";
 import { router } from "expo-router";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useNotification } from "@/components/providers/NotificationProvider";
 import { useProfile } from "@/components/providers/ProfileProvider";
+import IconGeneral from "@/components/icons/IconGeneral";
+import Header from "@/components/layout/Header";
+import { color, spacing } from "@/app/design/token";
 
 // Option Types
 type Option = {
@@ -103,6 +104,7 @@ const DemographicsForm = () => {
   const [ageBand, setAgeBand] = useState<string>("36-50");
   const [sex, setSex] = useState<string>("female");
   const [guardrailLevel, setGuardrailLevel] = useState<string>("moderate");
+  const [submitting, setSubmitting] = useState(false);
 
   // Prefill demographic data on mount
   useEffect(() => {
@@ -124,7 +126,6 @@ const DemographicsForm = () => {
     fetchDemographics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.uid]);
-  const [submitting, setSubmitting] = useState(false);
 
   const handleSave = async () => {
     if (!ageBand || !sex || !guardrailLevel) {
@@ -134,12 +135,6 @@ const DemographicsForm = () => {
 
     try {
       setSubmitting(true);
-
-      const demographicsData = {
-        ageBand,
-        sex,
-        guardrailLevel,
-      };
 
       // Save information to Database (Firestore)
       if (!user?.uid) throw new Error("User not authenticated");
@@ -179,23 +174,41 @@ const DemographicsForm = () => {
     }
   };
 
-const handleNext = () => {
-  router.push("/(app)/nutritionalProfiles");
-};
+  const handleNext = () => {
+    router.push("/(app)/nutritionalProfiles");
+  };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      className="flex-1 bg-white p-safe"
-    >
-      <ScrollView keyboardShouldPersistTaps="handled">
-        <View className="flex-1 w-[90%] self-center">
+    <View className="flex-1 bg-white p-safe">
 
-          {/* Header */}
-          <Tt className="text-xl font-interBold text-center my-4">
-            Your Health Profile
-          </Tt>
-          <Tt className="text-sm font-interMedium text-center text-hsl50 dark:text-hsl70 mb-6">
+      <Header />
+
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 24 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Title + Back */}
+        <View className="w-[95%] mx-auto mt-4 mb-6 flex-row items-center justify-between">
+          <Pressable
+            onPress={() => router.back()}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            className="px-2 py-1"
+          >
+            {({ pressed }) => (
+              <IconGeneral
+                type="arrow-backward-ios"
+                fill={pressed ? "#FF3F3F" : "hsl(0, 0%, 30%)"}
+              />
+            )}
+          </Pressable>
+          <Tt className="text-xl font-interBold">Your Health Profile</Tt>
+          <View style={{ width: 24, height: 24 }} />
+        </View>
+
+        <View className="w-[95%] mx-auto">
+
+          {/* Subtitle */}
+          <Tt className="text-sm font-interMedium text-hsl50 dark:text-hsl70 mb-6">
             Demographics shape reference portions and risk rules for recommendations.
           </Tt>
 
@@ -235,7 +248,8 @@ const handleNext = () => {
           <Pressable
             onPress={handleSave}
             disabled={submitting}
-            className="w-[90%] self-center py-3 px-4 my-4 rounded-lg border bg-primary border-hsl90 dark:border-hsl20 active:bg-transparent active:border-primary disabled:opacity-60"
+            hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+            className="py-3 px-4 my-4 rounded-lg border bg-primary border-hsl90 dark:border-hsl20 active:bg-transparent active:border-primary disabled:opacity-60"
           >
             {({ pressed }: { pressed: boolean }) => (
               <Tt className={`text-lg text-center font-interSemiBold ${pressed ? "text-primary" : "text-white"}`}>
@@ -247,18 +261,26 @@ const handleNext = () => {
           {/* Next Button */}
           <Pressable
             onPress={handleNext}
-            className="w-[90%] self-center py-3 px-4 mb-8 rounded-lg border border-primary active:bg-primary"
+            hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+            className="mb-16 flex-row justify-between items-center py-3 px-4 rounded-lg border border-hsl90 active:border-primary bg-white"
           >
             {({ pressed }: { pressed: boolean }) => (
-              <Tt className={`text-lg text-center font-interSemiBold ${pressed ? "text-white" : "text-primary"}`}>
-                Next
-              </Tt>
+              <>
+                <Tt className={`text-lg font-interSemiBold flex-grow ${pressed ? "text-primary" : "text-hsl30"}`}>
+                  Next
+                </Tt>
+                <IconGeneral
+                  type="arrow-forward-ios"
+                  fill={pressed ? color.primary : color.iconDefault}
+                  size={spacing.xl}
+                />
+              </>
             )}
           </Pressable>
 
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
