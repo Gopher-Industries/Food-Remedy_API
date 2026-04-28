@@ -152,14 +152,38 @@ async function addShoppingItemEnriched(input) {
   const userId = input.userId;
   const profile = await getUserProfile(userId);
 
+  const nutriments = input.nutriments || {};
+  
   const rawProduct = {
-    productName: input.productName,
-    barcode: input.barcode || null,
-    ingredientsText: input.ingredientsText || input.ingredients || "",
-    additivesText: input.additivesText || input.additives || "",
-    allergensText: input.allergensText || input.allergens || "",
-    nutrition: input.nutrition || {}
-  };
+  productName: input.productName,
+  barcode: input.barcode || null,
+
+  ingredientsText:
+    input.ingredientsText ||
+    (Array.isArray(input.ingredients)
+      ? input.ingredients.join(", ")
+      : input.ingredients || ""),
+
+  additivesText:
+    input.additivesText ||
+    (Array.isArray(input.additives)
+      ? input.additives.join(", ")
+      : input.additives || ""),
+
+  allergensText:
+    input.allergensText ||
+    (Array.isArray(input.allergens)
+      ? input.allergens.join(", ")
+      : input.allergens || ""),
+
+  nutrition: {
+    sugarG:
+      input?.nutrition?.sugarG ??
+      nutriments.sugars_100g ??
+      nutriments.sugars_serving ??
+      null
+  }
+};
 
   const scan = buildScanResult(rawProduct, profile || {});
   const now = new Date().toISOString();
