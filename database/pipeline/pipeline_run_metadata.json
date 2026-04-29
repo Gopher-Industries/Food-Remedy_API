@@ -1,5 +1,5 @@
 {
-  "run_started": "2026-04-19T20:27:22.819091+00:00",
+  "run_started": "2026-04-29T22:57:48.509141+00:00",
   "stages": {
     "enrich": {
       "processed": 5000,
@@ -92,5 +92,11 @@
       "output": "database/seeding/seeded_products.json"
     }
   },
-  "run_finished": "2026-04-19T20:27:53.414685+00:00"
+  "reports": {
+    "db018_dataset_quality_report": {
+      "status": "skipped",
+      "reason": "seed stage disabled or dry-run mode"
+    }
+  },
+  "run_finished": "2026-04-29T22:58:25.902700+00:00"
 }

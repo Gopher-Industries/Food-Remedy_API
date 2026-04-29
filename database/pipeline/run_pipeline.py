@@ -27,7 +27,7 @@ except Exception:
 from database.pipeline.stages.clean_stage import run_clean_stage
 from database.pipeline.stages.enrich_stage import run_enrich_stage
 from database.pipeline.stages.seed_stage import run_seed_stage
-
+from database.logging_system.pipeline_logger import PipelineStageLogger
 
 def _run_db018_quality_report(repo_root: str, seeded_input_path: Optional[str] = None) -> dict:
     """
@@ -236,6 +236,12 @@ def runPipeline(
         "stages": {},
     }
 
+    # Initialise Pipeline Logging
+    pipeline_logger = PipelineStageLogger("MainPipeline")
+    pipeline_logger.log_pipeline_start(input_source=config_path or "CLI arguments")
+    
+    pipeline_run_start_time = time.time()
+
     # checkpoint file for stage-level completion/recovery
     default_checkpoint = os.path.join(repo_root, "database", "pipeline_checkpoints.json")
     checkpoint_path = outputs.get("checkpoints", default_checkpoint)
@@ -257,12 +263,9 @@ def runPipeline(
     # Clean stage
     # If a checkpoint exists and the caller did not explicitly request the stage, skip it.
     if run_clean is None and checkpoints.get("clean", {}).get("status") == "completed" and not force:
-        print("Skipping clean stage (already completed according to checkpoints). Use --clean to force or --force to ignore checkpoints.")
+        pipeline_logger.log_info(stage_name="clean", message="skipped_by_checkpoint")
         stats["stages"]["clean"] = checkpoints.get("clean", {})
         completed_count += 1
-        # brief summary from checkpoint
-        ck = stats["stages"].get("clean", {})
-        print(f"Clean stage: status={ck.get('status')}, processed={ck.get('result', {}).get('processed') if isinstance(ck.get('result'), dict) else None}, failures={ck.get('result', {}).get('failures') if isinstance(ck.get('result'), dict) else None}")
     elif pipeline_cfg.get("clean", {}).get("enabled", True):
         clean_cfg = pipeline_cfg.get("clean", {})
         # propagate dry-run flag into stage config so implementations can honour it
@@ -270,10 +273,10 @@ def runPipeline(
             clean_cfg["dry_run"] = True
         in_path = clean_cfg.get("input", os.path.join(repo_root, "database", "data_investigation", "exampleProductRaw.json"))
         out_path = clean_cfg.get("output", os.path.join(repo_root, "database", "data_investigation", "exampleProductCleaned.json"))
-        stage_idx = completed_count + 1
-        pct = int((completed_count / total_stages) * 100) if total_stages else 0
-        print(f"Running stage {stage_idx}/{total_stages} (clean) — {pct}% complete")
-        print(f"Running clean stage: {in_path} -> {out_path}")
+        # stage_idx = completed_count + 1
+        # pct = int((completed_count / total_stages) * 100) if total_stages else 0
+        pipeline_logger.log_stage_start(stage_name="clean", input_file=in_path)
+        
         # mark running in checkpoints
         checkpoints.setdefault("clean", {})["status"] = "running"
         checkpoints["clean"]["started"] = datetime.now(timezone.utc).isoformat()
@@ -288,9 +291,16 @@ def runPipeline(
             checkpoints["clean"] = {"status": "completed", "finished": datetime.now(timezone.utc).isoformat(), "result": res}
             with open(checkpoint_path, "w", encoding="utf-8") as cf:
                 json.dump(checkpoints, cf, indent=2)
+
+            # short summary
+            pipeline_logger.log_stage_end(
+                stage_name="clean",
+                output_records=res.get("processed"),
+                failures=res.get("failures", 0),
+                output_file=res.get("output")
+            )
             completed_count += 1
-            # print short summary
-            print(f"Clean stage finished: processed={res.get('processed')}, failures={res.get('failures')}")
+            
         except Exception as e:
             stats["stages"]["clean"] = {"error": str(e)}
             checkpoints["clean"] = {"status": "failed", "error": str(e), "finished": datetime.now(timezone.utc).isoformat()}
@@ -299,26 +309,26 @@ def runPipeline(
             if pipeline_cfg.get("fail_on_error", True):
                 raise
     else:
-        print("Clean stage disabled by config")
+        pipeline_logger.log_info(stage_name="enrich", message="disabled_by_config")
 
     # Enrich stage
     if run_enrich is None and checkpoints.get("enrich", {}).get("status") == "completed" and not force:
-        print("Skipping enrich stage (already completed according to checkpoints). Use --enrich to force or --force to ignore checkpoints.")
+        pipeline_logger.log_info(stage_name="enrich", message="skipped_by_checkpoint")
         stats["stages"]["enrich"] = checkpoints.get("enrich", {})
         completed_count += 1
         ck = stats["stages"].get("enrich", {})
         res = ck.get('result') if isinstance(ck.get('result'), dict) else ck.get('result')
-        print(f"Enrich stage: status={ck.get('status')}, processed={res.get('processed') if isinstance(res, dict) else None}, failures={res.get('failures') if isinstance(res, dict) else None}")
+        # print(f"Enrich stage: status={ck.get('status')}, processed={res.get('processed') if isinstance(res, dict) else None}, failures={res.get('failures') if isinstance(res, dict) else None}")
     elif pipeline_cfg.get("enrich", {}).get("enabled", True):
         enrich_cfg = pipeline_cfg.get("enrich", {})
         if dry_run:
             enrich_cfg["dry_run"] = True
         in_path = enrich_cfg.get("input", stats["stages"].get("clean", {}).get("output", None))
         out_path = enrich_cfg.get("output", os.path.join(repo_root, "database", "seeding", "products_enriched.json"))
-        stage_idx = completed_count + 1
-        pct = int((completed_count / total_stages) * 100) if total_stages else 0
-        print(f"Running stage {stage_idx}/{total_stages} (enrich) — {pct}% complete")
-        print(f"Running enrich stage: {in_path} -> {out_path}")
+        # stage_idx = completed_count + 1
+        # pct = int((completed_count / total_stages) * 100) if total_stages else 0
+        pipeline_logger.log_stage_start(stage_name="enrich", input_file=in_path)
+        
         checkpoints.setdefault("enrich", {})["status"] = "running"
         checkpoints["enrich"]["started"] = datetime.now(timezone.utc).isoformat()
         # persist running checkpoint
@@ -331,8 +341,16 @@ def runPipeline(
             checkpoints["enrich"] = {"status": "completed", "finished": datetime.now(timezone.utc).isoformat(), "result": res}
             with open(checkpoint_path, "w", encoding="utf-8") as cf:
                 json.dump(checkpoints, cf, indent=2)
+            
+            # short summary
+            pipeline_logger.log_stage_end(
+                stage_name="enrich",
+                output_records=res.get("processed"),
+                failures=res.get("failures", 0),
+                output_file=res.get("output")
+            )
             completed_count += 1
-            print(f"Enrich stage finished: processed={res.get('processed')}, failures={res.get('failures')}")
+            
         except Exception as e:
             stats["stages"]["enrich"] = {"error": str(e)}
             checkpoints["enrich"] = {"status": "failed", "error": str(e), "finished": datetime.now(timezone.utc).isoformat()}
@@ -341,25 +359,25 @@ def runPipeline(
             if pipeline_cfg.get("fail_on_error", True):
                 raise
     else:
-        print("Enrich stage disabled by config")
+        pipeline_logger.log_info(stage_name="enrich", message="disabled_by_config")
 
     # Seed stage
     if run_seed is None and checkpoints.get("seed", {}).get("status") == "completed" and not force:
-        print("Skipping seed stage (already completed according to checkpoints). Use --seed to force or --force to ignore checkpoints.")
+        pipeline_logger.log_info(stage_name="seed", message="skipped_by_checkpoint")
         stats["stages"]["seed"] = checkpoints.get("seed", {})
         completed_count += 1
         ck = stats["stages"].get("seed", {})
         res = ck.get('result') if isinstance(ck.get('result'), dict) else ck.get('result')
-        print(f"Seed stage: status={ck.get('status')}, processed={res.get('processed') if isinstance(res, dict) else None}, failures={res.get('failures') if isinstance(res, dict) else None}")
+        # print(f"Seed stage: status={ck.get('status')}, processed={res.get('processed') if isinstance(res, dict) else None}, failures={res.get('failures') if isinstance(res, dict) else None}")
     elif pipeline_cfg.get("seed", {}).get("enabled", True):
         seed_cfg = pipeline_cfg.get("seed", {})
         if dry_run:
             seed_cfg["dry_run"] = True
         in_path = seed_cfg.get("input", stats["stages"].get("enrich", {}).get("output", None))
-        stage_idx = completed_count + 1
-        pct = int((completed_count / total_stages) * 100) if total_stages else 0
-        print(f"Running stage {stage_idx}/{total_stages} (seed) — {pct}% complete")
-        print(f"Running seed stage with input: {in_path}")
+        # stage_idx = completed_count + 1
+        # pct = int((completed_count / total_stages) * 100) if total_stages else 0
+        pipeline_logger.log_stage_start(stage_name="seed", input_file=in_path)
+        
         checkpoints.setdefault("seed", {})["status"] = "running"
         checkpoints["seed"]["started"] = datetime.now(timezone.utc).isoformat()
         # persist running checkpoint
@@ -372,8 +390,16 @@ def runPipeline(
             checkpoints["seed"] = {"status": "completed", "finished": datetime.now(timezone.utc).isoformat(), "result": res}
             with open(checkpoint_path, "w", encoding="utf-8") as cf:
                 json.dump(checkpoints, cf, indent=2)
+            
+            # short summary
+            pipeline_logger.log_stage_end(
+                stage_name="seed",
+                output_records=res.get("processed"),
+                failures=res.get("failures", 0),
+                output_file=res.get("output")
+            )
             completed_count += 1
-            print(f"Seed stage finished: processed={res.get('processed')}, failures={res.get('failures')}")
+            
         except Exception as e:
             stats["stages"]["seed"] = {"error": str(e)}
             checkpoints["seed"] = {"status": "failed", "error": str(e), "finished": datetime.now(timezone.utc).isoformat()}
@@ -382,7 +408,7 @@ def runPipeline(
             if pipeline_cfg.get("fail_on_error", True):
                 raise
     else:
-        print("Seed stage disabled by config")
+        pipeline_logger.log_info(stage_name="seed", message="disabled_by_config")
 
     # DB018 report generation (after seed stage)
     report_should_run = pipeline_cfg.get("seed", {}).get("enabled", True) and not dry_run
@@ -396,27 +422,33 @@ def runPipeline(
         seed_output = seed_result.get("output") if isinstance(seed_result, dict) else None
         try:
             report_status = _run_db018_quality_report(repo_root=repo_root, seeded_input_path=seed_output)
-            print(f"DB018 report generation: {report_status.get('status')}")
         except Exception as e:
             report_status = {
                 "status": "failed",
                 "error": str(e),
-                "input": seed_output,
+                "input": seed_output
             }
-            print(f"DB018 report generation failed: {e}")
+            
             if pipeline_cfg.get("fail_on_error", True):
                 raise
+    
     stats["reports"] = {"db018_dataset_quality_report": report_status}
-
     stats["run_finished"] = datetime.now(timezone.utc).isoformat()
+
     # Write metadata to outputs if configured
     meta_out = outputs.get("metadata", os.path.join(repo_root, "database", "pipeline_run_metadata.json"))
     ensure_dir(meta_out)
     with open(meta_out, "w", encoding="utf-8") as f:
         json.dump(stats, f, indent=2)
 
-    print(f"Pipeline run finished. Metadata written to {meta_out}")
-    return stats
+    pipeline_logger.log_info(stage_name="main", message="pipeline_finished", metadata=meta_out)
+    
+    # Log pipeline completion
+    total_duration_ms = (time.time() - pipeline_run_start_time) * 1000
+    pipeline_logger.log_pipeline_end(
+        total_duration_ms=total_duration_ms,
+        total_records=stats.get("stages", {}).get("seed", {}).get("result", {}).get("processed")
+    )
 
 
 if __name__ == "__main__":

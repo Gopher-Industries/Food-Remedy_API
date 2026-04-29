@@ -225,7 +225,7 @@ def save_checkpoint(batch_index: int) -> None:
         pass
 
 
-def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, Any]:
+def run(input_path: str, output_path: str, config: dict[str, Any], stage_logger=None) -> dict[str, Any]:
     """
     Pipeline seed stage: Writes enriched products to Firestore with batching,
     rate limiting, retry, and checkpoint support.
@@ -238,10 +238,23 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
     input_path = _resolve_repo_path(input_path)
     output_path = _resolve_repo_path(output_path)
 
-    print(
-        f"[seed_firestore.run] dry_run={dry_run}, batch_size={batch_size}, "
-        f"writes_per_second_limit={writes_per_second_limit}"
+    if stage_logger is None:
+        from database.logging_system.pipeline_logger import PipelineStageLogger
+        stage_logger = PipelineStageLogger("Seed")
+
+    stage_logger.log_stage_start(
+        stage_name="seed",
+        input_file=_repo_relative_for_metadata(input_path)
     )
+
+    stage_logger.log_info(
+        stage_name="seed",
+        message="config",
+        dry_run=config.get('dry_run'),
+        batch_size=config.get('batch_size'),
+        writes_per_second_limit=config.get('writes_per_second_limit')
+    )
+
     failures = 0
     total_written = 0
 
@@ -253,10 +266,10 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
         else:
             data = json.loads(raw)
     except json.JSONDecodeError as e:
-        print(f"[seed_firestore] Invalid JSON in {input_path}: {e}")
+        stage_logger.log_stage_error("seed", e, input_file=input_path)
         return {"error": f"Failed to load input: {e}", "processed": 0, "failures": 1}
     except OSError as e:
-        print(f"[seed_firestore] Cannot read {input_path}: {e}")
+        stage_logger.log_stage_error("seed", e, input_file=input_path)
         return {"error": f"Failed to load input: {e}", "processed": 0, "failures": 1}
 
     subset = config.get("subset")
@@ -267,10 +280,10 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
             subset = None
     if subset is not None and subset > 0:
         data = data[:subset]
-        print(f"Subset mode: using first {len(data)} record(s); checkpoint resume disabled.")
+        stage_logger.log_info(stage_name="seed", message="subset_mode", records=len(data))
 
     if not data:
-        print("Input JSON is empty — nothing to seed.")
+        stage_logger.log_info(stage_name="seed", message="empty_input")
         return {"processed": 0, "failures": 0, "output": _repo_relative_for_metadata(output_path)}
 
     total_records = len(data)
@@ -280,21 +293,25 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
     resume_offset = last_completed_batch * batch_size
 
     if last_completed_batch > 0 and use_checkpoint:
-        print(
-            f"Checkpoint: last committed batch index = {last_completed_batch} "
-            f"(file has {total_batch_count} batch(es) of up to {batch_size} docs)."
+        stage_logger.log_info(
+            stage_name="seed",
+            message="checkpoint_resume",
+            last_batch=last_completed_batch,
+            total_batches=total_batch_count
         )
 
     if resume_offset >= total_records:
-        print(
-            "No seed work left: checkpoint already covers this file. "
-            "To re-run from scratch, reset or delete database/seeding/checkpoint.json."
-        )
+        stage_logger.log_info(stage_name="seed", message="nothing_to_do_checkpoint_covers_all")
     else:
-        print(f"Starting at batch {last_completed_batch + 1} (document offset {resume_offset}).")
+        stage_logger.log_info(
+            stage_name="seed",
+            message="starting_from_batch",
+            batch=last_completed_batch + 1,
+            offset=resume_offset
+        )
 
-    print(f"Dry-run mode: {dry_run}")
-    print(f"Total documents: {total_records}")
+    stage_logger.log_info(stage_name="seed", message="dry_run_mode", dry_run=dry_run)
+    stage_logger.log_info(stage_name="seed", message="total_documents", count=total_records)
 
     writes_this_second = 0
     last_second = time.time()
@@ -311,7 +328,12 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
                 if not product.get("barcode"):
                     continue
                 total_written += 1
-            print(f"DRY-RUN: Would write batch {batch_number} ({len(chunk)} docs in chunk)")
+            stage_logger.log_info(
+                stage_name="seed",
+                message="dry_run_batch",
+                batch_number=batch_number,
+                docs=len(chunk)
+            )
             batches_this_run += 1
             continue
 
@@ -340,45 +362,42 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
         success = commit_batch_with_retry(batch, batch_number)
 
         if success:
-            print(f"Wrote batch {batch_number} ({len(chunk)} docs)")
+            stage_logger.log_info(
+                stage_name="seed",
+                message="batch_written",
+                batch_number=batch_number,
+                docs=len(chunk)
+            )
             save_checkpoint(batch_number)
             batches_this_run += 1
         else:
-            failures += 1  
+            failures += 1
+            stage_logger.log_stage_warning(
+                stage_name="seed",
+                warning_message=f"Batch {batch_number} failed after retries"
+            )
 
         if total_written > 20000:
-            print("Warning: Approaching daily write quota (20k) — stopping")
+            stage_logger.log_stage_warning(
+                stage_name="seed",
+                warning_message="Approaching daily write quota (20k) — stopping"
+            )
             break
 
     elapsed = time.time() - start_time
-    print("\nSeeding Summary:")
-    print(f"Total time: {elapsed:.2f} seconds")
-    print(f"Records in file: {total_records}")
-    print(f"Total batches for this file: {total_batch_count}")
-    print(f"Batches processed this run: {batches_this_run}")
-    print(f"Failed batches: {failures if not dry_run else 'N/A'}")
 
-    print("Seeding complete!")
-
-    if dry_run and use_checkpoint:
-        print(
-            "\nNote: database/seeding/checkpoint.json is only created or updated after "
-            "successful Firestore batch commits. Dry-run does not touch that file."
-        )
-
-    out_dir = os.path.dirname(output_path)
-    if out_dir:
-        os.makedirs(out_dir, exist_ok=True)
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-
-    out_meta = _repo_relative_for_metadata(output_path)
-    print(f"Seeded data written to: {out_meta}")
+    stage_logger.log_stage_end(
+        stage_name="seed",
+        duration_ms=round(elapsed * 1000, 2),
+        output_records=total_records,
+        failures=failures if not dry_run else 0,
+        output_file=_repo_relative_for_metadata(output_path)
+    )
 
     return {
         "processed": total_records,
         "failures": failures,
-        "output": out_meta,
+        "output": _repo_relative_for_metadata(output_path),
     }
 
 
@@ -401,14 +420,12 @@ def seed_products():
     input_path = _resolve_repo_path(in_rel) if in_rel else default_input
     output_path = _resolve_repo_path(out_rel) if out_rel else default_output
 
-    print(
-        f"[seed_products] input={_repo_relative_for_metadata(input_path)}, "
-        f"output={_repo_relative_for_metadata(output_path)}, "
-        f"dry_run={config.get('dry_run')}, batch_size={config.get('batch_size')}, "
-        f"writes_per_second_limit={config.get('writes_per_second_limit')}"
-    )
+    from database.logging_system.pipeline_logger import PipelineStageLogger
+    stage_logger = PipelineStageLogger("Seed")
 
-    return run(input_path, output_path, config)
+    result = run(input_path, output_path, config, stage_logger=stage_logger)
+
+    return result
 
 
 if __name__ == "__main__":
