@@ -39,8 +39,8 @@ export default function NutritionalProfilesScreen() {
   );
 
   /**
-   * When tap “Add Member” we clear any edit‐id
-   * and then navigate into the same edit screen—treating it
+   * When tap "Add Member" we clear any edit-id
+   * and then navigate into the same edit screen-treating it
    * as a brand-new member.
    */
   const handleAddMember = () => {
@@ -64,9 +64,8 @@ export default function NutritionalProfilesScreen() {
 
   return (
     <View className="flex-1 bg-white p-safe">
-        
-        <Header />
 
+      <Header />
 
       <ScrollView
         contentContainerStyle={{ paddingBottom: 24 }}
@@ -134,32 +133,67 @@ export default function NutritionalProfilesScreen() {
             </View>
           ))}
         </View>
-      </ScrollView>
 
-      {/* ADD MEMBER */}
-      <View className="w-[95%] mx-auto">
-        <Pressable
-          onPress={handleAddMember}
-          hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
-          className="mt-8 mb-16 flex-row justify-between items-center py-3 px-4 rounded-lg 
-                border border-hsl90 active:border-primary bg-white self-center"
-        >
-          {({ pressed }) => (
-            <>
-              <Tt
-                className={`text-lg font-interSemiBold flex-grow  ${pressed ? "text-primary" : "text-hsl30"}`}
-              >
-                Add New Nutritional Profile
+        {/* EDIT DEMOGRAPHICS */}
+        <View className="w-[95%] mx-auto">
+          <Pressable
+            onPress={() => router.push("/(app)/demographics" as any)}
+            hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+            className="mt-4 flex-row justify-between items-center py-3 px-4 rounded-lg border border-hsl90 active:border-primary bg-white"
+          >
+            {({ pressed }) => (
+              <>
+                <Tt className={`text-lg font-interSemiBold flex-grow ${pressed ? "text-primary" : "text-hsl30"}`}>
+                  Edit Demographics
+                </Tt>
+                <IconGeneral
+                  type="edit"
+                  fill={pressed ? color.primary : color.iconDefault}
+                  size={spacing.xl}
+                />
+              </>
+            )}
+          </Pressable>
+        </View>
+
+        {/* ADD MEMBER */}
+        <View className="w-[95%] mx-auto">
+          <Pressable
+            onPress={handleAddMember}
+            hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+            className="mt-4 flex-row justify-between items-center py-3 px-4 rounded-lg border border-hsl90 active:border-primary bg-white"
+          >
+            {({ pressed }) => (
+              <>
+                <Tt className={`text-lg font-interSemiBold flex-grow ${pressed ? "text-primary" : "text-hsl30"}`}>
+                  Add New Nutritional Profile
+                </Tt>
+                <IconGeneral
+                  type="member-add"
+                  fill={pressed ? color.primary : color.iconDefault}
+                  size={spacing.xl}
+                />
+              </>
+            )}
+          </Pressable>
+        </View>
+
+        {/* MAIN MENU BUTTON */}
+        <View className="w-[95%] mx-auto">
+          <Pressable
+            onPress={() => router.replace("/(app)/(tabs)" as any)}
+            hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+            className="mt-4 mb-16 py-3 px-4 rounded-lg border bg-primary border-hsl90 dark:border-hsl20 active:bg-transparent active:border-primary"
+          >
+            {({ pressed }: { pressed: boolean }) => (
+              <Tt className={`text-lg text-center font-interSemiBold ${pressed ? "text-primary" : "text-white"}`}>
+                Main Menu
               </Tt>
-              <IconGeneral
-                type="member-add"
-                fill={pressed ? color.primary : color.iconDefault}
-                size={spacing.xl}
-              />
-            </>
-          )}
-        </Pressable>
-      </View>
+            )}
+          </Pressable>
+        </View>
+
+      </ScrollView>
     </View>
   );
 }
