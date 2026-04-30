@@ -190,11 +190,7 @@ const DemographicsForm = () => {
         {/* Title + Back */}
         <View className="w-[95%] mx-auto mt-4 mb-6 flex-row items-center justify-between">
           <Pressable
-<<<<<<< HEAD
-            onPress={() => router.push("/nutritionalProfiles")}
-=======
-            onPress={() => router.back()}
->>>>>>> main
+            onPress={() => router.push("/(app)/nutritionalProfiles" as any)}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             className="px-2 py-1"
           >

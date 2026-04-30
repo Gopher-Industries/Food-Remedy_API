@@ -117,21 +117,13 @@ export default function ProductTabsScreen() {
         return <NutrientsTab product={currentProduct} />;
 
       case "Ingredients":
-<<<<<<< FE022_enhance_product_detail_recommendations
-        return <IngredientsTab product={currentProduct} />;
-=======
         return <IngredientsTab />;
->>>>>>> main
 
       case "For you":
         return <ForYouTab product={currentProduct} />;
 
       case "Compare":
-<<<<<<< FE022_enhance_product_detail_recommendations
-        return <RecommendationsTab product={currentProduct} />;
-=======
         return <CompareTab product={currentProduct} />;
->>>>>>> main
 
       default:
         return null;
