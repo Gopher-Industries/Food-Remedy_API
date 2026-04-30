@@ -23,7 +23,7 @@ import {
 import NutrientsTab from "./ProductTabs/NutrientsTab";
 import IngredientsTab from "./ProductTabs/IngredientsTab";
 import ForYouTab from "./ProductTabs/ForYouTab";
-import CompareTab from "./ProductTabs/RecommendationsTab";
+import RecommendationsTab from "./ProductTabs/RecommendationsTab";
 
 type TabKey = "Nutrients" | "Ingredients" | "For you" | "Compare";
 
@@ -117,13 +117,21 @@ export default function ProductTabsScreen() {
         return <NutrientsTab product={currentProduct} />;
 
       case "Ingredients":
-        // return <IngredientsTab product={currentProduct} />;
+<<<<<<< FE022_enhance_product_detail_recommendations
+        return <IngredientsTab product={currentProduct} />;
+=======
+        return <IngredientsTab />;
+>>>>>>> main
 
       case "For you":
         return <ForYouTab product={currentProduct} />;
 
       case "Compare":
-        // return <CompareTab product={currentProduct} />;
+<<<<<<< FE022_enhance_product_detail_recommendations
+        return <RecommendationsTab product={currentProduct} />;
+=======
+        return <CompareTab product={currentProduct} />;
+>>>>>>> main
 
       default:
         return null;
@@ -162,7 +170,7 @@ export default function ProductTabsScreen() {
                 <>
                   <IconGeneral type="cart-add" fill="white" size={20} />
                   <Tt className={`${primaryBtnText} font-interSemiBold ml-2`}>
-                    Add to List
+                    Add to Lists
                   </Tt>
                 </>
               )}
@@ -258,19 +266,21 @@ export default function ProductTabsScreen() {
 
           <View className="min-h-[400px]">{renderTabContent()}</View>
 
-          <Pressable
-            onPress={() => openModal("addToList")}
-            className="bg-primary rounded-lg py-4 px-6 mt-8 mb-4 flex-row justify-center items-center active:bg-primary/80"
-          >
-            {() => (
-              <>
-                <IconGeneral type="cart-add" fill="white" size={24} />
-                <Tt className="text-white font-interSemiBold text-lg ml-3">
-                  Add to Shopping List
-                </Tt>
-              </>
-            )}
-          </Pressable>
+          {activeTab !== "Compare" && (
+            <Pressable
+              onPress={() => openModal("addToList")}
+              className="bg-primary rounded-lg py-4 px-6 mt-8 mb-4 flex-row justify-center items-center active:bg-primary/80"
+            >
+              {() => (
+                <>
+                  <IconGeneral type="cart-add" fill="white" size={24} />
+                  <Tt className="text-white font-interSemiBold text-lg ml-3">
+                    Add to Shopping List
+                  </Tt>
+                </>
+              )}
+            </Pressable>
+          )}
         </View>
       </ScrollView>
     </Screen>
