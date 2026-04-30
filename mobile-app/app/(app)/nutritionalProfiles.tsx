@@ -139,7 +139,7 @@ export default function NutritionalProfilesScreen() {
         {/* EDIT DEMOGRAPHICS */}
         <View className="w-[95%] mx-auto">
           <Pressable
-            onPress={() => router.push("/demographics" as any)}
+            onPress={() => router.push("/(app)/demographics" as any)}
             hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
             className="mt-4 flex-row justify-between items-center py-3 px-4 rounded-lg border border-hsl90 active:border-primary bg-white"
           >
