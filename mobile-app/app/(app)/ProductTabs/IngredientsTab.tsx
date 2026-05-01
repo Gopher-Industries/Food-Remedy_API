@@ -38,7 +38,7 @@ export default function IngredientsTab() {
 
       {/* Search Bar */}
       <View style={styles.searchWrapper}>
-        <IngredientSearch />
+        {/* <IngredientSearch /> */}
       </View>
 
       {/* Ingredients Card */}
