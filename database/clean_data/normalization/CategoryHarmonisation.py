@@ -1,4 +1,4 @@
-## Category Harmonisation
+## Category Harmonisation (DB027 — Product Category Harmonisation)
 
 from __future__ import annotations
 from dataclasses import dataclass
@@ -26,7 +26,7 @@ if not logger.handlers:
 @dataclass
 class CategoryConfig:
     """
-    Configuration for DB003 category harmonisation.
+    Configuration for DB027 category harmonisation (raw labels → unified taxonomy).
 
     Attributes
     ----------
@@ -106,6 +106,15 @@ RAW_TO_UNIFIED: Dict[str, str] = {
     "confectioneries": "Chocolates & Confectionery",
     "chocolates": "Chocolates & Confectionery",
     "chocolate-candies": "Chocolates & Confectionery",
+    "bonbons": "Chocolates & Confectionery",
+
+    # Extra OFF-style tags (formerly covered by legacy keyword matching)
+    "dairy-drinks": "Beverages",
+    "sweetened-beverages": "Soft Drinks",
+    "evaporated-milks": "Beverages",
+    "cocoa-and-hazelnuts-spreads": "Chocolate & Sweet Spreads",
+    "oilseed-purees": "Nut & Seed Spreads",
+    "legume-butters": "Nut & Seed Spreads",
 }
 
 # Allowed unified categories (used for validation)
@@ -137,6 +146,56 @@ DEFAULT_CONFIG = CategoryConfig(
     allowed_unified_categories=ALLOWED_UNIFIED,
     fallback_category="Other",
 )
+
+# Priority-based selection for primary category. Higher number = higher priority.
+# Every ALLOWED_UNIFIED label has an explicit priority so specificity wins consistently.
+CATEGORY_PRIORITY: Dict[str, int] = {
+    "Canned Tuna": 90,
+    "Canned Fish": 88,
+    "Seafood – Prawns": 86,
+    "Seafood": 80,
+    "Canned Foods": 76,
+    "Meal Kits": 72,
+    "Instant Noodles": 65,
+    "Pasta & Noodles": 62,
+    "Iced Coffee Drinks": 58,
+    "Wholemeal Bread": 56,
+    "Beverages": 52,
+    "Bread": 50,
+    "Soft Drinks": 48,
+    "Snacks": 42,
+    "Sweet Snacks": 38,
+    "Chocolates & Confectionery": 34,
+    "Spreads": 28,
+    "Nut & Seed Spreads": 28,
+    "Chocolate & Sweet Spreads": 28,
+    "Cooking Oils & Fats": 22,
+    "Other": 0,
+}
+
+# Derive a higher-level nutrition profile type based on primaryCategory.
+CATEGORY_TO_PROFILE: Dict[str, str] = {
+    "Beverages": "Beverage",
+    "Soft Drinks": "Beverage",
+    "Iced Coffee Drinks": "Beverage",
+    "Seafood": "Meal",
+    "Seafood – Prawns": "Meal",
+    "Canned Foods": "Meal",
+    "Canned Fish": "Meal",
+    "Canned Tuna": "Meal",
+    "Meal Kits": "Meal",
+    "Pasta & Noodles": "Meal",
+    "Instant Noodles": "Meal",
+    "Bread": "Staple",
+    "Wholemeal Bread": "Staple",
+    "Snacks": "Snack",
+    "Sweet Snacks": "Snack",
+    "Chocolates & Confectionery": "Snack",
+    "Cooking Oils & Fats": "Oil",
+    "Spreads": "Staple",
+    "Nut & Seed Spreads": "Staple",
+    "Chocolate & Sweet Spreads": "Snack",
+}
 
 # Helper Functions
 # Accept language prefixes like 'en:', 'fr:', and region tags like 'en-GB:' (case-insensitive)
@@ -191,7 +250,11 @@ def apply_naming_rules(unified_label: str) -> str:
 
     return unified_label
 
-def map_raw_to_unified(raw_label: str, config: CategoryConfig) -> Optional[str]: # Maps a single raw category label to a unified category label.
+def map_raw_to_unified(
+    raw_label: str,
+    config: CategoryConfig,
+    allow_fallback: bool = True,
+) -> Optional[str]: # Maps a single raw category label to a unified category label.
     norm = normalise_raw_label(raw_label)
     if not norm:
         return None
@@ -205,11 +268,34 @@ def map_raw_to_unified(raw_label: str, config: CategoryConfig) -> Optional[str]:
     if config.allowed_unified_categories is not None:  # Normalise allowed categories to the same naming rules used for produced unified labels so comparisons are consistent.
         allowed_normalised = {apply_naming_rules(a) for a in config.allowed_unified_categories}
         if unified not in allowed_normalised:
-            if config.fallback_category:
+            if allow_fallback and config.fallback_category:
                 return apply_naming_rules(config.fallback_category)
             return None
 
     return unified
+
+
+def select_primary_category(unified_categories: List[str], config: CategoryConfig = DEFAULT_CONFIG) -> Optional[str]:
+    """Pick exactly one canonical category from a harmonised category list."""
+    if not unified_categories:
+        return apply_naming_rules(config.fallback_category) if config.fallback_category else None
+
+    best_category = None
+    best_priority = -1
+
+    for category in unified_categories:
+        priority = CATEGORY_PRIORITY.get(category, 0)
+        if priority > best_priority:
+            best_priority = priority
+            best_category = category
+
+    return best_category or unified_categories[0]
+
+
+def map_primary_to_profile(primary: Optional[str]) -> str:
+    if not primary:
+        return "General"
+    return CATEGORY_TO_PROFILE.get(primary, "General")
 
 # Apply to a Single Product
 def harmonise_categories_for_product(
@@ -218,9 +304,9 @@ def harmonise_categories_for_product(
 ) -> List[str]: #  Normalises category data for a single product.
     
     if raw_categories is None: # handle None / NaN
-        return []
+        return [apply_naming_rules(config.fallback_category)] if config.fallback_category else []
     if isinstance(raw_categories, float) and math.isnan(raw_categories):
-        return []
+        return [apply_naming_rules(config.fallback_category)] if config.fallback_category else []
 
     items: List[str] = []
 
@@ -237,7 +323,7 @@ def harmonise_categories_for_product(
     unified_set: Set[str] = set()
 
     for raw in items:
-        uni = map_raw_to_unified(raw, config)
+        uni = map_raw_to_unified(raw, config, allow_fallback=False)
         if uni:
             unified_set.add(uni)
         else:
@@ -247,11 +333,14 @@ def harmonise_categories_for_product(
             except Exception:
                 norm = str(raw)
             _record_unknown_category(norm)
-            # if a fallback is configured, add it so downstream logic has at least one category
-            if config.fallback_category:
-                unified_set.add(apply_naming_rules(config.fallback_category))
 
-    return sorted(unified_set)
+    if unified_set:
+        return sorted(unified_set)
+
+    if config.fallback_category:
+        return [apply_naming_rules(config.fallback_category)]
+
+    return []
 
 
 # Apply to DataFrame
@@ -263,7 +352,7 @@ def harmonise_categories_df(
     config: CategoryConfig = DEFAULT_CONFIG,
 ) -> pd.DataFrame:  # Applies harmonisation to an entire DataFrame.
     if source_col not in df.columns:
-        logger.warning(f"Column '{source_col}' not found. DB003 skipped.")
+        logger.warning(f"Column '{source_col}' not found. DB027 harmonisation skipped.")
         return df
 
     logger.info(
@@ -273,70 +362,7 @@ def harmonise_categories_df(
     df[unified_col] = df[source_col].apply(
         lambda cats: harmonise_categories_for_product(cats, config=config))
 
-    # Priority-based selection for primary category. Higher number = higher priority.
-    CATEGORY_PRIORITY: Dict[str, int] = {
-        # Assign priorities so more semantically meaningful categories are chosen as primary
-        "Canned Tuna": 90,
-        "Canned Fish": 85,
-        "Seafood": 80,
-        "Meal Kits": 70,
-        "Pasta & Noodles": 60,
-        "Instant Noodles": 60,
-        "Beverages": 50,
-        "Soft Drinks": 45,
-        "Iced Coffee Drinks": 55,
-        "Bread": 50,
-        "Wholemeal Bread": 55,
-        "Snacks": 40,
-        "Sweet Snacks": 35,
-        "Chocolates & Confectionery": 30,
-        "Cooking Oils & Fats": 20,
-        "Spreads": 25,
-        "Nut & Seed Spreads": 25,
-        "Chocolate & Sweet Spreads": 25,
-    }
-
-    def choose_primary(unified_list: List[str]) -> Optional[str]:
-        if not unified_list:
-            return apply_naming_rules(config.fallback_category) if config.fallback_category else None
-        # pick highest priority unified label; default priority = 0
-        best = None
-        best_p = -1
-        for u in unified_list:
-            p = CATEGORY_PRIORITY.get(u, 0)
-            if p > best_p:
-                best_p = p
-                best = u
-        return best or unified_list[0]
-
-    df[primary_col] = df[unified_col].apply(choose_primary)
-
-    # Derive a higher-level nutrition profile type based on primaryCategory
-    CATEGORY_TO_PROFILE: Dict[str, str] = {
-        "Beverages": "Beverage",
-        "Soft Drinks": "Beverage",
-        "Iced Coffee Drinks": "Beverage",
-        "Seafood": "Meal",
-        "Canned Fish": "Meal",
-        "Canned Tuna": "Meal",
-        "Meal Kits": "Meal",
-        "Pasta & Noodles": "Meal",
-        "Instant Noodles": "Meal",
-        "Bread": "Staple",
-        "Wholemeal Bread": "Staple",
-        "Snacks": "Snack",
-        "Sweet Snacks": "Snack",
-        "Chocolates & Confectionery": "Snack",
-        "Cooking Oils & Fats": "Oil",
-        "Spreads": "Staple",
-        "Nut & Seed Spreads": "Staple",
-        "Chocolate & Sweet Spreads": "Snack",
-    }
-
-    def map_primary_to_profile(primary: Optional[str]) -> str:
-        if not primary:
-            return "General"
-        return CATEGORY_TO_PROFILE.get(primary, "General")
+    df[primary_col] = df[unified_col].apply(lambda categories: select_primary_category(categories, config=config))
 
     df["nutritionProfileType"] = df[primary_col].apply(map_primary_to_profile)
 
@@ -374,4 +400,3 @@ def dump_unknowns(path: str):
     except Exception as e:
         logger.warning(f"Failed to write unknown categories to {path}: {e}")
 
-    return df

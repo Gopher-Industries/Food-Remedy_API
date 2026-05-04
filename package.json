@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "test:db012:cart": "node database/db012_cart_integration.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "sqlite3": "^6.0.1"
+  }
+}

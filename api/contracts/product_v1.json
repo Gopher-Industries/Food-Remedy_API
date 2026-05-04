@@ -64,7 +64,19 @@
         "removed": { "type": "array", "items": { "type": "string" }, "default": [] }
       }
     },
-    "metadata": { "type": "object", "additionalProperties": true }
+    "metadata": { "type": "object", "additionalProperties": true },
+    "enrichmentMetadata": {
+      "type": "object",
+      "description": "Recommendation scoring/metadata (subset of server enrichment; optional on responses)",
+      "properties": {
+        "recommendationScore": { "type": "number" },
+        "reasonTags": { "type": "array", "items": { "type": "string" } },
+        "similarityMetrics": { "type": "object", "additionalProperties": true }
+      },
+      "additionalProperties": true
+    },
+    "dateAdded": { "type": ["string", "null"] },
+    "lastUpdated": { "type": ["string", "null"] }
   },
   "additionalProperties": false
 }

@@ -34,21 +34,22 @@ def run_seed_stage(input_path: str, config: dict) -> dict:
 
     # Prefer seed_products()
     if hasattr(module, "seed_products"):
-        module.seed_products()
+        module.seed_products.config = config
+        result = module.seed_products()
 
     # Fallback to main()
     elif hasattr(module, "main"):
         try:
-            module.main(input_path)
+            result = module.main(input_path)
         except TypeError:
-            module.main()
+            result = module.main()
 
     else:
         raise RuntimeError(
             "Seed script exposes neither seed_products() nor main()"
         )
 
-    return {
+    return result or {
         "processed": None,
         "failures": None,
         "output": input_path
