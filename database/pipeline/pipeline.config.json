@@ -67,7 +67,7 @@
       "script_path": "database/seeding/seed_firestore.py",
       "batch_size": 500,
       "writes_per_second_limit": 400,
-      "max_writes_per_run": 20000
+      "validate_before_seed": true
     }
   }
 }

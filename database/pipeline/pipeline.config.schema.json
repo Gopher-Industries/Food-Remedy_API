@@ -41,7 +41,13 @@
           "properties": {
             "enabled": { "type": "boolean" },
             "input": { "type": ["string", "null"] },
-            "script_path": { "type": "string" }
+            "output": { "type": "string" },
+            "script_path": { "type": "string" },
+            "batch_size": { "type": "integer" },
+            "writes_per_second_limit": { "type": "integer" },
+            "validate_before_seed": { "type": "boolean" },
+            "dry_run": { "type": "boolean" },
+            "subset": { "type": "integer" }
           }
         }
       }
