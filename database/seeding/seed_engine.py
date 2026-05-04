@@ -77,7 +77,7 @@ def seed_batch(input_path: str, dry_run: bool = False, subset: int = None, batch
                 writes_this_second = 0
                 last_second = time.time()
             
-            doc_ref = db.collection("products").document(barcode)
+            doc_ref = db.collection("PRODUCTS").document(barcode)
             batch.set(doc_ref, product)
             writes_this_second += 1
 
