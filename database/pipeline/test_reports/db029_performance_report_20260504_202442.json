@@ -1,0 +1,72 @@
+{
+  "report_generated": "2026-05-04T20:24:42.997271",
+  "total_duration_seconds": 0.0066,
+  "stages": [
+    {
+      "stage": "load_data",
+      "status": "completed",
+      "duration_seconds": 0.0029,
+      "record_count": 11,
+      "records_per_second": 3793.1,
+      "notes": "Loaded 11 records from database/seeding/cleanTestSample.json"
+    },
+    {
+      "stage": "clean",
+      "status": "completed",
+      "duration_seconds": 0.0008,
+      "record_count": 11,
+      "records_per_second": 13750.0,
+      "notes": "Flattened nested fields for all records"
+    },
+    {
+      "stage": "enrich",
+      "status": "completed",
+      "duration_seconds": 0.0005,
+      "record_count": 11,
+      "records_per_second": 22000.0,
+      "notes": "Applied enrichment tags to all records"
+    },
+    {
+      "stage": "seed",
+      "status": "completed",
+      "duration_seconds": 0.0004,
+      "record_count": 11,
+      "records_per_second": 27500.0,
+      "notes": "Simulated seeding in 1 batches of 500"
+    }
+  ],
+  "bottlenecks": [
+    {
+      "rank": 1,
+      "stage": "load_data",
+      "duration_seconds": 0.0029,
+      "percentage_of_total": 43.9,
+      "is_slowest": true
+    },
+    {
+      "rank": 2,
+      "stage": "clean",
+      "duration_seconds": 0.0008,
+      "percentage_of_total": 12.1,
+      "is_slowest": false
+    },
+    {
+      "rank": 3,
+      "stage": "enrich",
+      "duration_seconds": 0.0005,
+      "percentage_of_total": 7.6,
+      "is_slowest": false
+    },
+    {
+      "rank": 4,
+      "stage": "seed",
+      "duration_seconds": 0.0004,
+      "percentage_of_total": 6.1,
+      "is_slowest": false
+    }
+  ],
+  "summary": "Slowest stage: 'load_data' took 0.0029s (43.9% of total runtime)",
+  "recommendations": [
+    "Stage 'load_data' is relatively slow (43.9% of total). Review for optimisation opportunities."
+  ]
+}
