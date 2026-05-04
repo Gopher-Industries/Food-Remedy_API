@@ -55,15 +55,43 @@ def main():
     print(f"[DB018] Total chunks: {len(chunks)}")
 
     checkpoint = load_checkpoint(CHECKPOINT_FILE)
-    start_chunk = checkpoint.get("last_completed_chunk", -1) + 1
+    last_completed = checkpoint.get("last_completed_chunk", -1)
+    start_chunk = last_completed + 1
+
+    print(f"[DB023] Last completed chunk: {last_completed}")
     print(f"[DB018] Resuming from chunk index: {start_chunk}")
 
     for idx in range(start_chunk, len(chunks)):
-        print(f"\n[DB018] Processing chunk {idx + 1}/{len(chunks)}")
+        try:
+            print(f"\n[DB018] Processing chunk {idx + 1}/{len(chunks)}")
 
-        raw_path = os.path.join(OUTPUT_DIR, f"chunk_{idx}_raw.json")
-        clean_path = os.path.join(OUTPUT_DIR, f"chunk_{idx}_clean.json")
-        enrich_path = os.path.join(OUTPUT_DIR, f"chunk_{idx}_enriched.json")
+            raw_path = os.path.join(OUTPUT_DIR, f"chunk_{idx}_raw.json")
+            clean_path = os.path.join(OUTPUT_DIR, f"chunk_{idx}_clean.json")
+            enrich_path = os.path.join(OUTPUT_DIR, f"chunk_{idx}_enriched.json")
+
+        # Write raw chunk
+            write_json_records(raw_path, chunks[idx])
+
+            run_clean_stage(raw_path, clean_path)
+
+            run_enrich_stage(
+                input_path=clean_path,
+                output_path=enrich_path,
+                config={}
+           )
+
+            run_seed_stage(
+                input_path=enrich_path,
+                config={}
+        )
+
+            save_checkpoint(CHECKPOINT_FILE, {"last_completed_chunk": idx})
+            print(f"[DB018] Chunk {idx + 1} completed successfully")
+
+        except Exception as e:
+            print(f"[DB023] Pipeline failed at chunk {idx}")
+            print("[DB023] Re-run pipeline to resume from last checkpoint.")
+            raise e
 
         # Write raw chunk
         write_json_records(raw_path, chunks[idx])

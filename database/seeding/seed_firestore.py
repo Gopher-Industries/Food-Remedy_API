@@ -13,6 +13,7 @@ if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
 from database.seeding.batch_limits import resolve_max_writes_per_run
+
 CHECKPOINT_FILE = os.path.join(BASE_DIR, "checkpoint.json")
 
 _firestore_client = None
@@ -162,8 +163,6 @@ def get_firestore_client():
         cred = credentials.Certificate(path)
         firebase_admin.initialize_app(cred, opts)
     else:
-        # Fail fast: ApplicationDefault often defers loading until firestore.client(), which
-        # produced confusing tracebacks. Verify ADC before initialize_app.
         try:
             import google.auth
 
@@ -190,6 +189,28 @@ def commit_batch(batch):
     batch.commit()
 
 
+def commit_batch_with_retry(batch, batch_number: int, max_retries: int = 3, delay_seconds: int = 2):
+    """
+    Detect failed batch commits and retry automatically (used with pipeline logging).
+    """
+    for attempt in range(1, max_retries + 1):
+        try:
+            commit_batch(batch)
+            print(f"Batch {batch_number} committed successfully on attempt {attempt}")
+            return True
+
+        except Exception as e:
+            print(f"Batch {batch_number} failed on attempt {attempt}: {e}")
+
+            if attempt < max_retries:
+                time.sleep(delay_seconds)
+            else:
+                print(f"Batch {batch_number} skipped after maximum retries.")
+                return False
+
+    return False
+
+
 def load_checkpoint() -> int:
     """Load last successful batch index from checkpoint file."""
     if os.path.exists(CHECKPOINT_FILE):
@@ -210,10 +231,15 @@ def save_checkpoint(batch_index: int) -> None:
         pass
 
 
-def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, Any]:
+def run(
+    input_path: str,
+    output_path: str,
+    config: dict[str, Any],
+    stage_logger=None,
+) -> dict[str, Any]:
     """
     Pipeline seed stage: Writes enriched products to Firestore with batching,
-    rate limiting, retry, and checkpoint support.
+    rate limiting, retry, checkpoint support, and optional pipeline logging.
     """
     start_time = time.time()
     batch_size = int(config.get("batch_size", 500))
@@ -225,10 +251,31 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
 
     max_writes_cap = resolve_max_writes_per_run(config)
     cap_msg = "unlimited" if max_writes_cap is None else str(max_writes_cap)
+
+    if stage_logger is None:
+        from database.logging_system.pipeline_logger import PipelineStageLogger
+
+        stage_logger = PipelineStageLogger("Seed")
+
     print(
         f"[seed_firestore.run] dry_run={dry_run}, batch_size={batch_size}, "
         f"writes_per_second_limit={writes_per_second_limit}, max_writes_per_run={cap_msg}"
     )
+
+    stage_logger.log_stage_start(
+        stage_name="seed",
+        input_file=_repo_relative_for_metadata(input_path),
+    )
+
+    stage_logger.log_info(
+        stage_name="seed",
+        message="config",
+        dry_run=dry_run,
+        batch_size=batch_size,
+        writes_per_second_limit=writes_per_second_limit,
+        max_writes_per_run=cap_msg,
+    )
+
     failures = 0
     total_written = 0
 
@@ -240,10 +287,10 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
         else:
             data = json.loads(raw)
     except json.JSONDecodeError as e:
-        print(f"[seed_firestore] Invalid JSON in {input_path}: {e}")
+        stage_logger.log_stage_error("seed", e, input_file=input_path)
         return {"error": f"Failed to load input: {e}", "processed": 0, "failures": 1}
     except OSError as e:
-        print(f"[seed_firestore] Cannot read {input_path}: {e}")
+        stage_logger.log_stage_error("seed", e, input_file=input_path)
         return {"error": f"Failed to load input: {e}", "processed": 0, "failures": 1}
 
     subset = config.get("subset")
@@ -254,10 +301,10 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
             subset = None
     if subset is not None and subset > 0:
         data = data[:subset]
-        print(f"Subset mode: using first {len(data)} record(s); checkpoint resume disabled.")
+        stage_logger.log_info(stage_name="seed", message="subset_mode", records=len(data))
 
     if not data:
-        print("Input JSON is empty — nothing to seed.")
+        stage_logger.log_info(stage_name="seed", message="empty_input")
         return {"processed": 0, "failures": 0, "output": _repo_relative_for_metadata(output_path)}
 
     total_records = len(data)
@@ -267,21 +314,25 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
     resume_offset = last_completed_batch * batch_size
 
     if last_completed_batch > 0 and use_checkpoint:
-        print(
-            f"Checkpoint: last committed batch index = {last_completed_batch} "
-            f"(file has {total_batch_count} batch(es) of up to {batch_size} docs)."
+        stage_logger.log_info(
+            stage_name="seed",
+            message="checkpoint_resume",
+            last_batch=last_completed_batch,
+            total_batches=total_batch_count,
         )
 
     if resume_offset >= total_records:
-        print(
-            "No seed work left: checkpoint already covers this file. "
-            "To re-run from scratch, reset or delete database/seeding/checkpoint.json."
-        )
+        stage_logger.log_info(stage_name="seed", message="nothing_to_do_checkpoint_covers_all")
     else:
-        print(f"Starting at batch {last_completed_batch + 1} (document offset {resume_offset}).")
+        stage_logger.log_info(
+            stage_name="seed",
+            message="starting_from_batch",
+            batch=last_completed_batch + 1,
+            offset=resume_offset,
+        )
 
-    print(f"Dry-run mode: {dry_run}")
-    print(f"Total documents: {total_records}")
+    stage_logger.log_info(stage_name="seed", message="dry_run_mode", dry_run=dry_run)
+    stage_logger.log_info(stage_name="seed", message="total_documents", count=total_records)
 
     writes_this_second = 0
     last_second = time.time()
@@ -298,7 +349,12 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
                 if not product.get("barcode"):
                     continue
                 total_written += 1
-            print(f"DRY-RUN: Would write batch {batch_number} ({len(chunk)} docs in chunk)")
+            stage_logger.log_info(
+                stage_name="seed",
+                message="dry_run_batch",
+                batch_number=batch_number,
+                docs=len(chunk),
+            )
             batches_this_run += 1
             continue
 
@@ -324,35 +380,50 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
             writes_this_second += 1
             total_written += 1
 
-        try:
-            commit_batch(batch)
+        success = commit_batch_with_retry(batch, batch_number)
+
+        if success:
             pct = (100.0 * total_written / total_records) if total_records else 0.0
             print(
                 f"Wrote batch {batch_number} ({len(chunk)} docs) — "
                 f"{total_written}/{total_records} ({pct:.1f}%)"
             )
+            stage_logger.log_info(
+                stage_name="seed",
+                message="batch_written",
+                batch_number=batch_number,
+                docs=len(chunk),
+                total_written=total_written,
+                total_records=total_records,
+                pct_rounded=round(pct, 1),
+            )
             save_checkpoint(batch_number)
             batches_this_run += 1
-        except Exception as e:
-            print(f"Batch {batch_number} failed: {e}")
+        else:
             failures += 1
+            stage_logger.log_stage_warning(
+                stage_name="seed",
+                warning_message=f"Batch {batch_number} failed after retries",
+            )
 
         if max_writes_cap is not None and total_written >= max_writes_cap:
-            print(
+            warn = (
                 f"Stopped: reached max_writes_per_run ({max_writes_cap}) for this run. "
                 "Resume tomorrow, raise the cap in pipeline config, set max_writes_per_run to 0 "
                 "for no limit, or use FIRESTORE_SEED_MAX_WRITES."
             )
+            stage_logger.log_stage_warning(stage_name="seed", warning_message=warn)
+            print(warn)
             break
 
     elapsed = time.time() - start_time
+
     print("\nSeeding Summary:")
     print(f"Total time: {elapsed:.2f} seconds")
     print(f"Records in file: {total_records}")
     print(f"Total batches for this file: {total_batch_count}")
     print(f"Batches processed this run: {batches_this_run}")
     print(f"Failed batches: {failures if not dry_run else 'N/A'}")
-
     print("Seeding complete!")
 
     if dry_run and use_checkpoint:
@@ -369,6 +440,14 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
 
     out_meta = _repo_relative_for_metadata(output_path)
     print(f"Seeded data written to: {out_meta}")
+
+    stage_logger.log_stage_end(
+        stage_name="seed",
+        duration_ms=round(elapsed * 1000, 2),
+        output_records=total_records,
+        failures=failures if not dry_run else 0,
+        output_file=out_meta,
+    )
 
     return {
         "processed": total_records,
@@ -405,7 +484,10 @@ def seed_products():
         f"max_writes_per_run={config.get('max_writes_per_run')}"
     )
 
-    return run(input_path, output_path, config)
+    from database.logging_system.pipeline_logger import PipelineStageLogger
+
+    stage_logger = PipelineStageLogger("Seed")
+    return run(input_path, output_path, config, stage_logger=stage_logger)
 
 
 if __name__ == "__main__":
