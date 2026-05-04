@@ -1,4 +1,5 @@
 import json
+import sys
 import time
 import os
 import argparse
@@ -8,6 +9,8 @@ from google.api_core import retry
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
 CHECKPOINT_FILE = os.path.join(BASE_DIR, "checkpoint.json")
 
 _firestore_client = None
@@ -253,6 +256,16 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
         print("Input JSON is empty — nothing to seed.")
         return {"processed": 0, "failures": 0, "output": _repo_relative_for_metadata(output_path)}
 
+    if config.get("validate_before_seed"):
+        from database.Validation.db012_validator import BatchValidator
+
+        print("[seed_firestore] DB012 pre-seed validation (schema + barcodes) on loaded slice...")
+        _bv = BatchValidator()
+        if not _bv.validate_data(data):
+            err = "Pre-seed validation failed (DB012). See logs and database/Validation reports."
+            print(f"[seed_firestore] {err}")
+            return {"error": err, "processed": 0, "failures": 1}
+
     total_records = len(data)
     use_checkpoint = subset is None or subset <= 0
     last_completed_batch = load_checkpoint() if use_checkpoint else 0
@@ -412,12 +425,18 @@ if __name__ == "__main__":
         default="database/seeding/seeded_products.json",
         help="Output JSON path for pipeline tracking (repo-relative or absolute)",
     )
+    parser.add_argument(
+        "--validate",
+        action="store_true",
+        help="Run DB012 batch validation on the input (after --subset) before any Firestore writes.",
+    )
     args = parser.parse_args()
 
     cfg: dict[str, Any] = {
         "dry_run": args.dry_run,
         "batch_size": args.batch_size,
         "writes_per_second_limit": args.writes_per_second,
+        "validate_before_seed": args.validate,
     }
     if args.subset:
         cfg["subset"] = args.subset

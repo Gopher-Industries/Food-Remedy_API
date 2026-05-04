@@ -21,36 +21,43 @@ class BatchValidator:
     def __init__(self):
         self.validator = DB021Validator()
 
+    def validate_data(self, products: list) -> bool:
+        """
+        Validate an in-memory product list (e.g. the exact slice about to be seeded).
+        Returns True only if schema and barcode checks pass.
+        """
+        logger.info("Starting batch validation (in-memory dataset)...")
+        try:
+            validate_results = self.validator.run_all_validations(products)
+            ok = bool(
+                validate_results["schema_validation"]["valid"]
+                and validate_results["barcode"]["ok"]
+            )
+            if not ok:
+                logger.error("Validation failed: schema or barcode checks did not pass.")
+                logger.error(f"schema_valid={validate_results['schema_validation']['valid']}")
+                logger.error(f"barcode_ok={validate_results['barcode']['ok']}")
+            else:
+                logger.info("In-memory dataset passed all critical checks.")
+            return ok
+        except Exception as e:
+            logger.error(f"Validation error: {str(e)}")
+            return False
+
     def validate(self, file_path='database/seeding/products_enriched.json'):
         """
-        Return a boolean indicates if the test is success.
+        Load JSON from disk and validate. Returns True if critical checks pass.
         """
-        logger.info(f"Starting batch validation...")
-        
-        logger.info(f"Validating {file_path}...")
-
-        result = True
+        logger.info(f"Starting batch validation from file: {file_path}...")
 
         try:
             with open(file_path, "r", encoding="utf-8") as file:
                 products = json.load(file)
-
-            # run DB021 validator
-            validate_results = self.validator.run_all_validations(products)
-
-            if not validate_results["schema_validation"]["valid"] or not validate_results["barcode"]["ok"]:
-                logger.error(f"{file_path} failed! Critical validation check needed.")
-                logger.error(validate_results["schema_validation"]["valid"])
-                logger.error(validate_results["barcode"]["ok"])
-                result = False
-            else:
-                logger.info(f"{file_path} passed all checks.")
-        
         except Exception as e:
-            logger.error(f"Failed to process {file_path}: {str(e)}")
-            result = False
-            
-        return result
+            logger.error(f"Failed to read {file_path}: {str(e)}")
+            return False
+
+        return self.validate_data(products)
     
 # To run the validation test
 def _test_validation_batch():
