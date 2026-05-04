@@ -1,0 +1,415 @@
+[
+  {
+    "barcode": "9337951006005",
+    "brand": "",
+    "productName": "Greek yogurt muslei",
+    "genericName": null,
+    "additives": [],
+    "allergens": [],
+    "ingredients": [],
+    "ingredientsText": null,
+    "ingredientsAnalysis": [],
+    "categories": [],
+    "labels": [],
+    "nutrientLevels": {},
+    "nutriments": {
+      "energy-kcal_serving": 125,
+      "fat_serving": 5.7,
+      "carbohydrates_serving": 18.6,
+      "fat_unit": "g",
+      "energy-kcal_unit": "kcal",
+      "proteins_serving": 2.8,
+      "carbohydrates_unit": "g",
+      "fat_100g": 5.7,
+      "proteins_100g": 2.8,
+      "energy_100g": 523,
+      "proteins_unit": "g",
+      "energy-kcal_100g": 125,
+      "carbohydrates_100g": 18.6,
+      "energy_serving": 523,
+      "energy_unit": "kcal"
+    },
+    "nutriscoreGrade": "unknown",
+    "productQuantity": 0.0,
+    "productQuantityUnit": "g",
+    "servingQuantity": 100.0,
+    "servingQuantityUnit": "g",
+    "traces": "",
+    "tracesFromIngredients": "",
+    "completeness": 0.2,
+    "images": {
+      "root": "https://images.openfoodfacts.org/images/products/933/795/100/6005",
+      "variants": {},
+      "primary": null
+    },
+    "enrichment": {
+      "nutrition": {
+        "tags": [],
+        "compositeScore": 25,
+        "scores": {
+          "protein": 0,
+          "fibre": 0,
+          "sugar": 50,
+          "fat": 50,
+          "saturatedFat": 50,
+          "sodium": 50,
+          "energy": 50
+        },
+        "raw": {
+          "sugars": null,
+          "protein": null,
+          "fat": null,
+          "satFat": null,
+          "fibre": null,
+          "sodium": null,
+          "energyKcalPer100": null
+        }
+      }
+    },
+    "allergensDetected": [],
+    "dietTags": [
+      "gluten_free",
+      "pescatarian",
+      "vegan",
+      "vegetarian"
+    ],
+    "lifestyleTags": [],
+    "riskTags": []
+  },
+  {
+    "barcode": "9352357004295",
+    "brand": "Keep It Cleaner",
+    "productName": "Plant protein crunch choc mint",
+    "genericName": null,
+    "additives": [],
+    "allergens": [],
+    "ingredients": [],
+    "ingredientsText": null,
+    "ingredientsAnalysis": [],
+    "categories": [],
+    "labels": [],
+    "nutrientLevels": {},
+    "nutriments": {
+      "fat_unit": "g",
+      "energy-kcal_unit": "kcal",
+      "sugars_100g": 11.7499995232,
+      "sugars_unit": "g",
+      "sugars_serving": 4.7,
+      "fiber_unit": "g",
+      "saturated-fat_unit": "g",
+      "carbohydrates_serving": 6.3,
+      "energy-kcal_serving": 174,
+      "fat_serving": 9.1,
+      "saturated-fat_100g": 7.5,
+      "energy_serving": 728,
+      "energy_unit": "kcal",
+      "energy_100g": 1820,
+      "proteins_unit": "g",
+      "energy-kcal_100g": 435,
+      "carbohydrates_100g": 15.7500004768,
+      "fat_100g": 22.7500009537,
+      "proteins_100g": 24.5000004768,
+      "fiber_serving": 6.9,
+      "fiber_100g": 17.2500002384,
+      "proteins_serving": 9.8,
+      "saturated-fat_serving": 3,
+      "carbohydrates_unit": "g"
+    },
+    "nutriscoreGrade": "unknown",
+    "productQuantity": 0.0,
+    "productQuantityUnit": "g",
+    "servingQuantity": 40.0,
+    "servingQuantityUnit": "g",
+    "traces": "",
+    "tracesFromIngredients": "",
+    "completeness": 0.3,
+    "images": {
+      "root": "https://images.openfoodfacts.org/images/products/935/235/700/4295",
+      "variants": {},
+      "primary": null
+    },
+    "enrichment": {
+      "nutrition": {
+        "tags": [],
+        "compositeScore": 25,
+        "scores": {
+          "protein": 0,
+          "fibre": 0,
+          "sugar": 50,
+          "fat": 50,
+          "saturatedFat": 50,
+          "sodium": 50,
+          "energy": 50
+        },
+        "raw": {
+          "sugars": null,
+          "protein": null,
+          "fat": null,
+          "satFat": null,
+          "fibre": null,
+          "sodium": null,
+          "energyKcalPer100": null
+        }
+      }
+    },
+    "allergensDetected": [],
+    "dietTags": [
+      "gluten_free",
+      "pescatarian",
+      "vegan",
+      "vegetarian"
+    ],
+    "lifestyleTags": [
+      "energy"
+    ],
+    "riskTags": [
+      "high_saturated_fat"
+    ]
+  },
+  {
+    "barcode": "9358097004472",
+    "brand": "Chef Good",
+    "productName": "Chicken Ramen",
+    "genericName": null,
+    "additives": [],
+    "allergens": [],
+    "ingredients": [],
+    "ingredientsText": null,
+    "ingredientsAnalysis": [],
+    "categories": [],
+    "labels": [],
+    "nutrientLevels": {},
+    "nutriments": {
+      "fat_100g": 2.5999999046,
+      "proteins_100g": 8.5,
+      "carbohydrates_unit": "g",
+      "saturated-fat_serving": 1.53,
+      "proteins_serving": 25.9,
+      "energy_unit": "kcal",
+      "energy_serving": 7010,
+      "carbohydrates_100g": 13.6999998093,
+      "energy-kcal_100g": 549,
+      "proteins_unit": "g",
+      "energy_100g": 2297,
+      "fat_serving": 7.93,
+      "energy-kcal_serving": 1670,
+      "saturated-fat_100g": 0.5,
+      "sugars_100g": 1.2999999523,
+      "energy-kcal_unit": "kcal",
+      "fat_unit": "g",
+      "carbohydrates_serving": 41.8,
+      "sugars_serving": 3.96,
+      "saturated-fat_unit": "g",
+      "sugars_unit": "g"
+    },
+    "nutriscoreGrade": "unknown",
+    "productQuantity": 0.0,
+    "productQuantityUnit": "g",
+    "servingQuantity": 305.0,
+    "servingQuantityUnit": "g",
+    "traces": "",
+    "tracesFromIngredients": "",
+    "completeness": 0.3625,
+    "images": {
+      "root": "https://images.openfoodfacts.org/images/products/935/809/700/4472",
+      "variants": {
+        "front_en": 3
+      },
+      "primary": "front_en"
+    },
+    "enrichment": {
+      "nutrition": {
+        "tags": [],
+        "compositeScore": 25,
+        "scores": {
+          "protein": 0,
+          "fibre": 0,
+          "sugar": 50,
+          "fat": 50,
+          "saturatedFat": 50,
+          "sodium": 50,
+          "energy": 50
+        },
+        "raw": {
+          "sugars": null,
+          "protein": null,
+          "fat": null,
+          "satFat": null,
+          "fibre": null,
+          "sodium": null,
+          "energyKcalPer100": null
+        }
+      }
+    },
+    "allergensDetected": [],
+    "dietTags": [
+      "gluten_free",
+      "pescatarian",
+      "vegan",
+      "vegetarian"
+    ],
+    "lifestyleTags": [
+      "energy"
+    ],
+    "riskTags": []
+  },
+  {
+    "barcode": "9310012059431",
+    "brand": "Masterfoods",
+    "productName": "nan",
+    "genericName": null,
+    "additives": [],
+    "allergens": [],
+    "ingredients": [],
+    "ingredientsText": null,
+    "ingredientsAnalysis": [],
+    "categories": [
+      "plant-based-foods-and-beverages",
+      "plant-based-foods",
+      "condiments",
+      "culinary-plants",
+      "aromatic-plants",
+      "herbs"
+    ],
+    "labels": [],
+    "nutrientLevels": {},
+    "nutriments": {},
+    "nutriscoreGrade": "unknown",
+    "productQuantity": 0.0,
+    "productQuantityUnit": "g",
+    "servingQuantity": 0.0,
+    "servingQuantityUnit": "g",
+    "traces": "",
+    "tracesFromIngredients": "",
+    "completeness": 0.375,
+    "images": {
+      "root": "https://images.openfoodfacts.org/images/products/931/001/205/9431",
+      "variants": {
+        "front_en": 3,
+        "ingredients_en": 5
+      },
+      "primary": "front_en"
+    },
+    "enrichment": {
+      "nutrition": {
+        "tags": [],
+        "compositeScore": 25,
+        "scores": {
+          "protein": 0,
+          "fibre": 0,
+          "sugar": 50,
+          "fat": 50,
+          "saturatedFat": 50,
+          "sodium": 50,
+          "energy": 50
+        },
+        "raw": {
+          "sugars": null,
+          "protein": null,
+          "fat": null,
+          "satFat": null,
+          "fibre": null,
+          "sodium": null,
+          "energyKcalPer100": null
+        }
+      }
+    },
+    "allergensDetected": [],
+    "dietTags": [
+      "gluten_free",
+      "pescatarian",
+      "vegan",
+      "vegetarian"
+    ],
+    "lifestyleTags": [
+      "weight_management"
+    ],
+    "riskTags": []
+  },
+  {
+    "barcode": "9358243002260",
+    "brand": "Soulara",
+    "productName": "Spaghetti",
+    "genericName": null,
+    "additives": [],
+    "allergens": [],
+    "ingredients": [],
+    "ingredientsText": null,
+    "ingredientsAnalysis": [],
+    "categories": [],
+    "labels": [],
+    "nutrientLevels": {},
+    "nutriments": {
+      "energy-kcal_serving": 1070,
+      "fat_serving": 17.5,
+      "saturated-fat_100g": 1,
+      "sugars_100g": 9,
+      "fat_unit": "g",
+      "energy-kcal_unit": "kcal",
+      "sugars_serving": 31.5,
+      "saturated-fat_unit": "g",
+      "sugars_unit": "g",
+      "carbohydrates_serving": 168,
+      "fat_100g": 5,
+      "proteins_100g": 15,
+      "saturated-fat_serving": 3.5,
+      "proteins_serving": 52.5,
+      "carbohydrates_unit": "g",
+      "energy_unit": "kcal",
+      "energy_serving": 4470,
+      "energy-kcal_100g": 305,
+      "proteins_unit": "g",
+      "energy_100g": 1276,
+      "carbohydrates_100g": 48
+    },
+    "nutriscoreGrade": "unknown",
+    "productQuantity": 0.0,
+    "productQuantityUnit": "g",
+    "servingQuantity": 350.0,
+    "servingQuantityUnit": "g",
+    "traces": "",
+    "tracesFromIngredients": "",
+    "completeness": 0.3,
+    "images": {
+      "root": "https://images.openfoodfacts.org/images/products/935/824/300/2260",
+      "variants": {},
+      "primary": null
+    },
+    "enrichment": {
+      "nutrition": {
+        "tags": [],
+        "compositeScore": 25,
+        "scores": {
+          "protein": 0,
+          "fibre": 0,
+          "sugar": 50,
+          "fat": 50,
+          "saturatedFat": 50,
+          "sodium": 50,
+          "energy": 50
+        },
+        "raw": {
+          "sugars": null,
+          "protein": null,
+          "fat": null,
+          "satFat": null,
+          "fibre": null,
+          "sodium": null,
+          "energyKcalPer100": null
+        }
+      }
+    },
+    "allergensDetected": [],
+    "dietTags": [
+      "gluten_free",
+      "pescatarian",
+      "vegan",
+      "vegetarian"
+    ],
+    "lifestyleTags": [
+      "energy",
+      "fitness"
+    ],
+    "riskTags": []
+  }
+]
