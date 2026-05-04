@@ -276,6 +276,7 @@ def runPipeline(
         # stage_idx = completed_count + 1
         # pct = int((completed_count / total_stages) * 100) if total_stages else 0
         pipeline_logger.log_stage_start(stage_name="clean", input_file=in_path)
+        stats["stages"].setdefault("clean", {})["started"] = datetime.now(timezone.utc).isoformat()
         
         # mark running in checkpoints
         checkpoints.setdefault("clean", {})["status"] = "running"
@@ -286,7 +287,13 @@ def runPipeline(
             json.dump(checkpoints, cf, indent=2)
         try:
             res = run_clean_stage(input_path=in_path, output_path=out_path, config=clean_cfg)
-            stats["stages"]["clean"] = res
+            stage_stats = stats["stages"].setdefault("clean", {})
+            stage_stats.update(res if isinstance(res, dict) else {})
+            stats["stages"]["clean"]["finished"] = datetime.now(timezone.utc).isoformat()
+            stats["stages"]["clean"]["config_summary"] = {
+                "enabled": clean_cfg.get("enabled"),
+                "dry_run": dry_run
+            }
             # update checkpoint as completed
             checkpoints["clean"] = {"status": "completed", "finished": datetime.now(timezone.utc).isoformat(), "result": res}
             with open(checkpoint_path, "w", encoding="utf-8") as cf:
@@ -297,7 +304,10 @@ def runPipeline(
                 stage_name="clean",
                 output_records=res.get("processed"),
                 failures=res.get("failures", 0),
-                output_file=res.get("output")
+                output_file=res.get("output"),
+                started=stats["stages"]["clean"].get("started"),
+                finished=stats["stages"]["clean"].get("finished"),
+                config_summary=stats["stages"]["clean"].get("config_summary"),
             )
             completed_count += 1
             
@@ -309,7 +319,7 @@ def runPipeline(
             if pipeline_cfg.get("fail_on_error", True):
                 raise
     else:
-        pipeline_logger.log_info(stage_name="enrich", message="disabled_by_config")
+        pipeline_logger.log_info(stage_name="clean", message="disabled_by_config")
 
     # Enrich stage
     if run_enrich is None and checkpoints.get("enrich", {}).get("status") == "completed" and not force:
@@ -328,6 +338,7 @@ def runPipeline(
         # stage_idx = completed_count + 1
         # pct = int((completed_count / total_stages) * 100) if total_stages else 0
         pipeline_logger.log_stage_start(stage_name="enrich", input_file=in_path)
+        stats["stages"].setdefault("enrich", {})["started"] = datetime.now(timezone.utc).isoformat()
         
         checkpoints.setdefault("enrich", {})["status"] = "running"
         checkpoints["enrich"]["started"] = datetime.now(timezone.utc).isoformat()
@@ -337,7 +348,17 @@ def runPipeline(
             json.dump(checkpoints, cf, indent=2)
         try:
             res = run_enrich_stage(input_path=in_path, output_path=out_path, config=enrich_cfg)
-            stats["stages"]["enrich"] = res
+            stage_stats = stats["stages"].setdefault("enrich", {})
+            stage_stats.update(res if isinstance(res, dict) else {})
+            stats["stages"]["enrich"]["finished"] = datetime.now(timezone.utc).isoformat()
+            stats["stages"]["enrich"]["config_summary"] = {
+                "enabled": enrich_cfg.get("enabled"),
+                "dry_run": dry_run
+            }
+            stats["stages"]["enrich"]["modules_summary"] = [
+                {"name": m["module"], "processed": m.get("result", {}).get("processed")} 
+                for m in res.get("modules_run", [])
+            ]
             checkpoints["enrich"] = {"status": "completed", "finished": datetime.now(timezone.utc).isoformat(), "result": res}
             with open(checkpoint_path, "w", encoding="utf-8") as cf:
                 json.dump(checkpoints, cf, indent=2)
@@ -347,7 +368,11 @@ def runPipeline(
                 stage_name="enrich",
                 output_records=res.get("processed"),
                 failures=res.get("failures", 0),
-                output_file=res.get("output")
+                output_file=res.get("output"),
+                started=stats["stages"]["enrich"].get("started"), 
+                finished=stats["stages"]["enrich"].get("finished"),
+                config_summary=stats["stages"]["enrich"].get("config_summary"),
+                modules_summary=stats["stages"]["enrich"].get("modules_summary")
             )
             completed_count += 1
             
@@ -377,6 +402,7 @@ def runPipeline(
         # stage_idx = completed_count + 1
         # pct = int((completed_count / total_stages) * 100) if total_stages else 0
         pipeline_logger.log_stage_start(stage_name="seed", input_file=in_path)
+        stats["stages"].setdefault("seed", {})["started"] = datetime.now(timezone.utc).isoformat()
         
         checkpoints.setdefault("seed", {})["status"] = "running"
         checkpoints["seed"]["started"] = datetime.now(timezone.utc).isoformat()
@@ -386,7 +412,13 @@ def runPipeline(
             json.dump(checkpoints, cf, indent=2)
         try:
             res = run_seed_stage(input_path=in_path, config=seed_cfg)
-            stats["stages"]["seed"] = res
+            stage_stats = stats["stages"].setdefault("seed", {})
+            stage_stats.update(res if isinstance(res, dict) else {})
+            stats["stages"]["seed"]["finished"] = datetime.now(timezone.utc).isoformat()
+            stats["stages"]["seed"]["config_summary"] = {
+                "enabled": seed_cfg.get("enabled"),
+                "dry_run": dry_run
+            }
             checkpoints["seed"] = {"status": "completed", "finished": datetime.now(timezone.utc).isoformat(), "result": res}
             with open(checkpoint_path, "w", encoding="utf-8") as cf:
                 json.dump(checkpoints, cf, indent=2)
@@ -396,7 +428,10 @@ def runPipeline(
                 stage_name="seed",
                 output_records=res.get("processed"),
                 failures=res.get("failures", 0),
-                output_file=res.get("output")
+                output_file=res.get("output"),
+                started=stats["stages"]["seed"].get("started"),
+                finished=stats["stages"]["seed"].get("finished"),
+                config_summary=stats["stages"]["seed"].get("config_summary"),
             )
             completed_count += 1
             

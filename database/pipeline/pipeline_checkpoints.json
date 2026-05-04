@@ -1,7 +1,7 @@
 {
   "enrich": {
     "status": "completed",
-    "finished": "2026-04-29T22:58:23.173777+00:00",
+    "finished": "2026-05-04T20:00:11.451030+00:00",
     "result": {
       "processed": 5000,
       "failures": 0,
@@ -14,7 +14,7 @@
           "result": {
             "processed": 5000,
             "failures": 0,
-            "output": "database/seeding/products_enriched.json"
+            "output": "C:\\Users\\alanm\\Downloads\\Alan\\Deakin\\working_files\\2026T1\\SIT782\\LocalRepositoryCloned\\Food-Remedy_API\\database\\database/seeding/products_enriched.json"
           }
         },
         {
@@ -90,7 +90,7 @@
   },
   "seed": {
     "status": "completed",
-    "finished": "2026-04-29T22:58:25.899699+00:00",
+    "finished": "2026-05-04T20:00:15.295371+00:00",
     "result": {
       "processed": 5000,
       "failures": 0,

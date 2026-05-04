@@ -58,6 +58,7 @@ class PipelineStageLogger:
         output_records: int | None = None,
         failures: int | None = None,
         output_file: str | None = None,
+        **extra, # added to support extra metadata
     ) -> None:
         message = f"event=stage_end pipeline={self.pipeline_name} stage={stage_name}"
         if duration_ms is not None:
@@ -70,6 +71,17 @@ class PipelineStageLogger:
             message += f" failures={failures}"
         if output_file:
             message += f" output_file={output_file}"
+
+        # Logging extra metadata fields (started, finished, config_summary, modules_summary, etc.)
+        for key, value in extra.items():
+                    if value is not None:
+                        if isinstance(value, dict):
+                            # Flatten simple dicts for readability
+                            for k, v in value.items():
+                                message += f" {key}_{k}={v}"
+                        else:
+                            message += f" {key}={value}"
+
         self.logger.info(message)
 
     def log_stage_warning(self, stage_name: str, warning_message: str) -> None:
