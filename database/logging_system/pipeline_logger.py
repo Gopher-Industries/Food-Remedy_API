@@ -56,6 +56,7 @@ class PipelineStageLogger:
         duration_ms: float | None = None,
         input_records: int | None = None,
         output_records: int | None = None,
+        failures: int | None = None,
         output_file: str | None = None,
     ) -> None:
         message = f"event=stage_end pipeline={self.pipeline_name} stage={stage_name}"
@@ -65,6 +66,8 @@ class PipelineStageLogger:
             message += f" input_records={input_records}"
         if output_records is not None:
             message += f" output_records={output_records}"
+        if failures is not None:
+            message += f" failures={failures}"
         if output_file:
             message += f" output_file={output_file}"
         self.logger.info(message)
@@ -99,4 +102,12 @@ class PipelineStageLogger:
             stage_name,
             metric_name,
             metric_value,
+        )
+
+    def log_info(self, stage_name: str, message: str, **kwargs) -> None:
+        """General info log with stage context"""
+        extra = " ".join(f"{k}={v}" for k, v in kwargs.items())
+        self.logger.info(
+            "event=stage_info pipeline=%s stage=%s message=%s %s",
+            self.pipeline_name, stage_name, message, extra
         )
