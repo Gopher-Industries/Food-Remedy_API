@@ -1,6 +1,7 @@
 import json
 import time
 import os
+import sys
 import argparse
 from typing import Any, Optional
 
@@ -8,6 +9,10 @@ from google.api_core import retry
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+
+from database.seeding.batch_limits import resolve_max_writes_per_run
 CHECKPOINT_FILE = os.path.join(BASE_DIR, "checkpoint.json")
 
 _firestore_client = None
@@ -218,9 +223,11 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
     input_path = _resolve_repo_path(input_path)
     output_path = _resolve_repo_path(output_path)
 
+    max_writes_cap = resolve_max_writes_per_run(config)
+    cap_msg = "unlimited" if max_writes_cap is None else str(max_writes_cap)
     print(
         f"[seed_firestore.run] dry_run={dry_run}, batch_size={batch_size}, "
-        f"writes_per_second_limit={writes_per_second_limit}"
+        f"writes_per_second_limit={writes_per_second_limit}, max_writes_per_run={cap_msg}"
     )
     failures = 0
     total_written = 0
@@ -319,15 +326,23 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
 
         try:
             commit_batch(batch)
-            print(f"Wrote batch {batch_number} ({len(chunk)} docs)")
+            pct = (100.0 * total_written / total_records) if total_records else 0.0
+            print(
+                f"Wrote batch {batch_number} ({len(chunk)} docs) — "
+                f"{total_written}/{total_records} ({pct:.1f}%)"
+            )
             save_checkpoint(batch_number)
             batches_this_run += 1
         except Exception as e:
             print(f"Batch {batch_number} failed: {e}")
             failures += 1
 
-        if total_written > 20000:
-            print("Warning: Approaching daily write quota (20k) — stopping")
+        if max_writes_cap is not None and total_written >= max_writes_cap:
+            print(
+                f"Stopped: reached max_writes_per_run ({max_writes_cap}) for this run. "
+                "Resume tomorrow, raise the cap in pipeline config, set max_writes_per_run to 0 "
+                "for no limit, or use FIRESTORE_SEED_MAX_WRITES."
+            )
             break
 
     elapsed = time.time() - start_time
@@ -371,6 +386,7 @@ def seed_products():
         "dry_run": False,
         "batch_size": 500,
         "writes_per_second_limit": 400,
+        "max_writes_per_run": 20000,
     }
 
     if hasattr(seed_products, "config") and isinstance(seed_products.config, dict):
@@ -385,7 +401,8 @@ def seed_products():
         f"[seed_products] input={_repo_relative_for_metadata(input_path)}, "
         f"output={_repo_relative_for_metadata(output_path)}, "
         f"dry_run={config.get('dry_run')}, batch_size={config.get('batch_size')}, "
-        f"writes_per_second_limit={config.get('writes_per_second_limit')}"
+        f"writes_per_second_limit={config.get('writes_per_second_limit')}, "
+        f"max_writes_per_run={config.get('max_writes_per_run')}"
     )
 
     return run(input_path, output_path, config)
@@ -412,6 +429,12 @@ if __name__ == "__main__":
         default="database/seeding/seeded_products.json",
         help="Output JSON path for pipeline tracking (repo-relative or absolute)",
     )
+    parser.add_argument(
+        "--max-writes",
+        type=int,
+        default=None,
+        help="Stop after N document writes (0 = unlimited). Overrides FIRESTORE_SEED_MAX_WRITES when set.",
+    )
     args = parser.parse_args()
 
     cfg: dict[str, Any] = {
@@ -419,6 +442,8 @@ if __name__ == "__main__":
         "batch_size": args.batch_size,
         "writes_per_second_limit": args.writes_per_second,
     }
+    if args.max_writes is not None:
+        cfg["max_writes_per_run"] = args.max_writes
     if args.subset:
         cfg["subset"] = args.subset
 
