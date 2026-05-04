@@ -4,8 +4,8 @@ import os
 import sys
 import time
 import tracemalloc
-from datetime import datetime
-from typing import Dict, List, Sequence
+from datetime import datetime, timezone
+from typing import Dict, List, Optional, Sequence
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if REPO_ROOT not in sys.path:
@@ -15,6 +15,7 @@ from database.pipeline.run_pipeline import runPipeline
 
 
 SEED_DIR = os.path.join(REPO_ROOT, "database", "seeding")
+SEED_SCRIPT = os.path.join(SEED_DIR, "seed_firestore.py")
 
 DEFAULT_SHARD_INPUTS = [
     os.path.join(SEED_DIR, "products_0k_10k.json"),
@@ -27,7 +28,7 @@ DEFAULT_50K_PLUS_INPUT = os.path.join(SEED_DIR, "products_50k+.json")
 
 
 def _now_utc() -> str:
-    return datetime.utcnow().isoformat()
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _load_records(path: str) -> List[dict]:
@@ -67,13 +68,51 @@ def _chunk(records: List[dict], chunk_size: int) -> List[List[dict]]:
 
 
 def _build_config(
-    chunk_input_path: str,
+    *,
+    raw_input_path: str,
+    chunk_cleaned_path: str,
     chunk_enriched_path: str,
     report_path: str,
     metadata_path: str,
     checkpoint_path: str,
+    chunk_seeded_manifest_path: str,
+    with_clean: bool,
+    with_seed: bool,
 ) -> Dict:
-    return {
+    enrich_input = chunk_cleaned_path if with_clean else raw_input_path
+    enrich_modules: List[Dict] = [
+        {
+            "name": "nutrition_enrich",
+            "path": os.path.join(
+                REPO_ROOT,
+                "database",
+                "pipeline",
+                "modules",
+                "nutrition_enrich.py",
+            ),
+            "enabled": True,
+        },
+    ]
+    # Clean-stage output flattens nested objects (e.g. nutriments as JSON strings).
+    # schema_validator expects OFF-shaped dict nutriments — skip it after clean.
+    if not with_clean:
+        enrich_modules.append(
+            {
+                "name": "schema_validator",
+                "path": os.path.join(
+                    REPO_ROOT,
+                    "database",
+                    "pipeline",
+                    "modules",
+                    "schema_validator.py",
+                ),
+                "enabled": True,
+                "config": {
+                    "report_path": report_path,
+                },
+            }
+        )
+    cfg: Dict = {
         "pipeline": {
             "fail_on_error": False,
             "outputs": {
@@ -81,45 +120,35 @@ def _build_config(
                 "checkpoints": checkpoint_path,
             },
             "clean": {
-                "enabled": False,
+                "enabled": with_clean,
+                "input": raw_input_path,
+                "output": chunk_cleaned_path,
             },
             "enrich": {
                 "enabled": True,
-                "input": chunk_input_path,
+                "input": enrich_input,
                 "output": chunk_enriched_path,
-                "modules": [
-                    {
-                        "name": "nutrition_enrich",
-                        "path": os.path.join(
-                            REPO_ROOT,
-                            "database",
-                            "pipeline",
-                            "modules",
-                            "nutrition_enrich.py",
-                        ),
-                        "enabled": True,
-                    },
-                    {
-                        "name": "schema_validator",
-                        "path": os.path.join(
-                            REPO_ROOT,
-                            "database",
-                            "pipeline",
-                            "modules",
-                            "schema_validator.py",
-                        ),
-                        "enabled": True,
-                        "config": {
-                            "report_path": report_path,
-                        },
-                    },
-                ],
+                "modules": enrich_modules,
             },
             "seed": {
-                "enabled": False,
+                "enabled": with_seed,
+                "script_path": SEED_SCRIPT,
+                # seed_firestore.seed_products() reads config["input"] (not run_seed_stage's path arg).
+                "input": chunk_enriched_path,
+                "output": chunk_seeded_manifest_path,
             },
         }
     }
+    return cfg
+
+
+def _stage_error(stage_result: object) -> Optional[str]:
+    if not isinstance(stage_result, dict):
+        return None
+    err = stage_result.get("error")
+    if err:
+        return str(err)
+    return None
 
 
 def run_large_pipeline_test(
@@ -130,8 +159,10 @@ def run_large_pipeline_test(
     dry_run: bool = False,
     stop_on_error: bool = False,
     allow_under_50k: bool = False,
+    with_clean: bool = False,
+    with_seed: bool = False,
 ) -> Dict:
-    run_id = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     run_dir = os.path.join(output_dir, f"large_pipeline_{run_id}")
     os.makedirs(run_dir, exist_ok=True)
 
@@ -168,6 +199,7 @@ def run_large_pipeline_test(
     print(f"[Large Test] Loaded {total_records} records in {load_elapsed:.2f}s")
     print(f"[Large Test] Chunk size: {chunk_size} | Total chunks: {total_chunks}")
     print(f"[Large Test] Dry-run: {dry_run}")
+    print(f"[Large Test] Stages: clean={with_clean}, enrich=True, seed={with_seed}")
 
     tracemalloc.start()
     suite_start = time.perf_counter()
@@ -179,7 +211,9 @@ def run_large_pipeline_test(
 
     for idx, chunk_records in enumerate(chunks, start=1):
         chunk_input_path = os.path.join(run_dir, f"chunk_{idx:03d}_input.json")
+        chunk_cleaned_path = os.path.join(run_dir, f"chunk_{idx:03d}_cleaned.json")
         chunk_output_path = os.path.join(run_dir, f"chunk_{idx:03d}_enriched.json")
+        chunk_seeded_path = os.path.join(run_dir, f"chunk_{idx:03d}_seeded_products.json")
         chunk_report_path = os.path.join(run_dir, f"chunk_{idx:03d}_schema_report.json")
         chunk_metadata_path = os.path.join(run_dir, f"chunk_{idx:03d}_pipeline_metadata.json")
         chunk_checkpoint_path = os.path.join(run_dir, f"chunk_{idx:03d}_pipeline_checkpoint.json")
@@ -188,36 +222,57 @@ def run_large_pipeline_test(
             json.dump(chunk_records, f, ensure_ascii=False)
 
         cfg = _build_config(
-            chunk_input_path=chunk_input_path,
+            raw_input_path=chunk_input_path,
+            chunk_cleaned_path=chunk_cleaned_path,
             chunk_enriched_path=chunk_output_path,
             report_path=chunk_report_path,
             metadata_path=chunk_metadata_path,
             checkpoint_path=chunk_checkpoint_path,
+            chunk_seeded_manifest_path=chunk_seeded_path,
+            with_clean=with_clean,
+            with_seed=with_seed,
         )
 
-        print(f"[Large Test] Running chunk {idx}/{total_chunks} ({len(chunk_records)} records)")
+        print(
+            f"[Large Test] Running chunk {idx}/{total_chunks} ({len(chunk_records)} records) "
+            f"[clean={with_clean}, seed={with_seed}]"
+        )
 
         chunk_start = time.perf_counter()
         stage_error = None
         stage_processed = 0
         stage_failures = 0
+        clean_error: Optional[str] = None
+        seed_error: Optional[str] = None
 
         try:
             run_result = runPipeline(
                 config=cfg,
-                run_clean=False,
-                run_enrich=True,
-                run_seed=False,
+                run_clean=None,
+                run_enrich=None,
+                run_seed=None,
                 dry_run=dry_run,
                 force=True,
             )
-            enrich_stage = run_result.get("stages", {}).get("enrich", {})
+            stages = run_result.get("stages", {}) if isinstance(run_result, dict) else {}
+            clean_res = stages.get("clean")
+            enrich_stage = stages.get("enrich", {})
+            seed_res = stages.get("seed")
+
+            clean_error = _stage_error(clean_res) if with_clean else None
+            seed_error = _stage_error(seed_res) if with_seed else None
+
             if isinstance(enrich_stage, dict):
                 stage_error = enrich_stage.get("error")
                 stage_processed = int(enrich_stage.get("processed") or len(chunk_records))
                 stage_failures = int(enrich_stage.get("failures") or 0)
             else:
                 stage_processed = len(chunk_records)
+
+            if clean_error:
+                stage_error = clean_error
+            if seed_error:
+                stage_error = seed_error
         except Exception as exc:
             stage_error = str(exc)
             stage_processed = 0
@@ -244,8 +299,12 @@ def run_large_pipeline_test(
             "records_per_second": round(records_per_second, 2) if records_per_second is not None else None,
             "status": "ok" if ok else "failed",
             "error": stage_error,
+            "clean_error": clean_error,
+            "seed_error": seed_error,
             "input_path": chunk_input_path,
             "output_path": chunk_output_path,
+            "cleaned_path": chunk_cleaned_path if with_clean else None,
+            "seeded_manifest_path": chunk_seeded_path if with_seed else None,
             "report_path": chunk_report_path,
             "metadata_path": chunk_metadata_path,
         }
@@ -282,6 +341,8 @@ def run_large_pipeline_test(
         "input_files": resolved_inputs,
         "output_directory": run_dir,
         "dry_run": dry_run,
+        "with_clean": with_clean,
+        "with_seed": with_seed,
         "chunk_size": chunk_size,
         "total_records_loaded": total_records,
         "load_duration_seconds": round(load_elapsed, 4),
@@ -318,7 +379,11 @@ def run_large_pipeline_test(
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run pipeline enrichment on large (50k+) product datasets and monitor performance"
+        description=(
+            "Run the data pipeline on large (50k+) product JSON and record performance. "
+            "Default: enrich + schema validation only (matches typical scale tests). "
+            "Use --with-clean / --with-seed / --full-pipeline for end-to-end coverage."
+        )
     )
     parser.add_argument(
         "--input-files",
@@ -358,6 +423,26 @@ def _parse_args() -> argparse.Namespace:
         action="store_true",
         help="Allow running with fewer than 50k records (for local testing only).",
     )
+    parser.add_argument(
+        "--with-clean",
+        action="store_true",
+        help="Enable clean stage before enrich (nutrient normalisation / flattened schema).",
+    )
+    parser.add_argument(
+        "--with-seed",
+        action="store_true",
+        help="Enable Firestore seed stage after enrich (uses database/seeding/seed_firestore.py).",
+    )
+    parser.add_argument(
+        "--full-pipeline",
+        action="store_true",
+        help="Shortcut for --with-clean --with-seed (full clean → enrich → seed per chunk).",
+    )
+    parser.add_argument(
+        "--allow-live-firestore",
+        action="store_true",
+        help="Required with --with-seed when not using --dry-run (confirms real Firestore writes).",
+    )
     return parser.parse_args()
 
 
@@ -365,6 +450,14 @@ def main():
     args = _parse_args()
     if args.chunk_size <= 0:
         raise ValueError("--chunk-size must be greater than zero")
+
+    with_clean = bool(args.with_clean or args.full_pipeline)
+    with_seed = bool(args.with_seed or args.full_pipeline)
+    if with_seed and not args.dry_run and not args.allow_live_firestore:
+        raise SystemExit(
+            "Refusing live Firestore writes: use --dry-run to simulate seeding, "
+            "or pass --allow-live-firestore if you intend to write to your Firebase project."
+        )
 
     summary = run_large_pipeline_test(
         input_files=args.input_files,
@@ -374,6 +467,8 @@ def main():
         dry_run=args.dry_run,
         stop_on_error=args.stop_on_error,
         allow_under_50k=args.allow_under_50k,
+        with_clean=with_clean,
+        with_seed=with_seed,
     )
 
     if not summary.get("success"):
