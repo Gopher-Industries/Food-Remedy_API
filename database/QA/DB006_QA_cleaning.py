@@ -5,7 +5,7 @@ import os
 
 # === 1. File paths ===
 base_dir = os.path.dirname(os.path.abspath(__file__))
-input_file = os.path.join(base_dir, "../clean data/cleanSample.json")  # cleaned dataset
+input_file = os.path.join(base_dir, "../clean_data/cleanSample.json")  # cleaned dataset
 errors_file = os.path.join(base_dir, "errors.json")
 summary_file = os.path.join(base_dir, "summary_report.txt")
 

@@ -1,5 +1,9 @@
+const config = require("./config");
+
+const PIPELINE_VERSION = config.pipeline.version;
+
 const NUTRITION_LIMITS = {
-  sugarHighG: 20
+  sugarHighG: config.pipeline.sugarHighLimit
 };
 
 const SEVERITY_WEIGHTS = {
@@ -7,8 +11,6 @@ const SEVERITY_WEIGHTS = {
   medium: 2,
   high: 3
 };
-
-const PIPELINE_VERSION = "1.3.0";
 
 function cleanData(raw) {
   const normalizeList = (text) =>
@@ -302,7 +304,7 @@ function buildScanResult(rawData, userProfile) {
       recommendationScore,
       matchedPreferences: safeUserProfile.dietPreferences || []
     },
-    alternatives: alternatives,
+    alternatives,
     metadata: {
       processedAt: new Date().toISOString(),
       pipelineVersion: PIPELINE_VERSION,

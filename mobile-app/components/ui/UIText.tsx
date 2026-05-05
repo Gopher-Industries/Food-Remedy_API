@@ -8,6 +8,7 @@ interface TtProps {
   className?: string;
   style?: StyleProp<TextStyle>;
   children?: any;
+  numberOfLines?: number;
 }
 
 const mapUp: Record<string, string> = {

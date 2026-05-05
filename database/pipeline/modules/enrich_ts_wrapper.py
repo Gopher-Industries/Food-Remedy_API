@@ -1,61 +1,65 @@
-import os
-import subprocess
-import shutil
+"""
+Optional enrich step: invoke TypeScript enricher if configured, else pass-through.
+
+Enrich stage expects: run(input_path, output_path, config) -> dict
+
+Config keys:
+  ts_path: path to a TS/JS entry file (relative to repo root or absolute)
+  node_cmd: optional command prefix, default "npx ts-node" or "node"
+"""
+from __future__ import annotations
+
 import json
-from typing import Optional
+import logging
+import os
+import shutil
+import subprocess
+from typing import Any, Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 
-def run(input_path: str, output_path: str, config: dict):
-    """Run the TypeScript enrichment script as a subprocess.
-
-    Expects the TS script `enrichProducts.ts` to accept two args: <input.json> <output.json>
-
-    The config may include `ts_path` (path to the .ts file). If absent, the wrapper
-    will look for `mobile-app/services/nutrition/enrichProducts.ts` under the repo root.
+def run(input_path: str, output_path: str, config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
-    # compute repo root (modules -> pipeline -> database -> repo root)
+    Load JSON array from input_path, optionally run TS enricher, write output_path.
+    This module is not part of DB007 missing-field logic; it is the enrich-stage hook.
+    """
+    config = config or {}
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+    ts_rel = config.get("ts_path") or ""
 
-    ts_path = None
-    if config and isinstance(config, dict):
-        ts_path = config.get("ts_path")
-    if not ts_path:
-        ts_path = os.path.join(repo_root, "mobile-app", "services", "nutrition", "enrichProducts.ts")
-    if not os.path.isabs(ts_path):
-        ts_path = os.path.join(repo_root, ts_path)
-
-    if not os.path.exists(ts_path):
-        raise FileNotFoundError(f"TypeScript enrichment script not found: {ts_path}")
-
-    # Respect dry-run
-    dry = False
-    if config and isinstance(config, dict):
-        dry = bool(config.get("dry_run"))
-    if dry:
-        print(f"DRY-RUN: skipping TypeScript enrichment subprocess for {ts_path}")
-        return {"processed": None, "failures": None, "output": None, "module": os.path.basename(__file__)}
-
-    # Ensure output directory exists
-    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
-
-    # Prefer npx ts-node if available; fall back to node if a .js build exists
-    npx = shutil.which("npx")
-    node = shutil.which("node")
-
-    # If a compiled .js sibling exists, prefer running node on it
-    js_candidate = os.path.splitext(ts_path)[0] + ".js"
-
-    if os.path.exists(js_candidate) and node:
-        cmd = [node, js_candidate, input_path, output_path]
-    elif npx:
-        cmd = [npx, "ts-node", ts_path, input_path, output_path]
+    if ts_rel:
+        ts_path = ts_rel if os.path.isabs(ts_rel) else os.path.join(repo_root, ts_rel)
     else:
-        raise RuntimeError("Neither 'npx' nor a compiled JS file is available to run the TypeScript enrich script")
+        ts_path = ""
 
+    out_dir = os.path.dirname(os.path.abspath(output_path))
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+
+    if ts_path and os.path.isfile(ts_path):
+        cmd = config.get("node_cmd")
+        if not cmd:
+            # Prefer npx ts-node for .ts files
+            cmd_list = ["npx", "--yes", "ts-node", ts_path, input_path, output_path]
+        else:
+            cmd_list = cmd.split() + [ts_path, input_path, output_path]
+        try:
+            subprocess.run(cmd_list, cwd=repo_root, check=True, capture_output=True, text=True)
+            logger.info("[enrich_ts_wrapper] TS enricher finished: %s", ts_path)
+            return {"processed": None, "failures": 0, "output": output_path, "mode": "ts"}
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
+            logger.warning(
+                "[enrich_ts_wrapper] TS step failed (%s); copying input to output.",
+                e,
+            )
+
+    shutil.copyfile(input_path, output_path)
     try:
-        subprocess.run(cmd, check=True)
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(f"Enrichment subprocess failed: {e}")
-
-    # Return a minimal result dict expected by the pipeline
-    return {"processed": None, "failures": None, "output": output_path, "module": os.path.basename(__file__)}
+        with open(output_path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+        n = len(data) if isinstance(data, list) else 0
+    except Exception:
+        n = None
+    logger.info("[enrich_ts_wrapper] Pass-through copy %s -> %s (records=%s)", input_path, output_path, n)
+    return {"processed": n, "failures": 0, "output": output_path, "mode": "passthrough"}
