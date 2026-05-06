@@ -360,7 +360,7 @@ def runPipeline(
             res = run_enrich_stage(input_path=in_path, output_path=out_path, config=enrich_cfg)
             
             # === DB031 Failure Test (temporary) ===
-            # raise Exception("DB031 test: simulated failure in enrich stage")
+            raise Exception("DB031 test: simulated failure in enrich stage")
             
             stage_stats = stats["stages"].setdefault("enrich", {})
             stage_stats.update(res if isinstance(res, dict) else {})

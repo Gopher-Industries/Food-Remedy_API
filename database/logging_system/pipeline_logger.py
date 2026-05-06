@@ -99,13 +99,20 @@ class PipelineStageLogger:
         input_file: str | None = None,
         batch_id: str | None = None,
     ) -> None:
+        """Log stage failure as structured event in both main log and error log."""
         details = f"event=stage_error pipeline={self.pipeline_name} stage={stage_name}"
         if input_file:
             details += f" input_file={input_file}"
         if batch_id:
             details += f" batch_id={batch_id}"
 
-        self.error_logger.exception("%s error=%s", details, error)
+        error_msg = str(error)
+
+        # Log to MAIN pipeline log
+        self.logger.error("%s error=%s", details, error_msg)
+
+        # Log to error logger with full traceback
+        self.error_logger.exception("%s error=%s", details, error_msg)
 
     def log_metric(self, stage_name: str, metric_name: str, metric_value: Any) -> None:
         self.logger.info(
