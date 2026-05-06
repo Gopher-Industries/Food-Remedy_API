@@ -1,7 +1,7 @@
 {
   "enrich": {
     "status": "completed",
-    "finished": "2026-05-04T20:00:11.451030+00:00",
+    "finished": "2026-05-06T18:02:25.729759+00:00",
     "result": {
       "processed": 5000,
       "failures": 0,
@@ -90,11 +90,21 @@
   },
   "seed": {
     "status": "completed",
-    "finished": "2026-05-04T20:00:15.295371+00:00",
+    "finished": "2026-05-06T18:02:31.497542+00:00",
     "result": {
       "processed": 5000,
       "failures": 0,
       "output": "database/seeding/seeded_products.json"
+    }
+  },
+  "clean": {
+    "status": "completed",
+    "finished": "2026-05-06T18:01:47.881746+00:00",
+    "result": {
+      "status": "completed",
+      "processed": 1,
+      "failures": 0,
+      "output": "database/data_investigation/exampleProductCleaned.json"
     }
   }
 }
