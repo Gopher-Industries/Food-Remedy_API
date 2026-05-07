@@ -27,6 +27,7 @@ fake_pd.DataFrame = lambda *a, **k: None
 sys.modules.setdefault('pandas', fake_pd)
 
 from mapping.map_enriched_to_product_detail import map_enriched_to_product_detail
+from mapping.validate_product_contract import validate_product
 
 
 repo_root = os.path.dirname(os.path.dirname(__file__))
@@ -70,46 +71,14 @@ def _validate_minimal(contract: Dict[str, Any], obj: Dict[str, Any]) -> List[str
     """
     errs: List[str] = []
     required = contract.get('required', [])
-    props = contract.get('properties', {})
 
     # required presence
     for r in required:
         if r not in obj:
             errs.append(f"missing required field: {r}")
 
-    # basic type checks for a subset of fields
-    def is_str(v):
-        return isinstance(v, str)
-
-    if 'barcode' in obj and not is_str(obj.get('barcode')):
-        errs.append('barcode must be string')
-
-    if 'productName' in obj and not is_str(obj.get('productName')):
-        errs.append('productName must be string')
-
-    images = obj.get('images')
-    if images is None or not isinstance(images, dict):
-        errs.append('images must be object')
-    else:
-        root = images.get('root', '')
-        if root is None or (not isinstance(root, str)):
-            errs.append('images.root must be string')
-
-    # nutriments_normalized numeric checks (if present)
-    nn = obj.get('nutriments_normalized') or {}
-    for k in ('energy_kj', 'energy_kcal'):
-        if k in nn and nn.get(k) is not None and not isinstance(nn.get(k), (int, float)):
-            errs.append(f'{k} must be numeric or null')
-
-    # tags shape
-    tags = obj.get('tags')
-    if tags is None:
-        errs.append('tags missing')
-    else:
-        if not isinstance(tags.get('final', []), list):
-            errs.append('tags.final must be list')
-        if not isinstance(tags.get('removed', []), list):
-            errs.append('tags.removed must be list')
+    # Reuse DB034 contract validator so checks stay consistent in one place.
+    errs.extend(validate_product(obj))
 
     return errs
 

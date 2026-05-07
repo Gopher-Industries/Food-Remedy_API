@@ -1,27 +1,29 @@
+"""DB034 - Product Detail Contract Alignment.
+
+Validates that enriched product documents, once mapped, match ProductDetail V1.
 """
-DB034 - Product Detail Contract Alignment
-Validates that enriched product documents match the ProductDetail V1 contract.
-Location: mapping/validate_product_contract.py
-"""
+
+from __future__ import annotations
 
 import json
-import os
 import logging
-from typing import Any, Dict, List
+from pathlib import Path
+from typing import Any
 
 from mapping.map_enriched_to_product_detail import map_enriched_to_product_detail
+
 logger = logging.getLogger(__name__)
 if not logger.handlers:
-    h = logging.StreamHandler()
-    h.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-    logger.addHandler(h)
-    logger.setLevel(logging.INFO)
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 # Required fields per contract
-REQUIRED_FIELDS = ["barcode", "productName"]
+REQUIRED_FIELDS = ("barcode", "productName")
 
 # Expected field types per contract
-FIELD_TYPES = {
+FIELD_TYPES: dict[str, Any] = {
     "barcode": str,
     "productName": str,
     "brand": (str, type(None)),
@@ -46,23 +48,32 @@ FIELD_TYPES = {
     "images": dict,
     "tags": dict,
     "metadata": dict,
-    
 }
 
+EXPECTED_NORM_KEYS = (
+    "energy_kj",
+    "energy_kcal",
+    "fat_g",
+    "saturated_fat_g",
+    "carbohydrates_g",
+    "sugars_g",
+    "proteins_g",
+    "salt_g",
+    "sodium_mg",
+    "fiber_g",
+)
 
-def validate_product(mapped: Dict[str, Any]) -> List[str]:
-    """
-    Validate a mapped product against the ProductDetail V1 contract.
-    Returns a list of validation errors. Empty list means valid.
-    """
-    errors = []
 
-    # Check required fields
+def validate_product(mapped: dict[str, Any]) -> list[str]:
+    """Validate mapped product against ProductDetail V1 contract."""
+    errors: list[str] = []
+
+    # Check required fields (non-empty)
     for field in REQUIRED_FIELDS:
         if not mapped.get(field):
             errors.append(f"Missing required field: {field}")
 
-    # Check field types
+    # Check field presence and types
     for field, expected_type in FIELD_TYPES.items():
         if field not in mapped:
             errors.append(f"Missing field: {field}")
@@ -74,12 +85,12 @@ def validate_product(mapped: Dict[str, Any]) -> List[str]:
                 f"Expected {expected_type}, got {type(value).__name__}"
             )
 
-    # Check images has root field
+    # Check images.root
     images = mapped.get("images", {})
     if not isinstance(images, dict) or not images.get("root"):
         errors.append("Field 'images.root' is missing or empty")
 
-    # Check tags has final and removed
+    # Check tags.final and tags.removed
     tags = mapped.get("tags", {})
     if not isinstance(tags, dict):
         errors.append("Field 'tags' must be an object")
@@ -89,114 +100,56 @@ def validate_product(mapped: Dict[str, Any]) -> List[str]:
         if "removed" not in tags:
             errors.append("Field 'tags.removed' is missing")
 
-    # Check nutriments_normalized has expected keys
+    # Check normalised nutriments keys
     norm = mapped.get("nutriments_normalized", {})
-    expected_norm_keys = [
-        "energy_kj", "energy_kcal", "fat_g", "saturated_fat_g",
-        "carbohydrates_g", "sugars_g", "proteins_g",
-        "salt_g", "sodium_mg", "fiber_g"
-    ]
-    for key in expected_norm_keys:
-        if key not in norm:
-            errors.append(f"Field 'nutriments_normalized.{key}' is missing")
+    if not isinstance(norm, dict):
+        errors.append("Field 'nutriments_normalized' must be an object")
+    else:
+        for key in EXPECTED_NORM_KEYS:
+            if key not in norm:
+                errors.append(f"Field 'nutriments_normalized.{key}' is missing")
 
     return errors
 
 
-def validate_dataset(input_path: str) -> Dict[str, Any]:
-    """
-    Load enriched products, map them to ProductDetail contract
-    and validate each one.
-    """
-    logger.info(f"[DB034] Loading products from {input_path}")
+def validate_dataset(input_path: str | Path) -> dict[str, Any]:
+    """Load enriched products, map to ProductDetail contract, and validate each one."""
+    input_file = Path(input_path)
+    logger.info("[DB034] Loading products from %s", input_file)
 
-    with open(input_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    with input_file.open("r", encoding="utf-8") as handle:
+        data = json.load(handle)
 
     if isinstance(data, dict):
         data = [data]
-
     if not isinstance(data, list):
         raise ValueError("Expected list of product records")
 
     total = len(data)
     valid_count = 0
     invalid_count = 0
-    all_errors = []
+    all_errors: list[dict[str, Any]] = []
 
     for record in data:
-        barcode = record.get("barcode", "unknown")
+        barcode = record.get("barcode", "unknown") if isinstance(record, dict) else "unknown"
         try:
             mapped = map_enriched_to_product_detail(record)
             errors = validate_product(mapped)
             if errors:
                 invalid_count += 1
-                all_errors.append({
-                    "barcode": barcode,
-                    "errors": errors
-                })
+                all_errors.append({"barcode": barcode, "errors": errors})
             else:
                 valid_count += 1
-        except Exception as e:
+        except Exception as exc:
             invalid_count += 1
-            all_errors.append({
-                "barcode": barcode,
-                "errors": [f"Mapping failed: {str(e)}"]
-            })
+            all_errors.append({"barcode": barcode, "errors": [f"Mapping failed: {exc}"]})
 
-    logger.info(f"[DB034] Validation complete: {valid_count}/{total} valid, "
-                f"{invalid_count}/{total} invalid")
+    logger.info(
+        "[DB034] Validation complete: %s/%s valid, %s/%s invalid",
+        valid_count,
+        total,
+        invalid_count,
+        total,
+    )
+    return {"total": total, "valid": valid_count, "invalid": invalid_count, "errors": all_errors}
 
-    return {
-        "total": total,
-        "valid": valid_count,
-        "invalid": invalid_count,
-        "errors": all_errors
-    }
-
-
-# Quick test
-if __name__ == "__main__":
-    test_product = {
-        "barcode": "1234567890123",
-        "productName": "Test Product",
-        "brand": "Test Brand",
-        "genericName": None,
-        "additives": ["e202"],
-        "allergens": ["Milk"],
-        "ingredients": ["sugar", "milk"],
-        "ingredientsText": "Sugar, Milk",
-        "categories": ["Snacks"],
-        "labels": ["organic"],
-        "nutrientLevels": {"fat": "low"},
-        "nutriments": {"energy-kcal_100g": 250, "proteins_100g": 5},
-        "nutriscoreGrade": "b",
-        "productQuantity": 100,
-        "productQuantityUnit": "g",
-        "servingQuantity": 30,
-        "servingQuantityUnit": "g",
-        "traces": None,
-        "completeness": 0.8,
-        "images": {
-            "root": "https://images.openfoodfacts.org/images/products/123",
-            "primary": "front_en",
-            "variants": {"front_en": 1}
-        },
-        "tags": {"final": ["vegan"], "removed": []},
-        "metadata": {"source": "local-enriched"}
-    }
-
-    print("Testing contract validation:\n")
-    mapped = map_enriched_to_product_detail(test_product)
-    errors = validate_product(mapped)
-
-    if errors:
-        print(f"Validation FAILED with {len(errors)} errors:")
-        for e in errors:
-            print(f"  - {e}")
-    else:
-        print("Validation PASSED - product matches contract!")
-
-    print("\nMapped fields:")
-    for key in mapped:
-        print(f"  {key}: {type(mapped[key]).__name__}")
