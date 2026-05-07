@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -27,6 +28,107 @@ DEFAULT_INPUT = REPO_ROOT / "database" / "seeding" / "products_5k_test.json"
 DEFAULT_REPORT = REPO_ROOT / "scripts" / "reports" / "db032_validation_report.json"
 
 RECOMMENDATION_REQUIRED_FIELDS = ("barcode", "productName")
+LANG_PREFIX_RE = re.compile(r"^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,6})?:")
+ALLOWED_QUANTITY_UNITS = {"g", "kg", "ml", "l"}
+ALLOWED_STANDARD_CATEGORIES = {
+    "meal kits",
+    "breads",
+    "noodles and pasta",
+    "seafood",
+    "oils",
+    "spreads",
+    "beverages",
+    "snacks and confectionery",
+    "other",
+}
+
+
+def _clean_categories(raw_categories: Any) -> list[str]:
+    cleaned: list[str] = []
+    if isinstance(raw_categories, list):
+        values = raw_categories
+    elif isinstance(raw_categories, str) and raw_categories.strip():
+        values = [raw_categories]
+    else:
+        values = []
+
+    for value in values:
+        if not isinstance(value, str):
+            continue
+        text = value.strip()
+        if not text:
+            continue
+        text = LANG_PREFIX_RE.sub("", text)
+        if text:
+            cleaned.append(text.lower())
+
+    # Deduplicate while preserving order
+    return list(dict.fromkeys(cleaned))
+
+
+def _canonical_standard_category(value: str) -> str:
+    text = (value or "").strip().lower()
+    if not text:
+        return "other"
+    if text in ALLOWED_STANDARD_CATEGORIES:
+        return text
+
+    if any(k in text for k in ("beverage", "drink", "juice", "coffee", "tea", "water", "soda")):
+        return "beverages"
+    if any(k in text for k in ("bread", "bun", "toast", "crumpet")):
+        return "breads"
+    if any(k in text for k in ("noodle", "pasta", "spaghetti", "macaroni")):
+        return "noodles and pasta"
+    if any(k in text for k in ("fish", "seafood", "oyster", "salmon", "tuna", "prawn", "shrimp")):
+        return "seafood"
+    if any(k in text for k in ("oil",)):
+        return "oils"
+    if any(k in text for k in ("spread", "margarine", "butter")):
+        return "spreads"
+    if any(k in text for k in ("meal", "ready", "frozen dinner", "kit")):
+        return "meal kits"
+    if any(k in text for k in ("snack", "chip", "chocolate", "confection", "cracker", "biscuit", "candy", "bar")):
+        return "snacks and confectionery"
+    return "other"
+
+
+def normalize_for_validation(product: dict[str, Any]) -> dict[str, Any]:
+    """Build a normalised view for DB032 checks without mutating source data."""
+    out = dict(product)
+
+    barcode = str(out.get("barcode") or "").strip()
+    out["barcode"] = barcode
+
+    product_name = str(out.get("productName") or "").strip()
+    if not product_name:
+        fallback_name = str(out.get("genericName") or "").strip() or str(out.get("brand") or "").strip()
+        out["productName"] = fallback_name or f"Unknown Product {barcode or 'unidentified'}"
+
+    categories = _clean_categories(out.get("categories"))
+    standard_raw = str(out.get("standardCategory") or "").strip().lower()
+    if not standard_raw and categories:
+        standard_raw = categories[0]
+    standard = _canonical_standard_category(standard_raw)
+    out["standardCategory"] = standard
+    out["category"] = standard
+    if categories:
+        out["categories"] = [standard] + [c for c in categories if c != standard]
+    else:
+        out["categories"] = [standard]
+
+    grade = str(out.get("nutriscoreGrade") or "").strip().lower()
+    if grade == "not-applicable":
+        out["nutriscoreGrade"] = "unknown"
+
+    unit = str(out.get("servingQuantityUnit") or "").strip().lower()
+    if unit and unit not in ALLOWED_QUANTITY_UNITS:
+        out["servingQuantityUnit"] = None
+
+    # Ensure recommendation signal checks can use tags consistently.
+    if not isinstance(out.get("tags"), dict):
+        out["tags"] = {"final": [], "removed": []}
+
+    return out
 
 
 def load_products(path: Path) -> list[dict[str, Any]]:
@@ -46,12 +148,12 @@ def load_products(path: Path) -> list[dict[str, Any]]:
             item = json.loads(line)
             if isinstance(item, dict):
                 products.append(item)
-        return products
+        return [normalize_for_validation(p) for p in products]
 
     if isinstance(parsed, list):
-        return [item for item in parsed if isinstance(item, dict)]
+        return [normalize_for_validation(item) for item in parsed if isinstance(item, dict)]
     if isinstance(parsed, dict):
-        return [parsed]
+        return [normalize_for_validation(parsed)]
     return []
 
 
@@ -83,7 +185,11 @@ def has_recommendation_signals(product: dict[str, Any]) -> bool:
             return True
 
     nutriments = product.get("nutriments")
-    return isinstance(nutriments, dict) and len(nutriments) > 0
+    if isinstance(nutriments, dict) and len(nutriments) > 0:
+        return True
+
+    nutrient_levels = product.get("nutrientLevels")
+    return isinstance(nutrient_levels, dict) and len(nutrient_levels) > 0
 
 
 def run_lookup_checks(products: list[dict[str, Any]], sample_size: int, rng: random.Random) -> dict[str, Any]:
@@ -175,7 +281,16 @@ def run_recommendation_candidate_checks(products: list[dict[str, Any]], sample_s
             )
             continue
 
-        candidate = peers[0]
+        # Prefer a peer that already satisfies recommendation quality checks.
+        candidate = next(
+            (
+                p
+                for p in peers
+                if all(str(p.get(field) or "").strip() for field in RECOMMENDATION_REQUIRED_FIELDS)
+                and has_recommendation_signals(p)
+            ),
+            peers[0],
+        )
         for field in RECOMMENDATION_REQUIRED_FIELDS:
             if not str(candidate.get(field) or "").strip():
                 issues.append(
