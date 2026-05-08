@@ -1,100 +1,26 @@
 {
   "enrich": {
-    "status": "completed",
-    "finished": "2026-04-29T22:58:23.173777+00:00",
-    "result": {
-      "processed": 5000,
-      "failures": 0,
-      "output": "database/seeding/products_enriched.json",
-      "modules_run": [
-        {
-          "module": "allergens",
-          "status": "ok",
-          "path": "C:\\Users\\alanm\\Downloads\\Alan\\Deakin\\working_files\\2026T1\\SIT782\\LocalRepositoryCloned\\Food-Remedy_API\\database\\pipeline/modules/allergens_enrich.py",
-          "result": {
-            "processed": 5000,
-            "failures": 0,
-            "output": "database/seeding/products_enriched.json"
-          }
-        },
-        {
-          "module": "db009_personalisation_tags",
-          "status": "ok",
-          "path": "C:\\Users\\alanm\\Downloads\\Alan\\Deakin\\working_files\\2026T1\\SIT782\\LocalRepositoryCloned\\Food-Remedy_API\\database\\pipeline/modules/db009_personalisation_tags.py",
-          "result": {
-            "processed": 5000,
-            "failures": 0,
-            "tag_contract": {
-              "dietTags": [
-                "vegan",
-                "vegetarian",
-                "pescatarian",
-                "gluten_free"
-              ],
-              "lifestyleTags": [
-                "fitness",
-                "energy",
-                "weight_management"
-              ],
-              "riskTags": [
-                "contains_allergens",
-                "contains_additives",
-                "high_sugar",
-                "high_salt",
-                "high_saturated_fat"
-              ]
-            }
-          }
-        },
-        {
-          "module": "db021_mood_tags",
-          "status": "ok",
-          "path": "C:\\Users\\alanm\\Downloads\\Alan\\Deakin\\working_files\\2026T1\\SIT782\\LocalRepositoryCloned\\Food-Remedy_API\\database\\pipeline/modules/db021_mood_tags.py",
-          "result": {
-            "processed": 5000,
-            "failures": 0,
-            "mood_tag_contract": {
-              "moodTags": [
-                "energy_boost",
-                "focus",
-                "relaxation",
-                "stress_relief",
-                "recovery"
-              ]
-            }
-          }
-        },
-        {
-          "module": "db019_alternative_product_mapping",
-          "status": "ok",
-          "path": "C:\\Users\\alanm\\Downloads\\Alan\\Deakin\\working_files\\2026T1\\SIT782\\LocalRepositoryCloned\\Food-Remedy_API\\database\\pipeline/modules/db019_alternative_product_mapping.py",
-          "result": {
-            "processed": 5000,
-            "failures": 0,
-            "module": "db019_alternative_product_mapping",
-            "stats": {
-              "products": 5000,
-              "categories": 71,
-              "empty_similar": 52,
-              "empty_healthier": 1737,
-              "healthier_strict_gap": 0,
-              "healthier_any_gain": 0,
-              "healthier_sugar_proxy": 3081,
-              "healthier_fiber_proxy": 182,
-              "sidecar_index": "database/seeding/product_alternatives_index.json"
-            }
-          }
-        }
-      ]
-    }
+    "status": "failed",
+    "error": "DB031 test: simulated failure in enrich stage",
+    "finished": "2026-05-06T18:43:05.940492+00:00"
   },
   "seed": {
     "status": "completed",
-    "finished": "2026-04-29T22:58:25.899699+00:00",
+    "finished": "2026-05-06T18:02:31.497542+00:00",
     "result": {
       "processed": 5000,
       "failures": 0,
       "output": "database/seeding/seeded_products.json"
+    }
+  },
+  "clean": {
+    "status": "completed",
+    "finished": "2026-05-06T18:42:29.307882+00:00",
+    "result": {
+      "status": "completed",
+      "processed": 1,
+      "failures": 0,
+      "output": "database/data_investigation/exampleProductCleaned.json"
     }
   }
 }
