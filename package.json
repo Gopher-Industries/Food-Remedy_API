@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "test:db012:cart": "node database/db012_cart_integration.js"
+    "test:db012:cart": "node database/db012_cart_integration.js",
+    "test:db030": "node database/integration_tests/run_db030_tests.js"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
