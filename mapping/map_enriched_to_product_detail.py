@@ -3,6 +3,7 @@ import logging
 
 from database.clean_data.normalization.NutrientUnitNormalisation import normalize_nutriments_dict
 from utils.category_normalizer import normalize_category_fields
+from database.clean_data.normalization.BarcodeNormalisation import BarcodeNormalisation
 
 try:
     from utils.conflict_resolver import resolve_conflicts
@@ -67,7 +68,7 @@ def map_enriched_to_product_detail(product: Dict[str, Any]) -> Dict[str, Any]:
     out: Dict[str, Any] = {}
 
     # Required fields
-    out["barcode"] = str(product.get("barcode") or "")
+    out["barcode"] = BarcodeNormalisation.barcode_normalise(product.get("barcode")) if product.get("barcode") is not None else None
     out["productName"] = str(product.get("productName") or "")
 
     # Optional fields with correct types/defaults
