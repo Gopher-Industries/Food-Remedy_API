@@ -2,6 +2,11 @@ const config = require("./config");
 const { addToQueue } = require("./syncQueue");
 const { processQueue, resolveConflict } = require("./syncService");
 
+const {
+  getProductByBarcode,
+  searchByName
+} = require("../pipeline/barcode_mapper");
+
 const PIPELINE_VERSION = config.pipeline.version;
 
 const NUTRITION_LIMITS = {
@@ -277,6 +282,21 @@ function generateRecommendationReason(item, userProfile) {
 function buildScanResult(rawData, userProfile) {
   const safeUserProfile = userProfile || {};
   const cleaned = cleanData(rawData || {});
+
+  // ===============================
+  // DB036 - BARCODE MAPPING LOGIC
+  // ===============================
+  let enrichedProduct = null;
+
+  if (cleaned.barcode) {
+    enrichedProduct = getProductByBarcode(cleaned.barcode);
+  }
+
+  // fallback if barcode not found
+  if (!enrichedProduct && cleaned.name) {
+    enrichedProduct = searchByName(cleaned.name);
+  }
+
   const warnings = getWarnings(cleaned, safeUserProfile);
   const classification = classifyProduct(warnings);
   const riskScore = calculateRiskScore(warnings);
@@ -297,8 +317,23 @@ function buildScanResult(rawData, userProfile) {
 
   return {
     product: cleaned,
+
+    // DB036 ADDITION
+    enrichedProduct: enrichedProduct || null,
+
+    // optional debug/trace info
+    lookup: {
+      found: !!enrichedProduct,
+      method: enrichedProduct
+        ? "barcode"
+        : cleaned.name
+        ? "name_fallback"
+        : "none"
+    },
+
     classification,
     warnings,
+
     suitability: {
       isSafe: classification !== "red",
       reasons: warnings.map((w) => w.message),
@@ -306,7 +341,9 @@ function buildScanResult(rawData, userProfile) {
       recommendationScore,
       matchedPreferences: safeUserProfile.dietPreferences || []
     },
+
     alternatives,
+
     metadata: {
       processedAt: new Date().toISOString(),
       pipelineVersion: PIPELINE_VERSION,
