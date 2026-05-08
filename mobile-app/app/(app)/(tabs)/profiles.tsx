@@ -159,7 +159,7 @@ export default function MembersPage() {
             {({ pressed }) => (
               <>
                 <View className="flex-row items-center gap-3">
-                  <IconGeneral type="user" fill="hsl(0, 0%, 40%)" size={32} />
+                  <IconGeneral type="person" fill="hsl(0, 0%, 40%)" size={32} />
                   <View>
                     <Tt className="font-interMedium">Demographics</Tt>
                     <Tt className="text-sm">Personalisation settings</Tt>
