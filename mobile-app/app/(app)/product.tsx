@@ -117,7 +117,7 @@ export default function ProductTabsScreen() {
         return <NutrientsTab product={currentProduct} />;
 
       case "Ingredients":
-        return <IngredientsTab  />;
+        return <IngredientsTab />;
 
       case "For you":
         return <ForYouTab product={currentProduct} />;

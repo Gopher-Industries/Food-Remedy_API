@@ -3,10 +3,17 @@ from firebase_admin import credentials, firestore
 import json
 import time
 import os
+import sys
 from google.api_core import retry
 import argparse
+from typing import Optional
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
+
+from database.seeding.batch_limits import resolve_max_writes_per_run
 CHECKPOINT_FILE = os.path.join(BASE_DIR, "checkpoint.json")
 
 cred = credentials.Certificate("serviceAccountKey.json")
@@ -27,7 +34,14 @@ def save_checkpoint(batch_index):
     with open(CHECKPOINT_FILE, 'w') as f:
         json.dump({"last_batch_index": batch_index}, f)
 
-def seed_batch(input_path: str, dry_run: bool = False, subset: int = None, batch_size: int = 500):
+def seed_batch(
+    input_path: str,
+    dry_run: bool = False,
+    subset: int = None,
+    batch_size: int = 500,
+    max_writes_per_run: Optional[int] = None,
+):
+    max_cap = resolve_max_writes_per_run({"max_writes_per_run": max_writes_per_run})
     with open(input_path, 'r', encoding='utf-8') as f:
         try:
             data = json.load(f)
@@ -52,9 +66,11 @@ def seed_batch(input_path: str, dry_run: bool = False, subset: int = None, batch
     total_records = len(data)
     start_index = load_checkpoint()
 
+    cap_msg = "unlimited" if max_cap is None else str(max_cap)
     print(f"Starting from batch {start_index + 1}")
     print(f"Dry-run mode: {dry_run}")
     print(f"Total documents: {total_records}")
+    print(f"max_writes_per_run: {cap_msg}")
 
     for i in range(start_index * batch_size, total_records, batch_size):
         batch = db.batch()
@@ -77,7 +93,7 @@ def seed_batch(input_path: str, dry_run: bool = False, subset: int = None, batch
                 writes_this_second = 0
                 last_second = time.time()
             
-            doc_ref = db.collection("products").document(barcode)
+            doc_ref = db.collection("PRODUCTS").document(barcode)
             batch.set(doc_ref, product)
             writes_this_second += 1
 
@@ -89,7 +105,12 @@ def seed_batch(input_path: str, dry_run: bool = False, subset: int = None, batch
 
         try:
             commit_batch(batch)
-            print(f"Wrote batch {batch_number} ({len(chunk)} docs)")
+            total_written += len(chunk)
+            pct_after = (100.0 * total_written / total_records) if total_records else 0.0
+            print(
+                f"Wrote batch {batch_number} ({len(chunk)} docs) — "
+                f"{total_written}/{total_records} ({pct_after:.1f}%)"
+            )
             save_checkpoint(batch_number)
         except Exception as e:
             print(f"Batch {batch_number} failed after retries: {e}")
@@ -97,9 +118,11 @@ def seed_batch(input_path: str, dry_run: bool = False, subset: int = None, batch
             failures += 1
             raise  # or continue, depending on tolerance
 
-        total_written += len(chunk)
-        if total_written > 20000:
-            print("Warning: Approaching daily write quota (20k) — stopping")
+        if max_cap is not None and total_written >= max_cap:
+            print(
+                f"Stopped: reached max_writes_per_run ({max_cap}). "
+                "Adjust seed_engine args, pipeline config, or FIRESTORE_SEED_MAX_WRITES."
+            )
             break
 
     elapsed = time.time() - start_time
@@ -118,6 +141,12 @@ if __name__ == "__main__":
     parser.add_argument("--dry-run", action="store_true", help="Simulate run without writing to Firestore")
     parser.add_argument("--subset", type=int, default=None, help="Limit to first N records for testing")
     parser.add_argument("--batch-size", type=int, default=500, help="Batch size for writes")
+    parser.add_argument(
+        "--max-writes",
+        type=int,
+        default=None,
+        help="Cap writes per run (0 = unlimited). Default: env or 20000.",
+    )
     args = parser.parse_args()
 
     print(f"Starting seeding from: {args.input}")
@@ -127,7 +156,13 @@ if __name__ == "__main__":
         print(f"Limited to first {args.subset} records")
 
     try:
-        seed_batch(args.input, dry_run=args.dry_run, subset=args.subset, batch_size=args.batch_size)
+        seed_batch(
+            args.input,
+            dry_run=args.dry_run,
+            subset=args.subset,
+            batch_size=args.batch_size,
+            max_writes_per_run=args.max_writes,
+        )
     except Exception as e:
         print(f"Seeding failed: {e}")
 

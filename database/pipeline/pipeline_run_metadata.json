@@ -1,7 +1,20 @@
 {
-  "run_started": "2026-04-19T20:27:22.819091+00:00",
+  "run_started": "2026-05-06T18:01:47.811558+00:00",
   "stages": {
+    "clean": {
+      "started": "2026-05-06T18:01:47.828256+00:00",
+      "status": "completed",
+      "processed": 1,
+      "failures": 0,
+      "output": "database/data_investigation/exampleProductCleaned.json",
+      "finished": "2026-05-06T18:01:47.881746+00:00",
+      "config_summary": {
+        "enabled": true,
+        "dry_run": true
+      }
+    },
     "enrich": {
+      "started": "2026-05-06T18:01:47.894987+00:00",
       "processed": 5000,
       "failures": 0,
       "output": "database/seeding/products_enriched.json",
@@ -13,7 +26,7 @@
           "result": {
             "processed": 5000,
             "failures": 0,
-            "output": "database/seeding/products_enriched.json"
+            "output": "C:\\Users\\alanm\\Downloads\\Alan\\Deakin\\working_files\\2026T1\\SIT782\\LocalRepositoryCloned\\Food-Remedy_API\\database\\database/seeding/products_enriched.json"
           }
         },
         {
@@ -84,13 +97,48 @@
             }
           }
         }
+      ],
+      "finished": "2026-05-06T18:02:25.728012+00:00",
+      "config_summary": {
+        "enabled": true,
+        "dry_run": true
+      },
+      "modules_summary": [
+        {
+          "name": "allergens",
+          "processed": 5000
+        },
+        {
+          "name": "db009_personalisation_tags",
+          "processed": 5000
+        },
+        {
+          "name": "db021_mood_tags",
+          "processed": 5000
+        },
+        {
+          "name": "db019_alternative_product_mapping",
+          "processed": 5000
+        }
       ]
     },
     "seed": {
+      "started": "2026-05-06T18:02:25.729759+00:00",
       "processed": 5000,
       "failures": 0,
-      "output": "database/seeding/seeded_products.json"
+      "output": "database/seeding/seeded_products.json",
+      "finished": "2026-05-06T18:02:31.497542+00:00",
+      "config_summary": {
+        "enabled": true,
+        "dry_run": true
+      }
     }
   },
-  "run_finished": "2026-04-19T20:27:53.414685+00:00"
+  "reports": {
+    "db018_dataset_quality_report": {
+      "status": "skipped",
+      "reason": "seed stage disabled or dry-run mode"
+    }
+  },
+  "run_finished": "2026-05-06T18:02:31.497542+00:00"
 }

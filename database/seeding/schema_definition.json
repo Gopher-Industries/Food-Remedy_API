@@ -1,5 +1,5 @@
 {
-  "collection": "products",
+  "collection": "PRODUCTS",
   "document_id": "barcode",
   "description": "Firestore schema for enriched product documents (V1)",
   "fields": {

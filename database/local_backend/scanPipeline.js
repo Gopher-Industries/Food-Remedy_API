@@ -1,4 +1,6 @@
 const config = require("./config");
+const { addToQueue } = require("./syncQueue");
+const { processQueue, resolveConflict } = require("./syncService");
 
 const PIPELINE_VERSION = config.pipeline.version;
 
@@ -313,6 +315,59 @@ function buildScanResult(rawData, userProfile) {
   };
 }
 
+function mergeScanResultWithRemote(localResult, remoteResult) {
+  const resolved = resolveConflict(
+    {
+      ...localResult,
+      updatedAt: localResult?.metadata?.processedAt
+    },
+    {
+      ...remoteResult,
+      updatedAt: remoteResult?.metadata?.processedAt
+    }
+  );
+
+  return {
+    mergedResult: resolved.resolved,
+    strategy: resolved.strategy
+  };
+}
+
+function saveScanResult(result) {
+  try {
+    throw new Error("Simulated network interruption");
+
+    return {
+      saved: true,
+      queued: false,
+      message: "Saved successfully"
+    };
+  } catch (error) {
+    const queuedAction = {
+      type: "SCAN_RESULT_SYNC",
+      data: result,
+      updatedAt: new Date().toISOString(),
+      syncSource: "scanPipeline",
+      priority: "normal"
+    };
+
+    addToQueue(queuedAction);
+
+    console.log("Sync interrupted. Action added to offline queue.");
+
+    return {
+      saved: false,
+      queued: true,
+      message: "Queued for retry after interruption"
+    };
+  }
+}
+
+async function onNetworkReconnect() {
+  console.log("Network restored. Processing queued sync actions...");
+  return await processQueue();
+}
+
 module.exports = {
   cleanData,
   getWarnings,
@@ -321,10 +376,14 @@ module.exports = {
   calculateRecommendationScore,
   getAlternatives,
   generateRecommendationReason,
-  buildScanResult
+  buildScanResult,
+  mergeScanResultWithRemote,
+  saveScanResult,
+  onNetworkReconnect
 };
 
 if (require.main === module) {
+
   const testRaw = {
     barcode: "12345",
     productName: "Milk Chocolate",
@@ -340,6 +399,33 @@ if (require.main === module) {
     dietPreferences: ["vegan", "glutenFree"]
   };
 
+  const result = buildScanResult(testRaw, testUser);
+
   console.log("Structured Scan Result:");
-  console.log(JSON.stringify(buildScanResult(testRaw, testUser), null, 2));
+  console.log(JSON.stringify(result, null, 2));
+
+  const saveStatus = saveScanResult(result);
+  console.log("Save Status:");
+  console.log(JSON.stringify(saveStatus, null, 2));
+
+  const remoteResult = {
+    ...result,
+    metadata: {
+      ...result.metadata,
+      processedAt: new Date(Date.now() - 60000).toISOString()
+    }
+  };
+
+  const conflictResult = mergeScanResultWithRemote(result, remoteResult);
+  console.log("Conflict Resolution Result:");
+  console.log(JSON.stringify(conflictResult, null, 2));
+
+  onNetworkReconnect()
+    .then((syncResult) => {
+      console.log("Sync Result:");
+      console.log(JSON.stringify(syncResult, null, 2));
+    })
+    .catch((error) => {
+      console.error("Reconnect sync failed:", error.message);
+    });
 }

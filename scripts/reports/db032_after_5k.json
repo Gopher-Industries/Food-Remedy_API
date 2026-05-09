@@ -1,0 +1,74 @@
+{
+  "ticket": "DB032",
+  "source": "database\\seeding\\products_5k_enriched_db032_remediated.json",
+  "total_records": 5000,
+  "seed": 32,
+  "sample_size": 200,
+  "ok": true,
+  "checks": {
+    "batch_validation": {
+      "source": "database\\seeding\\products_5k_enriched_db032_remediated.json",
+      "total_records": 5000,
+      "ok": true,
+      "checks": {
+        "missing_product_fields": {
+          "ok": true,
+          "issue_count": 0,
+          "field_counts": {},
+          "issues": []
+        },
+        "category_validation": {
+          "ok": true,
+          "issue_count": 0,
+          "standard_category_counts": {
+            "other": 4651,
+            "beverages": 203,
+            "spreads": 17,
+            "breads": 20,
+            "snacks and confectionery": 72,
+            "seafood": 13,
+            "oils": 11,
+            "noodles and pasta": 13
+          },
+          "unknown_standard_categories": {},
+          "issues": []
+        },
+        "inconsistency_detection": {
+          "ok": true,
+          "issue_count": 0,
+          "field_counts": {},
+          "duplicate_barcodes": {},
+          "issues": []
+        }
+      }
+    },
+    "integration_validation": {
+      "barcode_lookup": {
+        "ok": true,
+        "sampled_barcodes": 200,
+        "index_size": 5000,
+        "issues": []
+      },
+      "category_queries": {
+        "ok": true,
+        "categories_checked": 8,
+        "top_categories": [
+          "other",
+          "beverages",
+          "snacks-and-confectionery",
+          "breads",
+          "spreads",
+          "seafood",
+          "noodles-and-pasta",
+          "oils"
+        ],
+        "issues": []
+      },
+      "recommendation_candidates": {
+        "ok": true,
+        "products_checked": 200,
+        "issues": []
+      }
+    }
+  }
+}
