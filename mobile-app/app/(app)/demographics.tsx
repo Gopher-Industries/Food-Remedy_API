@@ -9,6 +9,7 @@ import { router } from "expo-router";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useNotification } from "@/components/providers/NotificationProvider";
 import { useProfile } from "@/components/providers/ProfileProvider";
+import { useSQLiteDatabase } from "@/components/providers/SQLiteDatabaseProvider";
 import IconGeneral from "@/components/icons/IconGeneral";
 import Header from "@/components/layout/Header";
 import { color, spacing } from "@/app/design/token";
@@ -100,6 +101,7 @@ const DemographicsForm = () => {
   const { user } = useAuth();
   const { addNotification } = useNotification();
   const { refresh } = useProfile();
+  const { db } = useSQLiteDatabase();
 
   const [ageBand, setAgeBand] = useState<string>("36-50");
   const [sex, setSex] = useState<string>("female");
@@ -146,7 +148,7 @@ const DemographicsForm = () => {
       const profileId = "demographics";
 
       // Save demographics as a profile
-      await upsertUserProfile(user.uid, profileId, {
+      const profileData = {
         userId: user.uid,
         profileId,
         firstName: "",
@@ -162,8 +164,14 @@ const DemographicsForm = () => {
         ageBand,
         sex,
         guardrailLevel,
-      });
+      };
 
+      await upsertUserProfile(user.uid, profileId, profileData);
+
+      if (db) {
+        const { upsertProfile } = await import("@/services/sqlDatabase/profiles.dao");
+        await upsertProfile(db, profileData);
+      }
       await refresh();
       addNotification("Demographics saved!", "s");
     } catch (err: any) {
