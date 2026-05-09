@@ -5,12 +5,7 @@ from database.clean_data.normalization.NutrientUnitNormalisation import normaliz
 from utils.category_normalizer import normalize_category_fields
 from database.clean_data.normalization.BarcodeNormalisation import BarcodeNormalisation
 
-try:
-    from utils.conflict_resolver import resolve_conflicts
-except Exception:
-    # Fallback no-op resolver if utils.conflict_resolver is not present in this environment
-    def resolve_conflicts(tags):
-        return {'final_tags': [], 'removed': []}
+from utils.conflict_resolver import resolve_conflicts
 
 logger = logging.getLogger(__name__)
 
@@ -56,10 +51,15 @@ def _tags_to_wire(product: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(raw, list):
         if not raw:
             return {"final": [], "removed": []}
-        resolved = resolve_conflicts(raw)
-        final = [t.get("tag") for t in resolved.get("final_tags", []) if t and t.get("tag")]
-        removed = [t.get("tag") for t in resolved.get("removed", []) if t and t.get("tag")]
-        return {"final": final, "removed": removed}
+        try:
+            resolved = resolve_conflicts(raw)
+            final = [t.get("tag") for t in resolved.get("final_tags", []) if t and t.get("tag")]
+            removed = [t.get("tag") for t in resolved.get("removed", []) if t and t.get("tag")]
+            return {"final": final, "removed": removed}
+        except Exception:
+            # Preserve source tags if resolver fails; avoids silent data loss.
+            logger.exception("Tag conflict resolution failed.")
+            return {"final": _normalize_tag_name_list(raw), "removed": []}
     return {"final": [], "removed": []}
 
 
