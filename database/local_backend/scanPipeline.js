@@ -287,14 +287,21 @@ function buildScanResult(rawData, userProfile) {
   // DB036 - BARCODE MAPPING LOGIC
   // ===============================
   let enrichedProduct = null;
+  let lookupMethod = "none";
 
   if (cleaned.barcode) {
     enrichedProduct = getProductByBarcode(cleaned.barcode);
+    if (enrichedProduct) {
+      lookupMethod = "barcode";
+    }
   }
 
   // fallback if barcode not found
   if (!enrichedProduct && cleaned.name) {
     enrichedProduct = searchByName(cleaned.name);
+    if (enrichedProduct) {
+      lookupMethod = "name_fallback";
+    }
   }
 
   const warnings = getWarnings(cleaned, safeUserProfile);
@@ -324,11 +331,7 @@ function buildScanResult(rawData, userProfile) {
     // optional debug/trace info
     lookup: {
       found: !!enrichedProduct,
-      method: enrichedProduct
-        ? "barcode"
-        : cleaned.name
-        ? "name_fallback"
-        : "none"
+      method: lookupMethod
     },
 
     classification,
