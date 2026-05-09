@@ -1,7 +1,7 @@
 import { doc, getDoc } from "firebase/firestore";
 import { fdb } from "@/config/firebaseConfig";
 import type { Product } from "@/types/Product";
-import { Status } from "@/types/Status";
+import { normaliseFirestoreProduct } from "@/services/utils/normaliseFirestoreProduct";
 
 /**
  * Fetch a single Product by its Firestore ID
@@ -17,7 +17,7 @@ export default async function getProductByBarcode(barcode: string): Promise<Prod
       return null;
     }
 
-    return snap.data() as Product;
+    return normaliseFirestoreProduct({ id: snap.id, ...snap.data() }) as Product;
   } catch (err) {
     console.error("[Firestore] getProductByBarcode error:", err);
     return null;
