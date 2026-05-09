@@ -33,5 +33,57 @@ def test_db033_reqs():
     assert "dairy" in final_tags
     print("Test passed for merged profile: Contradictory enrichments resolved into a single record.")
 
+def test_db033_scan_to_seeded_record_resolution():
+    # Simulate seeded/enriched catalog keyed by normalized GTIN-14.
+    seeded_enriched_records = [
+        {
+            "barcode": "9300633714437",
+            "productName": "Woolworths Full Cream Milk",
+            "tags": [{"tag": "dairy", "confidence": 1.0}],
+            "metadata": {"productId": "milk-001"},
+        },
+        {
+            "barcode": "012345678905",
+            "productName": "Sample UPC Product",
+            "tags": [{"tag": "healthy", "confidence": 0.8}],
+            "metadata": {"productId": "sample-002"},
+        },
+    ]
+
+    mapped = [map_enriched_to_product_detail(p) for p in seeded_enriched_records]
+    index_by_barcode = {p["barcode"]: p for p in mapped}
+
+    # All payload variants must resolve to the exact same enriched product.
+    scan_variants = [
+        "9300633714437",
+        "09300633714437",
+        " 9300-6337-1443-7 ",
+        9300633714437,
+    ]
+    resolved_ids = set()
+    for scan in scan_variants:
+        normalized = BarcodeNormalisation.barcode_normalise(scan)
+        resolved = index_by_barcode.get(normalized)
+        assert resolved is not None
+        resolved_ids.add(resolved["metadata"]["productId"])
+
+    assert resolved_ids == {"milk-001"}
+    print("Test passed for seeded resolution: scan variants resolve to the same enriched record.")
+
+def test_db033_barcode_edge_cases():
+    assert BarcodeNormalisation.barcode_normalise("abc") == ""
+    assert BarcodeNormalisation.barcode_normalise("123456789012345") == ""
+    assert BarcodeNormalisation.barcode_normalise(None) == ""
+    print("Test passed for barcode edge handling.")
+
+def test_db033_mapper_missing_barcode_contract():
+    mapped = map_enriched_to_product_detail({"productName": "No Barcode Product", "tags": []})
+    assert mapped["barcode"] is None
+    assert mapped["productName"] == "No Barcode Product"
+    print("Test passed for missing barcode contract behavior.")
+
 if __name__ == "__main__":
     test_db033_reqs()
+    test_db033_scan_to_seeded_record_resolution()
+    test_db033_barcode_edge_cases()
+    test_db033_mapper_missing_barcode_contract()
