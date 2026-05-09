@@ -38,3 +38,15 @@ From project root:
 
 ```bash
 node database/integration_tests/run_db030_tests.js
+```
+
+Or use npm script:
+
+```bash
+npm run test:db030
+```
+
+To validate DB030 backend + API/frontend data-flow checks:
+
+```bash
+npm run test:db030:full
