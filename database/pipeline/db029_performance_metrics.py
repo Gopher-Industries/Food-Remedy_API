@@ -9,6 +9,7 @@ import time
 import json
 import os
 import logging
+import argparse
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -18,6 +19,28 @@ if not logger.handlers:
     h.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
     logger.addHandler(h)
     logger.setLevel(logging.INFO)
+
+LARGE_INPUT_MIN_RECORDS = 50000
+
+
+def _assess_input_size(record_count: int) -> Dict[str, Any]:
+    """Assess whether the run qualifies as a large-input performance test."""
+    is_large_input = record_count >= LARGE_INPUT_MIN_RECORDS
+    records_short = max(0, LARGE_INPUT_MIN_RECORDS - record_count)
+    return {
+        "record_count": record_count,
+        "large_input_min_records": LARGE_INPUT_MIN_RECORDS,
+        "is_large_input": is_large_input,
+        "records_short_of_large_input": records_short,
+        "note": (
+            "Large-input requirement satisfied."
+            if is_large_input
+            else (
+                f"Input is below large-input threshold by {records_short} records. "
+                "Run again with a larger dataset to fully satisfy DB029 evidence."
+            )
+        )
+    }
 
 
 class StageTimer:
@@ -192,6 +215,7 @@ def measure_pipeline_performance(
         if isinstance(data, dict):
             data = [data]
         record_count = len(data)
+        input_assessment = _assess_input_size(record_count)
         load_timer.stop(
             record_count=record_count,
             notes=f"Loaded {record_count} records from {input_path}"
@@ -267,6 +291,12 @@ def measure_pipeline_performance(
 
     # Generate report
     report = profiler.generate_report()
+    report["input_assessment"] = input_assessment
+    if not input_assessment["is_large_input"]:
+        report["recommendations"].append(
+            "Re-run profiling with a large dataset "
+            f"(>= {LARGE_INPUT_MIN_RECORDS} records) for ticket-complete evidence."
+        )
 
     # Save report
     os.makedirs(output_dir, exist_ok=True)
@@ -289,13 +319,14 @@ def measure_pipeline_performance(
         )
     print(f"\nBottlenecks:")
     for b in report["bottlenecks"]:
-        marker = " ← SLOWEST" if b["is_slowest"] else ""
+        marker = " <- SLOWEST" if b["is_slowest"] else ""
         print(
             f"  #{b['rank']} {b['stage']}: "
             f"{b['duration_seconds']}s "
             f"({b['percentage_of_total']}%){marker}"
         )
     print(f"\nSummary: {report['summary']}")
+    print(f"\nInput assessment: {report['input_assessment']['note']}")
     print(f"\nRecommendations:")
     for r in report["recommendations"]:
         print(f"  - {r}")
@@ -303,41 +334,80 @@ def measure_pipeline_performance(
     return report
 
 
+def _create_dummy_dataset(output_path: str, record_count: int) -> str:
+    """Create a dummy JSON dataset for performance profiling."""
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    dummy_data = [
+        {
+            "barcode": f"100000000{str(i).zfill(6)}",
+            "productName": f"Test Product {i}",
+            "nutriments": {
+                "energy-kcal_100g": 200 + (i % 500),
+                "proteins_100g": 5 + (i % 10),
+                "carbohydrates_100g": 30 + (i % 20),
+                "sugars_100g": 10 + (i % 5),
+                "fat_100g": 8 + (i % 8)
+            },
+            "categories": ["Snacks"],
+            "brand": "Test Brand"
+        }
+        for i in range(record_count)
+    ]
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(dummy_data, f)
+    return output_path
+
+
 # Quick test
 if __name__ == "__main__":
-    # Use existing sample data for testing
-    test_input = "database/seeding/cleanTestSample.json"
-    if not os.path.exists(test_input):
-        # fallback to data investigation sample
-        test_input = "database/data_investigation/exampleProductCleaned.json"
+    parser = argparse.ArgumentParser(
+        description="DB029 pipeline performance measurement utility"
+    )
+    parser.add_argument(
+        "--input",
+        dest="input_path",
+        default=None,
+        help="Input JSON file path for profiling."
+    )
+    parser.add_argument(
+        "--generate-large-dummy",
+        action="store_true",
+        help=(
+            "Generate a dummy dataset and run profiling on it. "
+            "Default size is the DB029 large-input threshold."
+        )
+    )
+    parser.add_argument(
+        "--dummy-size",
+        type=int,
+        default=LARGE_INPUT_MIN_RECORDS,
+        help="Number of dummy records to generate (default: 50000)."
+    )
+    args = parser.parse_args()
 
-    if os.path.exists(test_input):
-        print(f"Running performance measurement on: {test_input}\n")
-        measure_pipeline_performance(test_input)
+    if args.generate_large_dummy:
+        dummy_path = (
+            f"database/pipeline/test_reports/dummy_test_data_{args.dummy_size}.json"
+        )
+        print(f"Creating dummy dataset with {args.dummy_size} records...")
+        created_path = _create_dummy_dataset(dummy_path, args.dummy_size)
+        print(f"Created dummy dataset: {created_path}\n")
+        print(f"Running performance measurement on: {created_path}\n")
+        measure_pipeline_performance(created_path)
+    elif args.input_path:
+        if os.path.exists(args.input_path):
+            print(f"Running performance measurement on: {args.input_path}\n")
+            measure_pipeline_performance(args.input_path)
+        else:
+            print(f"Input file does not exist: {args.input_path}")
     else:
-        print("No test input file found. Creating dummy data for test...\n")
-        # Create dummy data for testing
-        dummy_data = [
-            {
-                "barcode": f"100000000{str(i).zfill(4)}",
-                "productName": f"Test Product {i}",
-                "nutriments": {
-                    "energy-kcal_100g": 200 + i,
-                    "proteins_100g": 5 + (i % 10),
-                    "carbohydrates_100g": 30 + (i % 20),
-                    "sugars_100g": 10 + (i % 5),
-                    "fat_100g": 8 + (i % 8)
-                },
-                "categories": ["Snacks"],
-                "brand": "Test Brand"
-            }
-            for i in range(1000)
-        ]
-        # Save dummy data temporarily
-        dummy_path = "database/pipeline/test_reports/dummy_test_data.json"
-        os.makedirs("database/pipeline/test_reports", exist_ok=True)
-        with open(dummy_path, "w") as f:
-            json.dump(dummy_data, f)
+        # Use existing sample data for testing
+        test_input = "database/seeding/cleanTestSample.json"
+        if not os.path.exists(test_input):
+            test_input = "database/data_investigation/exampleProductCleaned.json"
 
-        print("Created 1000 dummy products for testing\n")
-        measure_pipeline_performance(dummy_path)
+        if os.path.exists(test_input):
+            print(f"Running performance measurement on: {test_input}\n")
+            measure_pipeline_performance(test_input)
+        else:
+            print("No sample input found. Use --generate-large-dummy or --input.")
