@@ -9,7 +9,6 @@ def test_db033_reqs():
     # assert all variants are in gtin-14 format
     assert len(set(normalized_keys)) == 1
     assert normalized_keys[0] == "09300633714437"
-    print("Test passed for barcode matching: All scan variants are in the correct GTIN-14 format.")
 
     # test merged profile production
     raw_product = {
@@ -31,7 +30,6 @@ def test_db033_reqs():
     assert "highSugar" not in final_tags # conflict checked
     assert "healthy" in final_tags 
     assert "dairy" in final_tags
-    print("Test passed for merged profile: Contradictory enrichments resolved into a single record.")
 
 def test_db033_scan_to_seeded_record_resolution():
     # Simulate seeded/enriched catalog keyed by normalized GTIN-14.
@@ -68,22 +66,13 @@ def test_db033_scan_to_seeded_record_resolution():
         resolved_ids.add(resolved["metadata"]["productId"])
 
     assert resolved_ids == {"milk-001"}
-    print("Test passed for seeded resolution: scan variants resolve to the same enriched record.")
 
 def test_db033_barcode_edge_cases():
     assert BarcodeNormalisation.barcode_normalise("abc") == ""
     assert BarcodeNormalisation.barcode_normalise("123456789012345") == ""
     assert BarcodeNormalisation.barcode_normalise(None) == ""
-    print("Test passed for barcode edge handling.")
 
 def test_db033_mapper_missing_barcode_contract():
     mapped = map_enriched_to_product_detail({"productName": "No Barcode Product", "tags": []})
     assert mapped["barcode"] is None
     assert mapped["productName"] == "No Barcode Product"
-    print("Test passed for missing barcode contract behavior.")
-
-if __name__ == "__main__":
-    test_db033_reqs()
-    test_db033_scan_to_seeded_record_resolution()
-    test_db033_barcode_edge_cases()
-    test_db033_mapper_missing_barcode_contract()
