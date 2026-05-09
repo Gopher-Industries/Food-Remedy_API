@@ -43,6 +43,10 @@ class BarcodeNormalisation:
         if not clean_barcode:
             return ""
             
+        # Guard malformed scans that exceed GTIN-14 length.
+        if len(clean_barcode) > 14:
+            return ""
+
         # pad with leading zeros to meet the GTIN-14 standard.
         # for examples: EAN-13 (e.g., 9300633714437) becomes "09300633714437"
         # UPC-A (12 digits) becomes "00" + 12 digits.
@@ -73,6 +77,8 @@ def test_barcode_normalisation():
         ("", ""),
         (None, ""),
         ("abc-123", "00000000000123"),
+        ("abc", ""),
+        ("123456789012345", ""),
     ]
     
     print("Running Barcode Normalisation tests for DB033...")
