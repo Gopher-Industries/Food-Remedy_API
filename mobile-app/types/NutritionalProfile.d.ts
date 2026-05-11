@@ -13,5 +13,9 @@ export interface NutritionalProfile {
   additives: string[];
   allergies: string[];
   intolerances: string[];
-  dietaryForm: string[];          // e.g. ['Vegetarian', 'Low FODMAP']
+  dietaryForm: string[]; 
+  healthGoal?: 
+  | "weight_loss"
+  | "muscle_gain"
+  | "maintenance";       
 }
