@@ -35,7 +35,7 @@ export function toSimpleProduct(p: Product | null | undefined): ProductSimple | 
     allergens: normalise(p.allergens),            // string[] | null | string → string[]
     traces: normalise(p.traces),                  // supports string | string[] | null
     additives: normalise(p.additives),
-    ingredientAnalysis: normalise((p as any).ingredientAnalysis),
+    ingredientAnalysis: normalise(p.ingredientsAnalysis),
     completeness: p.completeness
   };
 }

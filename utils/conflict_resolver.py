@@ -23,14 +23,18 @@ TAG_PRIORITY = {
 
 # Conflicts: if key present, listed tags are considered conflicting and should be removed
 CONFLICT_MAP = {
-    'highSugar': ['weightLoss', 'bloodSugarFriendly', 'lowSugar', 'balancedNutrition', 'weightLossFriendly'],
-    'highFat': ['weightLoss'],
-    'highSaturatedFat': ['heartHealth'],
+    'highSugar': ['weightLoss', 'bloodSugarFriendly', 'lowSugar', 'balancedNutrition', 'weightLossFriendly', 'healthy', 'sugarFriendly'],
+    'highFat': ['weightLoss', 'healthy', 'lowFat'],
+    'highSaturatedFat': ['heartHealth', 'healthy'],
+    'lowSugar' : ['highSugar'],
+    # balanced nutrition is conflicted with "high" nutrient tags
+    'balancedNutrition': ['highSugar', 'highFat', 'highSaturatedFat'],
     # healthy should not coexist with obvious "high" nutrient tags
-    'healthy': ['highSugar', 'highFat', 'highSaturatedFat'],
+    'healthy': ['highSugar', 'highFat', 'highSaturatedFat', 'highSodium'],
     # weightLoss conflicts with nutrient-dense indicators
-    'weightLoss': ['highSugar', 'highFat'],
+    'weightLoss': ['highSugar', 'highFat', 'highCalories'],
     'bloodSugarFriendly': ['highSugar'],
+    'sugarFriendly': ['highSugar'],
     # allergens should suppress lower-priority mood/nonspecific tags
     'allergen': ['weightLoss', 'mood'],
     # mood tags are informational and conflict with allergen presence
