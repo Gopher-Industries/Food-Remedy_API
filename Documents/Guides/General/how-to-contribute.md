@@ -36,6 +36,8 @@ It includes how to claim a ticket, create a branch and submit your code.
 Before working on your first ticket, make sure you've cloned the project repository to your local machine.  
 Refer to the [project README](/README.md) for detailed instructions on how to clone the repository.
 
+For **2026 Trimester 1** local setup (Expo app, captcha defaults, database paths), use [T1 2026 workflow and local development](t1-2026-workflow-and-local-development.md).
+
 
 ### Selecting a Ticket
 - Navigate to the [Planner board](https://tasks.office.com/deakin365.onmicrosoft.com/en-AU/Home/Planner/#/plantaskboard?groupId=b9325320-8dcf-4204-81c7-46ccdd3b0798&planId=-84UWjpguUKN44qYXOExBsgAFLTp)

@@ -1,54 +1,82 @@
 """
-Central logging configuration for the Food Remedy database pipeline.
-Provides consistent formatting + levels (INFO, WARNING, ERROR).
+Central logging configuration for Food Remedy.
+Supports pipeline, API, access, and error logging channels.
 """
 
+from __future__ import annotations
+
 import logging
-import os
-from datetime import datetime
+from logging.handlers import RotatingFileHandler
 
-# Create logs folder if missing
-LOG_DIR = "database/logs"
-os.makedirs(LOG_DIR, exist_ok=True)
+from .log_config import (
+    DEFAULT_DATE_FORMAT,
+    DEFAULT_LOG_FORMAT,
+    DEFAULT_LOG_LEVEL,
+    get_log_file_path,
+)
 
-# Log file name with date
-LOG_FILE = os.path.join(LOG_DIR, f"pipeline_{datetime.now().strftime('%Y_%m_%d')}.log")
 
-def get_logger(name: str):
+def _build_formatter() -> logging.Formatter:
+    return logging.Formatter(DEFAULT_LOG_FORMAT, DEFAULT_DATE_FORMAT)
+
+
+def _build_file_handler(channel: str) -> RotatingFileHandler:
+    handler = RotatingFileHandler(
+        get_log_file_path(channel),
+        maxBytes=5 * 1024 * 1024,
+        backupCount=5,
+        encoding="utf-8",
+    )
+    handler.setFormatter(_build_formatter())
+    return handler
+
+
+def _build_stream_handler() -> logging.StreamHandler:
+    handler = logging.StreamHandler()
+    handler.setFormatter(_build_formatter())
+    return handler
+
+
+def get_logger(name: str, channel: str = "pipeline") -> logging.Logger:
     """
-    Returns a logger with consistent formatting across the pipeline.
+    Return a logger configured for the given logging channel.
     """
-    logger = logging.getLogger(name)
+    logger_name = f"{channel}.{name}"
+    logger = logging.getLogger(logger_name)
 
-    if not logger.handlers:
-        logger.setLevel(logging.INFO)
+    if logger.handlers:
+        return logger
 
-        formatter = logging.Formatter(
-            "%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-            "%Y-%m-%d %H:%M:%S"
-        )
+    logger.setLevel(getattr(logging, DEFAULT_LOG_LEVEL, logging.INFO))
+    logger.propagate = False
 
-        file_handler = logging.FileHandler(LOG_FILE)
-        file_handler.setFormatter(formatter)
-
-        stream_handler = logging.StreamHandler()
-        stream_handler.setFormatter(formatter)
-
-        logger.addHandler(file_handler)
-        logger.addHandler(stream_handler)
+    logger.addHandler(_build_file_handler(channel))
+    logger.addHandler(_build_stream_handler())
 
     return logger
 
-# Optional: PipelineLogger class wrapper
+
+def get_api_logger(name: str = "api") -> logging.Logger:
+    return get_logger(name=name, channel="api")
+
+
+def get_access_logger(name: str = "access") -> logging.Logger:
+    return get_logger(name=name, channel="access")
+
+
+def get_error_logger(name: str = "error") -> logging.Logger:
+    return get_logger(name=name, channel="error")
+
+
 class PipelineLogger:
     def __init__(self, name: str):
-        self.logger = get_logger(name)
-    
+        self.logger = get_logger(name=name, channel="pipeline")
+
     def info(self, msg: str):
         self.logger.info(msg)
-    
+
     def warning(self, msg: str):
         self.logger.warning(msg)
-    
+
     def error(self, msg: str):
         self.logger.error(msg)

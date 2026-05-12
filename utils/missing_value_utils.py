@@ -49,6 +49,14 @@ def clean_numeric(value, default=None):
         return default
     
 
+def clean_completeness(value, default=0.0):
+    """Convert completeness to a float and clamp it into the valid 0..1 range."""
+    numeric = clean_numeric(value, default=default)
+    if numeric is None:
+        numeric = default
+    return max(0.0, min(float(numeric), 1.0))
+
+
 def normalize_quantity_with_unit(value):
     """Handle cases like "5 g" → (5.0, "g") or just return cleaned value."""
     if isinstance(value, str):

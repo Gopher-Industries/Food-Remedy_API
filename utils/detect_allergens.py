@@ -1,13 +1,12 @@
 import json
 from pathlib import Path
 import re
+from typing import Any, Optional
 
 # -------------------------------
 # Config Loading
 # -------------------------------
-CONFIG_PATH = Path(__file__).parent.parent / "database" / "Allergens" / "DB009_testing_allergens_config.json"
-# TODO: Update to "allergens_config.json" after DB008 merge
-
+CONFIG_PATH = Path(__file__).parent.parent / "database" / "Allergens" / "allergens_config.json"
 try:
     with open(CONFIG_PATH, "r", encoding="utf-8") as f:
         ALLERGEN_CONFIG = json.load(f)["allergens"]
@@ -17,8 +16,6 @@ except FileNotFoundError:
         {"name": "Milk", "keywords": ["milk", "whey", "casein", "lactose"]},
         {"name": "Peanuts", "keywords": ["peanut", "groundnut", "arachis"]},
     ]
-
-print(f"Loaded {len(ALLERGEN_CONFIG)} allergens.") # checking if config loads correctly
 
 # -------------------------------
 # Strict Regex Variations
@@ -51,21 +48,29 @@ NEGATION_PATTERNS = {
 # -------------------------------
 # Detection Function
 # -------------------------------
-def detect_allergens(product: dict) -> list[str]:
-    """Detect allergens by scanning multiple text fields."""
+def detect_allergens(
+    product: dict,
+    keyword_entries: Optional[list[dict[str, Any]]] = None,
+) -> list[str]:
+    """Detect allergens by scanning multiple text fields.
+
+    ``keyword_entries`` should match ``load_allergens()`` output (name + keywords).
+    If omitted, uses module-level config from ``allergens_config.json``.
+    """
+    entries = keyword_entries if keyword_entries is not None else ALLERGEN_CONFIG
     
     # Collect all fields that may contain allergen info
     fields_to_check = [
-        product.get("ingredients_text"),
+        product.get("ingredientsText") or product.get("ingredients_text"),
         product.get("traces"),
-        product.get("traces_from_ingredients"),
-        product.get("product_name"),
-        product.get("generic_name"),
+        product.get("tracesFromIngredients") or product.get("traces_from_ingredients"),
+        product.get("productName") or product.get("product_name"),
+        product.get("genericName") or product.get("generic_name"),
     ]
 
     # List-like fields
     list_fields = [
-        product.get("ingredients_tags"),
+        product.get("ingredients") or product.get("ingredients_tags"),
         product.get("allergens_tags"),
         product.get("categories_tags"),
         product.get("labels_tags"),
@@ -89,7 +94,7 @@ def detect_allergens(product: dict) -> list[str]:
             detected.add(name)
 
     # Keyword fallback with word boundaries
-    for allergen in ALLERGEN_CONFIG:
+    for allergen in entries:
         for keyword in allergen["keywords"]:
             if re.search(r"\b" + re.escape(keyword.lower()) + r"\b", combined_text):
                 detected.add(allergen["name"])
@@ -126,53 +131,3 @@ def detect_allergens(product: dict) -> list[str]:
 
     return sorted(detected)
 
-
-'''
-# ----------------------------- 
-# UPDATED Quick ALLERGEN TEST  
-# ----------------------------- 
-if __name__ == "__main__":
-    sample_product = {
-        "ingredients_text": "Milk, whey, peanut butter, eggs",
-        "traces": "",
-        "traces_from_ingredients": "",
-        "product_name": "",
-        "generic_name": "",
-        "ingredients_tags": [],
-        "allergens_tags": [],
-        "categories_tags": [],
-        "labels_tags": [],
-    }
-
-    print(detect_allergens(sample_product))  
-'''
-
-'''
-# ----------------------------- 
-# UPDATED Full ALLERGEN TEST  
-# ----------------------------- 
-if __name__ == "__main__":
-    sample_text = (
-        "semolina, prawn, mayonnaise, anchovy, yoghurt, groundnut, tofu, "
-        "tahini, pistachio, lupini beans, scallop, celeriac, mustard seed, 223"
-    )
-
-    sample_product = {
-        "ingredients_text": sample_text,
-        "traces": "",
-        "traces_from_ingredients": "",
-        "product_name": "",
-        "generic_name": "",
-        "ingredients_tags": [],
-        "allergens_tags": [],
-        "categories_tags": [],
-        "labels_tags": [],
-    }
-
-    print("Test ingredients:")
-    print(sample_text)
-
-    detected = detect_allergens(sample_product)
-    print("Detected allergens:")
-    print(detected)
-'''

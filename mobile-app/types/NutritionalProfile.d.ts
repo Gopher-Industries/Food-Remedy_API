@@ -14,4 +14,12 @@ export interface NutritionalProfile {
   allergies: string[];
   intolerances: string[];
   dietaryForm: string[];          // e.g. ['Vegetarian', 'Low FODMAP']
+  // Demographic fields
+  ageBand?: string;
+  sex?: string;
+  guardrailLevel?: string;
+  healthGoal?:
+  | "weight_loss"
+  | "muscle_gain"
+  | "maintenance";
 }

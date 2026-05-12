@@ -1,0 +1,14 @@
+{
+    "timestamp": "2026-05-06T18:02:29.810332",
+    "total_records": 5000,
+    "valid_records": 5000,
+    "invalid_records": 0,
+    "errors": [],
+    "summary": {
+        "basic_schema": true,
+        "nutrients": true,
+        "allergens": true,
+        "barcode_ok": true,
+        "schema_valid": true
+    }
+}

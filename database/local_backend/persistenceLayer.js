@@ -1,7 +1,10 @@
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
+const config = require("./config");
 
-const db = new sqlite3.Database(path.join(__dirname, "local_cache.db"));
+const db = new sqlite3.Database(
+  path.join(__dirname, config.database.sqliteFileName)
+);
 
 function initLocalDb() {
   db.serialize(() => {
@@ -138,14 +141,15 @@ function getShoppingList(userId) {
   });
 }
 
-// 🔹 NEW: update quantity / checked status
 function updateShoppingItem(itemId, updates) {
   return new Promise((resolve, reject) => {
     const newQuantity =
       typeof updates.quantity === "number" ? updates.quantity : null;
     const newChecked =
       typeof updates.checked === "boolean"
-        ? updates.checked ? 1 : 0
+        ? updates.checked
+          ? 1
+          : 0
         : null;
 
     db.run(
@@ -159,13 +163,12 @@ function updateShoppingItem(itemId, updates) {
       [newQuantity, newChecked, itemId],
       function (err) {
         if (err) return reject(err);
-        resolve(this.changes); // number of rows updated
+        resolve(this.changes);
       }
     );
   });
 }
 
-// 🔹 NEW: delete a shopping list item
 function deleteShoppingItem(itemId) {
   return new Promise((resolve, reject) => {
     db.run(
@@ -173,7 +176,7 @@ function deleteShoppingItem(itemId) {
       [itemId],
       function (err) {
         if (err) return reject(err);
-        resolve(this.changes); // number of rows deleted
+        resolve(this.changes);
       }
     );
   });

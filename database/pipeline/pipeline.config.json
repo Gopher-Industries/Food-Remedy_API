@@ -2,32 +2,74 @@
   "pipeline": {
     "fail_on_error": true,
     "outputs": {
-      "metadata": "/data/pipeline/pipeline_run_metadata.json",
-      "checkpoints": "/data/pipeline/pipeline_checkpoints.json"
+      "metadata": "database/pipeline/pipeline_run_metadata.json",
+      "checkpoints": "database/pipeline/pipeline_checkpoints.json"
     },
     "clean": {
-      "enabled": true,
+      "enabled": false,
       "input": "database/data_investigation/exampleProductRaw.json",
       "output": "database/data_investigation/exampleProductCleaned.json"
     },
     "enrich": {
       "enabled": true,
-      "input": "database/data_investigation/exampleProductCleaned.json",
+      "input": "database/seeding/products_5k_enriched.json",
       "output": "database/seeding/products_enriched.json",
       "modules": [
         {
           "name": "ts_enrich_wrapper",
-          "path": "database/pipeline/modules/enrich_ts_wrapper.py",
-          "enabled": true,
+          "path": "pipeline/modules/enrich_ts_wrapper.py",
+          "enabled": false,
           "config": {
             "ts_path": "mobile-app/services/nutrition/enrichProducts.ts"
+          }
+        },
+        {
+          "name": "allergens",
+          "path": "pipeline/modules/allergens_enrich.py",
+          "enabled": true,
+          "config": {}
+        },
+        {
+          "name": "db009_personalisation_tags",
+          "path": "pipeline/modules/db009_personalisation_tags.py",
+          "enabled": true,
+          "config": {}
+        },
+        {
+          "name": "db021_mood_tags",
+          "path": "pipeline/modules/db021_mood_tags.py",
+          "enabled": true,
+          "config": {}
+        },
+        {
+          "name": "db019_alternative_product_mapping",
+          "path": "pipeline/modules/db019_alternative_product_mapping.py",
+          "enabled": true,
+          "config": {
+            "max_similar": 5,
+            "max_healthier": 5,
+            "max_peers_scan": 400,
+            "healthier_min_score_delta": 2,
+            "max_nutrient_distance_healthier": 0.55,
+            "healthier_allow_any_score_gain": true,
+            "healthier_use_sugar_proxy": true,
+            "healthier_use_fiber_proxy": true,
+            "rng_seed": 20260419,
+            "sidecar_index_path": "database/seeding/product_alternatives_index.json"
           }
         }
       ]
     },
     "seed": {
-      "enabled": false,
-      "input": "database/seeding/products_enriched.json"
+      "enabled": true,
+      "input": "database/seeding/products_enriched.json",
+      "output": "database/seeding/seeded_products.json",
+      "script_path": "database/seeding/seed_firestore.py",
+      "batch_size": 500,
+      "writes_per_second_limit": 400,
+      "max_retries": 3,
+      "validate_before_seed": true,
+      "dry_run": false
     }
   }
 }
