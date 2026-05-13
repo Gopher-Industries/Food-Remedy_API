@@ -68,3 +68,13 @@ TEST008 acceptance criteria are satisfied by automated tests:
 - Error response format is consistent.
 - Proper status codes are returned (`200` success, `500` unhandled error).
 - `request_id` tracing is consistent in both payload and response header.
+
+## Repository note
+
+If `git status` shows **nothing to commit, working tree clean** after `git add` on these paths, the TEST008 changes are **already in the latest commit** on this branch. Confirm with:
+
+```bash
+git show --stat HEAD
+```
+
+You should see `exception_handler.py`, `test_t1008_error_handling_middleware.py`, and this file.
