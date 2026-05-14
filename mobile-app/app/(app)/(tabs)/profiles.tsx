@@ -37,6 +37,8 @@ export default function MembersPage() {
   // High contrast mode - would come from PreferencesProvider in a real implementation
   const highContrast = false;
 
+  
+
   // Refresh when screen is focused
   useFocusEffect(
     useCallback(() => {
