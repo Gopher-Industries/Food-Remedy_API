@@ -18,13 +18,55 @@ const ActiveProfileBadge: React.FC<ActiveProfileBadgeProps> = ({
 }) => {
   const { activeProfile, profiles, selfDisplayName } = useProfile();
 
-  // Get display name for active profile
+  /**
+   * IMPORTANT FIX:
+   * Remove demographics profile from counts and display
+   */
+  const visibleProfiles = profiles.filter((profile) => {
+    const profileId = String(profile.profileId || "")
+      .toLowerCase()
+      .trim();
+
+    const relationship = String(profile.relationship || "")
+      .toLowerCase()
+      .trim();
+
+    return (
+      profileId !== "demographics" &&
+      relationship !== "demographics"
+    );
+  });
+
+  /**
+   * Get display name
+   */
   const getProfileDisplayName = () => {
-    if (!activeProfile) return `All Profiles (${profiles.length})`;
-    if (activeProfile.relationship === "Self" && selfDisplayName) {
+    // No active profile selected
+    if (!activeProfile) {
+      return `All Profiles (${visibleProfiles.length})`;
+    }
+
+    // Ignore demographics profile
+    if (
+      activeProfile.profileId === "demographics" ||
+      activeProfile.relationship === "Demographics"
+    ) {
+      return `All Profiles (${visibleProfiles.length})`;
+    }
+
+    // Self profile
+    if (
+      activeProfile.relationship === "Self" &&
+      selfDisplayName
+    ) {
       return selfDisplayName;
     }
-    return activeProfile.firstName || activeProfile.relationship || "Profile";
+
+    return (
+      activeProfile.firstName ||
+      activeProfile.relationship ||
+      "Profile"
+    );
   };
 
   const displayName = getProfileDisplayName();
@@ -55,11 +97,15 @@ const ActiveProfileBadge: React.FC<ActiveProfileBadgeProps> = ({
                 )}
               </View>
             )}
+
             <Tt
-              className={`text-sm font-interSemiBold ${pressed ? "text-primary" : "text-hsl20"}`}
+              className={`text-sm font-interSemiBold ${
+                pressed ? "text-primary" : "text-hsl20"
+              }`}
             >
               {displayName}
             </Tt>
+
             <IconGeneral
               type="arrow-forward-ios"
               fill={pressed ? "#FF3F3F" : "hsl(0, 0%, 30%)"}
@@ -89,12 +135,16 @@ const ActiveProfileBadge: React.FC<ActiveProfileBadgeProps> = ({
             ) : (
               <View
                 className={`w-[40px] h-[40px] rounded-full flex justify-center items-center border-2 ${
-                  pressed ? "border-primary bg-primary" : "border-hsl90"
+                  pressed
+                    ? "border-primary bg-primary"
+                    : "border-hsl90"
                 }`}
               >
                 {activeProfile ? (
                   <Tt
-                    className={`font-interBold text-lg ${pressed ? "text-white" : "text-primary"}`}
+                    className={`font-interBold text-lg ${
+                      pressed ? "text-white" : "text-primary"
+                    }`}
                   >
                     {(displayName || "P")[0].toUpperCase()}
                   </Tt>
@@ -109,8 +159,13 @@ const ActiveProfileBadge: React.FC<ActiveProfileBadgeProps> = ({
             )}
 
             <View className="px-3 flex-1">
-              <Tt className="text-xs text-hsl30">Active Profile</Tt>
-              <Tt className="font-interBold text-base">{displayName}</Tt>
+              <Tt className="text-xs text-hsl30">
+                Active Profile
+              </Tt>
+
+              <Tt className="font-interBold text-base">
+                {displayName}
+              </Tt>
             </View>
           </View>
 
