@@ -91,7 +91,7 @@ function meetsdietary(product: Product, profile: NutritionalProfile): boolean {
     }
     // Gluten-free
     if (diet === "gluten-free") {
-      const hasGlutenFree = labels.some((l) => l.includes("gluten"));
+      const hasGlutenFree = labels.some((l) => l.includes("gluten-free"));
       if (!hasGlutenFree) return false;
     }
   }
@@ -136,6 +136,9 @@ function scoreAlternative(
   const categoryScore = categorySimilarity * 25;
   score += categoryScore;
 
+  if (categorySimilarity > 0.7) {
+    reasons.push("✓ Similar product category");
+  }
   // Safety score: classify and boost green products (40 points max)
   const altSafety = classifyProductSafety(alternative);
   const origSafety = classifyProductSafety(original);
@@ -165,6 +168,45 @@ function scoreAlternative(
     reasons.push(`✓ Aligns with ${(profile.dietaryForm || [])[0] || "your diet"}`);
   }
 
+  // Goal-based recommendation scoring
+  const nutriments = alternative.nutriments || {};
+
+  const calories =
+    Number(nutriments["energy-kcal_100g"]) || 0;
+
+  const protein =
+    Number(nutriments.proteins_100g) || 0;
+
+  const sugar =
+    Number(nutriments.sugars_100g) || 0;
+
+  // Weight loss users
+  if (
+    profile.healthGoal?.toLowerCase() ===
+    "weight_loss"
+  ) {
+    if (calories < 150) {
+      score += 15;
+      reasons.push("✓ Lower calorie option");
+    }
+
+    if (sugar < 5) {
+      score += 10;
+      reasons.push("✓ Lower sugar option");
+    }
+  }
+
+  // Muscle gain users
+  if (
+    profile.healthGoal?.toLowerCase() ===
+    "muscle_gain"
+  ) {
+    if (protein > 10) {
+      score += 20;
+      reasons.push("✓ Higher protein option");
+    }
+  }
+
   return {
     product: alternative,
     score: Math.max(0, score), // clamp to 0 minimum
@@ -187,10 +229,13 @@ export function getAlternatives(
   profile: NutritionalProfile,
   limit = 5
 ): RecommendationScore[] {
+  if (!original || !candidates?.length) {
+  return [];
+}
   // Filter: exclude red products, prioritize green > grey
   const scored = candidates
     .map((cand) => scoreAlternative(original, cand, profile))
-    .filter((rec) => rec.score > 0) // exclude zero-score products
+    .filter((rec) => rec.score > 0 && rec.safetyRating !== "red") // exclude zero-score products and Unsafe Products
     .sort((a, b) => {
       // Primary: safety rating (green > grey > red)
       const safetyOrder = { green: 3, grey: 2, red: 1 };
