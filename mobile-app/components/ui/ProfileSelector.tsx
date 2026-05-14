@@ -14,7 +14,15 @@ interface ProfileSelectorProps {
 const ProfileSelector: React.FC<ProfileSelectorProps> = ({
   onProfileSelected,
 }) => {
-  const { profiles, activeProfileId, setActiveProfile, selfDisplayName } = useProfile();
+  const { profiles, activeProfileId, setActiveProfile, selfDisplayName } =
+    useProfile();
+
+  const visibleProfiles = profiles.filter((profile) => {
+    const profileId = String(profile.profileId || "").toLowerCase().trim();
+    const relationship = String(profile.relationship || "").toLowerCase().trim();
+
+    return profileId !== "demographics" && relationship !== "demographics";
+  });
 
   const handleSelectProfile = async (profileId: string) => {
     await setActiveProfile(profileId);
@@ -29,12 +37,12 @@ const ProfileSelector: React.FC<ProfileSelectorProps> = ({
   return (
     <View className="w-full">
       <Tt className="text-lg font-interBold mb-3">Select Active Profile</Tt>
+
       <Tt className="text-sm text-hsl30 mb-4">
         Choose which profile to use for scanning products
       </Tt>
 
       <ScrollView className="max-h-[400px]">
-        {/* Show All Profiles Option */}
         <Pressable
           onPress={handleClearSelection}
           className={`mb-3 flex-row justify-between items-center px-4 py-4 rounded-xl border-2 ${
@@ -69,10 +77,10 @@ const ProfileSelector: React.FC<ProfileSelectorProps> = ({
           )}
         </Pressable>
 
-        {/* Individual Profiles */}
-        {profiles.map((profile) => {
+        {visibleProfiles.map((profile) => {
           const isActive = activeProfileId === profile.profileId;
           const avatarBorder = isActive ? "#FF3F3F" : "#E5E7EB";
+
           return (
             <Pressable
               key={profile.profileId}
@@ -86,7 +94,11 @@ const ProfileSelector: React.FC<ProfileSelectorProps> = ({
               <View className="flex-row items-center flex-1">
                 <ProfileAvatar
                   uri={profile.avatarUrl}
-                  name={profile.firstName}
+                  name={
+                    profile.relationship === "Self" && selfDisplayName
+                      ? selfDisplayName
+                      : profile.firstName
+                  }
                   size={50}
                   borderColor={avatarBorder}
                 />
@@ -97,7 +109,10 @@ const ProfileSelector: React.FC<ProfileSelectorProps> = ({
                       ? selfDisplayName
                       : profile.firstName || "Unnamed Profile"}
                   </Tt>
-                  <Tt className="text-hsl30 text-sm">{profile.relationship}</Tt>
+
+                  <Tt className="text-hsl30 text-sm">
+                    {profile.relationship}
+                  </Tt>
                 </View>
               </View>
 
