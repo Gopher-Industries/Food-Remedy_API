@@ -120,7 +120,7 @@ const ActiveProfileBadge: React.FC<ActiveProfileBadgeProps> = ({
   return (
     <Pressable
       onPress={onPress}
-      className="flex-row items-center justify-between px-4 py-3 rounded-lg bg-white border border-hsl90 active:border-primary"
+      className="flex-row items-center justify-between px-4 py-3 dark:bg-hsl15 rounded-lg bg-white border border-hsl90 active:border-primary"
     >
       {({ pressed }) => (
         <>
@@ -159,7 +159,7 @@ const ActiveProfileBadge: React.FC<ActiveProfileBadgeProps> = ({
             )}
 
             <View className="px-3 flex-1">
-              <Tt className="text-xs text-hsl30">
+              <Tt className="text-xs dark:text-hsl90 text-hsl30 ">
                 Active Profile
               </Tt>
 

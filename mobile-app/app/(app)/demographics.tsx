@@ -5,6 +5,7 @@ import { router } from "expo-router";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useNotification } from "@/components/providers/NotificationProvider";
 import { useProfile } from "@/components/providers/ProfileProvider";
+import { usePreferences } from "@/components/providers/PreferencesProvider";
 import IconGeneral from "@/components/icons/IconGeneral";
 import Header from "@/components/layout/Header";
 import { color, spacing } from "@/app/design/token";
@@ -40,6 +41,7 @@ type SingleSelectFieldProps = {
   options: Option[];
   selected: string;
   onSelect: (value: string) => void;
+  darkMode: boolean;
 };
 
 const SingleSelectField = ({
@@ -48,10 +50,15 @@ const SingleSelectField = ({
   options,
   selected,
   onSelect,
+  darkMode,
 }: SingleSelectFieldProps) => {
   return (
     <View className="mb-6">
-      <Tt className="text-lg font-interMedium text-hsl25 dark:text-hsl85 mb-1">
+      <Tt
+        className={`text-lg font-interMedium mb-1 ${
+          darkMode ? "text-hsl90" : "text-hsl25"
+        }`}
+      >
         {label}
       </Tt>
 
@@ -66,12 +73,18 @@ const SingleSelectField = ({
               className={`px-4 py-2 rounded-full border ${
                 isSelected
                   ? "bg-primary border-primary"
-                  : "bg-transparent border-hsl80 dark:border-hsl30"
+                  : darkMode
+                  ? "bg-hsl20 border-hsl30"
+                  : "bg-transparent border-hsl80"
               }`}
             >
               <Tt
                 className={`font-interMedium text-sm ${
-                  isSelected ? "text-white" : "text-hsl30 dark:text-hsl90"
+                  isSelected
+                    ? "text-white"
+                    : darkMode
+                    ? "text-hsl90"
+                    : "text-hsl30"
                 }`}
               >
                 {option.label}
@@ -81,7 +94,11 @@ const SingleSelectField = ({
         })}
       </View>
 
-      <Tt className="text-xs text-hsl50 dark:text-hsl70 mt-2 leading-5">
+      <Tt
+        className={`text-xs mt-2 leading-5 ${
+          darkMode ? "text-hsl70" : "text-hsl50"
+        }`}
+      >
         {hint}
       </Tt>
     </View>
@@ -92,6 +109,7 @@ const DemographicsForm = () => {
   const { user } = useAuth();
   const { addNotification } = useNotification();
   const { refresh } = useProfile();
+  const { darkMode } = usePreferences();
 
   const [ageBand, setAgeBand] = useState<string>("36-50");
   const [sex, setSex] = useState<string>("female");
@@ -112,9 +130,7 @@ const DemographicsForm = () => {
         if (profile) {
           if (profile.ageBand) setAgeBand(profile.ageBand);
           if (profile.sex) setSex(profile.sex);
-          if (profile.guardrailLevel) {
-            setGuardrailLevel(profile.guardrailLevel);
-          }
+          if (profile.guardrailLevel) setGuardrailLevel(profile.guardrailLevel);
         }
       } catch (err) {
         console.log("Could not fetch demographics:", err);
@@ -141,7 +157,7 @@ const DemographicsForm = () => {
         "@/services/database/user/profiles"
       );
 
-      const demographicsData : any= {
+      const demographicsData: any = {
         userId: user.uid,
         profileId: "demographics",
         ageBand,
@@ -166,7 +182,7 @@ const DemographicsForm = () => {
   };
 
   return (
-    <View className="flex-1 bg-white p-safe">
+    <View className={`flex-1 p-safe ${darkMode ? "bg-hsl15" : "bg-white"}`}>
       <Header />
 
       <ScrollView
@@ -182,23 +198,25 @@ const DemographicsForm = () => {
             {({ pressed }) => (
               <IconGeneral
                 type="arrow-backward-ios"
-                fill={pressed ? "#FF3F3F" : "hsl(0, 0%, 30%)"}
+                fill={pressed ? "#FF3F3F" : darkMode ? "#FFFFFF" : "hsl(0, 0%, 30%)"}
               />
             )}
           </Pressable>
 
-          <Tt className="text-xl font-interBold">Your Health Profile</Tt>
+          <Tt className={`text-xl font-interBold ${darkMode ? "text-white" : "text-hsl20"}`}>
+            Your Health Profile
+          </Tt>
 
           <View style={{ width: 24, height: 24 }} />
         </View>
 
         <View className="w-[95%] mx-auto">
-          <Tt className="text-sm font-interMedium text-hsl50 dark:text-hsl70 mb-6">
+          <Tt className={`text-sm font-interMedium mb-6 ${darkMode ? "text-hsl70" : "text-hsl50"}`}>
             Demographics shape reference portions and risk rules for
             recommendations.
           </Tt>
 
-          <Tt className="text-base font-interBold text-hsl25 dark:text-hsl85 mb-4 uppercase tracking-wide">
+          <Tt className={`text-base font-interBold mb-4 uppercase tracking-wide ${darkMode ? "text-hsl90" : "text-hsl25"}`}>
             Demographics (for personalisation)
           </Tt>
 
@@ -208,6 +226,7 @@ const DemographicsForm = () => {
             options={ageBandOptions}
             selected={ageBand}
             onSelect={setAgeBand}
+            darkMode={darkMode}
           />
 
           <SingleSelectField
@@ -216,6 +235,7 @@ const DemographicsForm = () => {
             options={sexOptions}
             selected={sex}
             onSelect={setSex}
+            darkMode={darkMode}
           />
 
           <SingleSelectField
@@ -224,13 +244,14 @@ const DemographicsForm = () => {
             options={guardrailOptions}
             selected={guardrailLevel}
             onSelect={setGuardrailLevel}
+            darkMode={darkMode}
           />
 
           <Pressable
             onPress={handleSave}
             disabled={submitting}
             hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
-            className="py-3 px-4 my-4 rounded-lg border bg-primary border-hsl90 dark:border-hsl20 active:bg-transparent active:border-primary disabled:opacity-60"
+            className="py-3 px-4 my-4 rounded-lg border bg-primary border-hsl90 active:bg-transparent active:border-primary disabled:opacity-60"
           >
             {({ pressed }) => (
               <Tt
@@ -246,13 +267,15 @@ const DemographicsForm = () => {
           <Pressable
             onPress={handleNext}
             hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
-            className="mb-16 flex-row justify-between items-center py-3 px-4 rounded-lg border border-hsl90 active:border-primary bg-white"
+            className={`mb-16 flex-row justify-between items-center py-3 px-4 rounded-lg border active:border-primary ${
+              darkMode ? "bg-hsl20 border-hsl30" : "bg-white border-hsl90"
+            }`}
           >
             {({ pressed }) => (
               <>
                 <Tt
                   className={`text-lg font-interSemiBold flex-grow ${
-                    pressed ? "text-primary" : "text-hsl30"
+                    pressed ? "text-primary" : darkMode ? "text-hsl90" : "text-hsl30"
                   }`}
                 >
                   Next
@@ -260,7 +283,7 @@ const DemographicsForm = () => {
 
                 <IconGeneral
                   type="arrow-forward-ios"
-                  fill={pressed ? color.primary : color.iconDefault}
+                  fill={pressed ? color.primary : darkMode ? "#FFFFFF" : color.iconDefault}
                   size={spacing.xl}
                 />
               </>
