@@ -38,7 +38,7 @@ const ProfileSelector: React.FC<ProfileSelectorProps> = ({
     <View className="w-full">
       <Tt className="text-lg font-interBold mb-3">Select Active Profile</Tt>
 
-      <Tt className="text-sm text-hsl30 mb-4">
+      <Tt className="text-sm text-hsl30 dark:text-hsl90 mb-4 ">
         Choose which profile to use for scanning products
       </Tt>
 
@@ -48,7 +48,7 @@ const ProfileSelector: React.FC<ProfileSelectorProps> = ({
           className={`mb-3 flex-row justify-between items-center px-4 py-4 rounded-xl border-2 ${
             activeProfileId === null
               ? "bg-primary/10 border-primary"
-              : "bg-white border-hsl90"
+              : "bg-white dark:bg-hsl15 border-hsl90 dark:border-hsl20"
           }`}
         >
           <View className="flex-row items-center flex-1">
@@ -68,7 +68,7 @@ const ProfileSelector: React.FC<ProfileSelectorProps> = ({
 
             <View className="px-3 flex-1">
               <Tt className="font-interBold text-lg">All Profiles</Tt>
-              <Tt className="text-hsl30 text-sm">Check against all profiles</Tt>
+              <Tt className="text-hsl30 dark:text-hsl90 text-sm">Check against all profiles</Tt>
             </View>
           </View>
 
@@ -88,7 +88,7 @@ const ProfileSelector: React.FC<ProfileSelectorProps> = ({
               className={`mb-3 flex-row justify-between items-center px-4 py-4 rounded-xl border-2 ${
                 isActive
                   ? "bg-primary/10 border-primary"
-                  : "bg-white border-hsl90"
+                  : "bg-white dark:bg-hsl15 border-hsl90 dark:border-hsl20"
               }`}
             >
               <View className="flex-row items-center flex-1">
@@ -110,7 +110,7 @@ const ProfileSelector: React.FC<ProfileSelectorProps> = ({
                       : profile.firstName || "Unnamed Profile"}
                   </Tt>
 
-                  <Tt className="text-hsl30 text-sm">
+                  <Tt className="text-hsl30 dark:text-hsl90 text-sm">
                     {profile.relationship}
                   </Tt>
                 </View>
