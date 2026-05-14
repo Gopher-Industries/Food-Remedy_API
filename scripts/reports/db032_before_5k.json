@@ -1,0 +1,1596 @@
+{
+  "ticket": "DB032",
+  "source": "database\\seeding\\products_5k_enriched.json",
+  "total_records": 5000,
+  "seed": 32,
+  "sample_size": 200,
+  "ok": false,
+  "checks": {
+    "batch_validation": {
+      "source": "database\\seeding\\products_5k_enriched.json",
+      "total_records": 5000,
+      "ok": false,
+      "checks": {
+        "missing_product_fields": {
+          "ok": false,
+          "issue_count": 11777,
+          "field_counts": {
+            "brand": 1085,
+            "categories": 4523,
+            "standardCategory": 5000,
+            "nutriments": 1162,
+            "productName": 7
+          },
+          "issues": [
+            {
+              "index": 0,
+              "barcode": "9337951006005",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 0,
+              "barcode": "9337951006005",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 0,
+              "barcode": "9337951006005",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 1,
+              "barcode": "9352357004295",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 1,
+              "barcode": "9352357004295",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 2,
+              "barcode": "9358097004472",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 2,
+              "barcode": "9358097004472",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 3,
+              "barcode": "9310012059431",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 3,
+              "barcode": "9310012059431",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 4,
+              "barcode": "9358243002260",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 4,
+              "barcode": "9358243002260",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 5,
+              "barcode": "9300633979522",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 5,
+              "barcode": "9300633979522",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 6,
+              "barcode": "9310272362081",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 6,
+              "barcode": "9310272362081",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 7,
+              "barcode": "4088700213483",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 8,
+              "barcode": "9337536000206",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 8,
+              "barcode": "9337536000206",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 8,
+              "barcode": "9337536000206",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 9,
+              "barcode": "9354849003540",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 9,
+              "barcode": "9354849003540",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 10,
+              "barcode": "2000031938196",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 10,
+              "barcode": "2000031938196",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 10,
+              "barcode": "2000031938196",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 10,
+              "barcode": "2000031938196",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 11,
+              "barcode": "9358243003021",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 11,
+              "barcode": "9358243003021",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 12,
+              "barcode": "9350002000173",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 12,
+              "barcode": "9350002000173",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 12,
+              "barcode": "9350002000173",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 13,
+              "barcode": "9358097004489",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 13,
+              "barcode": "9358097004489",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 14,
+              "barcode": "9326819001016",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 14,
+              "barcode": "9326819001016",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 14,
+              "barcode": "9326819001016",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 15,
+              "barcode": "9339929001586",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 15,
+              "barcode": "9339929001586",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 15,
+              "barcode": "9339929001586",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 16,
+              "barcode": "9317320100329",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 16,
+              "barcode": "9317320100329",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 16,
+              "barcode": "9317320100329",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 17,
+              "barcode": "9358243002659",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 17,
+              "barcode": "9358243002659",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 18,
+              "barcode": "3517372787714",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 18,
+              "barcode": "3517372787714",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 18,
+              "barcode": "3517372787714",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 19,
+              "barcode": "9350271004407",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 19,
+              "barcode": "9350271004407",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 20,
+              "barcode": "9354792003116",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 20,
+              "barcode": "9354792003116",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 21,
+              "barcode": "9332975005553",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 21,
+              "barcode": "9332975005553",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 22,
+              "barcode": "9312529001484",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 22,
+              "barcode": "9312529001484",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 22,
+              "barcode": "9312529001484",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 23,
+              "barcode": "9310645242972",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 24,
+              "barcode": "0475941080303",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 24,
+              "barcode": "0475941080303",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 24,
+              "barcode": "0475941080303",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 24,
+              "barcode": "0475941080303",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 25,
+              "barcode": "9310751002057",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 26,
+              "barcode": "9300657802059",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 27,
+              "barcode": "00221423",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 27,
+              "barcode": "00221423",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 28,
+              "barcode": "9310174008209",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 28,
+              "barcode": "9310174008209",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 29,
+              "barcode": "2862318018164",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 29,
+              "barcode": "2862318018164",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 30,
+              "barcode": "9300605153738",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 30,
+              "barcode": "9300605153738",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 31,
+              "barcode": "123456789101112",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 31,
+              "barcode": "123456789101112",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 31,
+              "barcode": "123456789101112",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 32,
+              "barcode": "9321941005017",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 32,
+              "barcode": "9321941005017",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 33,
+              "barcode": "9354444002061",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 33,
+              "barcode": "9354444002061",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 34,
+              "barcode": "0932459039884",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 34,
+              "barcode": "0932459039884",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 35,
+              "barcode": "9341816006840",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 35,
+              "barcode": "9341816006840",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 36,
+              "barcode": "0300357301189",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 36,
+              "barcode": "0300357301189",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 36,
+              "barcode": "0300357301189",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 36,
+              "barcode": "0300357301189",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 37,
+              "barcode": "9319133338340",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 37,
+              "barcode": "9319133338340",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 38,
+              "barcode": "9333725000453",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 38,
+              "barcode": "9333725000453",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 39,
+              "barcode": "0736697140018",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 39,
+              "barcode": "0736697140018",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 40,
+              "barcode": "9300682065085",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 40,
+              "barcode": "9300682065085",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 41,
+              "barcode": "9330171022176",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 41,
+              "barcode": "9330171022176",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 42,
+              "barcode": "9339687316229",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 42,
+              "barcode": "9339687316229",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 43,
+              "barcode": "9358243006329",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 43,
+              "barcode": "9358243006329",
+              "field": "standardCategory",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 44,
+              "barcode": "9354792005523",
+              "field": "categories",
+              "message": "recommended integration field is missing or empty"
+            }
+          ]
+        },
+        "category_validation": {
+          "ok": false,
+          "issue_count": 9523,
+          "standard_category_counts": {},
+          "unknown_standard_categories": {},
+          "issues": [
+            {
+              "index": 0,
+              "barcode": "9337951006005",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 0,
+              "barcode": "9337951006005",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 1,
+              "barcode": "9352357004295",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 1,
+              "barcode": "9352357004295",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 2,
+              "barcode": "9358097004472",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 2,
+              "barcode": "9358097004472",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 3,
+              "barcode": "9310012059431",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 4,
+              "barcode": "9358243002260",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 4,
+              "barcode": "9358243002260",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 5,
+              "barcode": "9300633979522",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 5,
+              "barcode": "9300633979522",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 6,
+              "barcode": "9310272362081",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 6,
+              "barcode": "9310272362081",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 7,
+              "barcode": "4088700213483",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 8,
+              "barcode": "9337536000206",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 8,
+              "barcode": "9337536000206",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 9,
+              "barcode": "9354849003540",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 9,
+              "barcode": "9354849003540",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 10,
+              "barcode": "2000031938196",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 10,
+              "barcode": "2000031938196",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 11,
+              "barcode": "9358243003021",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 11,
+              "barcode": "9358243003021",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 12,
+              "barcode": "9350002000173",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 12,
+              "barcode": "9350002000173",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 13,
+              "barcode": "9358097004489",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 13,
+              "barcode": "9358097004489",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 14,
+              "barcode": "9326819001016",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 14,
+              "barcode": "9326819001016",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 15,
+              "barcode": "9339929001586",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 15,
+              "barcode": "9339929001586",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 16,
+              "barcode": "9317320100329",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 16,
+              "barcode": "9317320100329",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 17,
+              "barcode": "9358243002659",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 17,
+              "barcode": "9358243002659",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 18,
+              "barcode": "3517372787714",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 18,
+              "barcode": "3517372787714",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 19,
+              "barcode": "9350271004407",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 19,
+              "barcode": "9350271004407",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 20,
+              "barcode": "9354792003116",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 21,
+              "barcode": "9332975005553",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 21,
+              "barcode": "9332975005553",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 22,
+              "barcode": "9312529001484",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 22,
+              "barcode": "9312529001484",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 23,
+              "barcode": "9310645242972",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 24,
+              "barcode": "0475941080303",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 24,
+              "barcode": "0475941080303",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 25,
+              "barcode": "9310751002057",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 26,
+              "barcode": "9300657802059",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 27,
+              "barcode": "00221423",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 27,
+              "barcode": "00221423",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 28,
+              "barcode": "9310174008209",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 28,
+              "barcode": "9310174008209",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 29,
+              "barcode": "2862318018164",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 29,
+              "barcode": "2862318018164",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 30,
+              "barcode": "9300605153738",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 30,
+              "barcode": "9300605153738",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 31,
+              "barcode": "123456789101112",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 31,
+              "barcode": "123456789101112",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 32,
+              "barcode": "9321941005017",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 32,
+              "barcode": "9321941005017",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 33,
+              "barcode": "9354444002061",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 33,
+              "barcode": "9354444002061",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 34,
+              "barcode": "0932459039884",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 34,
+              "barcode": "0932459039884",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 35,
+              "barcode": "9341816006840",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 35,
+              "barcode": "9341816006840",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 36,
+              "barcode": "0300357301189",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 36,
+              "barcode": "0300357301189",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 37,
+              "barcode": "9319133338340",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 37,
+              "barcode": "9319133338340",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 38,
+              "barcode": "9333725000453",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 38,
+              "barcode": "9333725000453",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 39,
+              "barcode": "0736697140018",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 40,
+              "barcode": "9300682065085",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 40,
+              "barcode": "9300682065085",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 41,
+              "barcode": "9330171022176",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 41,
+              "barcode": "9330171022176",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 42,
+              "barcode": "9339687316229",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 42,
+              "barcode": "9339687316229",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 43,
+              "barcode": "9358243006329",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 43,
+              "barcode": "9358243006329",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 44,
+              "barcode": "9354792005523",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 44,
+              "barcode": "9354792005523",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 45,
+              "barcode": "9383104624831",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 45,
+              "barcode": "9383104624831",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 46,
+              "barcode": "0202064203766",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 46,
+              "barcode": "0202064203766",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 47,
+              "barcode": "0314152009034",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 47,
+              "barcode": "0314152009034",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 48,
+              "barcode": "4088700046906",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 48,
+              "barcode": "4088700046906",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 49,
+              "barcode": "9350465010122",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 49,
+              "barcode": "9350465010122",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 50,
+              "barcode": "9351422000064",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 51,
+              "barcode": "9352864001015",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 51,
+              "barcode": "9352864001015",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 52,
+              "barcode": "9349266000289",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 52,
+              "barcode": "9349266000289",
+              "field": "categories",
+              "message": "categories list is empty"
+            },
+            {
+              "index": 53,
+              "barcode": "9314441715715",
+              "field": "standardCategory",
+              "message": "standard category is missing or empty"
+            },
+            {
+              "index": 53,
+              "barcode": "9314441715715",
+              "field": "categories",
+              "message": "categories list is empty"
+            }
+          ]
+        },
+        "inconsistency_detection": {
+          "ok": false,
+          "issue_count": 36,
+          "field_counts": {
+            "nutriscoreGrade": 31,
+            "servingQuantityUnit": 5
+          },
+          "duplicate_barcodes": {},
+          "issues": [
+            {
+              "index": 205,
+              "barcode": "9344844002204",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 227,
+              "barcode": "9311866011620",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 241,
+              "barcode": "9354628000685",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 309,
+              "barcode": "9358432010816",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 416,
+              "barcode": "9354628000326",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 419,
+              "barcode": "0227159250432",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 446,
+              "barcode": "0068958034096",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 463,
+              "barcode": "9320000100069",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 470,
+              "barcode": "9350848008517",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 661,
+              "barcode": "9338973000040",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 733,
+              "barcode": "9348378001603",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 883,
+              "barcode": "9310881978994",
+              "field": "servingQuantityUnit",
+              "message": "invalid quantity unit: kj"
+            },
+            {
+              "index": 1043,
+              "barcode": "9319133338357",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 1093,
+              "barcode": "9354782001436",
+              "field": "servingQuantityUnit",
+              "message": "invalid quantity unit: mmol/l"
+            },
+            {
+              "index": 1232,
+              "barcode": "9350002000364",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 1407,
+              "barcode": "9316417002348",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 1488,
+              "barcode": "9329982024998",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 1604,
+              "barcode": "9350465010214",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 1680,
+              "barcode": "9400581052848",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 1698,
+              "barcode": "3306682022284",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 1722,
+              "barcode": "9310421000895",
+              "field": "servingQuantityUnit",
+              "message": "invalid quantity unit: kj"
+            },
+            {
+              "index": 1777,
+              "barcode": "9354628000692",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 2101,
+              "barcode": "9314807087586",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 2293,
+              "barcode": "9320000119122",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 2302,
+              "barcode": "0931803323235",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 2496,
+              "barcode": "9312353007690",
+              "field": "servingQuantityUnit",
+              "message": "invalid quantity unit: kj"
+            },
+            {
+              "index": 2864,
+              "barcode": "5056379535129",
+              "field": "servingQuantityUnit",
+              "message": "invalid quantity unit: %"
+            },
+            {
+              "index": 3278,
+              "barcode": "9353333005817",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 3313,
+              "barcode": "9358432021966",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 3398,
+              "barcode": "9311890250095",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 3562,
+              "barcode": "9300657225759",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 3606,
+              "barcode": "5201083350258",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 4350,
+              "barcode": "9329982024936",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 4525,
+              "barcode": "93239707",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 4849,
+              "barcode": "9310022102509",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            },
+            {
+              "index": 4868,
+              "barcode": "9310645315850",
+              "field": "nutriscoreGrade",
+              "message": "invalid nutriscore grade: not-applicable"
+            }
+          ]
+        }
+      }
+    },
+    "integration_validation": {
+      "barcode_lookup": {
+        "ok": true,
+        "sampled_barcodes": 200,
+        "index_size": 5000,
+        "issues": []
+      },
+      "category_queries": {
+        "ok": true,
+        "categories_checked": 10,
+        "top_categories": [
+          "plant-based-foods-and-beverages",
+          "snacks",
+          "dairies",
+          "beverages-and-beverages-preparations",
+          "meals",
+          "condiments",
+          "dietary-supplements",
+          "seafood",
+          "farming-products",
+          "breakfasts"
+        ],
+        "issues": []
+      },
+      "recommendation_candidates": {
+        "ok": false,
+        "products_checked": 200,
+        "issues": [
+          {
+            "barcode": "9415382007508",
+            "category": "crumpets",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "0744708746838",
+            "category": "smoked-oysters",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "9339067003992",
+            "category": "grain-sourdough",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "3453669000015",
+            "category": "corn-thins",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "9339687105038",
+            "category": "shortcut-bacon",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "0319745005110",
+            "category": "dried-products",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "9339687276776",
+            "category": "dishwashing-liquid",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "5060070664385",
+            "category": "fruit-drink",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "9300607230260",
+            "category": "ju",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "9300605154407",
+            "category": "fruity-rolls",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "9369998198221",
+            "category": "meat-alternatives",
+            "message": "candidate missing required field: productName"
+          },
+          {
+            "barcode": "9335779000045",
+            "category": "energy-gel",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "9310645357188",
+            "category": "beef-stock",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "0225901012246",
+            "category": "free-range-boneless-whole-chicken",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "7825792228202",
+            "category": "hot-cross-bun",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "4088700006290",
+            "category": "coconut-flakes",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "0027000002261",
+            "category": "buttery-spread",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "9300650452572",
+            "category": "savoury-crackers",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "4078700218830",
+            "category": "specific-products",
+            "message": "no recommendation candidates available in same category"
+          },
+          {
+            "barcode": "3317824403441",
+            "category": "white-corn-strips",
+            "message": "no recommendation candidates available in same category"
+          }
+        ]
+      }
+    }
+  }
+}

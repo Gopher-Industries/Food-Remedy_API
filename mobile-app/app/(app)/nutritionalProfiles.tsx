@@ -15,34 +15,45 @@ export default function NutritionalProfilesScreen() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const { profiles, startEdit, startEditForNew, clearEdit, refresh, selfDisplayName } = useProfile();
+  const {
+    profiles,
+    startEdit,
+    startEditForNew,
+    clearEdit,
+    refresh,
+    selfDisplayName,
+  } = useProfile();
+
   const [refreshing, setRefreshing] = useState(false);
   const [firebaseUserName, setFirebaseUserName] = useState<string>("");
 
   useEffect(() => {
     const fetchUserName = async () => {
-      if (user?.uid) {
-        const profileName = await getUserProfileName(user.uid);
-        if (profileName) {
-          const fullName = `${profileName.firstName || ''} ${profileName.lastName || ''}`.trim() || profileName.userName || '';
-          setFirebaseUserName(fullName);
-        }
+      if (!user?.uid) return;
+
+      const profileName = await getUserProfileName(user.uid);
+
+      if (profileName) {
+        const fullName =
+          `${profileName.firstName || ""} ${profileName.lastName || ""}`.trim() ||
+          profileName.userName ||
+          "";
+
+        setFirebaseUserName(fullName);
       }
     };
+
     fetchUserName();
   }, [user?.uid]);
 
   useFocusEffect(
     useCallback(() => {
-      refresh();
-    }, [refresh])
+      if (user?.uid) {
+        refresh();
+      }
+    }, [user?.uid, refresh])
   );
 
-  /**
-   * When tap “Add Member” we clear any edit‐id
-   * and then navigate into the same edit screen—treating it
-   * as a brand-new member.
-   */
   const handleAddMember = () => {
     clearEdit();
     startEditForNew();
@@ -50,29 +61,48 @@ export default function NutritionalProfilesScreen() {
   };
 
   const handleEditMember = (id: string) => {
-    const existing = profiles.find(p => p.profileId === id);
+    const existing = profiles.find((p) => p.profileId === id);
     if (!existing) return;
+
     startEdit(existing);
     router.push("/(app)/membersEdit");
   };
 
   const onRefresh = useCallback(async () => {
+    if (!user?.uid) return;
+
     setRefreshing(true);
     await refresh();
     setRefreshing(false);
-  }, [refresh]);
+  }, [user?.uid, refresh]);
+
+  const visibleProfiles = profiles
+    .filter((profile) => {
+      const profileId = String(profile.profileId || "").toLowerCase().trim();
+      const relationship = String(profile.relationship || "").toLowerCase().trim();
+      const firstName = String(profile.firstName || "").toLowerCase().trim();
+
+      return (
+        profile.profileId !== "demographics" &&
+        profile.relationship !== "Demographics" &&
+        profile.firstName !== "User (Demographics)"
+      );
+    })
+    .filter(
+      (profile, index, self) =>
+        index === self.findIndex((p) => p.profileId === profile.profileId)
+    );
 
   return (
     <View className="flex-1 bg-white p-safe">
-        
-        <Header />
-
+      <Header />
 
       <ScrollView
         contentContainerStyle={{ paddingBottom: 24 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
-        {/* Title + Back */}
         <View className="w-[95%] mx-auto mt-4 mb-6 flex-row items-center justify-between">
           <Pressable
             onPress={() => router.back()}
@@ -80,45 +110,67 @@ export default function NutritionalProfilesScreen() {
             className="px-2 py-1"
           >
             {({ pressed }) => (
-              <IconGeneral type="arrow-backward-ios" fill={pressed ? "#FF3F3F" : "hsl(0 0%, 30%)"} />
+              <IconGeneral
+                type="arrow-backward-ios"
+                fill={pressed ? "#FF3F3F" : "hsl(0 0%, 30%)"}
+              />
             )}
           </Pressable>
+
           <Tt className="text-xl font-interBold">Nutritional Profiles</Tt>
+
           <View style={{ width: 24, height: 24 }} />
         </View>
 
-        {/* Profile List Items */}
         <View className="w-[95%] mx-auto">
-          {profiles.map((profile) => (
+          {visibleProfiles.map((profile) => (
             <View
               key={profile.profileId}
               className="mb-4 flex-row items-center px-4 py-4 rounded-lg border border-hsl90 bg-white"
-              style={{ elevation: 2, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 3 }}
+              style={{
+                elevation: 2,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.08,
+                shadowRadius: 3,
+              }}
             >
-              {/* User Avatar */}
               <View className="w-12 h-12 rounded-full bg-hsl98 flex items-center justify-center border-2 border-hsl90">
                 {profile.avatarUrl ? (
                   <ProfileAvatar
                     uri={profile.avatarUrl}
-                    name={profile.relationship === "Self" ? selfDisplayName : undefined}
+                    name={
+                      profile.relationship === "Self"
+                        ? selfDisplayName
+                        : undefined
+                    }
                     size={48}
                   />
                 ) : (
-                  <IconGeneral type="account" fill="hsl(0, 0%, 40%)" size={24} />
+                  <IconGeneral
+                    type="account"
+                    fill="hsl(0, 0%, 40%)"
+                    size={24}
+                  />
                 )}
               </View>
 
-              {/* User Info */}
               <View className="flex-1 ml-4">
                 <Tt className="font-interBold text-base">
                   {profile.relationship === "Self" && firebaseUserName
                     ? firebaseUserName
-                    : profile.firstName || getProfileLabel(profile.relationship, profile.relationship === "Self" ? selfDisplayName : undefined)}
+                    : profile.firstName ||
+                      getProfileLabel(
+                        profile.relationship,
+                        profile.relationship === "Self"
+                          ? selfDisplayName
+                          : undefined
+                      )}
                 </Tt>
+
                 <Tt className="text-sm text-hsl30">{profile.relationship}</Tt>
               </View>
 
-              {/* Edit Icon */}
               <Pressable
                 onPress={() => handleEditMember(profile.profileId)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -134,32 +186,77 @@ export default function NutritionalProfilesScreen() {
             </View>
           ))}
         </View>
-      </ScrollView>
 
-      {/* ADD MEMBER */}
-      <View className="w-[95%] mx-auto">
-        <Pressable
-          onPress={handleAddMember}
-          hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
-          className="mt-8 mb-16 flex-row justify-between items-center py-3 px-4 rounded-lg 
-                border border-hsl90 active:border-primary bg-white self-center"
-        >
-          {({ pressed }) => (
-            <>
+        <View className="w-[95%] mx-auto">
+          <Pressable
+            onPress={() => router.push("/(app)/demographics" as any)}
+            hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+            className="mt-4 flex-row justify-between items-center py-3 px-4 rounded-lg border border-hsl90 active:border-primary bg-white"
+          >
+            {({ pressed }) => (
+              <>
+                <Tt
+                  className={`text-lg font-interSemiBold flex-grow ${
+                    pressed ? "text-primary" : "text-hsl30"
+                  }`}
+                >
+                  Edit Demographics
+                </Tt>
+
+                <IconGeneral
+                  type="edit"
+                  fill={pressed ? color.primary : color.iconDefault}
+                  size={spacing.xl}
+                />
+              </>
+            )}
+          </Pressable>
+        </View>
+
+        <View className="w-[95%] mx-auto">
+          <Pressable
+            onPress={handleAddMember}
+            hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+            className="mt-4 flex-row justify-between items-center py-3 px-4 rounded-lg border border-hsl90 active:border-primary bg-white"
+          >
+            {({ pressed }) => (
+              <>
+                <Tt
+                  className={`text-lg font-interSemiBold flex-grow ${
+                    pressed ? "text-primary" : "text-hsl30"
+                  }`}
+                >
+                  Add New Nutritional Profile
+                </Tt>
+
+                <IconGeneral
+                  type="member-add"
+                  fill={pressed ? color.primary : color.iconDefault}
+                  size={spacing.xl}
+                />
+              </>
+            )}
+          </Pressable>
+        </View>
+
+        <View className="w-[95%] mx-auto">
+          <Pressable
+            onPress={() => router.push("/(app)/(tabs)" as any)}
+            hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+            className="mt-4 mb-16 py-3 px-4 rounded-lg border bg-primary border-hsl90 dark:border-hsl20 active:bg-transparent active:border-primary"
+          >
+            {({ pressed }) => (
               <Tt
-                className={`text-lg font-interSemiBold flex-grow  ${pressed ? "text-primary" : "text-hsl30"}`}
+                className={`text-lg text-center font-interSemiBold ${
+                  pressed ? "text-primary" : "text-white"
+                }`}
               >
-                Add New Nutritional Profile
+                Main Menu
               </Tt>
-              <IconGeneral
-                type="member-add"
-                fill={pressed ? color.primary : color.iconDefault}
-                size={spacing.xl}
-              />
-            </>
-          )}
-        </Pressable>
-      </View>
+            )}
+          </Pressable>
+        </View>
+      </ScrollView>
     </View>
   );
 }

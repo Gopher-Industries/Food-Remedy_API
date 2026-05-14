@@ -64,7 +64,7 @@ The **pipeline/** folder runs clean → enrich → seed in one go using `pipelin
 | **seeding/** | Uploads product JSON to Firestore in batches. | `seed_firestore.py`, `seed_engine.py`, `seed_products.py`, `schema_definition.json`, product chunk files |
 | **Allergens/** | Allergen reference data and detection. | `allergens_config.json`, `load_allergens.py`, `seed_allergens_to_db.py`, `test_allergens.py` |
 | **QA/** | Quality assurance for cleaned data. | `DB006_QA_cleaning.py`, `summary_report.txt`, `errors.json` |
-| **Validation/** | Validates product schema/rules before use. | `db021_validator.py` |
+| **Validation/** | Validates product schema/rules before use and DB012 pre-seed checks. | `db021_validator.py`, `db012_validator.py`, `DB012-Validation-Integration-Testing.md` |
 | **Reports/** | Generates validation/pipeline reports. | `db021_report_generator.py` |
 | **data_investigation/** | Exploratory analysis and samples (not production pipeline). | `exampleProductRaw.json`, `exampleProductCleaned.json`, `data_investigation.py` |
 | **logging_system/** | Shared logging for pipeline/scripts. | `logger.py`, `pipeline_logger_demo.py` |
@@ -119,7 +119,14 @@ Used for exploratory analysis and validation: test cleaning, compare raw vs clea
 1. **Initialise Firebase** — Use `serviceAccountKey.json`.
 2. **Load cleaned data** — e.g. `products_XXk_XXk.json` (chunk range in filename).
 3. **Batch upload** — Writes in chunks of 500, with retries and timestamps (`dateAdded`, `lastUpdated`).
-4. **Store** — Products in Firestore `PRODUCTS` collection, keyed by barcode.
+4. **Store** — Products in Firestore `products` collection (default), keyed by barcode.
+
+DB012 workflow:
+
+- Run validation via `Validation/db012_validator.py`.
+- Run Firestore integration checks via `db012_integration_test.py`.
+- Run local cart integration: `npm run test:db012:cart` (see `Validation/DB012-Validation-Integration-Testing.md`).
+- Or run seeding with validation gate: `seed_firestore.py --validate` (pipeline seed stage sets `validate_before_seed`).
 
 ---
 
@@ -160,7 +167,7 @@ Optional **Investigation** (e.g. `data_investigation/`) validates quality and ac
 | Upload products to Firestore | `seeding/` (e.g. `seed_firestore.py`, `seed_engine.py`) |
 | Work on allergens | `Allergens/` |
 | Run or improve cleaning QA | `QA/DB006_QA_cleaning.py` |
-| Validate schema/product shape | `Validation/`, `seeding/schema_definition.json` |
+| Validate schema/product shape | `Validation/`, `seeding/schema_definition.json`, `Validation/DB012-Validation-Integration-Testing.md` |
 | Explore data or examples | `data_investigation/`, `clean_data/IOExamples/` |
 | Change pipeline logging | `logging_system/logger.py` |
 

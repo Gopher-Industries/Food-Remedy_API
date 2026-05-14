@@ -3,9 +3,11 @@
 import type { Product } from "@/types/Product";
 import { apiGet } from "../apiClient";
 import { normalizeError } from "../errorHandler";
+import { normaliseFirestoreProduct } from "../utils/normaliseFirestoreProduct";
 
 async function getProductByIdRemote(barcode: string): Promise<Product | null> {
-  return apiGet<Product>(`/products/${barcode}`);
+  const product = await apiGet<Record<string, unknown>>(`/products/${barcode}`);
+  return product ? normaliseFirestoreProduct(product) : null;
 }
 
 // Fallback to Firestore DAO if remote base URL not configured

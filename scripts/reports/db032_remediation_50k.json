@@ -1,0 +1,15 @@
+{
+  "ticket": "DB040",
+  "source": "database\\seeding\\products_50k+_enriched.json",
+  "output": "database\\seeding\\products_50k+_enriched_db032_remediated.json",
+  "total_records": 11367,
+  "remediation_stats": {
+    "filled_standardCategory": 11367,
+    "filled_categories": 10966,
+    "normalized_nutriscoreGrade": 11174,
+    "filled_brand": 690,
+    "filled_nutriments": 662,
+    "normalized_servingQuantityUnit": 31,
+    "filled_productName": 7
+  }
+}

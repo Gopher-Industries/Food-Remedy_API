@@ -1,4 +1,5 @@
 import json
+import os
 from typing import Any
 from utils.detect_allergens import detect_allergens  # detection function built
 from database.Allergens.load_allergens import load_allergens  # official config loader
@@ -11,6 +12,15 @@ def run(input_path: str, output_path: str, config: dict) -> dict:
     """
     allergen_config = load_allergens()
 
+    # Normalize output_path: convert relative paths to absolute
+    if not os.path.isabs(output_path):
+        # Resolve relative to repo root if path is relative
+        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        output_path = os.path.join(repo_root, output_path)
+
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
     # Read input
     try:
         with open(input_path, "r", encoding="utf-8") as f:
@@ -19,9 +29,10 @@ def run(input_path: str, output_path: str, config: dict) -> dict:
         print(f"Error reading input file: {e}")
         raise
 
+    processed = 0
     failures = 0
 
- # Enrich every product
+    # Enrich every product
     for product in data:
         try:
             # Map camelCase fields from enriched data
@@ -52,6 +63,8 @@ def run(input_path: str, output_path: str, config: dict) -> dict:
             failures += 1
             barcode = product.get("barcode", "N/A")
             print(f"Warning: Failed to detect allergens for product {barcode}: {e}")
+        else:
+            processed += 1
 
         product["allergens"] = allergens
         product["allergensDetected"] = allergens
@@ -61,7 +74,7 @@ def run(input_path: str, output_path: str, config: dict) -> dict:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
     return {
-        "processed": len(data),
+        "processed": processed,
         "failures": failures,
         "output": output_path
     }
