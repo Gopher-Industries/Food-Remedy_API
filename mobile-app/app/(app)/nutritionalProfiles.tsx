@@ -10,10 +10,12 @@ import ProfileAvatar from "@/components/ui/ProfileAvatar";
 import { getProfileLabel } from "@/services/utils/profileLabel";
 import getUserProfileName from "@/services/database/user/getUserProfileName";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { usePreferences } from "@/components/providers/PreferencesProvider";
 
 export default function NutritionalProfilesScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { darkMode } = usePreferences();
 
   const {
     profiles,
@@ -83,9 +85,9 @@ export default function NutritionalProfilesScreen() {
       const firstName = String(profile.firstName || "").toLowerCase().trim();
 
       return (
-        profile.profileId !== "demographics" &&
-        profile.relationship !== "Demographics" &&
-        profile.firstName !== "User (Demographics)"
+        profileId !== "demographics" &&
+        relationship !== "demographics" &&
+        firstName !== "user (demographics)"
       );
     })
     .filter(
@@ -94,7 +96,7 @@ export default function NutritionalProfilesScreen() {
     );
 
   return (
-    <View className="flex-1 bg-white p-safe">
+    <View className={`flex-1 p-safe ${darkMode ? "bg-hsl15" : "bg-white"}`}>
       <Header />
 
       <ScrollView
@@ -112,12 +114,14 @@ export default function NutritionalProfilesScreen() {
             {({ pressed }) => (
               <IconGeneral
                 type="arrow-backward-ios"
-                fill={pressed ? "#FF3F3F" : "hsl(0 0%, 30%)"}
+                fill={pressed ? "#FF3F3F" : darkMode ? "#FFFFFF" : "hsl(0 0%, 30%)"}
               />
             )}
           </Pressable>
 
-          <Tt className="text-xl font-interBold">Nutritional Profiles</Tt>
+          <Tt className={`text-xl font-interBold ${darkMode ? "text-white" : "text-hsl20"}`}>
+            Nutritional Profiles
+          </Tt>
 
           <View style={{ width: 24, height: 24 }} />
         </View>
@@ -126,16 +130,22 @@ export default function NutritionalProfilesScreen() {
           {visibleProfiles.map((profile) => (
             <View
               key={profile.profileId}
-              className="mb-4 flex-row items-center px-4 py-4 rounded-lg border border-hsl90 bg-white"
+              className={`mb-4 flex-row items-center px-4 py-4 rounded-lg border ${
+                darkMode ? "border-hsl30 bg-hsl20" : "border-hsl90 bg-white"
+              }`}
               style={{
                 elevation: 2,
                 shadowColor: "#000",
                 shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.08,
+                shadowOpacity: darkMode ? 0 : 0.08,
                 shadowRadius: 3,
               }}
             >
-              <View className="w-12 h-12 rounded-full bg-hsl98 flex items-center justify-center border-2 border-hsl90">
+              <View
+                className={`w-12 h-12 rounded-full flex items-center justify-center border-2 ${
+                  darkMode ? "bg-hsl15 border-hsl30" : "bg-hsl98 border-hsl90"
+                }`}
+              >
                 {profile.avatarUrl ? (
                   <ProfileAvatar
                     uri={profile.avatarUrl}
@@ -149,14 +159,14 @@ export default function NutritionalProfilesScreen() {
                 ) : (
                   <IconGeneral
                     type="account"
-                    fill="hsl(0, 0%, 40%)"
+                    fill={darkMode ? "#FFFFFF" : "hsl(0, 0%, 40%)"}
                     size={24}
                   />
                 )}
               </View>
 
               <View className="flex-1 ml-4">
-                <Tt className="font-interBold text-base">
+                <Tt className={`font-interBold text-base ${darkMode ? "text-white" : "text-hsl20"}`}>
                   {profile.relationship === "Self" && firebaseUserName
                     ? firebaseUserName
                     : profile.firstName ||
@@ -168,7 +178,9 @@ export default function NutritionalProfilesScreen() {
                       )}
                 </Tt>
 
-                <Tt className="text-sm text-hsl30">{profile.relationship}</Tt>
+                <Tt className={`text-sm ${darkMode ? "text-hsl70" : "text-hsl30"}`}>
+                  {profile.relationship}
+                </Tt>
               </View>
 
               <Pressable
@@ -178,7 +190,7 @@ export default function NutritionalProfilesScreen() {
                 {({ pressed }) => (
                   <IconGeneral
                     type="edit"
-                    fill={pressed ? color.primary : color.iconDefault}
+                    fill={pressed ? color.primary : darkMode ? "#FFFFFF" : color.iconDefault}
                     size={spacing.lg}
                   />
                 )}
@@ -191,13 +203,15 @@ export default function NutritionalProfilesScreen() {
           <Pressable
             onPress={() => router.push("/(app)/demographics" as any)}
             hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
-            className="mt-4 flex-row justify-between items-center py-3 px-4 rounded-lg border border-hsl90 active:border-primary bg-white"
+            className={`mt-4 flex-row justify-between items-center py-3 px-4 rounded-lg border active:border-primary ${
+              darkMode ? "bg-hsl20 border-hsl30" : "bg-white border-hsl90"
+            }`}
           >
             {({ pressed }) => (
               <>
                 <Tt
                   className={`text-lg font-interSemiBold flex-grow ${
-                    pressed ? "text-primary" : "text-hsl30"
+                    pressed ? "text-primary" : darkMode ? "text-hsl90" : "text-hsl30"
                   }`}
                 >
                   Edit Demographics
@@ -205,7 +219,7 @@ export default function NutritionalProfilesScreen() {
 
                 <IconGeneral
                   type="edit"
-                  fill={pressed ? color.primary : color.iconDefault}
+                  fill={pressed ? color.primary : darkMode ? "#FFFFFF" : color.iconDefault}
                   size={spacing.xl}
                 />
               </>
@@ -217,13 +231,15 @@ export default function NutritionalProfilesScreen() {
           <Pressable
             onPress={handleAddMember}
             hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
-            className="mt-4 flex-row justify-between items-center py-3 px-4 rounded-lg border border-hsl90 active:border-primary bg-white"
+            className={`mt-4 flex-row justify-between items-center py-3 px-4 rounded-lg border active:border-primary ${
+              darkMode ? "bg-hsl20 border-hsl30" : "bg-white border-hsl90"
+            }`}
           >
             {({ pressed }) => (
               <>
                 <Tt
                   className={`text-lg font-interSemiBold flex-grow ${
-                    pressed ? "text-primary" : "text-hsl30"
+                    pressed ? "text-primary" : darkMode ? "text-hsl90" : "text-hsl30"
                   }`}
                 >
                   Add New Nutritional Profile
@@ -231,7 +247,7 @@ export default function NutritionalProfilesScreen() {
 
                 <IconGeneral
                   type="member-add"
-                  fill={pressed ? color.primary : color.iconDefault}
+                  fill={pressed ? color.primary : darkMode ? "#FFFFFF" : color.iconDefault}
                   size={spacing.xl}
                 />
               </>
@@ -243,7 +259,7 @@ export default function NutritionalProfilesScreen() {
           <Pressable
             onPress={() => router.push("/(app)/(tabs)" as any)}
             hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
-            className="mt-4 mb-16 py-3 px-4 rounded-lg border bg-primary border-hsl90 dark:border-hsl20 active:bg-transparent active:border-primary"
+            className="mt-4 mb-16 py-3 px-4 rounded-lg border bg-primary border-hsl90 active:bg-transparent active:border-primary"
           >
             {({ pressed }) => (
               <Tt
