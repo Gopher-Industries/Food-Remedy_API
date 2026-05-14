@@ -11,5 +11,6 @@ module.exports = {
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/$1',
         'expo-sqlite': '<rootDir>/__mocks__/expo-sqlite.js',
+        '^@/(.*)$': '<rootDir>/$1',
     },
 };
