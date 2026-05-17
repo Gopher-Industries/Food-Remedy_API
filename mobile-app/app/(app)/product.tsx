@@ -44,6 +44,14 @@ export default function ProductTabsScreen() {
     enabled: ttsEnabled && !loading && !error && !!currentProduct,
   });
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.replace("/(app)/(tabs)");
+    } else {
+      router.replace("/(app)/(tabs)"); 
+    }
+  };
+
   const productImageUri = useMemo(() => {
     if (!currentProduct) return null;
 
@@ -70,6 +78,7 @@ export default function ProductTabsScreen() {
             clean(item.imageUrl) ||
             clean(item.front) ||
             clean(item.primary);
+
           if (found) return found;
         }
       }
@@ -101,14 +110,21 @@ export default function ProductTabsScreen() {
   const shouldShowRemoteImage = !!productImageUri && !imageLoadFailed;
 
   const iconDefault = highContrast ? "#000000" : "hsl(0, 0%, 30%)";
+
   const pageBg = highContrast
     ? "bg-white dark:bg-hsl15"
     : "bg-hsl95 dark:bg-hsl10";
+
   const titleText = highContrast ? "text-black" : "text-hsl20";
-  const bodyText = highContrast ? "text-black" : "text-hsl30 dark:text-hsl90";
+
+  const bodyText = highContrast
+    ? "text-black"
+    : "text-hsl30 dark:text-hsl90";
+
   const primaryBtn = highContrast
     ? "bg-black border border-black"
     : "bg-primary";
+
   const primaryBtnText = "text-white";
 
   const renderTabContent = () => {
@@ -141,7 +157,7 @@ export default function ProductTabsScreen() {
       <View className="w-[95%] self-center mb-4">
         <View className="flex-row justify-between items-center">
           <Pressable
-            onPress={() => router.back()}
+            onPress={handleBack}
             className="flex-row justify-center items-center px-2 py-1"
           >
             {({ pressed }) => (
