@@ -257,7 +257,7 @@ export default function NutritionalProfilesScreen() {
 
         <View className="w-[95%] mx-auto">
           <Pressable
-            onPress={() => router.push("/(app)/(tabs)" as any)}
+            onPress={() => router.replace("/(app)/(tabs)" as any)}
             hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
             className="mt-4 mb-16 py-3 px-4 rounded-lg border bg-primary border-hsl90 active:bg-transparent active:border-primary"
           >

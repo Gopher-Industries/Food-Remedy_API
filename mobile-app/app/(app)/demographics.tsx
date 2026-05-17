@@ -130,7 +130,9 @@ const DemographicsForm = () => {
         if (profile) {
           if (profile.ageBand) setAgeBand(profile.ageBand);
           if (profile.sex) setSex(profile.sex);
-          if (profile.guardrailLevel) setGuardrailLevel(profile.guardrailLevel);
+          if (profile.guardrailLevel) {
+            setGuardrailLevel(profile.guardrailLevel);
+          }
         }
       } catch (err) {
         console.log("Could not fetch demographics:", err);
@@ -140,10 +142,10 @@ const DemographicsForm = () => {
     fetchDemographics();
   }, [user?.uid]);
 
-  const handleSave = async () => {
+  const saveDemographics = async () => {
     if (!ageBand || !sex || !guardrailLevel) {
       addNotification("Please fill in all fields.", "e");
-      return;
+      return false;
     }
 
     try {
@@ -167,18 +169,30 @@ const DemographicsForm = () => {
 
       await upsertUserProfile(user.uid, "demographics", demographicsData);
 
+      // This refreshes the profile provider so useProfileGate can become "ready"
       await refresh();
+
       addNotification("Demographics saved!", "s");
+      return true;
     } catch (err) {
       console.error(err);
       addNotification("Failed to save demographics.", "e");
+      return false;
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleNext = () => {
-    router.push("/(app)/nutritionalProfiles");
+  const handleSave = async () => {
+    await saveDemographics();
+  };
+
+  const handleNext = async () => {
+    const saved = await saveDemographics();
+
+    if (saved) {
+      router.replace("/(app)/nutritionalProfiles" as any);
+    }
   };
 
   return (
@@ -191,19 +205,29 @@ const DemographicsForm = () => {
       >
         <View className="w-[95%] mx-auto mt-4 mb-6 flex-row items-center justify-between">
           <Pressable
-            onPress={() => router.push("/(app)/nutritionalProfiles" as any)}
+            onPress={() => router.replace("/(app)/nutritionalProfiles" as any)}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             className="px-2 py-1"
           >
             {({ pressed }) => (
               <IconGeneral
                 type="arrow-backward-ios"
-                fill={pressed ? "#FF3F3F" : darkMode ? "#FFFFFF" : "hsl(0, 0%, 30%)"}
+                fill={
+                  pressed
+                    ? "#FF3F3F"
+                    : darkMode
+                    ? "#FFFFFF"
+                    : "hsl(0, 0%, 30%)"
+                }
               />
             )}
           </Pressable>
 
-          <Tt className={`text-xl font-interBold ${darkMode ? "text-white" : "text-hsl20"}`}>
+          <Tt
+            className={`text-xl font-interBold ${
+              darkMode ? "text-white" : "text-hsl20"
+            }`}
+          >
             Your Health Profile
           </Tt>
 
@@ -211,12 +235,20 @@ const DemographicsForm = () => {
         </View>
 
         <View className="w-[95%] mx-auto">
-          <Tt className={`text-sm font-interMedium mb-6 ${darkMode ? "text-hsl70" : "text-hsl50"}`}>
+          <Tt
+            className={`text-sm font-interMedium mb-6 ${
+              darkMode ? "text-hsl70" : "text-hsl50"
+            }`}
+          >
             Demographics shape reference portions and risk rules for
             recommendations.
           </Tt>
 
-          <Tt className={`text-base font-interBold mb-4 uppercase tracking-wide ${darkMode ? "text-hsl90" : "text-hsl25"}`}>
+          <Tt
+            className={`text-base font-interBold mb-4 uppercase tracking-wide ${
+              darkMode ? "text-hsl90" : "text-hsl25"
+            }`}
+          >
             Demographics (for personalisation)
           </Tt>
 
@@ -259,15 +291,16 @@ const DemographicsForm = () => {
                   pressed ? "text-primary" : "text-white"
                 }`}
               >
-                {submitting ? "Saving…" : "Save"}
+                {submitting ? "Saving..." : "Save"}
               </Tt>
             )}
           </Pressable>
 
           <Pressable
             onPress={handleNext}
+            disabled={submitting}
             hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
-            className={`mb-16 flex-row justify-between items-center py-3 px-4 rounded-lg border active:border-primary ${
+            className={`mb-16 flex-row justify-between items-center py-3 px-4 rounded-lg border active:border-primary disabled:opacity-60 ${
               darkMode ? "bg-hsl20 border-hsl30" : "bg-white border-hsl90"
             }`}
           >
@@ -275,7 +308,11 @@ const DemographicsForm = () => {
               <>
                 <Tt
                   className={`text-lg font-interSemiBold flex-grow ${
-                    pressed ? "text-primary" : darkMode ? "text-hsl90" : "text-hsl30"
+                    pressed
+                      ? "text-primary"
+                      : darkMode
+                      ? "text-hsl90"
+                      : "text-hsl30"
                   }`}
                 >
                   Next
@@ -283,7 +320,13 @@ const DemographicsForm = () => {
 
                 <IconGeneral
                   type="arrow-forward-ios"
-                  fill={pressed ? color.primary : darkMode ? "#FFFFFF" : color.iconDefault}
+                  fill={
+                    pressed
+                      ? color.primary
+                      : darkMode
+                      ? "#FFFFFF"
+                      : color.iconDefault
+                  }
                   size={spacing.xl}
                 />
               </>
