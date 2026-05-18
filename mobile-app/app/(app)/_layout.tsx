@@ -28,12 +28,7 @@ export default function AppLayout() {
   //   return <Redirect href="/demographics" />;
   // }
 
-  if (
-    gate === "ready" &&
-    (pathname === "/onboarding" ||
-      pathname === "/demographics" ||
-      pathname === "/nutritionalProfiles")
-  ) {
+  if (gate === "ready" && pathname === "/onboarding") {
     return <Redirect href="/(app)/(tabs)" />;
   }
 

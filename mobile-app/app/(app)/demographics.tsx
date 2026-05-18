@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { ScrollView, View, Pressable } from "react-native";
 import Tt from "@/components/ui/UIText";
 import { router } from "expo-router";
@@ -6,6 +6,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useNotification } from "@/components/providers/NotificationProvider";
 import { useProfile } from "@/components/providers/ProfileProvider";
 import { usePreferences } from "@/components/providers/PreferencesProvider";
+import { useSQLiteDatabase } from "@/components/providers/SQLiteDatabaseProvider";
 import IconGeneral from "@/components/icons/IconGeneral";
 import Header from "@/components/layout/Header";
 import { color, spacing } from "@/app/design/token";
@@ -110,6 +111,7 @@ const DemographicsForm = () => {
   const { addNotification } = useNotification();
   const { refresh } = useProfile();
   const { darkMode } = usePreferences();
+  const { db } = useSQLiteDatabase();
 
   const [ageBand, setAgeBand] = useState<string>("36-50");
   const [sex, setSex] = useState<string>("female");
@@ -159,7 +161,7 @@ const DemographicsForm = () => {
         "@/services/database/user/profiles"
       );
 
-      const demographicsData: any = {
+      const profileData: any = {
         userId: user.uid,
         profileId: "demographics",
         ageBand,
@@ -167,7 +169,15 @@ const DemographicsForm = () => {
         guardrailLevel,
       };
 
-      await upsertUserProfile(user.uid, "demographics", demographicsData);
+      await upsertUserProfile(user.uid, "demographics", profileData);
+
+      // Mirror to SQLite so ForYouTab can read demographic fields offline
+      if (db) {
+        const { upsertDemographicsProfile } = await import(
+          "@/services/sqlDatabase/profiles.dao"
+        );
+        await upsertDemographicsProfile(db, user.uid, { ageBand, sex, guardrailLevel });
+      }
 
       // This refreshes the profile provider so useProfileGate can become "ready"
       await refresh();
