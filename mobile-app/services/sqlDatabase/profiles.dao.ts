@@ -25,6 +25,9 @@ function rowToProfile(r: any): NutritionalProfile {
     allergies: parseArr(r.allergies_json),
     intolerances: parseArr(r.intolerances_json),
     dietaryForm: parseArr(r.dietary_form_json),
+    ...(r.age_band != null && { ageBand: r.age_band }),
+    ...(r.sex != null && { sex: r.sex }),
+    ...(r.guardrail_level != null && { guardrailLevel: r.guardrail_level }),
   };
 }
 
@@ -40,12 +43,14 @@ export async function createProfile(
     `INSERT INTO profiles (
       profile_id, user_id, first_name, last_name, status, relationship, age, avatar_url,
       additives_json, allergies_json, intolerances_json, dietary_form_json,
+      age_band, sex, guardrail_level,
       created_at, updated_at
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       profileId, input.userId, input.firstName, input.lastName, input.status ? 1 : 0,
       input.relationship, input.age, input.avatarUrl,
       J(input.additives), J(input.allergies), J(input.intolerances), J(input.dietaryForm),
+      input.ageBand ?? null, input.sex ?? null, input.guardrailLevel ?? null,
       ts, ts
     ]
   );
@@ -65,8 +70,9 @@ export async function upsertProfile(
     `INSERT INTO profiles (
       profile_id, user_id, first_name, last_name, status, relationship, age, avatar_url,
       additives_json, allergies_json, intolerances_json, dietary_form_json,
+      age_band, sex, guardrail_level,
       created_at, updated_at
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     ON CONFLICT(profile_id) DO UPDATE SET
       user_id=excluded.user_id,
       first_name=excluded.first_name,
@@ -79,13 +85,40 @@ export async function upsertProfile(
       allergies_json=excluded.allergies_json,
       intolerances_json=excluded.intolerances_json,
       dietary_form_json=excluded.dietary_form_json,
+      age_band=excluded.age_band,
+      sex=excluded.sex,
+      guardrail_level=excluded.guardrail_level,
       updated_at=excluded.updated_at`,
     [
       profile.profileId, profile.userId, profile.firstName, profile.lastName, profile.status ? 1 : 0,
       profile.relationship, profile.age, profile.avatarUrl,
       J(profile.additives), J(profile.allergies), J(profile.intolerances), J(profile.dietaryForm),
+      profile.ageBand ?? null, profile.sex ?? null, profile.guardrailLevel ?? null,
       ts, ts
     ]
+  );
+}
+
+/** Upsert only demographic fields (ageBand, sex, guardrailLevel) for the demographics profile. */
+export async function upsertDemographicsProfile(
+  db: SQLiteDatabase,
+  userId: string,
+  data: { ageBand: string; sex: string; guardrailLevel: string }
+): Promise<void> {
+  const ts = nowIso();
+  await db.runAsync(
+    `INSERT INTO profiles (
+      profile_id, user_id, first_name, last_name, status, relationship, age, avatar_url,
+      additives_json, allergies_json, intolerances_json, dietary_form_json,
+      age_band, sex, guardrail_level,
+      created_at, updated_at
+    ) VALUES ('demographics',?,?,?,1,'demographics',0,'','[]','[]','[]','[]',?,?,?,?,?)
+    ON CONFLICT(profile_id) DO UPDATE SET
+      age_band=excluded.age_band,
+      sex=excluded.sex,
+      guardrail_level=excluded.guardrail_level,
+      updated_at=excluded.updated_at`,
+    [userId, 'user', '(demographics)', data.ageBand, data.sex, data.guardrailLevel, ts, ts]
   );
 }
 

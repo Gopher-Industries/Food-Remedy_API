@@ -1,6 +1,5 @@
 import React, { useMemo } from "react";
 import { View } from "react-native";
-
 import Tt from "@/components/ui/UIText";
 import ProductCompareSection, {
   ProductData,
@@ -37,16 +36,25 @@ function normalizeArray(value: any): string[] {
   return [];
 }
 
-function buildUserProfile(activeProfile: any, profiles: any[]): UserDemographics {
+function buildUserProfile(
+  activeProfile: any,
+  profiles: any[]
+): UserDemographics {
   const visibleProfiles = profiles.filter((profile) => {
     const profileId = String(profile.profileId || "").toLowerCase().trim();
     const relationship = String(profile.relationship || "").toLowerCase().trim();
-
     return profileId !== "demographics" && relationship !== "demographics";
   });
 
+  const demographicsProfile = profiles?.find(
+    (p: any) => p.profileId === "demographics"
+  );
+
   const selectedProfile =
-    activeProfile || (visibleProfiles.length > 0 ? visibleProfiles[0] : null);
+    activeProfile ||
+    (visibleProfiles.length > 0 ? visibleProfiles[0] : null) ||
+    demographicsProfile ||
+    null;
 
   if (!selectedProfile) {
     return {
@@ -58,19 +66,6 @@ function buildUserProfile(activeProfile: any, profiles: any[]): UserDemographics
     };
   }
 
-  const age =
-    Number(selectedProfile.age) ||
-    Number(selectedProfile.ageYears) ||
-    Number(selectedProfile.userAge) ||
-    0;
-
-  let ageGroup = "Not available";
-
-  if (age > 0 && age <= 18) ageGroup = "0–18";
-  else if (age <= 35) ageGroup = "19–35";
-  else if (age <= 50) ageGroup = "36–50";
-  else if (age > 50) ageGroup = "50+";
-
   const gender =
     String(
       selectedProfile.gender ??
@@ -79,11 +74,27 @@ function buildUserProfile(activeProfile: any, profiles: any[]): UserDemographics
         "Not available"
     ).trim() || "Not available";
 
+  let ageGroup = "Not available";
+  if (selectedProfile.ageBand) {
+    ageGroup = selectedProfile.ageBand;
+  } else {
+    const age =
+      Number(selectedProfile.age) ||
+      Number(selectedProfile.ageYears) ||
+      Number(selectedProfile.userAge) ||
+      0;
+    if (age > 0 && age <= 18) ageGroup = "0–18";
+    else if (age <= 35) ageGroup = "19–35";
+    else if (age <= 50) ageGroup = "36–50";
+    else if (age > 50) ageGroup = "50+";
+  }
+
   const activityLevel =
     String(
       selectedProfile.activityLevel ??
         selectedProfile.activity ??
         selectedProfile.exerciseLevel ??
+        selectedProfile.guardrailLevel ??
         "Not available"
     ).trim() || "Not available";
 
@@ -201,9 +212,7 @@ export default function CompareTab({ product }: Props) {
     <View className={`mt-6 mb-8 ${darkMode ? "bg-hsl15" : "bg-white"}`}>
       <View
         className={`mb-4 rounded-xl border p-4 ${
-          darkMode
-            ? "border-hsl30 bg-hsl20"
-            : "border-gray-200 bg-white"
+          darkMode ? "border-hsl30 bg-hsl20" : "border-gray-200 bg-white"
         }`}
       >
         <Tt
