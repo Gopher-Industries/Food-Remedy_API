@@ -51,6 +51,9 @@ Each stage emits a **contracted dataset** with clear guarantees so downstream te
 5. **Serving** – Mobile caches respect TTLs; when offline, UI shows last-known risk badges with a “verify when online” toast.
 
 ## 8. Known Limitations & Assumptions
+
+> **T1 2026 (DB038):** Demo/QA-oriented gap list with measured 5k sample stats and tag/score impact: [DB038-Source-Data-Gaps-And-Limitations.md](../2026%20Trimester%201/DB038-Source-Data-Gaps-And-Limitations.md).
+
 - **OFF data lag** – Packaging changes may trail reality; we rely on users to flag mismatches until we ingest crowd-sourced corrections.
 - **Sparse ingredients** – Products lacking `ingredients_text` cannot produce certain tags (e.g., low-GI). The pipeline intentionally withholds badges rather than guessing.
 - **Australian focus** – Filters drop non-AU items, so travelling users may encounter missing barcodes. Future versions could fall back to global categories.
