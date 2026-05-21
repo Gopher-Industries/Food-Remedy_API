@@ -1,0 +1,59 @@
+{
+  "barcode": "09300633391645",
+  "productName": "vegetable oil",
+  "brand": "Woolworths",
+  "genericName": "",
+  "additives": [],
+  "allergens": [],
+  "ingredients": [
+    "vegetable-oil-y"
+  ],
+  "ingredientsText": "vegetable oil ****y*** ....",
+  "category": "fats",
+  "categories": [
+    "fats",
+    "plant-based-foods",
+    "plant-based-foods-and-beverages",
+    "vegetable-fats",
+    "vegetable-oils"
+  ],
+  "labels": [
+    "health-star-rating",
+    "health-star-rating-4-5"
+  ],
+  "nutrientLevels": {},
+  "nutriments": {},
+  "nutriments_normalized": {
+    "energy_kj": null,
+    "energy_kcal": null,
+    "fat_g": null,
+    "saturated_fat_g": null,
+    "carbohydrates_g": null,
+    "sugars_g": null,
+    "proteins_g": null,
+    "salt_g": null,
+    "sodium_mg": null,
+    "fiber_g": null
+  },
+  "nutriscoreGrade": "unknown",
+  "productQuantity": 750.0,
+  "productQuantityUnit": "ml",
+  "servingQuantity": 0.0,
+  "servingQuantityUnit": "g",
+  "traces": "",
+  "completeness": 0.5625,
+  "images": {
+    "root": "https://images.openfoodfacts.org/images/products/930/063/339/1645",
+    "primary": null,
+    "variants": {
+      "ingredients_en": 4
+    }
+  },
+  "tags": {
+    "final": [],
+    "removed": []
+  },
+  "metadata": {
+    "source": "local-enriched"
+  }
+}

@@ -92,6 +92,7 @@ The handover also listed follow-up work: final automation reliability, more conf
 | Clean stage | `database/pipeline/stages/clean_stage.py` |
 | Enrich stage | `database/pipeline/stages/enrich_stage.py` |
 | Map enriched record to API shape | `mapping/map_enriched_to_product_detail.py` |
+| Product Detail API lock (v1.0.0) | `Documents/Database/2026 Trimester 1/DB037-API-LOCK.md`, `contracts/product_detail_v1.schema.json` |
 | Seeding | `database/seeding/seed_engine.py` |
 | Captcha configuration | `mobile-app/config/captchaConfig.ts` |
 

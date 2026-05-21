@@ -1,6 +1,7 @@
-"""DB034 - Product Detail Contract Alignment.
+"""DB034 / DB037 - Product Detail contract validation.
 
-Validates that enriched product documents, once mapped, match ProductDetail V1.
+Validates that enriched product documents, once mapped, match ProductDetail v1.0.0.
+Canonical schema: contracts/product_detail_v1.schema.json (see DB037-API-LOCK.md).
 """
 
 from __future__ import annotations
