@@ -26,19 +26,17 @@ fake_pd = types.SimpleNamespace()
 fake_pd.DataFrame = lambda *a, **k: None
 sys.modules.setdefault('pandas', fake_pd)
 
+from mapping.contract_paths import CANONICAL_CONTRACT_PATH
 from mapping.map_enriched_to_product_detail import map_enriched_to_product_detail
 from mapping.validate_product_contract import validate_product
 
 
 repo_root = os.path.dirname(os.path.dirname(__file__))
-CONTRACT_PATH = os.path.join(repo_root, 'contracts', 'product_detail_v1.schema.json')
-if not os.path.exists(CONTRACT_PATH):
-    # fallback to api/contracts/product_v1.json if canonical contracts/ missing
-    CONTRACT_PATH = os.path.join(repo_root, 'api', 'contracts', 'product_v1.json')
+CONTRACT_PATH = str(CANONICAL_CONTRACT_PATH)
 
 
 def _load_contract() -> Dict[str, Any]:
-    with open(CONTRACT_PATH, 'r', encoding='utf-8') as fh:
+    with open(CONTRACT_PATH, encoding='utf-8') as fh:
         return json.load(fh)
 
 

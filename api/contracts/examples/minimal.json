@@ -1,0 +1,66 @@
+{
+  "barcode": "01234567890123",
+  "productName": "Test Product",
+  "brand": "Test Brand",
+  "genericName": null,
+  "additives": [
+    "e202"
+  ],
+  "allergens": [
+    "Milk"
+  ],
+  "ingredients": [
+    "sugar",
+    "milk"
+  ],
+  "ingredientsText": "Sugar, Milk",
+  "category": "Snacks",
+  "categories": [
+    "Snacks"
+  ],
+  "labels": [
+    "organic"
+  ],
+  "nutrientLevels": {
+    "fat": "low"
+  },
+  "nutriments": {
+    "energy-kcal_100g": 250,
+    "proteins_100g": 5
+  },
+  "nutriments_normalized": {
+    "energy_kj": 1046.0,
+    "energy_kcal": 250.0,
+    "fat_g": null,
+    "saturated_fat_g": null,
+    "carbohydrates_g": null,
+    "sugars_g": null,
+    "proteins_g": 5.0,
+    "salt_g": null,
+    "sodium_mg": null,
+    "fiber_g": null
+  },
+  "nutriscoreGrade": "b",
+  "productQuantity": 100,
+  "productQuantityUnit": "g",
+  "servingQuantity": 30,
+  "servingQuantityUnit": "g",
+  "traces": null,
+  "completeness": 0.8,
+  "images": {
+    "root": "https://images.openfoodfacts.org/images/products/123",
+    "primary": "front_en",
+    "variants": {
+      "front_en": 1
+    }
+  },
+  "tags": {
+    "final": [
+      "vegan"
+    ],
+    "removed": []
+  },
+  "metadata": {
+    "source": "local-enriched"
+  }
+}
