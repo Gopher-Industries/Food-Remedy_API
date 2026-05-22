@@ -3,22 +3,33 @@
 import { Pressable, View, Switch } from "react-native";
 import { useState } from "react";
 import { router } from "expo-router";
+
 import Header from "@/components/layout/Header";
 import Screen from "@/components/layout/Screen";
 import IconGeneral from "@/components/icons/IconGeneral";
 import Tt from "@/components/ui/UIText";
+
 import { color } from "@/app/design/token";
+import { usePreferences } from "@/components/providers/PreferencesProvider";
 
 export default function NotificationSettingsPage() {
   const [mealReminder, setMealReminder] = useState(true);
   const [healthTips, setHealthTips] = useState(true);
   const [communityMessages, setCommunityMessages] = useState(false);
 
+  // DARK MODE STATE
+  const { darkMode } = usePreferences();
+
   return (
-    <Screen className="p-safe">
+    <Screen
+      className={`p-safe ${
+        darkMode ? "bg-hsl15" : "bg-white"
+      }`}
+    >
       <Header />
 
       <View className="w-[95%] mx-auto">
+        {/* Header */}
         <View className="flex-row items-center justify-between mb-4">
           <Pressable
             onPress={() => router.back()}
@@ -31,43 +42,99 @@ export default function NotificationSettingsPage() {
               />
             )}
           </Pressable>
-          <Tt className="font-interBold text-xl">Notification Settings</Tt>
+
+          <Tt
+            className={`font-interBold text-xl ${
+              darkMode ? "text-white" : "text-black"
+            }`}
+          >
+            Notification Settings
+          </Tt>
+
           <View style={{ width: 24, height: 24 }} />
         </View>
 
-        {/* Notification Preferences Card */}
-        <View className="mt-8 bg-white rounded-lg border border-hsl90 p-4 shadow-md" style={{ elevation: 3, shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}>
-          
+        {/* Notification Card */}
+        <View
+          className={`mt-8 rounded-lg border p-4 shadow-md ${
+            darkMode
+              ? "bg-hsl20 border-hsl30"
+              : "bg-white border-hsl90"
+          }`}
+          style={{
+            elevation: 3,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+          }}
+        >
           {/* Meal Reminder */}
-          <View className="flex-row items-center justify-between mb-4 border-hsl90">
-            <Tt className="font-interBold">Meal Reminder</Tt>
+          <View className="flex-row items-center justify-between mb-4">
+            <Tt
+              className={`font-interBold ${
+                darkMode ? "text-white" : "text-black"
+              }`}
+            >
+              Meal Reminder
+            </Tt>
+
             <Switch
               value={mealReminder}
               onValueChange={setMealReminder}
-              trackColor={{ false: "hsl(0, 0%, 80%)", true: color.primary }}
-              thumbColor={mealReminder ? "white" : "hsl(0, 0%, 60%)"}
+              trackColor={{
+                false: darkMode
+                  ? "hsl(0, 0%, 30%)"
+                  : "hsl(0, 0%, 80%)",
+                true: color.primary,
+              }}
+              thumbColor={mealReminder ? "#fff" : "#d1d5db"}
             />
           </View>
 
-          {/* Health Tips & Recipes */}
-          <View className="flex-row items-center justify-between mb-4 border-hsl90">
-            <Tt className="font-interBold">Health Tips & Recipes</Tt>
+          {/* Health Tips */}
+          <View className="flex-row items-center justify-between mb-4">
+            <Tt
+              className={`font-interBold ${
+                darkMode ? "text-white" : "text-black"
+              }`}
+            >
+              Health Tips & Recipes
+            </Tt>
+
             <Switch
               value={healthTips}
               onValueChange={setHealthTips}
-              trackColor={{ false: "hsl(0, 0%, 80%)", true: color.primary }}
-              thumbColor={healthTips ? "white" : "hsl(0, 0%, 60%)"}
+              trackColor={{
+                false: darkMode
+                  ? "hsl(0, 0%, 30%)"
+                  : "hsl(0, 0%, 80%)",
+                true: color.primary,
+              }}
+              thumbColor={healthTips ? "#fff" : "#d1d5db"}
             />
           </View>
 
           {/* Community Messages */}
           <View className="flex-row items-center justify-between">
-            <Tt className="font-interBold">Community Messages</Tt>
+            <Tt
+              className={`font-interBold ${
+                darkMode ? "text-white" : "text-black"
+              }`}
+            >
+              Community Messages
+            </Tt>
+
             <Switch
               value={communityMessages}
               onValueChange={setCommunityMessages}
-              trackColor={{ false: "hsl(0, 0%, 80%)", true: color.primary }}
-              thumbColor={communityMessages ? "white" : "hsl(0, 0%, 60%)"}
+              trackColor={{
+                false: darkMode
+                  ? "hsl(0, 0%, 30%)"
+                  : "hsl(0, 0%, 80%)",
+                true: color.primary,
+              }}
+              thumbColor={communityMessages ? "#fff" : "#d1d5db"}
             />
           </View>
         </View>
