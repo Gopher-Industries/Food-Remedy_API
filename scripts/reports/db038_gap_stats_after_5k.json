@@ -1,0 +1,41 @@
+{
+  "ticket": "DB038",
+  "source": "database\\seeding\\products_5k_enriched_db032_remediated.json",
+  "total_records": 5000,
+  "missing_field_counts": {
+    "brand": 0,
+    "categories": 0,
+    "standardCategory": 0,
+    "nutriments": 0,
+    "productName": 0,
+    "ingredientsText": 4627
+  },
+  "missing_field_percent": {
+    "brand": 0.0,
+    "categories": 0.0,
+    "standardCategory": 0.0,
+    "nutriments": 0.0,
+    "productName": 0.0,
+    "ingredientsText": 92.54
+  },
+  "standard_category_distribution": {
+    "other": 4651,
+    "beverages": 203,
+    "snacks and confectionery": 72,
+    "breads": 20,
+    "spreads": 17,
+    "seafood": 13,
+    "noodles and pasta": 13,
+    "oils": 11
+  },
+  "health_score_gaps": {
+    "insufficient_nutrients_for_score_lt3": 1278,
+    "insufficient_nutrients_percent": 25.56,
+    "null_composite_score": 0,
+    "null_composite_percent": 0.0,
+    "provisional_only_no_composite": 0,
+    "provisional_only_percent": 0.0,
+    "min_nutrients_rule": 3
+  },
+  "doc": "Documents/Database/2026 Trimester 1/DB038-Source-Data-Gaps-And-Limitations.md"
+}

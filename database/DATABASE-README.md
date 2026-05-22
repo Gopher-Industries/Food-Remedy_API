@@ -1,7 +1,8 @@
 # 🧠 Food Remedy Database Documentation
-> **DB015 Documentation:** For full schema, data flow, cart/recommendation dependencies and deployment checklist, see [`Documents/Database/2026 Trimester 1/DB015-Schema-DataFlow-Documentation.md`](Documents/Database/2026 Trimester 1/DB015-Schema-DataFlow-Documentation.md)
+> **DB015 Documentation:** For full schema, data flow, cart/recommendation dependencies and deployment checklist, see [`Documents/Database/2026 Trimester 1/DB015-Schema-DataFlow-Documentation.md`](Documents/Database/2026 Trimester 1/DB015-Schema-DataFlow-Documentation.md)  
+> **DB038 Documentation:** For known source-data gaps and how they affect tags/scores in demos and QA, see [`Documents/Database/2026 Trimester 1/DB038-Source-Data-Gaps-And-Limitations.md`](../Documents/Database/2026%20Trimester%201/DB038-Source-Data-Gaps-And-Limitations.md)
 
-This document is the **single place** for how the **database/** folder is organised, how data is processed (scrape → clean → enrich → seed), and where to find scripts and docs. No functionality is changed here—only documentation.
+This document is the **single place** for how the **database/** folder is organised, how data is processed (scrape → clean → enrich → seed), and where to find scripts and docs. No functionality is changed here-only documentation.
 
 📄 **Future docs:** Save new database documentation in `Documents/Database/[Year-Trimester]`.
 
@@ -91,14 +92,14 @@ The **pipeline/** folder runs clean → enrich → seed in one go using `pipelin
 
 Prepares scraped data for ingestion: standardises, deduplicates, renames, and structures.
 
-1. **Load & deduplicate** — Remove duplicate product entries by barcode.
-2. **Text & field normalisation** — Clean names, brands, valid barcodes.
-3. **Numeric standardisation** — Consistent units (e.g. grams).
-4. **Nutrient filtering** — Keep energy, fats, carbs, protein, salt/sodium, etc.
-5. **Tag cleaning** — Remove language prefixes (e.g. `en:`) from tags.
-6. **Image handling** — Generate image URLs from barcodes.
-7. **Schema refinement** — Drop unwanted columns, rename `code` → `barcode`, `brands` → `brand`, camelCase.
-8. **Save** — Export cleaned JSON for Firestore/pipeline.
+1. **Load & deduplicate** - Remove duplicate product entries by barcode.
+2. **Text & field normalisation** - Clean names, brands, valid barcodes.
+3. **Numeric standardisation** - Consistent units (e.g. grams).
+4. **Nutrient filtering** - Keep energy, fats, carbs, protein, salt/sodium, etc.
+5. **Tag cleaning** - Remove language prefixes (e.g. `en:`) from tags.
+6. **Image handling** - Generate image URLs from barcodes.
+7. **Schema refinement** - Drop unwanted columns, rename `code` → `barcode`, `brands` → `brand`, camelCase.
+8. **Save** - Export cleaned JSON for Firestore/pipeline.
 
 **Note:** `clean_data/` is the **only** cleaning folder. All cleaning scripts and examples live there.
 
@@ -116,10 +117,10 @@ Used for exploratory analysis and validation: test cleaning, compare raw vs clea
 
 **File:** `database/seeding/seed_firestore.py` (and `seed_engine.py`, `seed_products.py`)
 
-1. **Initialise Firebase** — Use `serviceAccountKey.json`.
-2. **Load cleaned data** — e.g. `products_XXk_XXk.json` (chunk range in filename).
-3. **Batch upload** — Writes in chunks of 500, with retries and timestamps (`dateAdded`, `lastUpdated`).
-4. **Store** — Products in Firestore `products` collection (default), keyed by barcode.
+1. **Initialise Firebase** - Use `serviceAccountKey.json`.
+2. **Load cleaned data** - e.g. `products_XXk_XXk.json` (chunk range in filename).
+3. **Batch upload** - Writes in chunks of 500, with retries and timestamps (`dateAdded`, `lastUpdated`).
+4. **Store** - Products in Firestore `products` collection (default), keyed by barcode.
 
 DB012 workflow:
 
@@ -136,10 +137,10 @@ End-to-end flow:
 
 **Scraping → Cleaning → Enrichment → Seeding**
 
-1. **Scrape** — Collect Australian food product data.
-2. **Clean** — Process and standardise (consistent schema).
-3. **Enrich** — Add tags, scores, categories (pipeline modules).
-4. **Seed** — Upload to Firestore.
+1. **Scrape** - Collect Australian food product data.
+2. **Clean** - Process and standardise (consistent schema).
+3. **Enrich** - Add tags, scores, categories (pipeline modules).
+4. **Seed** - Upload to Firestore.
 
 Optional **Investigation** (e.g. `data_investigation/`) validates quality and accuracy outside the main pipeline. Run the full flow via `pipeline/run_pipeline.py` and `pipeline/pipeline.config.json`.
 
@@ -149,7 +150,7 @@ Optional **Investigation** (e.g. `data_investigation/`) validates quality and ac
 
 | File | Purpose |
 |------|--------|
-| `DATABASE-README.md` | This file — structure, process, and quick reference. |
+| `DATABASE-README.md` | This file - structure, process, and quick reference. |
 | `DB006_sample1.py` | Sample script for DB006 (QA). |
 | `DB007-missing-values.md` | Notes on missing values (DB007). |
 | `pipeline_checkpoints.json`, `pipeline_run_metadata.json` | Pipeline state and metadata (used by `run_pipeline.py`). |
@@ -175,4 +176,4 @@ Optional **Investigation** (e.g. `data_investigation/`) validates quality and ac
 
 **Summary:** One cleaning folder (`clean_data/`). One doc (this file). Flow: Scraping → Clean → Enrich → Seed. New team members can use this README to find scraping scripts, cleaning scripts, enrichment (pipeline), seeding scripts, and QA/Reports.
 
-**Trimester 2026 T1 — full local workflow (mobile app, captcha, env vars):** [`Documents/Guides/General/t1-2026-workflow-and-local-development.md`](../Documents/Guides/General/t1-2026-workflow-and-local-development.md)
+**Trimester 2026 T1 - full local workflow (mobile app, captcha, env vars):** [`Documents/Guides/General/t1-2026-workflow-and-local-development.md`](../Documents/Guides/General/t1-2026-workflow-and-local-development.md)

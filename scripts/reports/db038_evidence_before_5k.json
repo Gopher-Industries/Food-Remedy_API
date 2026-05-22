@@ -1,0 +1,678 @@
+{
+  "ticket": "DB032",
+  "source": "database\\seeding\\products_5k_enriched.json",
+  "total_records": 5000,
+  "seed": 32,
+  "sample_size": 200,
+  "ok": true,
+  "checks": {
+    "batch_validation": {
+      "source": "database\\seeding\\products_5k_enriched.json",
+      "total_records": 5000,
+      "ok": true,
+      "checks": {
+        "missing_product_fields": {
+          "ok": true,
+          "issue_count": 2247,
+          "field_counts": {
+            "brand": 1085,
+            "nutriments": 1162
+          },
+          "issues": [
+            {
+              "index": 0,
+              "barcode": "9337951006005",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 3,
+              "barcode": "9310012059431",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 8,
+              "barcode": "9337536000206",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 10,
+              "barcode": "2000031938196",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 10,
+              "barcode": "2000031938196",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 12,
+              "barcode": "9350002000173",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 14,
+              "barcode": "9326819001016",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 15,
+              "barcode": "9339929001586",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 16,
+              "barcode": "9317320100329",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 18,
+              "barcode": "3517372787714",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 20,
+              "barcode": "9354792003116",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 22,
+              "barcode": "9312529001484",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 24,
+              "barcode": "0475941080303",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 24,
+              "barcode": "0475941080303",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 31,
+              "barcode": "123456789101112",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 36,
+              "barcode": "0300357301189",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 36,
+              "barcode": "0300357301189",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 39,
+              "barcode": "0736697140018",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 46,
+              "barcode": "0202064203766",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 47,
+              "barcode": "0314152009034",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 48,
+              "barcode": "4088700046906",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 51,
+              "barcode": "9352864001015",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 52,
+              "barcode": "9349266000289",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 53,
+              "barcode": "9314441715715",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 54,
+              "barcode": "0340401715692",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 55,
+              "barcode": "9300639617824",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 56,
+              "barcode": "9314441712530",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 59,
+              "barcode": "0350957020003",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 59,
+              "barcode": "0350957020003",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 60,
+              "barcode": "9314957040745",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 61,
+              "barcode": "9314957120003",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 64,
+              "barcode": "9314957040158",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 65,
+              "barcode": "9314957040707",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 66,
+              "barcode": "9314957040127",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 67,
+              "barcode": "9314957040103",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 68,
+              "barcode": "9314957040219",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 69,
+              "barcode": "9314957075044",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 71,
+              "barcode": "9314951572341",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 72,
+              "barcode": "9314957040134",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 73,
+              "barcode": "9314957209142",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 74,
+              "barcode": "9314957040684",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 75,
+              "barcode": "5060011706884",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 76,
+              "barcode": "5060011706877",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 77,
+              "barcode": "5060011706860",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 78,
+              "barcode": "9310134220177",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 79,
+              "barcode": "9316389780527",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 80,
+              "barcode": "0075502000513",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 81,
+              "barcode": "9314957513843",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 83,
+              "barcode": "9316389196502",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 87,
+              "barcode": "9314441009562",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 88,
+              "barcode": "9314441300560",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 89,
+              "barcode": "9336946006716",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 90,
+              "barcode": "793144417118850103601",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 92,
+              "barcode": "9316695003808",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 93,
+              "barcode": "9333668001203",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 94,
+              "barcode": "9316112005606",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 98,
+              "barcode": "9321325002175",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 100,
+              "barcode": "9321325002168",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 101,
+              "barcode": "0735006003556",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 102,
+              "barcode": "9325163004711",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 103,
+              "barcode": "9325163001703",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 104,
+              "barcode": "9325163001680",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 105,
+              "barcode": "9325163001697",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 106,
+              "barcode": "9325163001635",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 107,
+              "barcode": "793251630047590107102",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 108,
+              "barcode": "9310232957876",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 109,
+              "barcode": "9325163004728",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 110,
+              "barcode": "9325163001611",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 111,
+              "barcode": "9325163001659",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 112,
+              "barcode": "9325163001642",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 113,
+              "barcode": "9325163004704",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 114,
+              "barcode": "9314441706539",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 115,
+              "barcode": "0399406244461",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 116,
+              "barcode": "9329427044062",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 117,
+              "barcode": "9332843003223",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 118,
+              "barcode": "9310560015651",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 119,
+              "barcode": "8710912058335",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 120,
+              "barcode": "8713734001404",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 125,
+              "barcode": "9357636000005",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 127,
+              "barcode": "9322214007387",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 127,
+              "barcode": "9322214007387",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 128,
+              "barcode": "9310645309286",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 128,
+              "barcode": "9310645309286",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 132,
+              "barcode": "9336864001398",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 137,
+              "barcode": "9300639617718",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 138,
+              "barcode": "9300639617725",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 139,
+              "barcode": "9314441707918",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 139,
+              "barcode": "9314441707918",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 140,
+              "barcode": "9332703000287",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 140,
+              "barcode": "9332703000287",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 142,
+              "barcode": "9332703000300",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 143,
+              "barcode": "9312182000442",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 146,
+              "barcode": "8713734320413",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 146,
+              "barcode": "8713734320413",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 147,
+              "barcode": "9312182000459",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 152,
+              "barcode": "9390410226864",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 153,
+              "barcode": "9312182000411",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 154,
+              "barcode": "9316389000441",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 154,
+              "barcode": "9316389000441",
+              "field": "nutriments",
+              "message": "recommended integration field is missing or empty"
+            },
+            {
+              "index": 155,
+              "barcode": "9322666002169",
+              "field": "brand",
+              "message": "recommended integration field is missing or empty"
+            }
+          ]
+        },
+        "category_validation": {
+          "ok": true,
+          "issue_count": 0,
+          "standard_category_counts": {
+            "other": 4687,
+            "beverages": 186,
+            "snacks and confectionery": 76,
+            "meal kits": 31,
+            "seafood": 12,
+            "breads": 4,
+            "spreads": 2,
+            "oils": 2
+          },
+          "unknown_standard_categories": {},
+          "issues": []
+        },
+        "inconsistency_detection": {
+          "ok": true,
+          "issue_count": 0,
+          "field_counts": {},
+          "duplicate_barcodes": {},
+          "issues": []
+        }
+      }
+    },
+    "integration_validation": {
+      "barcode_lookup": {
+        "ok": true,
+        "sampled_barcodes": 200,
+        "index_size": 5000,
+        "issues": []
+      },
+      "category_queries": {
+        "ok": true,
+        "categories_checked": 8,
+        "top_categories": [
+          "other",
+          "beverages",
+          "snacks and confectionery",
+          "meal kits",
+          "seafood",
+          "breads",
+          "spreads",
+          "oils"
+        ],
+        "issues": []
+      },
+      "recommendation_candidates": {
+        "ok": true,
+        "products_checked": 200,
+        "issues": []
+      }
+    }
+  }
+}
