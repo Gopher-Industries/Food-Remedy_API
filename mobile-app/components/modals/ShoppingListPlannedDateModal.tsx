@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { View, Pressable, Platform, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ModalWrapper from "@/components/modals/ModalAWrapper";
@@ -20,10 +20,13 @@ const formatDateInputValue = (date: Date) => {
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, "0");
   const day = `${date.getDate()}`.padStart(2, "0");
+
   return `${year}-${month}-${day}`;
 };
 
-const ShoppingListPlannedDateModal: React.FC<ShoppingListPlannedDateModalProps> = ({
+const ShoppingListPlannedDateModal: React.FC<
+  ShoppingListPlannedDateModalProps
+> = ({
   editingItem,
   localState,
   today,
@@ -39,24 +42,48 @@ const ShoppingListPlannedDateModal: React.FC<ShoppingListPlannedDateModalProps> 
       const mod = require("@react-native-community/datetimepicker");
       return mod.default ?? mod;
     }
+
     return null;
   }, []);
 
-  const selectedDate =
+  const initialDate =
     editingItem && localState[editingItem.barcode]?.plannedPurchaseDate
       ? new Date(localState[editingItem.barcode].plannedPurchaseDate as string)
       : today;
+
+  const [tempDate, setTempDate] = useState<Date>(initialDate);
+
+  useEffect(() => {
+    setTempDate(initialDate);
+  }, [editingItem]);
 
   const handleClose = () => {
     setEditingItem(null);
     closeModal("editPlannedDate");
   };
 
-  const handleQuickSet = (daysToAdd: number) => {
+  const handleSave = () => {
     if (!editingItem) return;
+
+    setPlannedDate(editingItem.barcode, tempDate);
+
+    handleClose();
+  };
+
+  const handleClearDate = () => {
+    if (!editingItem) return;
+
+    setPlannedDate(editingItem.barcode, null);
+
+    handleClose();
+  };
+
+  const handleQuickSet = (daysToAdd: number) => {
     const d = new Date(today);
+
     d.setDate(d.getDate() + daysToAdd);
-    setPlannedDate(editingItem.barcode, d);
+
+    setTempDate(d);
   };
 
   return (
@@ -64,35 +91,51 @@ const ShoppingListPlannedDateModal: React.FC<ShoppingListPlannedDateModalProps> 
       {editingItem && (
         <View
           className="flex-1 justify-center items-center px-6"
-          style={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 16 }}
+          style={{
+            paddingTop: insets.top + 16,
+            paddingBottom: insets.bottom + 16,
+          }}
         >
           <View className="bg-white dark:bg-hsl15 rounded-2xl p-4 w-full">
-            <Tt className="font-interSemiBold text-lg mb-2">Planned date</Tt>
+            <Tt className="font-interSemiBold text-lg mb-2">
+              Planned date
+            </Tt>
 
             <Tt className="text-sm text-hsl40 dark:text-hsl80 mb-4">
               {editingItem.productName}
             </Tt>
 
-            {/* Top shortcut buttons */}
             <View className="gap-2 mb-4">
-              <Button title="Today" onPress={() => handleQuickSet(0)} />
-              <Button title="Tomorrow" onPress={() => handleQuickSet(1)} />
-              <Button title="Next Week" onPress={() => handleQuickSet(7)} />
+              <Button
+                title="Today"
+                onPress={() => handleQuickSet(0)}
+              />
+
+              <Button
+                title="Tomorrow"
+                onPress={() => handleQuickSet(1)}
+              />
+
+              <Button
+                title="Next Week"
+                onPress={() => handleQuickSet(7)}
+              />
             </View>
 
-            {/* Calendar */}
             {Platform.OS === "web" ? (
               <View className="mb-4 rounded-xl border border-hsl90 dark:border-hsl20 p-3 bg-white">
                 <Tt className="text-sm text-hsl40 dark:text-hsl80 mb-2">
                   Pick a date
                 </Tt>
+
                 <TextInput
-                  value={formatDateInputValue(selectedDate)}
+                  value={formatDateInputValue(tempDate)}
                   onChangeText={(value) => {
-                    if (!editingItem) return;
                     const parsed = new Date(`${value}T00:00:00`);
+
                     if (Number.isNaN(parsed.getTime())) return;
-                    setPlannedDate(editingItem.barcode, parsed);
+
+                    setTempDate(parsed);
                   }}
                   placeholder="YYYY-MM-DD"
                   className="border border-hsl80 rounded-xl px-3 py-3 text-black"
@@ -102,35 +145,49 @@ const ShoppingListPlannedDateModal: React.FC<ShoppingListPlannedDateModalProps> 
               RNDateTimePicker && (
                 <View className="mb-4 rounded-xl overflow-hidden border border-hsl90 dark:border-hsl20">
                   <RNDateTimePicker
-                    value={selectedDate}
+                    value={tempDate}
                     mode="date"
                     display={Platform.OS === "ios" ? "inline" : "calendar"}
                     minimumDate={today}
-                    onChange={(_event: any, date?: Date) => {
-                      if (!date || !editingItem) return;
-                      setPlannedDate(editingItem.barcode, date);
-                    }}
                     themeVariant="light"
+                    onChange={(event: any, date?: Date) => {
+                      if (Platform.OS === "android") {
+                        if (event?.type === "dismissed") {
+                          return;
+                        }
+                      }
+
+                      if (date) {
+                        setTempDate(date);
+                      }
+                    }}
                   />
                 </View>
               )
             )}
 
-            {/* Clear */}
+            <Button
+              title="OK"
+              onPress={handleSave}
+            />
+
+            <View className="h-2" />
+
             <Button
               variant="outline"
               title="Clear planned date"
-              onPress={() => {
-                if (!editingItem) return;
-                setPlannedDate(editingItem.barcode, null);
-              }}
+              onPress={handleClearDate}
             />
 
             <View className="h-3" />
 
-            {/* Cancel */}
-            <Pressable onPress={handleClose} className="items-center">
-              <Tt className="text-sm text-hsl40 dark:text-hsl80">Cancel</Tt>
+            <Pressable
+              onPress={handleClose}
+              className="items-center"
+            >
+              <Tt className="text-sm text-hsl40 dark:text-hsl80">
+                Cancel
+              </Tt>
             </Pressable>
           </View>
         </View>
