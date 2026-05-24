@@ -124,6 +124,7 @@ Working on a **code-free ticket**?
 
 ### 🎨 Frontend Team
 - [📖 Frontend README](./mobile-app/README.md)  
+- [📖 T1 2026 Frontend Changes (FE005)](./Documents/Frontend/2026%20Trimester%201/FE005-T1-2026-Frontend-Changes.md)  
 
 ---
 
