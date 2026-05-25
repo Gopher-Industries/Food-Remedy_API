@@ -1,35 +1,34 @@
-// _layout (app) tsx
-
 import { useAuth } from "@/components/providers/AuthProvider";
 import { Redirect, Stack, usePathname } from "expo-router";
 import LoadingPage from "../(misc)/loading";
 import { useProfileGate } from "@/hooks/useProfileGate";
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 export default function AppLayout() {
   const { loading: authLoading, user } = useAuth();
-  const { gate } = useProfileGate(); // 'loading' | 'needs-onboarding' | 'ready'
+  const { gate } = useProfileGate();
   const pathname = usePathname();
 
-  // 1) Auth gate
   if (authLoading) return <LoadingPage />;
   if (!user) return <Redirect href="/login" />;
 
-  // 2) Profile gate
-  if (gate === 'loading') return <LoadingPage />;
+  if (gate === "loading") return <LoadingPage />;
 
-  // If no profile yet, always send to onboarding (unless already there)
-  if (gate === 'needs-onboarding' && pathname !== '/onboarding') {
+  if (gate === "needs-onboarding" && pathname !== "/onboarding") {
     return <Redirect href="/onboarding" />;
   }
 
-  if (gate === 'needs-demographics' && pathname !== '/demographics' && pathname !== '/nutritionalProfiles') {
-  return <Redirect href="/demographics" />;
-}
+  // if (
+  //   gate === "needs-demographics" &&
+  //   pathname !== "/demographics"
+  //   // pathname !== "/nutritionalProfiles"
+  //   // !pathname.startsWith("/(apps)/(tabs)")
+  // ) {
+  //   return <Redirect href="/demographics" />;
+  // }
 
-  // If a profile exists and user somehow navigates to onboarding, kick them to history
-  if (gate === 'ready' && pathname === '/onboarding') {
+  if (gate === "ready" && pathname === "/onboarding") {
     return <Redirect href="/(app)/(tabs)" />;
   }
 

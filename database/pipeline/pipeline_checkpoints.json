@@ -1,7 +1,7 @@
 {
   "enrich": {
     "status": "completed",
-    "finished": "2026-04-19T20:27:48.082190+00:00",
+    "finished": "2026-05-08T11:50:04.747344+00:00",
     "result": {
       "processed": 5000,
       "failures": 0,
@@ -10,17 +10,17 @@
         {
           "module": "allergens",
           "status": "ok",
-          "path": "C:\\Users\\alanm\\Downloads\\Alan\\Deakin\\working_files\\2026T1\\SIT782\\LocalRepositoryCloned\\Food-Remedy_API\\database\\pipeline/modules/allergens_enrich.py",
+          "path": "/workspaces/Food-Remedy_API/database/pipeline/modules/allergens_enrich.py",
           "result": {
             "processed": 5000,
             "failures": 0,
-            "output": "database/seeding/products_enriched.json"
+            "output": "/workspaces/Food-Remedy_API/database/database/seeding/products_enriched.json"
           }
         },
         {
           "module": "db009_personalisation_tags",
           "status": "ok",
-          "path": "C:\\Users\\alanm\\Downloads\\Alan\\Deakin\\working_files\\2026T1\\SIT782\\LocalRepositoryCloned\\Food-Remedy_API\\database\\pipeline/modules/db009_personalisation_tags.py",
+          "path": "/workspaces/Food-Remedy_API/database/pipeline/modules/db009_personalisation_tags.py",
           "result": {
             "processed": 5000,
             "failures": 0,
@@ -49,7 +49,7 @@
         {
           "module": "db021_mood_tags",
           "status": "ok",
-          "path": "C:\\Users\\alanm\\Downloads\\Alan\\Deakin\\working_files\\2026T1\\SIT782\\LocalRepositoryCloned\\Food-Remedy_API\\database\\pipeline/modules/db021_mood_tags.py",
+          "path": "/workspaces/Food-Remedy_API/database/pipeline/modules/db021_mood_tags.py",
           "result": {
             "processed": 5000,
             "failures": 0,
@@ -67,7 +67,7 @@
         {
           "module": "db019_alternative_product_mapping",
           "status": "ok",
-          "path": "C:\\Users\\alanm\\Downloads\\Alan\\Deakin\\working_files\\2026T1\\SIT782\\LocalRepositoryCloned\\Food-Remedy_API\\database\\pipeline/modules/db019_alternative_product_mapping.py",
+          "path": "/workspaces/Food-Remedy_API/database/pipeline/modules/db019_alternative_product_mapping.py",
           "result": {
             "processed": 5000,
             "failures": 0,
@@ -90,11 +90,21 @@
   },
   "seed": {
     "status": "completed",
-    "finished": "2026-04-19T20:27:53.413169+00:00",
+    "finished": "2026-05-06T18:02:31.497542+00:00",
     "result": {
       "processed": 5000,
       "failures": 0,
       "output": "database/seeding/seeded_products.json"
+    }
+  },
+  "clean": {
+    "status": "completed",
+    "finished": "2026-05-06T18:42:29.307882+00:00",
+    "result": {
+      "status": "completed",
+      "processed": 1,
+      "failures": 0,
+      "output": "database/data_investigation/exampleProductCleaned.json"
     }
   }
 }

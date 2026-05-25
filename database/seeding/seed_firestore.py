@@ -1,13 +1,28 @@
+"""
+Enhanced Firestore seeding engine with batch writes, rate limiting, checkpointing,
+and retry logic (DB025-DB028 integration).
+
+Large seeding runs complete safely and observably. Temporary database or quota
+errors do not abort the whole seeding job.
+"""
+
 import json
+import sys
 import time
 import os
 import argparse
 from typing import Any, Optional
 
-from google.api_core import retry
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.abspath(os.path.join(BASE_DIR, "..", ".."))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+
+from database.seeding.checkpoint_manager import CheckpointManager
+from database.seeding.rate_limiter import AdaptiveRateLimiter
+from database.seeding.progress_tracker import ProgressTracker
+from database.seeding.retry_config import retry_with_backoff, DEFAULT_RETRY, ErrorCategory, categorize_error
+
 CHECKPOINT_FILE = os.path.join(BASE_DIR, "checkpoint.json")
 
 _firestore_client = None
@@ -179,72 +194,92 @@ def get_firestore_client():
     return _firestore_client
 
 
-@retry.Retry(predicate=retry.if_exception_type(Exception), initial=1, maximum=16, multiplier=2, deadline=60)
 def commit_batch(batch):
-    """Commit a Firestore batch with retry."""
-    batch.commit()
+    """Commit a Firestore batch with retry.
 
-def commit_batch_with_retry(batch, batch_number: int, max_retries: int = 3, delay_seconds: int = 2):
+    Import google-api-core lazily so dry-run mode works without Google deps.
     """
-    DB025: Detect failed insert operations and retry automatically.
-    """
-    for attempt in range(1, max_retries + 1):
-        try:
-            commit_batch(batch)
-            print(f"Batch {batch_number} committed successfully on attempt {attempt}")
-            return True
-
-        except Exception as e:
-            print(f"Batch {batch_number} failed on attempt {attempt}: {e}")
-
-            if attempt < max_retries:
-                time.sleep(delay_seconds)
-            else:
-                print(f"Batch {batch_number} skipped after maximum retries.")
-                return False
-
-
-
-def load_checkpoint() -> int:
-    """Load last successful batch index from checkpoint file."""
-    if os.path.exists(CHECKPOINT_FILE):
-        try:
-            with open(CHECKPOINT_FILE, "r", encoding="utf-8") as f:
-                return json.load(f).get("last_batch_index", 0)
-        except Exception:
-            pass
-    return 0
-
-
-def save_checkpoint(batch_index: int) -> None:
-    """Save current batch index to checkpoint."""
     try:
-        with open(CHECKPOINT_FILE, "w", encoding="utf-8") as f:
-            json.dump({"last_batch_index": batch_index}, f, indent=2)
-    except Exception:
-        pass
+        from google.api_core import retry as g_retry
+    except ImportError as e:
+        raise ImportError(
+            "google-api-core is required for real Firestore writes. "
+            "Install with: pip install google-api-core"
+        ) from e
+
+    @g_retry.Retry(
+        predicate=g_retry.if_exception_type(Exception),
+        initial=1,
+        maximum=16,
+        multiplier=2,
+        deadline=60,
+    )
+    def _commit():
+        batch.commit()
+
+    _commit()
+
 
 
 def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, Any]:
     """
-    Pipeline seed stage: Writes enriched products to Firestore with batching,
-    rate limiting, retry, and checkpoint support.
+    Enhanced seed stage: Writes enriched products to Firestore with batching,
+    rate limiting, checkpoint support, and retry logic.
+
+    Args:
+        input_path: Path to enriched products JSON.
+        output_path: Path to write seeded products JSON (for pipeline tracking).
+        config: Configuration dict with keys:
+            - dry_run (bool): Simulate without writing to Firestore.
+            - batch_size (int): Documents per Firestore batch (max 500).
+            - writes_per_second_limit (int): Rate limit (adaptive).
+            - max_retries (int): Retry attempts per failed batch.
+            - validate_before_seed (bool): Run DB012 validation first.
+            - subset (int): Limit to first N documents (disables resume).
+
+    Returns:
+        dict with 'processed', 'failures', 'output', and optional 'error'.
     """
     start_time = time.time()
+
+    # Configuration
     batch_size = int(config.get("batch_size", 500))
     writes_per_second_limit = int(config.get("writes_per_second_limit", 400))
     dry_run = bool(config.get("dry_run", False))
+    max_retries = int(config.get("max_retries", 3))
 
+    raw_input_path = str(input_path).strip()
     input_path = _resolve_repo_path(input_path)
     output_path = _resolve_repo_path(output_path)
 
-    print(
-        f"[seed_firestore.run] dry_run={dry_run}, batch_size={batch_size}, "
-        f"writes_per_second_limit={writes_per_second_limit}"
-    )
-    failures = 0
-    total_written = 0
+    if raw_input_path in {"...", "."} or os.path.basename(os.path.normpath(input_path)) == "...":
+        msg = (
+            "Invalid --input path: received placeholder '...'. "
+            "Use a real JSON file path, for example: "
+            "database/seeding/products_enriched.json"
+        )
+        print(f"[ERROR] {msg}")
+        return {"error": msg, "processed": 0, "failures": 1}
 
+    if os.path.isdir(input_path):
+        msg = (
+            f"Invalid --input path: expected a JSON file but got a directory: {input_path}. "
+            "Use a file like database/seeding/products_enriched.json"
+        )
+        print(f"[ERROR] {msg}")
+        return {"error": msg, "processed": 0, "failures": 1}
+
+    print("\n" + "=" * 70)
+    print("[SEEDING ENGINE] Enhanced Firestore Seeding with Checkpointing & Retry")
+    print("=" * 70)
+    print(f"Input:  {_repo_relative_for_metadata(input_path)}")
+    print(f"Output: {_repo_relative_for_metadata(output_path)}")
+    print(f"Dry-run: {dry_run}")
+    print(f"Batch size: {batch_size}")
+    print(f"Target rate: {writes_per_second_limit} writes/sec")
+    print(f"Max retries per batch: {max_retries}")
+
+    # Load input
     try:
         with open(input_path, "r", encoding="utf-8") as f:
             raw = f.read()
@@ -253,12 +288,15 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
         else:
             data = json.loads(raw)
     except json.JSONDecodeError as e:
-        print(f"[seed_firestore] Invalid JSON in {input_path}: {e}")
-        return {"error": f"Failed to load input: {e}", "processed": 0, "failures": 1}
+        msg = f"Invalid JSON in {input_path}: {e}"
+        print(f"[ERROR] {msg}")
+        return {"error": msg, "processed": 0, "failures": 1}
     except OSError as e:
-        print(f"[seed_firestore] Cannot read {input_path}: {e}")
-        return {"error": f"Failed to load input: {e}", "processed": 0, "failures": 1}
+        msg = f"Cannot read {input_path}: {e}"
+        print(f"[ERROR] {msg}")
+        return {"error": msg, "processed": 0, "failures": 1}
 
+    # Handle subset
     subset = config.get("subset")
     if subset is not None:
         try:
@@ -267,119 +305,189 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
             subset = None
     if subset is not None and subset > 0:
         data = data[:subset]
-        print(f"Subset mode: using first {len(data)} record(s); checkpoint resume disabled.")
+        print(f"[SUBSET] Using first {len(data)} record(s); checkpoint resume disabled.")
 
     if not data:
-        print("Input JSON is empty — nothing to seed.")
+        print("[INFO] Input JSON is empty — nothing to seed.")
         return {"processed": 0, "failures": 0, "output": _repo_relative_for_metadata(output_path)}
+
+    # Optional pre-seed validation
+    if config.get("validate_before_seed"):
+        print("[VALIDATION] Running DB012 pre-seed validation...")
+        try:
+            from database.Validation.db012_validator import BatchValidator
+            bv = BatchValidator()
+            if not bv.validate_data(data):
+                msg = "Pre-seed validation failed (DB012). See logs and database/Validation reports."
+                print(f"[ERROR] {msg}")
+                return {"error": msg, "processed": 0, "failures": 1}
+            print("[VALIDATION] ✓ All records passed schema validation.")
+        except Exception as e:
+            msg = f"Validation error: {e}"
+            print(f"[ERROR] {msg}")
+            return {"error": msg, "processed": 0, "failures": 1}
 
     total_records = len(data)
     use_checkpoint = subset is None or subset <= 0
-    last_completed_batch = load_checkpoint() if use_checkpoint else 0
-    total_batch_count = (total_records + batch_size - 1) // batch_size if total_records else 0
-    resume_offset = last_completed_batch * batch_size
 
-    if last_completed_batch > 0 and use_checkpoint:
+    # Initialize checkpoint manager
+    checkpoint_mgr = CheckpointManager(CHECKPOINT_FILE)
+    if use_checkpoint:
+        resume_info = checkpoint_mgr.get_resume_info()
+        start_batch_index = resume_info["next_batch_index"]
+        resume_offset = (start_batch_index - 1) * batch_size
         print(
-            f"Checkpoint: last committed batch index = {last_completed_batch} "
-            f"(file has {total_batch_count} batch(es) of up to {batch_size} docs)."
-        )
-
-    if resume_offset >= total_records:
-        print(
-            "No seed work left: checkpoint already covers this file. "
-            "To re-run from scratch, reset or delete database/seeding/checkpoint.json."
+            f"[CHECKPOINT] Resuming from batch {start_batch_index}. "
+            f"Previously: {resume_info['documents_written']} written, "
+            f"{resume_info['documents_failed']} failed."
         )
     else:
-        print(f"Starting at batch {last_completed_batch + 1} (document offset {resume_offset}).")
+        start_batch_index = 0
+        resume_offset = 0
+        print("[CHECKPOINT] Subset mode: checkpoint resume disabled.")
 
-    print(f"Dry-run mode: {dry_run}")
-    print(f"Total documents: {total_records}")
+    if resume_offset >= total_records:
+        print("[INFO] No seed work left: checkpoint already covers this file.")
+        return {
+            "processed": total_records,
+            "failures": 0,
+            "output": _repo_relative_for_metadata(output_path),
+        }
 
-    writes_this_second = 0
-    last_second = time.time()
+    # Initialize helpers
+    rate_limiter = AdaptiveRateLimiter(writes_per_second_limit)
+    progress = ProgressTracker(total_records, batch_size)
+    retry_config = DEFAULT_RETRY
+    retry_config.max_retries = max_retries
 
     db = None if dry_run else get_firestore_client()
+    total_batches = (total_records + batch_size - 1) // batch_size
 
-    batches_this_run = 0
+    print(f"[PROCESSING] Starting batch {start_batch_index + 1} of {total_batches}")
+    print()
+
+    # Main batch processing loop
+    batches_processed = 0
+    batches_failed = 0
+
     for i in range(resume_offset, total_records, batch_size):
+        batch_idx = i // batch_size
+        batch_number = batch_idx + 1
         chunk = data[i : i + batch_size]
-        batch_number = i // batch_size + 1
+        batch_start_time = progress.on_batch_start()
 
         if dry_run:
+            # Dry-run: just count
+            docs_valid = 0
             for product in chunk:
-                if not product.get("barcode"):
-                    continue
-                total_written += 1
-            print(f"DRY-RUN: Would write batch {batch_number} ({len(chunk)} docs in chunk)")
-            batches_this_run += 1
+                if product.get("barcode"):
+                    docs_valid += 1
+            progress.on_batch_success(batch_number, docs_valid)
+            batches_processed += 1
             continue
 
-        batch = db.batch()
-        for product in chunk:
-            barcode = product.get("barcode")
-            if not barcode:
-                continue
+        # Real seeding: attempt batch with retries
+        batch_attempt = 0
+        batch_success = False
+        batch_error = None
 
-            current_second = time.time()
-            if current_second - last_second >= 1:
-                writes_this_second = 0
-                last_second = current_second
+        def do_batch_commit():
+            """Closure for retryable batch commit."""
+            batch = db.batch()
+            docs_added = 0
+            docs_skipped = 0
 
-            if writes_this_second >= writes_per_second_limit:
-                sleep_time = max(0, 1 - (current_second - last_second))
-                time.sleep(sleep_time)
-                writes_this_second = 0
-                last_second = time.time()
+            for product in chunk:
+                barcode = product.get("barcode")
+                if not barcode:
+                    docs_skipped += 1
+                    checkpoint_mgr.add_failed_document(
+                        str(i + docs_added + docs_skipped),
+                        "Missing barcode"
+                    )
+                    continue
 
-            doc_ref = db.collection("products").document(barcode)
-            batch.set(doc_ref, product, merge=True)
-            writes_this_second += 1
-            total_written += 1
+                # Rate limit before each write
+                rate_limiter.acquire(1, block=True)
 
-        success = commit_batch_with_retry(batch, batch_number)
+                doc_ref = db.collection("products").document(str(barcode))
+                batch.set(doc_ref, product, merge=True)
+                docs_added += 1
 
-        if success:
-            print(f"Wrote batch {batch_number} ({len(chunk)} docs)")
-            save_checkpoint(batch_number)
-            batches_this_run += 1
-        else:
-            failures += 1  
+            # Commit batch
+            commit_batch(batch)
+            return docs_added, docs_skipped
 
-        if total_written > 20000:
-            print("Warning: Approaching daily write quota (20k) — stopping")
-            break
+        # Retry logic with backoff
+        try:
+            def on_batch_retry(attempt: int, error: Exception):
+                nonlocal batch_attempt
+                batch_attempt = attempt
+                print(
+                    f"[RETRY] Batch {batch_number}: "
+                    f"Attempt {attempt + 1}/{retry_config.max_retries + 1}"
+                )
+                # Adapt rate limit on quota errors
+                error_cat = categorize_error(error)
+                if error_cat == ErrorCategory.TRANSIENT:
+                    rate_limiter.on_quota_error()
 
+            docs_written, docs_skipped = retry_with_backoff(
+                do_batch_commit,
+                retry_config,
+                on_retry=on_batch_retry,
+            )
+            batch_success = True
+            rate_limiter.on_success()
+            checkpoint_mgr.mark_batch_success(batch_idx, docs_written, docs_skipped)
+            progress.on_batch_success(batch_number, docs_written, docs_skipped)
+            batches_processed += 1
+
+        except Exception as e:
+            batch_error = str(e)
+            checkpoint_mgr.mark_batch_failure(batch_idx, batch_error)
+            progress.on_batch_failure(batch_number, batch_error, batch_start_time)
+            batches_failed += 1
+
+            # Continue to next batch (partial failure doesn't abort entire job)
+            print(f"[WARN] Batch {batch_number} exhausted retries. Continuing...")
+
+    # Summary
     elapsed = time.time() - start_time
-    print("\nSeeding Summary:")
-    print(f"Total time: {elapsed:.2f} seconds")
-    print(f"Records in file: {total_records}")
-    print(f"Total batches for this file: {total_batch_count}")
-    print(f"Batches processed this run: {batches_this_run}")
-    print(f"Failed batches: {failures if not dry_run else 'N/A'}")
+    summary = progress.get_summary()
 
-    print("Seeding complete!")
+    print("\n" + "=" * 70)
+    print("SEEDING SUMMARY")
+    print("=" * 70)
+    print(f"Elapsed time: {summary['elapsed_seconds']:.2f}s")
+    print(f"Total batches: {summary['batches']['total']}")
+    print(f"  ✓ Completed: {summary['batches']['completed']}")
+    print(f"  ✗ Failed:    {summary['batches']['failed']}")
+    print(f"Total documents: {summary['documents']['total']}")
+    print(f"  ✓ Written:   {summary['documents']['written']}")
+    print(f"  ✗ Failed:    {summary['documents']['failed']}")
+    print(f"  ⊘ Skipped:   {summary['documents']['skipped']}")
+    print(f"Success rate: {summary['success_rate_pct']:.1f}%")
+    print(f"Throughput: {summary['throughput']['docs_per_sec']:.1f} docs/sec")
+    print("=" * 70)
 
-    if dry_run and use_checkpoint:
-        print(
-            "\nNote: database/seeding/checkpoint.json is only created or updated after "
-            "successful Firestore batch commits. Dry-run does not touch that file."
-        )
+    if dry_run:
+        print("[DRY-RUN] No Firestore writes were made. Checkpoint not updated.")
 
-    out_dir = os.path.dirname(output_path)
-    if out_dir:
-        os.makedirs(out_dir, exist_ok=True)
+    # Save output
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
-
     out_meta = _repo_relative_for_metadata(output_path)
     print(f"Seeded data written to: {out_meta}")
 
     return {
-        "processed": total_records,
-        "failures": failures,
+        "processed": summary["documents"]["total"],
+        "failures": summary["batches"]["failed"],
         "output": out_meta,
+        "summary": summary,
     }
+
 
 
 def seed_products():
@@ -412,25 +520,40 @@ def seed_products():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Firestore Seeding Engine")
+    parser = argparse.ArgumentParser(
+        description="Enhanced Firestore Seeding Engine with Retry & Checkpointing (DB025-DB028)"
+    )
     parser.add_argument(
         "--input",
         default=os.path.join(BASE_DIR, "products_enriched.json"),
         help="Path to enriched JSON file (repo-relative or absolute)",
     )
-    parser.add_argument("--dry-run", action="store_true", help="Simulate run (no Firebase)")
+    parser.add_argument("--dry-run", action="store_true", help="Simulate run (no Firestore writes)")
     parser.add_argument("--subset", type=int, default=None, help="Limit to first N records")
-    parser.add_argument("--batch-size", type=int, default=500, help="Documents per Firestore batch (max 500)")
+    parser.add_argument(
+        "--batch-size", type=int, default=500, help="Documents per Firestore batch (max 500)"
+    )
     parser.add_argument(
         "--writes-per-second",
         type=int,
         default=400,
-        help="Soft cap on document writes per second before throttling",
+        help="Target write rate before throttling (adaptive under quota pressure)",
+    )
+    parser.add_argument(
+        "--max-retries",
+        type=int,
+        default=3,
+        help="Max retry attempts per failed batch (exponential backoff)",
     )
     parser.add_argument(
         "--output",
         default="database/seeding/seeded_products.json",
         help="Output JSON path for pipeline tracking (repo-relative or absolute)",
+    )
+    parser.add_argument(
+        "--validate",
+        action="store_true",
+        help="Run DB012 batch validation on the input before Firestore writes",
     )
     args = parser.parse_args()
 
@@ -438,6 +561,8 @@ if __name__ == "__main__":
         "dry_run": args.dry_run,
         "batch_size": args.batch_size,
         "writes_per_second_limit": args.writes_per_second,
+        "max_retries": args.max_retries,
+        "validate_before_seed": args.validate,
     }
     if args.subset:
         cfg["subset"] = args.subset

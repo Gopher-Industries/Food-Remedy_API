@@ -168,7 +168,22 @@ export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
           await db.execAsync(`ALTER TABLE shopping_list_items ADD COLUMN note TEXT;`);
         }
 
-        await db.execAsync(`PRAGMA user_version = 4;`);
+        // Migration: add demographic columns to profiles
+        const profileCols = await db.getAllAsync<{ name: string }>(`PRAGMA table_info('profiles');`);
+        const hasAgeBandCol = profileCols.some(c => c.name === 'age_band');
+        const hasSexCol = profileCols.some(c => c.name === 'sex');
+        const hasGuardrailLevelCol = profileCols.some(c => c.name === 'guardrail_level');
+        if (!hasAgeBandCol) {
+          await db.execAsync(`ALTER TABLE profiles ADD COLUMN age_band TEXT;`);
+        }
+        if (!hasSexCol) {
+          await db.execAsync(`ALTER TABLE profiles ADD COLUMN sex TEXT;`);
+        }
+        if (!hasGuardrailLevelCol) {
+          await db.execAsync(`ALTER TABLE profiles ADD COLUMN guardrail_level TEXT;`);
+        }
+
+        await db.execAsync(`PRAGMA user_version = 5;`);
       });
 
       return db;

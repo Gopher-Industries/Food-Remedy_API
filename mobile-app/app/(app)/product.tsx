@@ -23,7 +23,7 @@ import {
 import NutrientsTab from "./ProductTabs/NutrientsTab";
 import IngredientsTab from "./ProductTabs/IngredientsTab";
 import ForYouTab from "./ProductTabs/ForYouTab";
-import CompareTab from "./ProductTabs/RecommendationsTab";
+// import RecommendationsTab from "./ProductTabs/RecommendationsTab";
 
 type TabKey = "Nutrients" | "Ingredients" | "For you" | "Compare";
 
@@ -37,12 +37,20 @@ export default function ProductTabsScreen() {
   const [activeTab, setActiveTab] = useState<TabKey>("Nutrients");
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
 
-  const tabs: TabKey[] = ["Nutrients", "Ingredients", "For you", "Compare"];
+  const tabs: TabKey[] = ["Nutrients", "Ingredients", "For you"];
 
   useScanVoiceSummary({
     product: currentProduct ?? null,
     enabled: ttsEnabled && !loading && !error && !!currentProduct,
   });
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.replace("/(app)/(tabs)");
+    } else {
+      router.replace("/(app)/(tabs)"); 
+    }
+  };
 
   const productImageUri = useMemo(() => {
     if (!currentProduct) return null;
@@ -70,6 +78,7 @@ export default function ProductTabsScreen() {
             clean(item.imageUrl) ||
             clean(item.front) ||
             clean(item.primary);
+
           if (found) return found;
         }
       }
@@ -101,14 +110,21 @@ export default function ProductTabsScreen() {
   const shouldShowRemoteImage = !!productImageUri && !imageLoadFailed;
 
   const iconDefault = highContrast ? "#000000" : "hsl(0, 0%, 30%)";
+
   const pageBg = highContrast
     ? "bg-white dark:bg-hsl15"
     : "bg-hsl95 dark:bg-hsl10";
+
   const titleText = highContrast ? "text-black" : "text-hsl20";
-  const bodyText = highContrast ? "text-black" : "text-hsl30 dark:text-hsl90";
+
+  const bodyText = highContrast
+    ? "text-black"
+    : "text-hsl30 dark:text-hsl90";
+
   const primaryBtn = highContrast
     ? "bg-black border border-black"
     : "bg-primary";
+
   const primaryBtnText = "text-white";
 
   const renderTabContent = () => {
@@ -117,13 +133,13 @@ export default function ProductTabsScreen() {
         return <NutrientsTab product={currentProduct} />;
 
       case "Ingredients":
-        // return <IngredientsTab product={currentProduct} />;
+        return <IngredientsTab />;
 
       case "For you":
         return <ForYouTab product={currentProduct} />;
 
-      case "Compare":
-        // return <CompareTab product={currentProduct} />;
+      // case "Compare":
+      //   return <RecommendationsTab product={currentProduct} />;
 
       default:
         return null;
@@ -141,7 +157,7 @@ export default function ProductTabsScreen() {
       <View className="w-[95%] self-center mb-4">
         <View className="flex-row justify-between items-center">
           <Pressable
-            onPress={() => router.back()}
+            onPress={handleBack}
             className="flex-row justify-center items-center px-2 py-1"
           >
             {({ pressed }) => (
@@ -162,7 +178,7 @@ export default function ProductTabsScreen() {
                 <>
                   <IconGeneral type="cart-add" fill="white" size={20} />
                   <Tt className={`${primaryBtnText} font-interSemiBold ml-2`}>
-                    Add to List
+                    Add to Lists
                   </Tt>
                 </>
               )}
@@ -258,19 +274,21 @@ export default function ProductTabsScreen() {
 
           <View className="min-h-[400px]">{renderTabContent()}</View>
 
-          <Pressable
-            onPress={() => openModal("addToList")}
-            className="bg-primary rounded-lg py-4 px-6 mt-8 mb-4 flex-row justify-center items-center active:bg-primary/80"
-          >
-            {() => (
-              <>
-                <IconGeneral type="cart-add" fill="white" size={24} />
-                <Tt className="text-white font-interSemiBold text-lg ml-3">
-                  Add to Shopping List
-                </Tt>
-              </>
-            )}
-          </Pressable>
+          {activeTab !== "Compare" && (
+            <Pressable
+              onPress={() => openModal("addToList")}
+              className="bg-primary rounded-lg py-4 px-6 mt-8 mb-4 flex-row justify-center items-center active:bg-primary/80"
+            >
+              {() => (
+                <>
+                  <IconGeneral type="cart-add" fill="white" size={24} />
+                  <Tt className="text-white font-interSemiBold text-lg ml-3">
+                    Add to Shopping List
+                  </Tt>
+                </>
+              )}
+            </Pressable>
+          )}
         </View>
       </ScrollView>
     </Screen>

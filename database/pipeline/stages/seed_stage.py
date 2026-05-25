@@ -24,7 +24,7 @@ def run_seed_stage(input_path: str, config: dict) -> dict:
     )
 
     seed_script = config.get("script_path") or os.path.join(
-        repo_root, "database", "seeding", "seed_products.py" # outdated early testing file not to be used
+        repo_root, "database", "seeding", "seed_products.py"
     )
 
     if not os.path.exists(seed_script):

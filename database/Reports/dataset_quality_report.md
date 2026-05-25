@@ -2,7 +2,7 @@
 
 **Generated on:** seeded_products.json  
 **Total products:** 5000  
-**Report time:** 22-04-2026 04:55:29
+**Report time:** 08-05-2026 11:50:05
 
 ## Summary Statistics
 - Average completeness score: 0.325  
@@ -19,15 +19,13 @@
 - `images` missing: 0.0%
 - `productQuantityUnit` missing: 0.0%
 - `servingQuantityUnit` missing: 0.0%
-- `dietTags` missing: 0.6%
+- `dietTags` missing: 0.5%
 - `nutriscoreGrade` missing: 1.5%
 - `lifestyleTags` missing: 10.6%
 - `moodTags` missing: 13.6%
 - `brand` missing: 21.7%
 - `servingQuantity` missing: 26.4%
-- `riskTags` missing: 56.7%
-- `allergens` missing: 78.7%
-- `allergensDetected` missing: 78.7%
+- `riskTags` missing: 68.8%
 - `labels` missing: 81.6%
 - `productQuantity` missing: 85.3%
 - `categories` missing: 90.5%
@@ -35,6 +33,7 @@
 - `ingredients` missing: 92.5%
 - `ingredientsText` missing: 92.5%
 - `nutrientLevels` missing: 93.3%
+- `allergens` missing: 95.0%
 - `additives` missing: 95.5%
 - `tracesFromIngredients` missing: 98.6%
 - `traces` missing: 99.8%

@@ -1,10 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://food-remedy.dev/schemas/product-detail/v1",
   "title": "ProductDetailV1",
+  "description": "Frozen Product Detail JSON contract v1.0.0 (DB037). DB maps enriched records via mapping/map_enriched_to_product_detail.py; BE/FE consume this shape on GET /api/products/{barcode}.",
   "type": "object",
   "required": ["barcode", "productName"],
   "properties": {
-    "barcode": { "type": "string", "description": "GTIN / barcode" },
+    "barcode": { "type": "string", "description": "GTIN / barcode (normalised, leading zeros preserved)" },
     "brand": { "type": ["string", "null"] },
     "productName": { "type": "string" },
     "genericName": { "type": ["string", "null"] },
@@ -67,7 +69,7 @@
     "metadata": { "type": "object", "additionalProperties": true },
     "enrichmentMetadata": {
       "type": "object",
-      "description": "Recommendation scoring/metadata (subset of server enrichment; optional on responses)",
+      "description": "Recommendation scoring/metadata (optional on responses)",
       "properties": {
         "recommendationScore": { "type": "number" },
         "reasonTags": { "type": "array", "items": { "type": "string" } },

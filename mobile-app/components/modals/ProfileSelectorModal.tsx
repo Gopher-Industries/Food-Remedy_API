@@ -27,7 +27,7 @@ const ProfileSelectorModal: React.FC = () => {
       <View className="flex-1 justify-end bg-black/50">
         <Pressable className="flex-1" onPress={handleClose} />
 
-        <View className="mx-[10px] bg-white rounded-t-3xl px-6 py-6 max-h-[80%]">
+        <View className="mx-[10px] bg-white dark:bg-hsl15 rounded-t-3xl px-6 py-6 max-h-[80%]">
           {/* HEADER */}
           <View className="flex-row justify-between items-center mb-4">
             <Tt className="text-2xl font-interBold">Active Profile</Tt>

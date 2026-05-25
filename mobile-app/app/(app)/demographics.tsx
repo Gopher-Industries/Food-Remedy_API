@@ -1,24 +1,21 @@
-import React, { useState, useEffect } from "react";
-import {
-  ScrollView,
-  View,
-  Pressable,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
+import { useState, useEffect } from "react";
+import { ScrollView, View, Pressable } from "react-native";
 import Tt from "@/components/ui/UIText";
 import { router } from "expo-router";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useNotification } from "@/components/providers/NotificationProvider";
 import { useProfile } from "@/components/providers/ProfileProvider";
+import { usePreferences } from "@/components/providers/PreferencesProvider";
+import { useSQLiteDatabase } from "@/components/providers/SQLiteDatabaseProvider";
+import IconGeneral from "@/components/icons/IconGeneral";
+import Header from "@/components/layout/Header";
+import { color, spacing } from "@/app/design/token";
 
-// Option Types
 type Option = {
   label: string;
   value: string;
 };
 
-// Options 
 const ageBandOptions: Option[] = [
   { label: "18 - 25 years", value: "18-25" },
   { label: "26 - 35 years", value: "26-35" },
@@ -45,6 +42,7 @@ type SingleSelectFieldProps = {
   options: Option[];
   selected: string;
   onSelect: (value: string) => void;
+  darkMode: boolean;
 };
 
 const SingleSelectField = ({
@@ -53,16 +51,22 @@ const SingleSelectField = ({
   options,
   selected,
   onSelect,
+  darkMode,
 }: SingleSelectFieldProps) => {
   return (
     <View className="mb-6">
-      <Tt className="text-lg font-interMedium text-hsl25 dark:text-hsl85 mb-1">
+      <Tt
+        className={`text-lg font-interMedium mb-1 ${
+          darkMode ? "text-hsl90" : "text-hsl25"
+        }`}
+      >
         {label}
       </Tt>
 
       <View className="flex-row flex-wrap gap-2 mt-1">
         {options.map((option) => {
           const isSelected = selected === option.value;
+
           return (
             <Pressable
               key={option.value}
@@ -70,14 +74,18 @@ const SingleSelectField = ({
               className={`px-4 py-2 rounded-full border ${
                 isSelected
                   ? "bg-primary border-primary"
-                  : "bg-transparent border-hsl80 dark:border-hsl30"
+                  : darkMode
+                  ? "bg-hsl20 border-hsl30"
+                  : "bg-transparent border-hsl80"
               }`}
             >
               <Tt
                 className={`font-interMedium text-sm ${
                   isSelected
                     ? "text-white"
-                    : "text-hsl30 dark:text-hsl90"
+                    : darkMode
+                    ? "text-hsl90"
+                    : "text-hsl30"
                 }`}
               >
                 {option.label}
@@ -87,178 +95,256 @@ const SingleSelectField = ({
         })}
       </View>
 
-      <Tt className="text-xs text-hsl50 dark:text-hsl70 mt-2 leading-5">
+      <Tt
+        className={`text-xs mt-2 leading-5 ${
+          darkMode ? "text-hsl70" : "text-hsl50"
+        }`}
+      >
         {hint}
       </Tt>
     </View>
   );
 };
 
-// Main Demographics Form 
 const DemographicsForm = () => {
   const { user } = useAuth();
   const { addNotification } = useNotification();
   const { refresh } = useProfile();
+  const { darkMode } = usePreferences();
+  const { db } = useSQLiteDatabase();
 
   const [ageBand, setAgeBand] = useState<string>("36-50");
   const [sex, setSex] = useState<string>("female");
   const [guardrailLevel, setGuardrailLevel] = useState<string>("moderate");
+  const [submitting, setSubmitting] = useState(false);
 
-  // Prefill demographic data on mount
   useEffect(() => {
     const fetchDemographics = async () => {
       if (!user?.uid) return;
+
       try {
-        const { getUserProfile } = await import("@/services/database/user/profiles");
-        const profileId = "demographics";
-        const profile = await getUserProfile(user.uid, profileId);
+        const { getUserProfile } = await import(
+          "@/services/database/user/profiles"
+        );
+
+        const profile = await getUserProfile(user.uid, "demographics");
+
         if (profile) {
           if (profile.ageBand) setAgeBand(profile.ageBand);
           if (profile.sex) setSex(profile.sex);
-          if (profile.guardrailLevel) setGuardrailLevel(profile.guardrailLevel);
+          if (profile.guardrailLevel) {
+            setGuardrailLevel(profile.guardrailLevel);
+          }
         }
       } catch (err) {
-        // Ignore errors, just don't prefill
+        console.log("Could not fetch demographics:", err);
       }
     };
-    fetchDemographics();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.uid]);
-  const [submitting, setSubmitting] = useState(false);
 
-  const handleSave = async () => {
+    fetchDemographics();
+  }, [user?.uid]);
+
+  const saveDemographics = async () => {
     if (!ageBand || !sex || !guardrailLevel) {
       addNotification("Please fill in all fields.", "e");
-      return;
+      return false;
     }
 
     try {
       setSubmitting(true);
 
-      const demographicsData = {
+      if (!user?.uid) {
+        throw new Error("User not authenticated");
+      }
+
+      const { upsertUserProfile } = await import(
+        "@/services/database/user/profiles"
+      );
+
+      const profileData: any = {
+        userId: user.uid,
+        profileId: "demographics",
         ageBand,
         sex,
         guardrailLevel,
       };
 
-      // Save information to Database (Firestore)
-      if (!user?.uid) throw new Error("User not authenticated");
+      await upsertUserProfile(user.uid, "demographics", profileData);
 
-      // Import upsertUserProfile dynamically to avoid circular deps
-      const { upsertUserProfile } = await import("@/services/database/user/profiles");
+      // Mirror to SQLite so ForYouTab can read demographic fields offline
+      if (db) {
+        const { upsertDemographicsProfile } = await import(
+          "@/services/sqlDatabase/profiles.dao"
+        );
+        await upsertDemographicsProfile(db, user.uid, { ageBand, sex, guardrailLevel });
+      }
 
-      // For demo, use profileId = 'demographics' (or fetch actual profileId if needed)
-      const profileId = "demographics";
-
-      // Save demographics as a profile
-      await upsertUserProfile(user.uid, profileId, {
-        userId: user.uid,
-        profileId,
-        firstName: "",
-        lastName: "",
-        status: true,
-        relationship: "Self",
-        age: 0,
-        avatarUrl: "",
-        additives: [],
-        allergies: [],
-        intolerances: [],
-        dietaryForm: [],
-        ageBand,
-        sex,
-        guardrailLevel,
-      });
-
+      // This refreshes the profile provider so useProfileGate can become "ready"
       await refresh();
+
       addNotification("Demographics saved!", "s");
-    } catch (err: any) {
+      return true;
+    } catch (err) {
       console.error(err);
       addNotification("Failed to save demographics.", "e");
+      return false;
     } finally {
       setSubmitting(false);
     }
   };
 
-const handleNext = () => {
-  router.push("/(app)/nutritionalProfiles");
-};
+  const handleSave = async () => {
+    await saveDemographics();
+  };
+
+  const handleNext = async () => {
+    const saved = await saveDemographics();
+
+    if (saved) {
+      router.replace("/(app)/nutritionalProfiles" as any);
+    }
+  };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      className="flex-1 bg-white p-safe"
-    >
-      <ScrollView keyboardShouldPersistTaps="handled">
-        <View className="flex-1 w-[90%] self-center">
+    <View className={`flex-1 p-safe ${darkMode ? "bg-hsl15" : "bg-white"}`}>
+      <Header />
 
-          {/* Header */}
-          <Tt className="text-xl font-interBold text-center my-4">
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 24 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View className="w-[95%] mx-auto mt-4 mb-6 flex-row items-center justify-between">
+          <Pressable
+            onPress={() => router.replace("/(app)/nutritionalProfiles" as any)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            className="px-2 py-1"
+          >
+            {({ pressed }) => (
+              <IconGeneral
+                type="arrow-backward-ios"
+                fill={
+                  pressed
+                    ? "#FF3F3F"
+                    : darkMode
+                    ? "#FFFFFF"
+                    : "hsl(0, 0%, 30%)"
+                }
+              />
+            )}
+          </Pressable>
+
+          <Tt
+            className={`text-xl font-interBold ${
+              darkMode ? "text-white" : "text-hsl20"
+            }`}
+          >
             Your Health Profile
           </Tt>
-          <Tt className="text-sm font-interMedium text-center text-hsl50 dark:text-hsl70 mb-6">
-            Demographics shape reference portions and risk rules for recommendations.
+
+          <View style={{ width: 24, height: 24 }} />
+        </View>
+
+        <View className="w-[95%] mx-auto">
+          <Tt
+            className={`text-sm font-interMedium mb-6 ${
+              darkMode ? "text-hsl70" : "text-hsl50"
+            }`}
+          >
+            Demographics shape reference portions and risk rules for
+            recommendations.
           </Tt>
 
-          {/* Demographics Section Header */}
-          <Tt className="text-base font-interBold text-hsl25 dark:text-hsl85 mb-4 uppercase tracking-wide">
+          <Tt
+            className={`text-base font-interBold mb-4 uppercase tracking-wide ${
+              darkMode ? "text-hsl90" : "text-hsl25"
+            }`}
+          >
             Demographics (for personalisation)
           </Tt>
 
-          {/* Age Band */}
           <SingleSelectField
             label="Age band"
             hint="Used to apply age-appropriate reference portions and nutrition guardrails in recommendations."
             options={ageBandOptions}
             selected={ageBand}
             onSelect={setAgeBand}
+            darkMode={darkMode}
           />
 
-          {/* Sex */}
           <SingleSelectField
             label="Sex (reference intakes)"
             hint="Used to align reference intake values where sex-specific nutrition guidance applies."
             options={sexOptions}
             selected={sex}
             onSelect={setSex}
+            darkMode={darkMode}
           />
 
-          {/* Guardrail Level */}
           <SingleSelectField
             label="Nutrition guardrail level"
             hint="Controls how strict sodium and sugar limits should be in recommendations."
             options={guardrailOptions}
             selected={guardrailLevel}
             onSelect={setGuardrailLevel}
+            darkMode={darkMode}
           />
 
-          {/* Save Button */}
           <Pressable
             onPress={handleSave}
             disabled={submitting}
-            className="w-[90%] self-center py-3 px-4 my-4 rounded-lg border bg-primary border-hsl90 dark:border-hsl20 active:bg-transparent active:border-primary disabled:opacity-60"
+            hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+            className="py-3 px-4 my-4 rounded-lg border bg-primary border-hsl90 active:bg-transparent active:border-primary disabled:opacity-60"
           >
-            {({ pressed }: { pressed: boolean }) => (
-              <Tt className={`text-lg text-center font-interSemiBold ${pressed ? "text-primary" : "text-white"}`}>
-                {submitting ? "Saving…" : "Save"}
+            {({ pressed }) => (
+              <Tt
+                className={`text-lg text-center font-interSemiBold ${
+                  pressed ? "text-primary" : "text-white"
+                }`}
+              >
+                {submitting ? "Saving..." : "Save"}
               </Tt>
             )}
           </Pressable>
 
-          {/* Next Button */}
           <Pressable
             onPress={handleNext}
-            className="w-[90%] self-center py-3 px-4 mb-8 rounded-lg border border-primary active:bg-primary"
+            disabled={submitting}
+            hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+            className={`mb-16 flex-row justify-between items-center py-3 px-4 rounded-lg border active:border-primary disabled:opacity-60 ${
+              darkMode ? "bg-hsl20 border-hsl30" : "bg-white border-hsl90"
+            }`}
           >
-            {({ pressed }: { pressed: boolean }) => (
-              <Tt className={`text-lg text-center font-interSemiBold ${pressed ? "text-white" : "text-primary"}`}>
-                Next
-              </Tt>
+            {({ pressed }) => (
+              <>
+                <Tt
+                  className={`text-lg font-interSemiBold flex-grow ${
+                    pressed
+                      ? "text-primary"
+                      : darkMode
+                      ? "text-hsl90"
+                      : "text-hsl30"
+                  }`}
+                >
+                  Next
+                </Tt>
+
+                <IconGeneral
+                  type="arrow-forward-ios"
+                  fill={
+                    pressed
+                      ? color.primary
+                      : darkMode
+                      ? "#FFFFFF"
+                      : color.iconDefault
+                  }
+                  size={spacing.xl}
+                />
+              </>
             )}
           </Pressable>
-
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 

@@ -15,8 +15,14 @@ import sys
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any, List
 
+
 from pymongo import MongoClient, UpdateOne
 from pymongo.errors import BulkWriteError
+
+# Import category normalization utility
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from utils.category_normalizer import normalize_category_fields
 
 
 # ----------------------------
@@ -59,9 +65,14 @@ def normalize_record(raw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     if not barcode:
         return None
 
-    categories = [clean_tag(x) for x in (raw.get("categories_tags") or [])]
-    categories = [x for x in categories if x]
-    categories = list(dict.fromkeys(categories))[:25]  # dedupe + cap
+
+    categories_raw = [clean_tag(x) for x in (raw.get("categories_tags") or [])]
+    categories_raw = [x for x in categories_raw if x]
+    categories_raw = list(dict.fromkeys(categories_raw))[:25]  # dedupe + cap
+    # Use normalization utility for UI-ready output
+    normalized = normalize_category_fields(categories_raw)
+    category = normalized["category"]
+    categories = normalized["categories"]
 
     allergens = [clean_tag(x) for x in (raw.get("allergens_tags") or [])]
     allergens = [x for x in allergens if x]
@@ -74,10 +85,12 @@ def normalize_record(raw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
     brand = (raw.get("brands") or "").split(",")[0].strip()
 
+
     doc = {
         "barcode": barcode,
         "productName": (raw.get("product_name") or "").strip(),
         "brand": brand,
+        "category": category,
         "categories": categories,
         "allergens": allergens,
         "nutriScore": nutri,

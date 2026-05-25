@@ -128,6 +128,7 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
                 "request_id": request_id,
             }
         },
+        headers={"X-Request-ID": request_id},
     )
 
 

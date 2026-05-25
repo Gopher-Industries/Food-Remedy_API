@@ -56,7 +56,9 @@ class PipelineStageLogger:
         duration_ms: float | None = None,
         input_records: int | None = None,
         output_records: int | None = None,
+        failures: int | None = None,
         output_file: str | None = None,
+        **extra, # added to support extra metadata
     ) -> None:
         message = f"event=stage_end pipeline={self.pipeline_name} stage={stage_name}"
         if duration_ms is not None:
@@ -65,8 +67,21 @@ class PipelineStageLogger:
             message += f" input_records={input_records}"
         if output_records is not None:
             message += f" output_records={output_records}"
+        if failures is not None:
+            message += f" failures={failures}"
         if output_file:
             message += f" output_file={output_file}"
+
+        # Logging extra metadata fields (started, finished, config_summary, modules_summary, etc.)
+        for key, value in extra.items():
+                    if value is not None:
+                        if isinstance(value, dict):
+                            # Flatten simple dicts for readability
+                            for k, v in value.items():
+                                message += f" {key}_{k}={v}"
+                        else:
+                            message += f" {key}={value}"
+
         self.logger.info(message)
 
     def log_stage_warning(self, stage_name: str, warning_message: str) -> None:
@@ -84,13 +99,20 @@ class PipelineStageLogger:
         input_file: str | None = None,
         batch_id: str | None = None,
     ) -> None:
+        """Log stage failure as structured event in both main log and error log."""
         details = f"event=stage_error pipeline={self.pipeline_name} stage={stage_name}"
         if input_file:
             details += f" input_file={input_file}"
         if batch_id:
             details += f" batch_id={batch_id}"
 
-        self.error_logger.exception("%s error=%s", details, error)
+        error_msg = str(error)
+
+        # Log to MAIN pipeline log
+        self.logger.error("%s error=%s", details, error_msg)
+
+        # Log to error logger with full traceback
+        self.error_logger.exception("%s error=%s", details, error_msg)
 
     def log_metric(self, stage_name: str, metric_name: str, metric_value: Any) -> None:
         self.logger.info(
@@ -99,4 +121,12 @@ class PipelineStageLogger:
             stage_name,
             metric_name,
             metric_value,
+        )
+
+    def log_info(self, stage_name: str, message: str, **kwargs) -> None:
+        """General info log with stage context"""
+        extra = " ".join(f"{k}={v}" for k, v in kwargs.items())
+        self.logger.info(
+            "event=stage_info pipeline=%s stage=%s message=%s %s",
+            self.pipeline_name, stage_name, message, extra
         )

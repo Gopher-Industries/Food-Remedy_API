@@ -1,0 +1,79 @@
+{
+  "barcode": "09300633714437",
+  "productName": "Tuna Tomato and Onion",
+  "brand": "Woolworths",
+  "genericName": "",
+  "additives": [],
+  "allergens": [],
+  "ingredients": [],
+  "ingredientsText": "",
+  "category": "canned-fishes",
+  "categories": [
+    "canned-fishes",
+    "canned-foods",
+    "canned-tunas",
+    "fatty-fishes",
+    "fishes",
+    "fishes-and-their-products",
+    "seafood",
+    "tunas"
+  ],
+  "labels": [
+    "health-star-rating",
+    "health-star-rating-4"
+  ],
+  "nutrientLevels": {
+    "fat": "moderate"
+  },
+  "nutriments": {
+    "carbohydrates_unit": "g",
+    "proteins_serving": 12.7,
+    "fat_100g": 8.63,
+    "proteins_100g": 13.4,
+    "carbohydrates_100g": 5.89,
+    "energy_100g": 647,
+    "proteins_unit": "g",
+    "energy-kcal_100g": 155,
+    "energy_serving": 615,
+    "energy_unit": "kcal",
+    "fat_serving": 8.2,
+    "energy-kcal_serving": 147,
+    "carbohydrates_serving": 5.6,
+    "fat_unit": "g",
+    "energy-kcal_unit": "kcal"
+  },
+  "nutriments_normalized": {
+    "energy_kj": 647.0,
+    "energy_kcal": 154.637,
+    "fat_g": 8.63,
+    "saturated_fat_g": null,
+    "carbohydrates_g": 5.89,
+    "sugars_g": null,
+    "proteins_g": 13.4,
+    "salt_g": null,
+    "sodium_mg": null,
+    "fiber_g": null
+  },
+  "nutriscoreGrade": "unknown",
+  "productQuantity": 0.0,
+  "productQuantityUnit": "g",
+  "servingQuantity": 95.0,
+  "servingQuantityUnit": "g",
+  "traces": "",
+  "completeness": 0.475,
+  "images": {
+    "root": "https://images.openfoodfacts.org/images/products/930/063/371/4437",
+    "primary": "front_en",
+    "variants": {
+      "front_en": 11,
+      "ingredients_en": 14
+    }
+  },
+  "tags": {
+    "final": [],
+    "removed": []
+  },
+  "metadata": {
+    "source": "local-enriched"
+  }
+}

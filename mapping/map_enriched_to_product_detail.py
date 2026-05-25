@@ -3,13 +3,9 @@ import logging
 
 from database.clean_data.normalization.NutrientUnitNormalisation import normalize_nutriments_dict
 from utils.category_normalizer import normalize_category_fields
+from database.clean_data.normalization.BarcodeNormalisation import BarcodeNormalisation
 
-try:
-    from utils.conflict_resolver import resolve_conflicts
-except Exception:
-    # Fallback no-op resolver if utils.conflict_resolver is not present in this environment
-    def resolve_conflicts(tags):
-        return {'final_tags': [], 'removed': []}
+from utils.conflict_resolver import resolve_conflicts
 
 logger = logging.getLogger(__name__)
 
@@ -55,10 +51,15 @@ def _tags_to_wire(product: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(raw, list):
         if not raw:
             return {"final": [], "removed": []}
-        resolved = resolve_conflicts(raw)
-        final = [t.get("tag") for t in resolved.get("final_tags", []) if t and t.get("tag")]
-        removed = [t.get("tag") for t in resolved.get("removed", []) if t and t.get("tag")]
-        return {"final": final, "removed": removed}
+        try:
+            resolved = resolve_conflicts(raw)
+            final = [t.get("tag") for t in resolved.get("final_tags", []) if t and t.get("tag")]
+            removed = [t.get("tag") for t in resolved.get("removed", []) if t and t.get("tag")]
+            return {"final": final, "removed": removed}
+        except Exception:
+            # Preserve source tags if resolver fails; avoids silent data loss.
+            logger.exception("Tag conflict resolution failed.")
+            return {"final": _normalize_tag_name_list(raw), "removed": []}
     return {"final": [], "removed": []}
 
 
@@ -67,7 +68,7 @@ def map_enriched_to_product_detail(product: Dict[str, Any]) -> Dict[str, Any]:
     out: Dict[str, Any] = {}
 
     # Required fields
-    out["barcode"] = str(product.get("barcode") or "")
+    out["barcode"] = BarcodeNormalisation.barcode_normalise(product.get("barcode")) if product.get("barcode") is not None else None
     out["productName"] = str(product.get("productName") or "")
 
     # Optional fields with correct types/defaults
