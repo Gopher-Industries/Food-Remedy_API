@@ -12,11 +12,26 @@ def _validate_record(record: Dict[str, Any]) -> List[str]:
     else:
         if not isinstance(record["barcode"], str) or not record["barcode"].strip():
             errors.append("invalid_barcode")
-
+    # productName is required
+    if "productName" not in record:
+        errors.append("missing_productName")
+    else:
+        if not isinstance(record["productName"], str) or not record["productName"].strip():
+            errors.append("invalid_productName")
     # Nutriments should be a dict (can be empty)
     if "nutriments" in record and not isinstance(record["nutriments"], dict):
         errors.append("invalid_nutriments_type")
-
+    # allergens should be a list if present
+    if "allergens" in record and not isinstance(record["allergens"], list):
+        errors.append("invalid_allergens_type")
+    # categories should be a list if present
+    if "categories" in record and not isinstance(record["categories"], list):
+        errors.append("invalid_categories_type")
+    # completeness should be between 0 and 1 if present
+    if "completeness" in record:
+        c = record["completeness"]
+        if not isinstance(c, (int, float)) or not (0 <= c <= 1):
+            errors.append("invalid_completeness_value")
     return errors
 
 
