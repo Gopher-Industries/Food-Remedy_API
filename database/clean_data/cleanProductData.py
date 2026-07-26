@@ -5,6 +5,8 @@ Clean OpenFoodFacts Australia dataset for database ingestion.
 import os
 import sys
 
+from numpy import record
+
 # Allow `from utils...` when running this file directly (project root must be on path).
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if _PROJECT_ROOT not in sys.path:
@@ -258,12 +260,7 @@ def clean_quantity_fields(df: pd.DataFrame) -> pd.DataFrame:
     df['serving_quantity_unit'] = df['serving_quantity_unit'].astype(
         str).str.lower()
 
-    # Serving size text
-    # df['serving_size'] = (
-    #     df['serving_size']
-    #     .fillna('Not Specified') if 'serving_size' in df.columns else 'Not Specified'
-    # )
-    # df['serving_size'] = df['serving_size'].astype(str)
+
 
     return df
 
@@ -747,12 +744,20 @@ def clean_ingredients_list(tags) -> list | None:
 
 def validate_record(record: dict) -> list[str]:
     warnings = []
-    if not len(record['barcode']) == 13 and record['barcode'].isdigit(): warnings.append("Barcode must be 13 digits")
-    if not isinstance(record['nutriments'], dict): warnings.append("Nutriments must be a dictionary")
-    if not record['productQuantity'] >= 0: warnings.append("Product quantity cannot be negative")
-    if not record['servingQuantity'] >= 0: warnings.append("Serving quantity cannot be negative")
-    if not record['productQuantityUnit'] in ["g", "ml", "l", "kg"]: warnings.append("Invalid product quantity unit")
-    if not record['servingQuantityUnit'] in ["g", "ml", "l", "kg"]: warnings.append("Invalid serving quantity unit")
+    # DB001: Fixed logic bug -> previously only warned when barcode was BOTH wrong-length 
+    # AND numeric, so non-numeric/malformed barcodes silently passed validation.
+    if not (record['barcode'].isdigit() and len(record['barcode']) == 13):
+        warnings.append("Barcode must be 13 digits")
+    if not isinstance(record['nutriments'], dict):
+        warnings.append("Nutriments must be a dictionary")
+    if not record['productQuantity'] >= 0:
+        warnings.append("Product quantity cannot be negative")
+    if not record['servingQuantity'] >= 0:
+        warnings.append("Serving quantity cannot be negative")
+    if not record['productQuantityUnit'] in ["g", "ml", "l", "kg"]:
+        warnings.append("Invalid product quantity unit")
+    if not record['servingQuantityUnit'] in ["g", "ml", "l", "kg"]:
+        warnings.append("Invalid serving quantity unit")
     if not 0 <= record['completeness'] <= 1: warnings.append("Completeness must be between 0 and 1")
     return warnings
 
