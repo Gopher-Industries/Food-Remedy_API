@@ -88,7 +88,7 @@ class IngredientStandardisation:
         """
         reverse_list = {}
 
-        for standard, variants in self.ingredient_rules.items():
+        for standard, variants in input_list.items():        
             # map the standard to itself
             reverse_list[standard] = standard
             
@@ -199,11 +199,29 @@ def _test_standardisation():
     expected = ["sugar", "pepper", "salt", "potato"]
     expected = sorted(expected)
 
-    standarisation = IngredientStandardisation()
+    standardisation = IngredientStandardisation()
 
-    result = standarisation.standardise(input_data)
+    result = standardisation.standardise(input_data)
 
     assert result == expected, f"Expected {expected}, but got {result}"
+
+    # Regression test for the DB004 reverse-mapping improvement.
+    custom_rules = {
+        "sweetener": ["syrup"],
+    }
+
+    custom_mapping = standardisation.reverse_mapping(custom_rules)
+
+    expected_custom_mapping = {
+        "sweetener": "sweetener",
+        "syrup": "sweetener",
+    }
+
+    assert custom_mapping == expected_custom_mapping, (
+        f"Expected {expected_custom_mapping}, "
+        f"but got {custom_mapping}"
+    )
+
     print("Test passed.")
 
 if __name__ == '__main__':
