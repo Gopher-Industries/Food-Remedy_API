@@ -82,15 +82,21 @@ def test_barcode_normalisation():
     ]
     
     print("Running Barcode Normalisation tests for DB033...")
+    all_passed = True
+
     for i, (input, expected) in enumerate(test_cases):
         actual = normaliser.barcode_normalise(input)
         try:
             assert actual == expected
             print(f"Test case {i+1} Passed: '{input}' -> '{actual}'")
         except AssertionError:
+            all_passed = False
             print(f"❌ Test case {i+1} Failed: Input '{input}' -> Got '{actual}', Expected '{expected}'")
 
-    print("All test passed.")
+    if all_passed:
+        print("All tests passed.")
+    else:
+        print("One or more tests failed.")
 
 if __name__ == "__main__":
     test_barcode_normalisation()
