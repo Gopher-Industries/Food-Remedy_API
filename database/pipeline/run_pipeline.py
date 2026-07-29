@@ -74,7 +74,9 @@ def read_config(path: str) -> dict:
 
 
 def ensure_dir(path: str):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    dirname = os.path.dirname(path)
+    if dirname:
+        os.makedirs(dirname, exist_ok=True)
 
 
 # Minimal JSON Schema for pipeline config. A file `pipeline.config.schema.json`
