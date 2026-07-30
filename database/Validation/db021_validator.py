@@ -188,6 +188,22 @@ class DB021Validator:
     #  BARCODE VALIDATION
     # -----------------------------
 
+    @staticmethod
+    def _is_valid_barcode_format(barcode: str) -> bool:
+        """
+        Accepts numeric-only barcodes at standard retail lengths:
+        EAN-8 (8), UPC-A (12), EAN-13 (13), GTIN-14 (14).
+
+        Note: schema_definition.json's `description` field claims barcodes
+        are "13 digits, no leading zeros" - real sample data
+        (products_5k_test.json, 5000 records) contradicts this: 111 records
+        use 8-digit EAN-8, 4 use 14-digit GTIN-14, and 579 (~11.6%) have a
+        legitimate leading zero. This implementation follows real production
+        data and standard retail barcode formats instead. Flagged as a
+        schema documentation issue in the PR rather than enforced here.
+        """
+        return barcode.isdigit() and len(barcode) in (8, 12, 13, 14)
+
     def validate_barcodes(self, products):
         empty = 0
         invalid_type = 0
@@ -204,6 +220,11 @@ class DB021Validator:
             barcode = str(raw_barcode).strip()
             if not barcode:
                 empty += 1
+                continue
+
+            # DB012: reject malformed barcodes (non-numeric or non-standard length)
+            if not self._is_valid_barcode_format(barcode):
+                invalid_type += 1
                 continue
 
             if barcode in seen:
