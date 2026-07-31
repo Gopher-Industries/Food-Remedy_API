@@ -21,7 +21,7 @@ const firebaseConfig = {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
 // Initialize Auth properly
-let auth;
+let auth: Auth;
 
 if (Platform.OS === "web") {
   // Web → default auth
