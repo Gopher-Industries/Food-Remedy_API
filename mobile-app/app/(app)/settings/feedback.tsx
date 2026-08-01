@@ -9,8 +9,7 @@ import Input from "@/components/ui/UIInput";
 import Header from "@/components/layout/Header";
 import Screen from "@/components/layout/Screen";
 import { useNotification } from "@/components/providers/NotificationProvider";
-import IconGeneral from "@/components/icons/IconGeneral";
-import { color } from "@/app/design/token";
+import { BackButton } from "@/components/shared";
 import submitFeedback from "@/services/database/feedback/submitFeedback";
 import { auth } from "@/config/firebaseConfig";
 import { useAuthUserId } from "@/hooks/useAuthUserId";
@@ -100,17 +99,7 @@ export default function FeedbackPage() {
 
       <View className="w-[92%] mx-auto">
         <View className="flex-row items-center justify-between mb-3">
-          <Pressable
-            onPress={() => router.back()}
-            className="flex-row justify-center items-center self-end px-2 py-1"
-          >
-            {({ pressed }) => (
-              <IconGeneral
-                type="arrow-backward-ios"
-                fill={pressed ? color.primary : color.iconDefault}
-              />
-            )}
-          </Pressable>
+          <BackButton />
           <Tt className="font-interBold text-xl">Feedback</Tt>
           <View style={{ width: 24, height: 24 }} />
         </View>

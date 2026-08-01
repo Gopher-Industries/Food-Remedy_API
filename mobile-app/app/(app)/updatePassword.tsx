@@ -4,6 +4,7 @@ import { useState } from "react";
 import Tt from "@/components/ui/UIText";
 import IconGeneral from "@/components/icons/IconGeneral";
 import { color, spacing } from "@/app/design/token";
+import { BackButton } from "@/components/shared";
 import Header from "@/components/layout/Header";
 import { updatePassword } from "firebase/auth";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -71,18 +72,7 @@ export default function UpdatePasswordScreen() {
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         {/* Back button on left + Title in center */}
         <View className="flex-row items-center justify-between px-4 mb-6 mt-4">
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            {({ pressed }) => (
-              <IconGeneral
-                type="arrow-backward-ios"
-                fill={pressed ? color.primary : "hsl(0, 0%, 50%)"}
-                size={spacing.lg}
-              />
-            )}
-          </Pressable>
+          <BackButton />
 
           <Tt className="text-2xl font-interBold">Update Password</Tt>
 

@@ -16,6 +16,7 @@ import Header from "@/components/layout/Header";
 import { useNotification } from "@/components/providers/NotificationProvider";
 import IconGeneral from "@/components/icons/IconGeneral";
 import { color } from "@/app/design/token";
+import { BackButton } from "@/components/shared";
 
 export default function UpdatePasswordPage() {
   const router = useRouter();
@@ -135,17 +136,7 @@ export default function UpdatePasswordPage() {
         <View className="w-[95%] mx-auto">
           {/* Header with back button */}
           <View className="flex-row items-center justify-between mb-6">
-            <Pressable
-              onPress={() => router.back()}
-              className="flex-row justify-center items-center px-2 py-1"
-            >
-              {({ pressed }) => (
-                <IconGeneral
-                  type="arrow-backward-ios"
-                  fill={pressed ? color.primary : color.iconDefault}
-                />
-              )}
-            </Pressable>
+            <BackButton />
             <Tt className="font-interBold text-xl">Update Password</Tt>
             {/* Invisible placeholder to center title */}
             <IconGeneral type="arrow-backward-ios" fill="transparent" />
