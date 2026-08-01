@@ -1,6 +1,5 @@
 import json
 import os
-import time
 from typing import Any, Dict, List
 
 
@@ -92,9 +91,10 @@ def run(input_path: str, output_path: str, config: dict):
         repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
         report_dir = os.path.join(repo_root, "pipeline", "test_reports")
         os.makedirs(report_dir, exist_ok=True)
-        ts = int(time.time())
+        from datetime import datetime
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_path = os.path.join(report_dir, f"schema_report_{ts}.json")
-
+        
     if dry:
         print("DRY-RUN: schema validation report (not written):")
         print(json.dumps(report, indent=2, ensure_ascii=False))
