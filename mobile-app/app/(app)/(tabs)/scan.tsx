@@ -18,8 +18,10 @@ import { useModalManager } from "@/components/providers/ModalManagerProvider";
 import { color } from "@/app/design/token";
 import { useSessionPreferences } from "@/components/providers/SessionPreferencesProvider";
 import Tt from "@/components/ui/UIText";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function ScanPage() {
+  const { sessionType } = useAuth();
   const { setBarcode } = useProduct();
   const { openModal } = useModalManager();
   const {
@@ -38,6 +40,10 @@ export default function ScanPage() {
     setFacing((p) => (p === "back" ? "front" : "back"));
 
   const handleOpenProfileSelector = () => {
+    if (sessionType === "guest") {
+      router.push("/(app)/(tabs)/profiles");
+      return;
+    }
     openModal("profileSelector");
   };
 

@@ -9,7 +9,7 @@ import {
   Image,
   Pressable,
 } from "react-native";
-import { Link, useRouter } from "expo-router";
+import { Link } from "expo-router";
 import Input from "@/components/ui/UIInput";
 import IconGeneral from "@/components/icons/IconGeneral";
 import Tt from "@/components/ui/UIText";
@@ -17,11 +17,12 @@ import { useNotification } from "@/components/providers/NotificationProvider";
 import { registerWithEmail } from "@/services";
 import { color } from "@/app/design/token";
 import { useTheme } from "@/theme";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const { addNotification } = useNotification();
   const theme = useTheme();
+  const { completeAuthentication } = useAuth();
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -88,7 +89,7 @@ export default function RegisterPage() {
       }
 
       addNotification("Registered Account!", "s");
-      router.replace("/login");
+      await completeAuthentication();
     } catch (error: any) {
       console.error("Error logging in: ", error);
       setErrorMessage("Unknown Error Occured");
