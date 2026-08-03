@@ -32,6 +32,8 @@ def run_enrich_stage(input_path: str, output_path: str, config=None) -> dict:
       {"modules": [{"name": "mod1", "path": "/abs/path/to/mod.py", "enabled": true}, ...]}
 
     If no modules are present, copies input -> output.
+    A module error does not stop later modules from running, but is included in
+    the returned failure count so callers can report it accurately.
     """
     modules = config.get("modules", [])
 
@@ -111,7 +113,8 @@ def run_enrich_stage(input_path: str, output_path: str, config=None) -> dict:
                         pass
         processed = total_processed if processed_found else None
 
-    # Aggregate failures across modules when reported
+    # Aggregate failures reported by modules, and include modules that raised
+    # before they could return their own failure count.
     total_failures = 0
     failures_found = False
     for r in run_list:
@@ -124,6 +127,14 @@ def run_enrich_stage(input_path: str, output_path: str, config=None) -> dict:
                     failures_found = True
                 except Exception:
                     pass
+
+    failed_module_count = sum(
+        1 for entry in run_list if entry.get("status") == "failed"
+    )
+    if failed_module_count:
+        total_failures += failed_module_count
+        failures_found = True
+
     failures = total_failures if failures_found else None
 
     return {"processed": processed, "failures": failures, "output": current_input, "modules_run": run_list}
