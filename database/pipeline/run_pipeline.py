@@ -540,6 +540,12 @@ if __name__ == "__main__":
 
     args = p.parse_args()
 
+    if args.seed is False:
+       print(
+            "[SAFE MODE] Seed stage disabled via --no-seed. "
+            "No Firestore seeding will be performed."
+        )
+
     runPipeline(
         config_path=args.config,
         run_clean=args.clean,
