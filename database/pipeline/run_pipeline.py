@@ -74,9 +74,7 @@ def read_config(path: str) -> dict:
 
 
 def ensure_dir(path: str):
-    dirname = os.path.dirname(path)
-    if dirname:
-        os.makedirs(dirname, exist_ok=True)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
 
 
 # Minimal JSON Schema for pipeline config. A file `pipeline.config.schema.json`
@@ -338,7 +336,10 @@ def runPipeline(
         stats["stages"]["enrich"] = checkpoints.get("enrich", {})
         completed_count += 1
         ck = stats["stages"].get("enrich", {})
-        res = ck.get('result') if isinstance(ck.get('result'), dict) else ck.get('result')
+        # Note: previously computed as `ck.get('result') if isinstance(ck.get('result'), dict)
+        # else ck.get('result')`, which always evaluates to `ck.get('result')` regardless of
+        # the isinstance check (DB013: removed the redundant no-op ternary).
+        res = ck.get('result')
 
     elif pipeline_cfg.get("enrich", {}).get("enabled", True):
         enrich_cfg = pipeline_cfg.get("enrich", {})
@@ -415,7 +416,10 @@ def runPipeline(
         stats["stages"]["seed"] = checkpoints.get("seed", {})
         completed_count += 1
         ck = stats["stages"].get("seed", {})
-        res = ck.get('result') if isinstance(ck.get('result'), dict) else ck.get('result')
+        # Note: previously computed as `ck.get('result') if isinstance(ck.get('result'), dict)
+        # else ck.get('result')`, which always evaluates to `ck.get('result')` regardless of
+        # the isinstance check (DB013: removed the redundant no-op ternary).
+        res = ck.get('result')
 
     elif pipeline_cfg.get("seed", {}).get("enabled", True):
         seed_cfg = pipeline_cfg.get("seed", {})
