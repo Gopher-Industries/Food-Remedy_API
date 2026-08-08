@@ -9,7 +9,8 @@ import {
   Image,
   Pressable,
 } from "react-native";
-import { Link } from "expo-router";
+import { router } from "expo-router";
+import { useDirtyForm } from "@/hooks/useDirtyForm";
 import Input from "@/components/ui/UIInput";
 import IconGeneral from "@/components/icons/IconGeneral";
 import Tt from "@/components/ui/UIText";
@@ -23,6 +24,7 @@ export default function RegisterPage() {
   const { addNotification } = useNotification();
   const theme = useTheme();
   const { completeAuthentication } = useAuth();
+  const { markDirty, markClean, confirmLeave } = useDirtyForm();
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -89,6 +91,7 @@ export default function RegisterPage() {
       }
 
       addNotification("Registered Account!", "s");
+      markClean();
       await completeAuthentication();
     } catch (error: any) {
       console.error("Error logging in: ", error);
@@ -133,7 +136,7 @@ export default function RegisterPage() {
                 className="py-3 mt-8"
                 placeholder="First Name"
                 value={firstName}
-                onChangeText={setFirstName}
+                onChangeText={(text) => { setFirstName(text); markDirty(); }}
                 keyboardType="default"
                 autoCapitalize="none"
                 autoComplete="off"
@@ -145,7 +148,7 @@ export default function RegisterPage() {
                 className="py-3 mt-4"
                 placeholder="Last Name"
                 value={lastName}
-                onChangeText={setLastName}
+                onChangeText={(text) => { setLastName(text); markDirty(); }}
                 keyboardType="default"
                 autoCapitalize="none"
                 autoComplete="off"
@@ -157,7 +160,7 @@ export default function RegisterPage() {
                 className="py-3 mt-4"
                 placeholder="Email"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(text) => { setEmail(text); markDirty(); }}
                 keyboardType="default"
                 autoCapitalize="none"
                 autoComplete="off"
@@ -169,7 +172,7 @@ export default function RegisterPage() {
                 <Input
                   className="py-3"
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => { setPassword(text); markDirty(); }}
                   placeholder="Password"
                   secureTextEntry={showPassword}
                   autoCapitalize="none"
@@ -199,7 +202,7 @@ export default function RegisterPage() {
                 <Input
                   className="py-3"
                   value={confirmPassword}
-                  onChangeText={setConfirmPassword}
+                  onChangeText={(text) => { setConfirmPassword(text); markDirty(); }}
                   placeholder="Confirm Password"
                   secureTextEntry={showConfirmPassword}
                   autoCapitalize="none"
@@ -242,15 +245,12 @@ export default function RegisterPage() {
               </Pressable>
 
               {/* Navigating to login */}
-              <Tt className="text-sm mt-12 text-center">
-                Already have an account?{" "}
-                <Link
-                  href="/login"
-                  className="text-primary font-interSemiBold active:underline"
-                >
-                  Log in
-                </Link>
-              </Tt>
+              <View className="flex-row justify-center items-center mt-12">
+                <Tt className="text-sm">Already have an account? </Tt>
+                <Pressable onPress={() => confirmLeave(() => router.replace("/login"))}>
+                  <Tt className="text-sm text-primary font-interSemiBold">Log in</Tt>
+                </Pressable>
+              </View>
             </>
           )}
         </View>

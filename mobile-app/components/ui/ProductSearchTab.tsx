@@ -1,7 +1,7 @@
 // Product Search Tab tsx
 
 import { useEffect, useMemo, useRef } from "react";
-import { Keyboard, Pressable, View } from "react-native";
+import { Alert, Keyboard, Pressable, View } from "react-native";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
 import IconGeneral from "../icons/IconGeneral";
 import ProductBanner from "../product/ProductBanner";
@@ -29,8 +29,14 @@ const ProductSearchTab = ({ collapsed }: ProductSearchTabProps) => {
 
   useEffect(() => {
     if (!sheetRef.current) return;
-    if (collapsed) {
-      Keyboard.dismiss();
+    if (!collapsed) return;
+    Keyboard.dismiss();
+    if (query.trim()) {
+      Alert.alert("Discard changes?", "You have unsaved changes that will be lost.", [
+        { text: "Stay", style: "cancel" },
+        { text: "Leave", style: "destructive", onPress: () => { sheetRef.current?.collapse(); setQuery(""); } },
+      ]);
+    } else {
       sheetRef.current.collapse();
       setQuery("");
     }
