@@ -40,7 +40,7 @@ const lightTheme = {
     lg: 16,
     xl: 24,
   },
-} as const;
+};
 
 export type Theme = typeof lightTheme;
 
