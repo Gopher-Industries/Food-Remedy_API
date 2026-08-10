@@ -4,14 +4,13 @@ import { FontAwesome } from "@expo/vector-icons";
 import { usePreferences } from "@/components/providers/PreferencesProvider";
 
 type Goal = "Lower sodium" | "Heart health" | "Lower sugar" | "High protein";
-type Allergen = "Peanuts" | "Milk" | "Soy" | "Gluten" | "Tree nuts";
 
 export interface UserDemographics {
   gender: string;
   ageGroup: string;
   activityLevel: string;
   goals: Goal[];
-  allergens: Allergen[];
+  allergens: string[];
 }
 
 export interface ProductData {
@@ -202,11 +201,21 @@ export default function ProductCompareSection({
       }
     }
 
-    const matchedAllergens = userProfile.allergens.filter((allergen) =>
-      product.allergens
-        .map((item) => item.toLowerCase())
-        .includes(allergen.toLowerCase())
-    );
+    // clean the string for allergens e.g: "en:allergy" -> "allergy"
+    const clean = (value: string) =>
+        value.toLowerCase().trim().replace(/^[a-z]{2}:/, "");
+
+    const productAllergens = product.allergens.map(clean).filter(Boolean);
+
+    const matchedAllergens = userProfile.allergens.filter((allergen) => {
+      const userAllergen = clean(allergen);
+      // an empty allergy will flag every product so empty strings will return false
+      if (!userAllergen) return false;
+      // include any string that contains so for "milk", "milk products" and "cow milk" will be included
+      return productAllergens.some(
+          (item) => item.includes(userAllergen) || userAllergen.includes(item)
+      );
+    });
 
     if (matchedAllergens.length === 0) {
       rows.push({
