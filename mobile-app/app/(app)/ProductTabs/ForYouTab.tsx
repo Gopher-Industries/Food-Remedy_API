@@ -123,22 +123,9 @@ function buildUserProfile(
     ...normalizeArray(selectedProfile.preferences?.avoidAllergens),
   ];
 
-  const mappedAllergens: UserDemographics["allergens"] = [];
-
-  rawAllergens.forEach((item) => {
-    const lower = item.toLowerCase();
-
-    if (lower.includes("peanut")) mappedAllergens.push("Peanuts");
-    else if (lower.includes("milk") || lower.includes("dairy")) {
-      mappedAllergens.push("Milk");
-    } else if (lower.includes("soy")) {
-      mappedAllergens.push("Soy");
-    } else if (lower.includes("gluten") || lower.includes("wheat")) {
-      mappedAllergens.push("Gluten");
-    } else if (lower.includes("tree nut") || lower.includes("almond")) {
-      mappedAllergens.push("Tree nuts");
-    }
-  });
+  const mappedAllergens = rawAllergens
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
 
   return {
     gender,

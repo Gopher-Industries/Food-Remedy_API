@@ -74,7 +74,9 @@ def read_config(path: str) -> dict:
 
 
 def ensure_dir(path: str):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    dirname = os.path.dirname(path)
+    if dirname:
+        os.makedirs(dirname, exist_ok=True)
 
 
 # Minimal JSON Schema for pipeline config. A file `pipeline.config.schema.json`
@@ -336,9 +338,7 @@ def runPipeline(
         stats["stages"]["enrich"] = checkpoints.get("enrich", {})
         completed_count += 1
         ck = stats["stages"].get("enrich", {})
-        # Note: previously computed as `ck.get('result') if isinstance(ck.get('result'), dict)
-        # else ck.get('result')`, which always evaluates to `ck.get('result')` regardless of
-        # the isinstance check (DB013: removed the redundant no-op ternary).
+        # Both branches of the previous ternary returned ck.get('result').
         res = ck.get('result')
 
     elif pipeline_cfg.get("enrich", {}).get("enabled", True):
@@ -416,9 +416,7 @@ def runPipeline(
         stats["stages"]["seed"] = checkpoints.get("seed", {})
         completed_count += 1
         ck = stats["stages"].get("seed", {})
-        # Note: previously computed as `ck.get('result') if isinstance(ck.get('result'), dict)
-        # else ck.get('result')`, which always evaluates to `ck.get('result')` regardless of
-        # the isinstance check (DB013: removed the redundant no-op ternary).
+        # Both branches of the previous ternary returned ck.get('result').
         res = ck.get('result')
 
     elif pipeline_cfg.get("seed", {}).get("enabled", True):
@@ -543,6 +541,12 @@ if __name__ == "__main__":
     p.add_argument("--force", dest="force", action="store_true", help="Ignore checkpoints and force re-run of stages")
 
     args = p.parse_args()
+
+    if args.seed is False:
+       print(
+            "[SAFE MODE] Seed stage disabled via --no-seed. "
+            "No Firestore seeding will be performed."
+        )
 
     runPipeline(
         config_path=args.config,
