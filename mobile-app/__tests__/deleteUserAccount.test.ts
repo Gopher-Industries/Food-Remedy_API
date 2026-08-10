@@ -1,7 +1,7 @@
 /*
 PURPOSE:
 This test file verifies that deleteUserAccountData removes a user's data
-in the correct order.
+in the correct order and targets the correct Firestore paths.
 
 The account deletion process should:
 1. Delete profile storage first.
@@ -17,12 +17,10 @@ import { deleteUserAccountData } from '../services/database/user/deleteUserAccou
 import { collection, deleteDoc, doc, getDocs, writeBatch } from 'firebase/firestore';
 import { deleteUserProfilesStorage } from '../services/storage/uploadProfileAvatar';
 
-
 // Replace Firebase config with a fake Firestore object.
 jest.mock('../config/firebaseConfig', () => ({
   fdb: {},
 }));
-
 
 // Replace Firebase Firestore functions with mocks.
 // This prevents the tests from connecting to the real Firebase database.
@@ -34,23 +32,31 @@ jest.mock('firebase/firestore', () => ({
   writeBatch: jest.fn(),
 }));
 
-
 // Replace Storage cleanup with a mock.
 // No real Firebase Storage files will be deleted.
 jest.mock('../services/storage/uploadProfileAvatar', () => ({
   deleteUserProfilesStorage: jest.fn(),
 }));
 
-
 describe('deleteUserAccountData', () => {
   const uid = 'user-123';
+
+  // Stable fake Firestore references so we can verify
+  // that the correct references are used during deletion.
+  const mockProfilesCollectionRef = {
+    path: `USERS/${uid}/PROFILES`,
+  };
+
+  const mockUserDocRef = {
+    path: `USERS/${uid}`,
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Fake Firestore references.
-    (collection as jest.Mock).mockReturnValue({ path: 'profiles' });
-    (doc as jest.Mock).mockReturnValue({ path: `USERS/${uid}` });
+    // Return fake references instead of connecting to Firestore.
+    (collection as jest.Mock).mockReturnValue(mockProfilesCollectionRef);
+    (doc as jest.Mock).mockReturnValue(mockUserDocRef);
 
     // Storage cleanup succeeds by default.
     (deleteUserProfilesStorage as jest.Mock).mockResolvedValue(undefined);
@@ -59,10 +65,8 @@ describe('deleteUserAccountData', () => {
     (deleteDoc as jest.Mock).mockResolvedValue(undefined);
   });
 
-
   it('deletes profile storage before starting Firestore cleanup', async () => {
-    // ARRANGE:
-    // No profile documents are stored for this user.
+    // ARRANGE
     (getDocs as jest.Mock).mockResolvedValue({
       docs: [],
     });
@@ -70,12 +74,10 @@ describe('deleteUserAccountData', () => {
     // ACT
     await deleteUserAccountData(uid);
 
-    // ASSERT:
-    // Both functions should have been called.
+    // ASSERT
     expect(deleteUserProfilesStorage).toHaveBeenCalledWith(uid);
     expect(getDocs).toHaveBeenCalledTimes(1);
 
-    // Storage cleanup must happen before Firestore getDocs().
     const storageCall =
       (deleteUserProfilesStorage as jest.Mock).mock.invocationCallOrder[0];
 
@@ -85,10 +87,26 @@ describe('deleteUserAccountData', () => {
     expect(storageCall).toBeLessThan(firestoreCall);
   });
 
+  it('uses the correct Firestore profile collection path', async () => {
+    // ARRANGE
+    (getDocs as jest.Mock).mockResolvedValue({
+      docs: [],
+    });
+
+    // ACT
+    await deleteUserAccountData(uid);
+
+    // ASSERT
+    expect(collection).toHaveBeenCalledWith(
+      {},
+      `USERS/${uid}/PROFILES`
+    );
+
+    expect(getDocs).toHaveBeenCalledWith(mockProfilesCollectionRef);
+  });
 
   it('deletes profile documents using a Firestore batch', async () => {
-    // ARRANGE:
-    // Two fake Firestore profile documents.
+    // ARRANGE
     const profileDocs = [
       { ref: { id: 'profile-1' } },
       { ref: { id: 'profile-2' } },
@@ -108,24 +126,30 @@ describe('deleteUserAccountData', () => {
     // ACT
     await deleteUserAccountData(uid);
 
-    // ASSERT:
-    // Both profile documents should be added to the batch.
+    // ASSERT
     expect(mockBatch.delete).toHaveBeenCalledTimes(2);
-    expect(mockBatch.delete).toHaveBeenCalledWith(profileDocs[0].ref);
-    expect(mockBatch.delete).toHaveBeenCalledWith(profileDocs[1].ref);
 
-    // The batch should then be committed.
+    expect(mockBatch.delete).toHaveBeenCalledWith(
+      profileDocs[0].ref
+    );
+
+    expect(mockBatch.delete).toHaveBeenCalledWith(
+      profileDocs[1].ref
+    );
+
     expect(mockBatch.commit).toHaveBeenCalledTimes(1);
   });
 
-
   it('creates another batch when more than 450 profile documents exist', async () => {
-    // ARRANGE:
-    // The implementation commits a batch after 450 documents.
-    // Using 451 profiles verifies that a second batch is created.
-    const profileDocs = Array.from({ length: 451 }, (_, index) => ({
-      ref: { id: `profile-${index + 1}` },
-    }));
+    // ARRANGE
+    // The implementation commits after 450 documents.
+    // 451 documents should therefore require two batches.
+    const profileDocs = Array.from(
+      { length: 451 },
+      (_, index) => ({
+        ref: { id: `profile-${index + 1}` },
+      })
+    );
 
     (getDocs as jest.Mock).mockResolvedValue({
       docs: profileDocs,
@@ -148,20 +172,17 @@ describe('deleteUserAccountData', () => {
     // ACT
     await deleteUserAccountData(uid);
 
-    // ASSERT:
-    // First batch should contain the first 450 profiles.
+    // ASSERT
     expect(firstBatch.delete).toHaveBeenCalledTimes(450);
     expect(firstBatch.commit).toHaveBeenCalledTimes(1);
 
-    // The remaining profile should be placed in a second batch.
     expect(secondBatch.delete).toHaveBeenCalledTimes(1);
     expect(secondBatch.commit).toHaveBeenCalledTimes(1);
 
     expect(writeBatch).toHaveBeenCalledTimes(2);
   });
 
-
-  it('deletes the main user document after profile cleanup is complete', async () => {
+  it('uses the correct user document path and deletes that exact document last', async () => {
     // ARRANGE
     const profileDocs = [
       { ref: { id: 'profile-1' } },
@@ -182,11 +203,17 @@ describe('deleteUserAccountData', () => {
     // ACT
     await deleteUserAccountData(uid);
 
-    // ASSERT:
-    // Final user document should be deleted.
-    expect(deleteDoc).toHaveBeenCalledTimes(1);
+    // ASSERT
+    // The correct main user document path must be created.
+    expect(doc).toHaveBeenCalledWith(
+      {},
+      `USERS/${uid}`
+    );
 
-    // The batch containing profile deletions must finish first.
+    // deleteDoc must receive that exact user document reference.
+    expect(deleteDoc).toHaveBeenCalledWith(mockUserDocRef);
+
+    // Profile deletions must complete before the user document is deleted.
     const batchCommitCall =
       mockBatch.commit.mock.invocationCallOrder[0];
 
@@ -196,18 +223,45 @@ describe('deleteUserAccountData', () => {
     expect(batchCommitCall).toBeLessThan(userDeleteCall);
   });
 
+  it('deletes the main user document when the user has no profile documents', async () => {
+    // ARRANGE
+    (getDocs as jest.Mock).mockResolvedValue({
+      docs: [],
+    });
+
+    // ACT
+    await deleteUserAccountData(uid);
+
+    // ASSERT
+    expect(deleteUserProfilesStorage).toHaveBeenCalledWith(uid);
+
+    expect(collection).toHaveBeenCalledWith(
+      {},
+      `USERS/${uid}/PROFILES`
+    );
+
+    expect(doc).toHaveBeenCalledWith(
+      {},
+      `USERS/${uid}`
+    );
+
+    // Even with zero profile documents,
+    // the main user document must still be deleted.
+    expect(deleteDoc).toHaveBeenCalledWith(mockUserDocRef);
+
+    expect(deleteDoc).toHaveBeenCalledTimes(1);
+  });
 
   it('does not start Firestore deletion when storage cleanup fails', async () => {
-    // ARRANGE:
-    // Simulate Firebase Storage cleanup failing.
+    // ARRANGE
     (deleteUserProfilesStorage as jest.Mock).mockRejectedValue(
       new Error('Storage cleanup failed')
     );
 
     // ACT + ASSERT
-    await expect(deleteUserAccountData(uid)).rejects.toThrow(
-      'Storage cleanup failed'
-    );
+    await expect(
+      deleteUserAccountData(uid)
+    ).rejects.toThrow('Storage cleanup failed');
 
     // Firestore cleanup must never start.
     expect(getDocs).not.toHaveBeenCalled();
@@ -215,27 +269,22 @@ describe('deleteUserAccountData', () => {
     expect(deleteDoc).not.toHaveBeenCalled();
   });
 
-
   it('does not delete the user document when reading profiles fails', async () => {
-    // ARRANGE:
-    // Storage succeeds, but Firestore profile retrieval fails.
+    // ARRANGE
     (getDocs as jest.Mock).mockRejectedValue(
       new Error('Firestore read failed')
     );
 
     // ACT + ASSERT
-    await expect(deleteUserAccountData(uid)).rejects.toThrow(
-      'Firestore read failed'
-    );
+    await expect(
+      deleteUserAccountData(uid)
+    ).rejects.toThrow('Firestore read failed');
 
-    // Storage happened first.
     expect(deleteUserProfilesStorage).toHaveBeenCalledWith(uid);
 
-    // But the final user document should not be deleted.
     expect(writeBatch).not.toHaveBeenCalled();
     expect(deleteDoc).not.toHaveBeenCalled();
   });
-
 
   it('does not delete the user document when a profile batch fails', async () => {
     // ARRANGE
@@ -257,11 +306,12 @@ describe('deleteUserAccountData', () => {
     (writeBatch as jest.Mock).mockReturnValue(mockBatch);
 
     // ACT + ASSERT
-    await expect(deleteUserAccountData(uid)).rejects.toThrow(
-      'Batch commit failed'
-    );
+    await expect(
+      deleteUserAccountData(uid)
+    ).rejects.toThrow('Batch commit failed');
 
-    // If profile deletion fails, the main user document must remain.
+    // If the profile cleanup fails,
+    // the main user document must not be deleted.
     expect(deleteDoc).not.toHaveBeenCalled();
   });
 });
