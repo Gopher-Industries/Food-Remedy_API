@@ -2,12 +2,12 @@ import * as SQLite from "expo-sqlite";
 import { db as dbWrapper, Db } from "./db";
 import { initBE03Schema } from "./ShoppingListService";
 
-import p0_10 from "../../data/products_0k_10k_enriched.json";
-import p10_20 from "../../data/products_10k_20k_enriched.json";
-import p20_30 from "../../data/products_20k_30k_enriched.json";
-import p30_40 from "../../data/products_30k_40k_enriched.json";
-import p40_50 from "../../data/products_40k_50k_enriched.json";
-import p50p from "../../data/products_50k_plus_enriched.json";
+import p0_10 from "../../../database/seeding/products_0k_10k.json";
+import p10_20 from "../../../database/seeding/products_10k_20k.json";
+import p20_30 from "../../../database/seeding/products_20k_30k.json";
+import p30_40 from "../../../database/seeding/products_30k_40k.json";
+import p40_50 from "../../../database/seeding/products_40k_50k.json";
+import p50p from "../../../database/seeding/products_50k+.json";
 
 
 type AnyProduct = any;
