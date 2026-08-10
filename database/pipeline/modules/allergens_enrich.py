@@ -1,7 +1,7 @@
 import json
 import os
-from typing import Any
 from utils.detect_allergens import detect_allergens  # detection function built
+from utils.missing_value_utils import normalize_allergens
 from database.Allergens.load_allergens import load_allergens  # official config loader
 
 def run(input_path: str, output_path: str, config: dict) -> dict:
@@ -48,9 +48,11 @@ def run(input_path: str, output_path: str, config: dict) -> dict:
                 "labels_tags": product.get("labels"),
             }
 
-            allergens = detect_allergens(
-                product=detection_input,
-                keyword_entries=allergen_config
+            allergens = normalize_allergens(
+                detect_allergens(
+                    product=detection_input,
+                    keyword_entries=allergen_config,
+                )
             )
 
             # Debug print with more useful info
@@ -59,7 +61,7 @@ def run(input_path: str, output_path: str, config: dict) -> dict:
             # print(f"Detected allergens for {barcode} ({product_name}): {allergens}") # testing line; can be uncommented for debugging
 
         except Exception as e:
-            allergens = []
+            allergens = normalize_allergens(None)
             failures += 1
             barcode = product.get("barcode", "N/A")
             print(f"Warning: Failed to detect allergens for product {barcode}: {e}")

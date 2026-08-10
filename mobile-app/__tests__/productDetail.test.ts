@@ -63,5 +63,30 @@ describe("Product detail response", () => {
     expect(product.tags?.final).toEqual(["vegetarian"]);
     expect(product.metadata?.source).toBe("test");
   });
-});
 
+  it.each([undefined, null, [], ""])(
+    "represents missing or empty allergen data as Unknown (%p)",
+    (allergens) => {
+      const product = buildProductDetailResponse({ ...raw, allergens });
+
+      expect(product.allergens).toEqual(["Unknown"]);
+    },
+  );
+
+  it("preserves known allergens and prefers a known detected fallback", () => {
+    expect(buildProductDetailResponse(raw).allergens).toEqual(["Milk"]);
+    expect(
+      buildProductDetailResponse({
+        ...raw,
+        allergens: [],
+        allergensDetected: ["Egg"],
+      }).allergens,
+    ).toEqual(["Egg"]);
+  });
+
+  it("uses the same Unknown representation in the Firestore normalizer", () => {
+    const product = normaliseFirestoreProduct({ ...raw, allergens: [] });
+
+    expect(product.allergens).toEqual(["Unknown"]);
+  });
+});
