@@ -4,7 +4,9 @@
   "brand": "Woolworths",
   "genericName": "",
   "additives": [],
-  "allergens": [],
+  "allergens": [
+    "Unknown"
+  ],
   "ingredients": [
     "vegetable-oil-y"
   ],

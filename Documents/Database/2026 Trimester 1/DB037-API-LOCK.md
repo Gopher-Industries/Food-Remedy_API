@@ -1,6 +1,6 @@
 # DB037 — Cross-team API lock (BE + DB)
 
-**Status:** Contract frozen at **v1.0.0** (2026-05-21)  
+**Status:** Contract frozen at **v1.0.1** (DB023 patch, 2026-08-10; original v1.0.0 lock dated 2026-05-21)
 **Repo:** Food-Remedy_API  
 **Related tasks:** DB033 (mapping correctness), DB034 (contract validation)
 
@@ -13,7 +13,7 @@ Establish a **single source of truth** for Product Detail JSON across Database, 
 3. BE serves that shape on product detail (`mobile-app/app/api/products/[barcode]+api.ts`).
 4. FE renders using the same field names (`mobile-app/services/utils/productDetail.ts`, `mobile-app/types/Product.d.ts`).
 
-## Frozen artifacts (v1.0.0)
+## Frozen artifacts (v1.0.x)
 
 | Artifact | Path |
 |----------|------|
@@ -33,7 +33,7 @@ Establish a **single source of truth** for Product Detail JSON across Database, 
 | `brand` | no | string \| null | |
 | `genericName` | no | string \| null | |
 | `additives` | no | string[] | Default `[]` |
-| `allergens` | no | string[] | Default `[]` |
+| `allergens` | no | string[] | Known values or `["Unknown"]` when missing/empty |
 | `ingredients` | no | string[] | Default `[]` |
 | `ingredientsText` | no | string \| null | |
 | `category` | no | string \| null | Primary category (`category_normalizer`) |
@@ -94,7 +94,7 @@ python scripts/generate_contract_examples.py
 
 ## Versioning
 
-- Current: **1.0.0**
+- Current: **1.0.1** (DB023 missing-allergen semantics; field shape unchanged)
 - Patch documentation-only: no version bump.
 - New optional field: minor version (1.1.0) + changelog + FE/BE review.
 - Breaking rename/remove: **v2** schema file + migration plan.
