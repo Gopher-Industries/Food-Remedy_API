@@ -1,5 +1,6 @@
 import { doc, getDoc } from "firebase/firestore";
 import { fdb } from "@/config/firebaseConfig";
+import { findRestrictionConflict } from "@/services/safety/restrictionMatching";
 
 type ClassificationColour = "red" | "green" | "grey";
 
@@ -14,6 +15,7 @@ interface ProductDoc {
   productName?: string;
   brand?: string;
   allergens?: string[];
+  traces?: string | string[] | null;
   additives?: string[];
   nutrientLevels?: {
     fat?: string;
@@ -36,12 +38,7 @@ interface ClassificationResult {
   brand?: string;
 }
 
-function normaliseList(list?: string[]): string[] {
-  if (!list) return [];
-  return list.map((x) => x.toLowerCase().trim()).filter(Boolean);
-}
-
-function classifyProduct(
+export function classifyProduct(
   product: ProductDoc,
   profile: UserProfile = {},
   fallbackBarcode?: string
@@ -49,18 +46,13 @@ function classifyProduct(
   const reasons: string[] = [];
   let score = 100;
 
-  const productAllergens = normaliseList(product.allergens);
-  const userAllergies = normaliseList(profile.allergies);
-
-  const matchedAllergens = userAllergies.filter((a) =>
-    productAllergens.includes(a.toLowerCase())
-  );
+  const restrictionMatch = findRestrictionConflict(profile, product);
 
   const finalBarcode = product.barcode ?? fallbackBarcode ?? "";
 
-  if (matchedAllergens.length > 0) {
+  if (restrictionMatch) {
     reasons.push(
-      `Contains allergens for this profile: ${matchedAllergens.join(", ")}`
+      `Contains allergen or trace for this profile: ${restrictionMatch}`
     );
     return {
       barcode: finalBarcode,

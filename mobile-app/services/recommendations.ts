@@ -6,6 +6,7 @@
 
 import type { Product } from "@/types/Product";
 import type { NutritionalProfile } from "@/types/NutritionalProfile";
+import { findRestrictionConflict } from "@/services/safety/restrictionMatching";
 
 export interface RecommendationScore {
   product: Product;
@@ -45,19 +46,7 @@ function classifyProductSafety(product: Product): "green" | "grey" | "red" {
  * Returns true if product contains no allergens/forbidden additives
  */
 function isSafeForProfile(product: Product, profile: NutritionalProfile): boolean {
-  // Check allergens
-  const productAllergens = (product.allergens || []).map((a) => a.toLowerCase());
-  const profileAllergies = (profile.allergies || []).map((a) => a.toLowerCase());
-  const hasAllergen = profileAllergies.some((allergy) =>
-    productAllergens.some((allergen) => allergen.includes(allergy) || allergy.includes(allergen))
-  );
-  if (hasAllergen) return false;
-
-  // Check traces (if critical)
-  const productTraces = (product.traces || "").toLowerCase();
-  if (productTraces && profileAllergies.some((allergy) => productTraces.includes(allergy))) {
-    return false;
-  }
+  if (findRestrictionConflict(profile, product)) return false;
 
   // Check forbidden additives
   const productAdditives = (product.additives || []).map((a) => a.toLowerCase());
@@ -235,7 +224,12 @@ export function getAlternatives(
   // Filter: exclude red products, prioritize green > grey
   const scored = candidates
     .map((cand) => scoreAlternative(original, cand, profile))
-    .filter((rec) => rec.score > 0 && rec.safetyRating !== "red") // exclude zero-score products and Unsafe Products
+    .filter(
+      (rec) =>
+        rec.score > 0 &&
+        rec.safetyRating !== "red" &&
+        isSafeForProfile(rec.product, profile)
+    )
     .sort((a, b) => {
       // Primary: safety rating (green > grey > red)
       const safetyOrder = { green: 3, grey: 2, red: 1 };
@@ -256,14 +250,9 @@ export function isUnsuitableForProfile(
   product: Product,
   profile: NutritionalProfile
 ): { unsuitable: boolean; reason: string } {
-  // Check allergens
-  const productAllergens = (product.allergens || []).map((a) => a.toLowerCase());
-  const profileAllergies = (profile.allergies || []).map((a) => a.toLowerCase());
-  const allergenMatch = profileAllergies.find((allergy) =>
-    productAllergens.some((allergen) => allergen.includes(allergy) || allergy.includes(allergen))
-  );
-  if (allergenMatch) {
-    return { unsuitable: true, reason: `Contains allergen: ${allergenMatch}` };
+  const restrictionMatch = findRestrictionConflict(profile, product);
+  if (restrictionMatch) {
+    return { unsuitable: true, reason: `Contains allergen or trace: ${restrictionMatch}` };
   }
 
   // Check forbidden additives

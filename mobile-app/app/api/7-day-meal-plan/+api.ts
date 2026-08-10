@@ -2,6 +2,7 @@
 
 import { collection, getDocs, limit, query } from "firebase/firestore";
 import { fdb } from "@/config/firebaseConfig";
+import { findRestrictionConflict } from "@/services/safety/restrictionMatching";
 
 type DietType = "omnivore" | "vegetarian" | "vegan";
 
@@ -182,13 +183,6 @@ function safeStringArray(value: unknown): string[] {
     return value.filter((x) => typeof x === "string").map((x) => normaliseToken(x));
 }
 
-// Function: splitCommaList
-// Purpose: Split comma-separated strings into normalised tokens
-function splitCommaList(value: string | null | undefined): string[] {
-    if (!value) return [];
-    return value.split(",").map((x) => normaliseToken(x)).filter(Boolean);
-}
-
 // Function: yyyyMmDdToday
 // Purpose: Produce YYYY-MM-DD string for today
 function yyyyMmDdToday(): string {
@@ -315,21 +309,8 @@ function isDietCompatible(dietType: DietType, ingredientsAnalysis?: string[] | n
 
 // Function: conflictWithRestrictions
 // Purpose: Extra allergen/intolerance filtering using allergens[] and traces string
-function conflictsWithRestrictions(profile: Profile, product: ProductDoc): boolean {
-    // Building restricted set from allergies + intolerances
-    const restricted = new Set(
-        [...profile.allergies, ...profile.intolerances].map(normaliseToken));
-    
-    // Get allergens list and traces list
-    const allergens = safeStringArray(product.allergens);
-    const traces = splitCommaList(product.traces);
-
-    // If any restricted item appears, conflict = true
-    for (const a of [...allergens, ...traces]) {
-        if (restricted.has(a)) return true;
-    }
-
-    return false;
+export function conflictsWithRestrictions(profile: Profile, product: ProductDoc): boolean {
+    return Boolean(findRestrictionConflict(profile, product));
 }
 
 // Function: toMealProductFromApi
