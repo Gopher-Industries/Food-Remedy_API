@@ -2,9 +2,13 @@ import React, { useMemo } from "react";
 import { View, Text } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { usePreferences } from "@/components/providers/PreferencesProvider";
+import type { AllergenSafetyAssessment } from "@/services/allergenSafety";
+import {
+  guardOverallFitForAllergenSafety,
+  presentAllergenSuitability,
+} from "@/services/profileProductSuitability";
 
 type Goal = "Lower sodium" | "Heart health" | "Lower sugar" | "High protein";
-
 export interface UserDemographics {
   gender: string;
   ageGroup: string;
@@ -18,7 +22,7 @@ export interface ProductData {
   sugar: number;
   sodium: number;
   protein: number;
-  allergens: string[];
+  allergenSafety: AllergenSafetyAssessment;
 }
 
 interface CompareRow {
@@ -68,7 +72,10 @@ const getStatusStyles = (
   }
 };
 
-const getOverallScore = (rows: CompareRow[]) => {
+const getOverallScore = (
+  rows: CompareRow[],
+  allergenSafety: AllergenSafetyAssessment
+) => {
   let total = 0;
 
   rows.forEach((row) => {
@@ -81,6 +88,12 @@ const getOverallScore = (rows: CompareRow[]) => {
 
   let label: "Good fit" | "Moderate fit" | "Poor fit" = "Moderate fit";
   let status: "good" | "watch" | "bad" = "watch";
+
+  const allergenGuard = guardOverallFitForAllergenSafety(
+    percentage,
+    allergenSafety
+  );
+  if (allergenGuard) return allergenGuard;
 
   if (percentage >= 75) {
     label = "Good fit";
@@ -201,47 +214,19 @@ export default function ProductCompareSection({
       }
     }
 
-    // clean the string for allergens e.g: "en:allergy" -> "allergy"
-    const clean = (value: string) =>
-        value.toLowerCase().trim().replace(/^[a-z]{2}:/, "");
-
-    const productAllergens = product.allergens.map(clean).filter(Boolean);
-
-    const matchedAllergens = userProfile.allergens.filter((allergen) => {
-      const userAllergen = clean(allergen);
-      // an empty allergy will flag every product so empty strings will return false
-      if (!userAllergen) return false;
-      // include any string that contains so for "milk", "milk products" and "cow milk" will be included
-      return productAllergens.some(
-          (item) => item.includes(userAllergen) || userAllergen.includes(item)
-      );
+    const allergenPresentation = presentAllergenSuitability(
+      product.allergenSafety
+    );
+    rows.push({
+      id: "allergens",
+      title: "Allergen check",
+      ...allergenPresentation,
     });
-
-    if (matchedAllergens.length === 0) {
-      rows.push({
-        id: "allergens",
-        title: "Allergen check",
-        status: "good",
-        label: "No conflict found",
-        description:
-          "No listed allergen conflict was found between your profile and this product.",
-      });
-    } else {
-      rows.push({
-        id: "allergens",
-        title: "Allergen check",
-        status: "bad",
-        label: "Contains allergen",
-        description: `This product may conflict with: ${matchedAllergens.join(
-          ", "
-        )}.`,
-      });
-    }
 
     return rows;
   }, [userProfile, product]);
 
-  const overall = getOverallScore(compareRows);
+  const overall = getOverallScore(compareRows, product.allergenSafety);
   const overallStyles = getStatusStyles(overall.status, darkMode);
 
   return (

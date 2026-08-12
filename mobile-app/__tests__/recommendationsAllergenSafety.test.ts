@@ -72,6 +72,29 @@ describe("recommendation allergen safety", () => {
     );
   });
 
+  it("treats canonical Seafood evidence as unsafe and red", () => {
+    const seafoodProfile = {
+      ...profile,
+      allergies: ["Seafood"],
+    } as NutritionalProfile;
+    const tuna = {
+      ...completeProduct,
+      barcode: "9300633714437",
+      productName: "Canned tuna",
+      allergens: ["Fish"],
+    } as Product;
+
+    expect(getRecommendationSummary(tuna, seafoodProfile)).toEqual(
+      expect.objectContaining({
+        safe: false,
+        safetyRating: "red",
+        reasons: expect.arrayContaining([
+          expect.stringMatching(/contains allergen: seafood/i),
+        ]),
+      })
+    );
+  });
+
   it.each(incompleteAllergenDataFixtures)(
     "returns caution instead of safe for $name",
     ({ fields }) => {
