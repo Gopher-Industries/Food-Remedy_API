@@ -115,10 +115,18 @@ def detect_allergens(
         if not re.search(DAIRY_TERMS, combined_text):
             detected.remove("Milk")
 
-    # Suppress plant milks (soy milk, almond milk, oat milk, etc.)
+    # Suppress false Milk detection from plant milks
     if "Milk" in detected:
-        if re.search(r"\b(soy|almond|oat|rice|coconut|hemp|cashew|hazelnut|walnut|pecan|macadamia|pistachio|pea) milk\b", combined_text):
-            if not re.search(DAIRY_TERMS, combined_text):
+        plant_milk_pattern = (
+            r"\b(soy|almond|oat|rice|coconut|hemp|cashew|hazelnut|walnut|"
+            r"pecan|macadamia|pistachio|pea) milk\b"
+        )
+
+        if re.search(plant_milk_pattern, combined_text):
+            # Remove plant-milk phrases before checking for genuine dairy terms
+            text_without_plant_milk = re.sub(plant_milk_pattern, "", combined_text)
+
+            if not re.search(DAIRY_TERMS, text_without_plant_milk):
                 detected.remove("Milk")
 
     # Per-allergen negation suppression
