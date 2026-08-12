@@ -1,5 +1,9 @@
 import { doc, getDoc } from "firebase/firestore";
 import { fdb } from "@/config/firebaseConfig";
+import {
+  assessAllergenSafety,
+  INCOMPLETE_ALLERGEN_DATA_REASON,
+} from "@/services/allergenSafety";
 
 type ClassificationColour = "red" | "green" | "grey";
 
@@ -13,7 +17,8 @@ interface ProductDoc {
   barcode: string;
   productName?: string;
   brand?: string;
-  allergens?: string[];
+  allergens?: unknown;
+  traces?: unknown;
   additives?: string[];
   nutrientLevels?: {
     fat?: string;
@@ -36,11 +41,6 @@ interface ClassificationResult {
   brand?: string;
 }
 
-function normaliseList(list?: string[]): string[] {
-  if (!list) return [];
-  return list.map((x) => x.toLowerCase().trim()).filter(Boolean);
-}
-
 function classifyProduct(
   product: ProductDoc,
   profile: UserProfile = {},
@@ -49,18 +49,13 @@ function classifyProduct(
   const reasons: string[] = [];
   let score = 100;
 
-  const productAllergens = normaliseList(product.allergens);
-  const userAllergies = normaliseList(profile.allergies);
-
-  const matchedAllergens = userAllergies.filter((a) =>
-    productAllergens.includes(a.toLowerCase())
-  );
+  const allergenSafety = assessAllergenSafety(product, profile.allergies);
 
   const finalBarcode = product.barcode ?? fallbackBarcode ?? "";
 
-  if (matchedAllergens.length > 0) {
+  if (allergenSafety.status === "unsafe") {
     reasons.push(
-      `Contains allergens for this profile: ${matchedAllergens.join(", ")}`
+      `Contains allergens for this profile: ${allergenSafety.matchedAllergen}`
     );
     return {
       barcode: finalBarcode,
@@ -70,6 +65,10 @@ function classifyProduct(
       productName: product.productName,
       brand: product.brand,
     };
+  }
+
+  if (allergenSafety.status === "unknown") {
+    reasons.push(INCOMPLETE_ALLERGEN_DATA_REASON);
   }
 
   const nl = product.nutrientLevels || {};
@@ -111,6 +110,11 @@ function classifyProduct(
   } else {
     colour = "red";
     reasons.push("High nutritional risk.");
+  }
+
+  if (allergenSafety.status === "unknown" && colour === "green") {
+    colour = "grey";
+    score = Math.min(score, 50);
   }
 
   return {
