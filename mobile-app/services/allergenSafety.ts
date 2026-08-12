@@ -1,3 +1,5 @@
+import { findRestrictionRule } from "@/services/constants/AllergenTaxonomy";
+
 export const INCOMPLETE_ALLERGEN_DATA_REASON =
   "Allergen information is incomplete; safety is unknown.";
 
@@ -6,83 +8,134 @@ export type AllergenSafetyStatus = "safe" | "unsafe" | "unknown";
 export interface AllergenSafetyAssessment {
   status: AllergenSafetyStatus;
   matchedAllergen?: string;
+  matchedAllergens?: string[];
 }
 
-interface ProductAllergenFields {
+export interface ProductAllergenFields {
   allergens?: unknown;
   traces?: unknown;
+  tracesFromIngredients?: unknown;
+  ingredients?: unknown;
+  ingredientsText?: unknown;
 }
 
-function readAllergens(value: unknown): {
-  complete: boolean;
-  values: string[];
-} {
-  if (!Array.isArray(value) || value.length === 0) {
-    return { complete: false, values: [] };
-  }
+function normalizeEvidence(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/^([a-z]{2,3}):/, "")
+    .replace(/[_\s]+/g, "-")
+    .replace(/[^\p{L}\p{N}-]+/gu, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
-  const complete = value.every(
-    (item) => typeof item === "string" && item.trim().length > 0
-  );
-  const values = value
-    .filter((item): item is string => typeof item === "string")
-    .map((item) => item.toLowerCase().trim())
+function normalizeRawEvidence(raw: string[]): string[] {
+  return raw
+    .flatMap((item) => item.split(/[;,]/))
+    .map(normalizeEvidence)
     .filter(Boolean);
-
-  return { complete, values };
 }
 
-function readTraces(value: unknown): {
-  complete: boolean;
-  values: string[];
-} {
-  if (typeof value !== "string" || !value.trim()) {
-    return { complete: false, values: [] };
-  }
-
-  return {
-    complete: true,
-    values: value
-      .split(/[;,]/)
-      .map((item) => item.toLowerCase().trim())
-      .filter(Boolean),
-  };
+function readArrayEvidence(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return normalizeRawEvidence(
+    value.filter((item): item is string => typeof item === "string")
+  );
 }
 
-function normaliseAllergies(value: unknown): string[] {
+function readStringEvidence(value: unknown): string[] {
+  return typeof value === "string" ? normalizeRawEvidence([value]) : [];
+}
+
+function isCompleteAllergenList(value: unknown): boolean {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.every(
+      (item) => typeof item === "string" && item.trim().length > 0
+    )
+  );
+}
+
+function isCompleteTraceDeclaration(value: unknown): boolean {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function normalizeRestrictions(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
 
-  return value
-    .filter((item): item is string => typeof item === "string")
-    .map((item) => item.toLowerCase().trim())
-    .filter(Boolean);
+  return Array.from(
+    new Set(
+      value
+        .filter((item): item is string => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean)
+    )
+  );
+}
+
+function containsAlias(evidence: string, alias: string): boolean {
+  const normalizedAlias = normalizeEvidence(alias);
+  if (!normalizedAlias) return false;
+  return (`-${evidence}-`).includes(`-${normalizedAlias}-`);
+}
+
+function productEvidence(product: ProductAllergenFields): string[] {
+  return Array.from(
+    new Set([
+      ...readArrayEvidence(product.allergens),
+      ...readStringEvidence(product.traces),
+      ...readStringEvidence(product.tracesFromIngredients),
+      ...readArrayEvidence(product.ingredients),
+      ...readStringEvidence(product.ingredientsText),
+    ])
+  );
+}
+
+export function findRestrictionMatches(
+  product: ProductAllergenFields,
+  profileRestrictions: unknown
+): string[] {
+  const evidence = productEvidence(product);
+
+  return normalizeRestrictions(profileRestrictions).filter((restriction) => {
+    const rule = findRestrictionRule(restriction);
+    if (!rule) return false;
+    return rule.aliases.some((alias) =>
+      evidence.some((item) => containsAlias(item, alias))
+    );
+  });
 }
 
 /**
- * Applies the shared backend rule for untrusted allergen data.
- * A known match is unsafe. A non-match is only safe when both the allergen
- * list and trace string contain valid data; otherwise its safety is unknown.
+ * Shared allergen/restriction decision used by backend and active scan flows.
+ * Known evidence wins over incomplete fields. A safe result requires complete
+ * allergen/trace declarations and only declaration-resolvable restrictions.
  */
 export function assessAllergenSafety(
   product: ProductAllergenFields,
-  profileAllergies: unknown
+  profileRestrictions: unknown
 ): AllergenSafetyAssessment {
-  const allergens = readAllergens(product.allergens);
-  const traces = readTraces(product.traces);
-  const allergies = normaliseAllergies(profileAllergies);
-  const productValues = [...allergens.values, ...traces.values];
+  const restrictions = normalizeRestrictions(profileRestrictions);
+  const matchedAllergens = findRestrictionMatches(product, restrictions);
 
-  const matchedAllergen = allergies.find((allergy) =>
-    productValues.some(
-      (value) => value.includes(allergy) || allergy.includes(value)
-    )
-  );
-
-  if (matchedAllergen) {
-    return { status: "unsafe", matchedAllergen };
+  if (matchedAllergens.length > 0) {
+    return {
+      status: "unsafe",
+      matchedAllergen: matchedAllergens[0],
+      matchedAllergens,
+    };
   }
 
-  if (!allergens.complete || !traces.complete) {
+  const hasUnsupportedOrPositiveOnlyRestriction = restrictions.some(
+    (restriction) => findRestrictionRule(restriction)?.resolution !== "declaration"
+  );
+  const declarationsComplete =
+    isCompleteAllergenList(product.allergens) &&
+    isCompleteTraceDeclaration(product.traces);
+
+  if (!declarationsComplete || hasUnsupportedOrPositiveOnlyRestriction) {
     return { status: "unknown" };
   }
 

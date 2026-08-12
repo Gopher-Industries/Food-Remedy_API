@@ -139,4 +139,90 @@ describe("POST /api/products/classify allergen safety", () => {
       expect.objectContaining({ colour: "red" })
     );
   });
+
+  it("maps a Seafood profile selection to a Fish declaration", async () => {
+    (getDoc as jest.Mock).mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        barcode: "9300633714437",
+        productName: "Canned tuna",
+        allergens: ["Fish"],
+        traces: "none declared",
+        nutrientLevels: { sugars: "low" },
+      }),
+    });
+
+    const response = await POST(
+      new Request("http://localhost/api/products/classify", {
+        method: "POST",
+        body: JSON.stringify({
+          barcode: "9300633714437",
+          profile: { allergies: ["Seafood"] },
+        }),
+      })
+    );
+
+    expect(await response.json()).toEqual(
+      expect.objectContaining({
+        colour: "red",
+        score: 0,
+        reasons: expect.arrayContaining([
+          expect.stringMatching(/contains allergens.*seafood/i),
+        ]),
+      })
+    );
+  });
+
+  it("uses tracesFromIngredients as trusted conflict evidence", async () => {
+    (getDoc as jest.Mock).mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        barcode: "mustard-trace",
+        allergens: ["soy"],
+        traces: "none declared",
+        tracesFromIngredients: "May contain mustard seed",
+        nutrientLevels: { sugars: "low" },
+      }),
+    });
+
+    const response = await POST(
+      new Request("http://localhost/api/products/classify", {
+        method: "POST",
+        body: JSON.stringify({
+          barcode: "mustard-trace",
+          profile: { allergies: ["Mustard"] },
+        }),
+      })
+    );
+
+    expect(await response.json()).toEqual(
+      expect.objectContaining({ colour: "red", score: 0 })
+    );
+  });
+
+  it("checks profile intolerances through the same canonical matcher", async () => {
+    (getDoc as jest.Mock).mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        barcode: "wheat-product",
+        allergens: ["wheat"],
+        traces: "none declared",
+        nutrientLevels: { sugars: "low" },
+      }),
+    });
+
+    const response = await POST(
+      new Request("http://localhost/api/products/classify", {
+        method: "POST",
+        body: JSON.stringify({
+          barcode: "wheat-product",
+          profile: { intolerances: ["Gluten"] },
+        }),
+      })
+    );
+
+    expect(await response.json()).toEqual(
+      expect.objectContaining({ colour: "red", score: 0 })
+    );
+  });
 });

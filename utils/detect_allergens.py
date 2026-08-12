@@ -52,28 +52,28 @@ def detect_allergens(
     product: dict,
     keyword_entries: Optional[list[dict[str, Any]]] = None,
 ) -> list[str]:
-    """Detect allergens by scanning multiple text fields.
+    """Detect allergens from trusted declarations and ingredient evidence.
 
     ``keyword_entries`` should match ``load_allergens()`` output (name + keywords).
     If omitted, uses module-level config from ``allergens_config.json``.
+
+    Marketing metadata such as product names, categories and labels is excluded:
+    it may support search, but is not reliable enough to create a safety result.
     """
     entries = keyword_entries if keyword_entries is not None else ALLERGEN_CONFIG
     
-    # Collect all fields that may contain allergen info
+    # Trusted free-text evidence supplied by the product record.
     fields_to_check = [
         product.get("ingredientsText") or product.get("ingredients_text"),
         product.get("traces"),
         product.get("tracesFromIngredients") or product.get("traces_from_ingredients"),
-        product.get("productName") or product.get("product_name"),
-        product.get("genericName") or product.get("generic_name"),
     ]
 
-    # List-like fields
+    # Trusted structured evidence. Product/category/label names are intentionally
+    # not authoritative allergen declarations.
     list_fields = [
         product.get("ingredients") or product.get("ingredients_tags"),
         product.get("allergens_tags"),
-        product.get("categories_tags"),
-        product.get("labels_tags"),
     ]
 
     # Flatten list fields into strings

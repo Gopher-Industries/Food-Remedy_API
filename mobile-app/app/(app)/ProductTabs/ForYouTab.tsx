@@ -7,6 +7,10 @@ import ProductCompareSection, {
 } from "@/components/product/ProductCompareSection";
 import { useProfile } from "@/components/providers/ProfileProvider";
 import { usePreferences } from "@/components/providers/PreferencesProvider";
+import {
+  assessProductForProfile,
+  getProfileRestrictions,
+} from "@/services/profileProductSuitability";
 
 function normalizeArray(value: any): string[] {
   if (!value) return [];
@@ -123,22 +127,10 @@ function buildUserProfile(
     ...normalizeArray(selectedProfile.preferences?.avoidAllergens),
   ];
 
-  const mappedAllergens: UserDemographics["allergens"] = [];
-
-  rawAllergens.forEach((item) => {
-    const lower = item.toLowerCase();
-
-    if (lower.includes("peanut")) mappedAllergens.push("Peanuts");
-    else if (lower.includes("milk") || lower.includes("dairy")) {
-      mappedAllergens.push("Milk");
-    } else if (lower.includes("soy")) {
-      mappedAllergens.push("Soy");
-    } else if (lower.includes("gluten") || lower.includes("wheat")) {
-      mappedAllergens.push("Gluten");
-    } else if (lower.includes("tree nut") || lower.includes("almond")) {
-      mappedAllergens.push("Tree nuts");
-    }
-  });
+  const mappedAllergens = getProfileRestrictions({
+    allergies: rawAllergens,
+    intolerances: [],
+  } as any);
 
   return {
     gender,
@@ -149,7 +141,10 @@ function buildUserProfile(
   };
 }
 
-function buildProductData(currentProduct: any): ProductData {
+function buildProductData(
+  currentProduct: any,
+  selectedRestrictions: string[]
+): ProductData {
   const nutriments = currentProduct?.nutriments ?? {};
 
   const sugar =
@@ -176,17 +171,15 @@ function buildProductData(currentProduct: any): ProductData {
         0
     ) || 0;
 
-  const allergens = [
-    ...normalizeArray(currentProduct?.allergens),
-    ...normalizeArray(currentProduct?.traces),
-  ];
-
   return {
     name: currentProduct?.productName ?? "Unknown product",
     sugar,
     sodium,
     protein,
-    allergens,
+    allergenSafety: assessProductForProfile(currentProduct, {
+      allergies: selectedRestrictions,
+      intolerances: [],
+    } as any),
   };
 }
 
@@ -203,8 +196,8 @@ export default function CompareTab({ product }: Props) {
   }, [activeProfile, profiles]);
 
   const productData = useMemo(() => {
-    return buildProductData(product);
-  }, [product]);
+    return buildProductData(product, userProfile.allergens);
+  }, [product, userProfile.allergens]);
 
   if (!product) return null;
 

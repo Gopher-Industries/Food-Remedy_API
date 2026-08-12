@@ -35,17 +35,14 @@ def run(input_path: str, output_path: str, config: dict) -> dict:
     # Enrich every product
     for product in data:
         try:
-            # Map camelCase fields from enriched data
+            # Pass only declarations and ingredient evidence. Product names,
+            # categories and marketing labels are not authoritative safety data.
             detection_input = {
                 "ingredients_text": product.get("ingredientsText") or product.get("ingredients_text", ""),
                 "traces": product.get("traces", ""),
                 "traces_from_ingredients": product.get("tracesFromIngredients") or product.get("traces_from_ingredients", ""),
-                "product_name": product.get("productName") or product.get("product_name", ""),
-                "generic_name": product.get("genericName") or product.get("generic_name", ""),
                 "ingredients_tags": product.get("ingredients") or product.get("ingredients_tags"),
                 "allergens_tags": product.get("allergens"),
-                "categories_tags": product.get("categories"),
-                "labels_tags": product.get("labels"),
             }
 
             allergens = detect_allergens(

@@ -19,6 +19,9 @@ interface ProductDoc {
   brand?: string;
   allergens?: unknown;
   traces?: unknown;
+  tracesFromIngredients?: unknown;
+  ingredients?: unknown;
+  ingredientsText?: unknown;
   additives?: string[];
   nutrientLevels?: {
     fat?: string;
@@ -49,7 +52,11 @@ function classifyProduct(
   const reasons: string[] = [];
   let score = 100;
 
-  const allergenSafety = assessAllergenSafety(product, profile.allergies);
+  const profileRestrictions = [
+    ...(Array.isArray(profile.allergies) ? profile.allergies : []),
+    ...(Array.isArray(profile.intolerances) ? profile.intolerances : []),
+  ];
+  const allergenSafety = assessAllergenSafety(product, profileRestrictions);
 
   const finalBarcode = product.barcode ?? fallbackBarcode ?? "";
 
