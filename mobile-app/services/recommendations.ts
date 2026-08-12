@@ -10,6 +10,7 @@ import {
   assessAllergenSafety,
   INCOMPLETE_ALLERGEN_DATA_REASON,
 } from "@/services/allergenSafety";
+import { getProfileRestrictions } from "@/services/profileProductSuitability";
 
 export interface RecommendationScore {
   product: Product;
@@ -142,7 +143,10 @@ function scoreAlternative(
   }
 
   // Allergen safety (20 points if safe)
-  const allergenSafety = assessAllergenSafety(alternative, profile.allergies);
+  const allergenSafety = assessAllergenSafety(
+    alternative,
+    getProfileRestrictions(profile)
+  );
   const forbiddenAdditive = findForbiddenAdditive(alternative, profile);
   if (allergenSafety.status === "safe" && !forbiddenAdditive) {
     score += 20;
@@ -204,9 +208,11 @@ function scoreAlternative(
     score: Math.max(0, score), // clamp to 0 minimum
     reasons,
     safetyRating:
-      nutritionalSafety === "red" || allergenSafety.status !== "unknown"
-        ? nutritionalSafety
-        : "grey",
+      allergenSafety.status === "unsafe"
+        ? "red"
+        : nutritionalSafety === "red" || allergenSafety.status !== "unknown"
+          ? nutritionalSafety
+          : "grey",
   };
 }
 
@@ -251,7 +257,10 @@ export function isUnsuitableForProfile(
   product: Product,
   profile: NutritionalProfile
 ): { unsuitable: boolean; reason: string } {
-  const allergenSafety = assessAllergenSafety(product, profile.allergies);
+  const allergenSafety = assessAllergenSafety(
+    product,
+    getProfileRestrictions(profile)
+  );
   if (allergenSafety.status === "unsafe") {
     return {
       unsuitable: true,
@@ -290,11 +299,16 @@ export function getRecommendationSummary(
 } {
   const unsafe = isUnsuitableForProfile(product, profile);
   const nutritionalSafety = classifyProductSafety(product);
-  const allergenSafety = assessAllergenSafety(product, profile.allergies);
+  const allergenSafety = assessAllergenSafety(
+    product,
+    getProfileRestrictions(profile)
+  );
   const safety =
-    nutritionalSafety === "red" || allergenSafety.status !== "unknown"
-      ? nutritionalSafety
-      : "grey";
+    allergenSafety.status === "unsafe"
+      ? "red"
+      : nutritionalSafety === "red" || allergenSafety.status !== "unknown"
+        ? nutritionalSafety
+        : "grey";
   const reasons: string[] = [];
 
   if (unsafe.unsuitable) {
