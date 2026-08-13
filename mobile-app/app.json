@@ -48,8 +48,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "4fcd9d91-8452-433c-b735-2fab0fb2a5ac"
+        "projectId": "c886c6f2-2c56-4c89-9541-426ef0d681b7"
       }
-    }
+    },
+    "owner": "gayeshis-team"
   }
 }

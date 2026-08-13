@@ -3,10 +3,10 @@
 import Header from "@/components/layout/Header";
 import Screen from "@/components/layout/Screen";
 import IconGeneral from "@/components/icons/IconGeneral";
+import BarcodeScanning from "@react-native-ml-kit/barcode-scanning";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, View } from "react-native";
-import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { useNotification } from "@/components/providers/NotificationProvider";
 import BarcodeOverlayMask from "@/components/layout/BarcodeOverlayGuide";
@@ -119,20 +119,10 @@ export default function ScanPage() {
 
   // Open image picker
   const result = await ImagePicker.launchImageLibraryAsync({
-  mediaTypes: ImagePicker.MediaTypeOptions.Images,
-  allowsEditing: false,
-  quality: 1,
-});
-
-  if (result.canceled) {
-    addNotification("Image selection cancelled.", "n");
-    return;
-}
-
-  addNotification("Barcode image selected successfully.", "s");
-
-  const imageUri = result.assets[0].uri;
-  console.log("Selected barcode image:", imageUri);
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: false,
+    quality: 1,
+  });
 
   // User cancelled image selection
   if (result.canceled) {
@@ -140,13 +130,57 @@ export default function ScanPage() {
     return;
   }
 
-  // Get selected image
-  const selectedImage = result.assets[0];
+  const imageUri = result.assets[0].uri;
+  console.log("Selected barcode image:", imageUri);
 
-  console.log("Selected barcode image:", selectedImage.uri);
+  // Product barcode image scanning is not supported on iOS
+  if (Platform.OS === "ios") {
+    addNotification(
+      "Product barcode images are not supported on iOS.",
+      "e"
+    );
+    return;
+  }
 
-  addNotification("Barcode image selected successfully.", "s");
+  try {
+    // Scan the selected image for barcodes
+    const barcodes = await BarcodeScanning.scan(imageUri);
 
+    if (barcodes.length === 0) {
+      addNotification(
+        "Could not detect a barcode in this image.",
+        "e"
+      );
+      return;
+    }
+
+    const barcode = barcodes[0].value;
+
+    if (!barcode) {
+      addNotification(
+        "Could not read the barcode in this image.",
+        "e"
+      );
+      return;
+    }
+
+    console.log("Detected barcode:", barcode);
+
+    // Reuse the existing product lookup workflow
+    setBarcode(barcode);
+
+    addNotification(
+      `Barcode detected: ${barcode}`,
+      "s"
+    );
+  } catch (error) {
+    console.error("Barcode scanning failed:", error);
+
+    addNotification(
+      "Unable to scan the selected image.",
+      "e"
+    );
+  }
 };
 
   return (
