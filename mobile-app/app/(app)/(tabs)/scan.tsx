@@ -7,7 +7,11 @@ import BarcodeScanning from "@react-native-ml-kit/barcode-scanning";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, View } from "react-native";
-import {Camera,CameraType,CameraView,useCameraPermissions,} from "expo-camera";
+import {
+  CameraType,
+  CameraView,
+  useCameraPermissions,
+} from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { useNotification } from "@/components/providers/NotificationProvider";
 import BarcodeOverlayMask from "@/components/layout/BarcodeOverlayGuide";
@@ -27,16 +31,20 @@ export default function ScanPage() {
   const { sessionType } = useAuth();
   const { addNotification } = useNotification();
   const { setBarcode } = useProduct();
-  const { openModal } = useModalManager();  
+  const { openModal } = useModalManager();
+
   const {
     showContainsBadges,
     toggleShowContains,
     toggleAllergenHighlight,
   } = useSessionPreferences();
+
   const [scanned, setScanned] = useState<boolean>(false);
   const [collapseSheet, setCollapseSheet] = useState(false);
+
   const isFocused = useIsFocused();
   const cameraRef = useRef<CameraView>(null);
+
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
 
@@ -48,6 +56,7 @@ export default function ScanPage() {
       router.push("/(app)/(tabs)/profiles");
       return;
     }
+
     openModal("profileSelector");
   };
 
@@ -57,32 +66,41 @@ export default function ScanPage() {
   useFocusEffect(
     useCallback(() => {
       if (Platform.OS === "android") {
-        // small delay helps SurfaceView settle before resuming
-        const t = setTimeout(() => cameraRef.current?.resumePreview?.(), 80);
+        // Small delay helps SurfaceView settle before resuming
+        const t = setTimeout(
+          () => cameraRef.current?.resumePreview?.(),
+          80
+        );
+
         return () => {
           clearTimeout(t);
           cameraRef.current?.pausePreview?.();
         };
       }
+
       return () => {};
-    }, []),
+    }, [])
   );
 
   // Camera permissions are still loading.
   if (!permission) return <LoadingPage />;
 
   // Camera permissions are not granted yet.
-  if (!permission.granted)
+  if (!permission.granted) {
     return (
       <CameraPermission
         permission={permission}
         requestPermission={requestPermission}
       />
     );
+  }
 
   /**
    * Handle Barcode Scanned
-   * @param param
+   *
+   * This is the existing barcode lookup workflow.
+   * It is reused by both the live camera scanner
+   * and the selected-image barcode scanner.
    */
   const handleBarCodeScanned = ({
     type,
@@ -94,6 +112,7 @@ export default function ScanPage() {
     setScanned(true);
     setBarcode(data);
     router.push("/(app)/product");
+
     setTimeout(() => setScanned(false), 800);
   };
 
@@ -102,90 +121,99 @@ export default function ScanPage() {
    */
   const closeBottomSheet = () => {
     setCollapseSheet(true);
-    setTimeout(() => setCollapseSheet(false), 100); // reset after trigger
+
+    setTimeout(() => setCollapseSheet(false), 100);
   };
 
+  /**
+   * Choose an image containing a barcode and decode it.
+   *
+   * Barcode image scanning is currently supported on Android only.
+   * Once a barcode is detected, the existing barcode scanning
+   * workflow is reused.
+   */
   const handleChooseBarcodeImage = async () => {
-  // Request permission to access the media library
-  const { status } =
-    await ImagePicker.requestMediaLibraryPermissionsAsync();
+    // Request permission to access the media library
+    const { status } =
+      await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-  if (status !== "granted") {
-    addNotification(
-      "Media library permission is required to choose a barcode image.",
-      "e"
-    );
-    return;
-  }
-
-  // Open image picker
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: false,
-    quality: 1,
-  });
-
-  // User cancelled image selection
-  if (result.canceled) {
-    addNotification("Image selection cancelled.", "n");
-    return;
-  }
-
-  const imageUri = result.assets[0].uri;
-  console.log("Selected barcode image:", imageUri);
-
-  // Product barcode image scanning is not supported on iOS
-  if (Platform.OS === "ios") {
-    addNotification(
-      "Product barcode images are not supported on iOS.",
-      "e"
-    );
-    return;
-  }
-
-  try {
-    // Scan the selected image for barcodes
-    const barcodes = await BarcodeScanning.scan(imageUri);
-
-    if (barcodes.length === 0) {
+    if (status !== "granted") {
       addNotification(
-        "Could not detect a barcode in this image.",
+        "Media library permission is required to choose a barcode image.",
         "e"
       );
       return;
     }
 
-    const barcode = barcodes[0].value;
-
-    if (!barcode) {
-      addNotification(
-        "Could not read the barcode in this image.",
-        "e"
-      );
-      return;
-    }
-
-    console.log("Detected barcode:", barcode);
-
-    // Reuse the existing barcode scanning workflow
-    handleBarCodeScanned({
-      type: "image",
-      data: barcode,
+    // Open image picker
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      quality: 1,
     });
 
-    addNotification(
-      `Barcode detected: ${barcode}`,
-      "s"
-  );
-  } catch (error) {
-    console.error("Barcode scanning failed:", error);
+    // User cancelled image selection
+    if (result.canceled) {
+      addNotification("Image selection cancelled.", "n");
+      return;
+    }
 
-    addNotification(
-      "Unable to scan the selected image.",
-      "e"
-    );
-  }
-};
+    const imageUri = result.assets[0].uri;
+
+    console.log("Selected barcode image:", imageUri);
+
+    // Product barcode image scanning is not supported on iOS
+    if (Platform.OS === "ios") {
+      addNotification(
+        "Product barcode images are not supported on iOS.",
+        "e"
+      );
+      return;
+    }
+
+    try {
+      // Scan the selected image for barcodes
+      const barcodes = await BarcodeScanning.scan(imageUri);
+
+      if (barcodes.length === 0) {
+        addNotification(
+          "Could not detect a barcode in this image.",
+          "e"
+        );
+        return;
+      }
+
+      const barcode = barcodes[0].value;
+
+      if (!barcode) {
+        addNotification(
+          "Could not read the barcode in this image.",
+          "e"
+        );
+        return;
+      }
+
+      console.log("Detected barcode:", barcode);
+
+      // Reuse the existing barcode scanning workflow
+      handleBarCodeScanned({
+        type: "image",
+        data: barcode,
+      });
+
+      addNotification(
+        `Barcode detected: ${barcode}`,
+        "s"
+      );
+    } catch (error) {
+      console.error("Barcode scanning failed:", error);
+
+      addNotification(
+        "Unable to scan the selected image.",
+        "e"
+      );
+    }
+  };
 
   return (
     <Screen className="relative px-safe pt-safe">
@@ -193,12 +221,23 @@ export default function ScanPage() {
 
       {/* ACTIVE PROFILE BADGE */}
       <View className="w-[95%] self-center mt-2 mb-3">
-        <ActiveProfileBadge compact onPress={handleOpenProfileSelector} />
+        <ActiveProfileBadge
+          compact
+          onPress={handleOpenProfileSelector}
+        />
       </View>
 
-      <ScrollView contentContainerStyle={{ flex: 1, marginTop: 5 }}>
+      <ScrollView
+        contentContainerStyle={{
+          flex: 1,
+          marginTop: 5,
+        }}
+      >
         {/* CAMERA WRAPPER */}
-        <Pressable onPress={closeBottomSheet} className="relative flex-1">
+        <Pressable
+          onPress={closeBottomSheet}
+          className="relative flex-1"
+        >
           {/* Only mount CameraView when focused */}
           {isFocused && (
             <CameraView
@@ -206,7 +245,9 @@ export default function ScanPage() {
               key={facing}
               style={{ flex: 1 }}
               facing={facing}
-              onBarcodeScanned={!scanned ? handleBarCodeScanned : undefined}
+              onBarcodeScanned={
+                !scanned ? handleBarCodeScanned : undefined
+              }
             />
           )}
 
@@ -221,7 +262,11 @@ export default function ScanPage() {
               {({ pressed }) => (
                 <IconGeneral
                   type="camera-switch"
-                  fill={pressed ? color.primary : "hsl(0, 0%, 100%)"}
+                  fill={
+                    pressed
+                      ? color.primary
+                      : "hsl(0, 0%, 100%)"
+                  }
                 />
               )}
             </Pressable>
@@ -239,10 +284,15 @@ export default function ScanPage() {
               {({ pressed }) => (
                 <>
                   <IconGeneral
-                    type={showContainsBadges ? "visibility-off" : "visibility"}
+                    type={
+                      showContainsBadges
+                        ? "visibility-off"
+                        : "visibility"
+                    }
                     fill="white"
                     size={20}
                   />
+
                   <Tt className="text-white font-interSemiBold ml-2">
                     {showContainsBadges
                       ? "Hide Allergen Info"
@@ -252,18 +302,20 @@ export default function ScanPage() {
               )}
             </Pressable>
           </View>
+
           {/* Choose Barcode Image Button */}
           <View className="absolute bottom-28 self-center">
-          <Pressable
-            onPress={handleChooseBarcodeImage}
-            className="bg-primary rounded-lg px-6 py-3"
-          >
-          <Tt className="text-white font-interSemiBold">
-          Choose Barcode Image
-          </Tt>
-          </Pressable>
-        </View>
+            <Pressable
+              onPress={handleChooseBarcodeImage}
+              className="bg-primary rounded-lg px-6 py-3"
+            >
+              <Tt className="text-white font-interSemiBold">
+                Choose Barcode Image
+              </Tt>
+            </Pressable>
+          </View>
         </Pressable>
+
         <ProductSearchTab collapsed={collapseSheet} />
       </ScrollView>
     </Screen>

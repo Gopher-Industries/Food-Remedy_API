@@ -23,6 +23,7 @@ from pymongo.errors import BulkWriteError
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from utils.category_normalizer import normalize_category_fields
+from utils.missing_value_utils import normalize_allergens
 
 
 # ----------------------------
@@ -76,7 +77,7 @@ def normalize_record(raw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
     allergens = [clean_tag(x) for x in (raw.get("allergens_tags") or [])]
     allergens = [x for x in allergens if x]
-    allergens = list(dict.fromkeys(allergens))
+    allergens = normalize_allergens(list(dict.fromkeys(allergens)))
 
     nutri = raw.get("nutriscore_grade")
     nutri = (str(nutri).strip().upper() if nutri else None)

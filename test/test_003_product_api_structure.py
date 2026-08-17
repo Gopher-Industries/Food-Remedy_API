@@ -150,12 +150,33 @@ def test_missing_brand_returns_none():
     assert mapped["brand"] is None
 
 
-def test_missing_allergens_returns_empty_list():
-    """Missing allergens should return empty list."""
+def test_missing_allergens_returns_unknown():
+    """Missing allergens must not be interpreted as no allergens."""
     product = _sample_product()
     product.pop("allergens")
     mapped = map_enriched_to_product_detail(product)
-    assert mapped["allergens"] == []
+    assert mapped["allergens"] == ["Unknown"]
+
+
+def test_empty_allergens_returns_unknown():
+    product = _sample_product()
+    product["allergens"] = []
+    mapped = map_enriched_to_product_detail(product)
+    assert mapped["allergens"] == ["Unknown"]
+
+
+def test_known_allergens_remain_unchanged():
+    product = _sample_product()
+    mapped = map_enriched_to_product_detail(product)
+    assert mapped["allergens"] == ["Gluten"]
+
+
+def test_legacy_detected_allergens_take_precedence_over_unknown():
+    product = _sample_product()
+    product["allergens"] = []
+    product["allergensDetected"] = ["Milk"]
+    mapped = map_enriched_to_product_detail(product)
+    assert mapped["allergens"] == ["Milk"]
 
 
 def test_missing_ingredients_returns_empty_list():

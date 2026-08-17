@@ -19,6 +19,7 @@ import re
 from utils.missing_value_utils import (
     normalize_string,
     normalize_list,
+    normalize_allergens,
     normalize_dict,
     clean_numeric,
     clean_completeness
@@ -820,7 +821,11 @@ def main(input_path: str, output_path: str):
         record["servingQuantity"] = clean_numeric(record.get("servingQuantity"))
         record["completeness"] = clean_completeness(record.get("completeness"))
         
-        record["allergensDetected"] = detect_allergens(record)  # DB009: list[str]
+        # DB023: a failed/empty detection is unknown, never an implicit
+        # declaration that the product has no allergens.
+        allergens = normalize_allergens(detect_allergens(record))
+        record["allergens_tags"] = allergens
+        record["allergensDetected"] = allergens  # DB009 compatibility alias
         df.loc[idx] = record  # write back (includes allergensDetected)
         
     df = add_image_urls(df)

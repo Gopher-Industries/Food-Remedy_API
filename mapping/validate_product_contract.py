@@ -1,6 +1,6 @@
 """DB034 / DB037 - Product Detail contract validation.
 
-Validates that enriched product documents, once mapped, match ProductDetail v1.0.0.
+Validates that enriched product documents, once mapped, match ProductDetail v1.0.1.
 Canonical schema: contracts/product_detail_v1.schema.json (see DB037-API-LOCK.md).
 """
 
@@ -86,6 +86,18 @@ def validate_product(mapped: dict[str, Any]) -> list[str]:
                 f"Expected {expected_type}, got {type(value).__name__}"
             )
 
+    # Missing allergen information must remain distinguishable from a known
+    # list. The mapper emits ["Unknown"], and the sentinel cannot be mixed
+    # with known values.
+    allergens = mapped.get("allergens")
+    if isinstance(allergens, list):
+        if not allergens:
+            errors.append("Field 'allergens' must use ['Unknown'] when information is missing")
+        elif not all(isinstance(item, str) and item.strip() for item in allergens):
+            errors.append("Field 'allergens' items must be non-empty strings")
+        elif any(item.strip().lower() == "unknown" for item in allergens) and len(allergens) > 1:
+            errors.append("Field 'allergens' cannot mix 'Unknown' with known allergens")
+
     # Check images.root
     images = mapped.get("images", {})
     if not isinstance(images, dict) or not images.get("root"):
@@ -153,4 +165,3 @@ def validate_dataset(input_path: str | Path) -> dict[str, Any]:
         total,
     )
     return {"total": total, "valid": valid_count, "invalid": invalid_count, "errors": all_errors}
-
