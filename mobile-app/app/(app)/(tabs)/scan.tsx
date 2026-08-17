@@ -7,6 +7,7 @@ import BarcodeScanning from "@react-native-ml-kit/barcode-scanning";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, View } from "react-native";
+import {Camera,CameraType,CameraView,useCameraPermissions,} from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { useNotification } from "@/components/providers/NotificationProvider";
 import BarcodeOverlayMask from "@/components/layout/BarcodeOverlayGuide";
@@ -166,13 +167,16 @@ export default function ScanPage() {
 
     console.log("Detected barcode:", barcode);
 
-    // Reuse the existing product lookup workflow
-    setBarcode(barcode);
+    // Reuse the existing barcode scanning workflow
+    handleBarCodeScanned({
+      type: "image",
+      data: barcode,
+    });
 
     addNotification(
       `Barcode detected: ${barcode}`,
       "s"
-    );
+  );
   } catch (error) {
     console.error("Barcode scanning failed:", error);
 
