@@ -338,7 +338,8 @@ def runPipeline(
         stats["stages"]["enrich"] = checkpoints.get("enrich", {})
         completed_count += 1
         ck = stats["stages"].get("enrich", {})
-        res = ck.get('result') if isinstance(ck.get('result'), dict) else ck.get('result')
+        # Both branches of the previous ternary returned ck.get('result').
+        res = ck.get('result')
 
     elif pipeline_cfg.get("enrich", {}).get("enabled", True):
         enrich_cfg = pipeline_cfg.get("enrich", {})
@@ -415,7 +416,8 @@ def runPipeline(
         stats["stages"]["seed"] = checkpoints.get("seed", {})
         completed_count += 1
         ck = stats["stages"].get("seed", {})
-        res = ck.get('result') if isinstance(ck.get('result'), dict) else ck.get('result')
+        # Both branches of the previous ternary returned ck.get('result').
+        res = ck.get('result')
 
     elif pipeline_cfg.get("seed", {}).get("enabled", True):
         seed_cfg = pipeline_cfg.get("seed", {})

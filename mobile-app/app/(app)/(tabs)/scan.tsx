@@ -7,6 +7,8 @@ import { router, useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, View } from "react-native";
 import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
+import * as ImagePicker from "expo-image-picker";
+import { useNotification } from "@/components/providers/NotificationProvider";
 import BarcodeOverlayMask from "@/components/layout/BarcodeOverlayGuide";
 import { useProduct } from "@/components/providers/ProductProvider";
 import LoadingPage from "@/app/(misc)/loading";
@@ -22,8 +24,9 @@ import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function ScanPage() {
   const { sessionType } = useAuth();
+  const { addNotification } = useNotification();
   const { setBarcode } = useProduct();
-  const { openModal } = useModalManager();
+  const { openModal } = useModalManager();  
   const {
     showContainsBadges,
     toggleShowContains,
@@ -101,6 +104,51 @@ export default function ScanPage() {
     setTimeout(() => setCollapseSheet(false), 100); // reset after trigger
   };
 
+  const handleChooseBarcodeImage = async () => {
+  // Request permission to access the media library
+  const { status } =
+    await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+  if (status !== "granted") {
+    addNotification(
+      "Media library permission is required to choose a barcode image.",
+      "e"
+    );
+    return;
+  }
+
+  // Open image picker
+  const result = await ImagePicker.launchImageLibraryAsync({
+  mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  allowsEditing: false,
+  quality: 1,
+});
+
+  if (result.canceled) {
+    addNotification("Image selection cancelled.", "n");
+    return;
+}
+
+  addNotification("Barcode image selected successfully.", "s");
+
+  const imageUri = result.assets[0].uri;
+  console.log("Selected barcode image:", imageUri);
+
+  // User cancelled image selection
+  if (result.canceled) {
+    addNotification("Image selection cancelled.", "n");
+    return;
+  }
+
+  // Get selected image
+  const selectedImage = result.assets[0];
+
+  console.log("Selected barcode image:", selectedImage.uri);
+
+  addNotification("Barcode image selected successfully.", "s");
+
+};
+
   return (
     <Screen className="relative px-safe pt-safe">
       <Header />
@@ -166,8 +214,18 @@ export default function ScanPage() {
               )}
             </Pressable>
           </View>
+          {/* Choose Barcode Image Button */}
+          <View className="absolute bottom-28 self-center">
+          <Pressable
+            onPress={handleChooseBarcodeImage}
+            className="bg-primary rounded-lg px-6 py-3"
+          >
+          <Tt className="text-white font-interSemiBold">
+          Choose Barcode Image
+          </Tt>
+          </Pressable>
+        </View>
         </Pressable>
-
         <ProductSearchTab collapsed={collapseSheet} />
       </ScrollView>
     </Screen>

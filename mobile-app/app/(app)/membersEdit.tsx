@@ -1,7 +1,7 @@
 // Member Edit Page tsx
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { View, ScrollView, Pressable, Image } from "react-native";
+import { View, ScrollView, Pressable, Image, Modal, ActivityIndicator } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import Header from "@/components/layout/Header";
@@ -14,43 +14,67 @@ import { useModalManager } from "@/components/providers/ModalManagerProvider";
 import { useProfile } from "@/components/providers/ProfileProvider";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { upsertUserProfile } from "@/services/database/user/profiles";
-import { deleteProfileAvatar, isRemoteUri, uploadProfileAvatar } from "@/services/storage/uploadProfileAvatar";
+import {
+  deleteProfileAvatar,
+  isRemoteUri,
+  uploadProfileAvatar,
+} from "@/services/storage/uploadProfileAvatar";
 import ProfileMultiSelectSection from "@/components/ui/ProfileMultiSelectSection";
-import { ADDITIVES, ALLERGIES, DIETARIES, INTOLERANCES } from "@/services/constants/NutritionalTags";
+import {
+  ADDITIVES,
+  ALLERGIES,
+  DIETARIES,
+  INTOLERANCES,
+} from "@/services/constants/NutritionalTags";
 import { useNotification } from "@/components/providers/NotificationProvider";
 import PdBlk from "@/components/ui/UIPaddingBlock";
 import ModalWrapper from "@/components/modals/ModalAWrapper";
 import ModalResponse from "@/components/modals/ModalResponse";
 import getUserProfileName from "@/services/database/user/getUserProfileName";
 
-
 export default function MembersEditPage() {
   const router = useRouter();
   const { addNotification } = useNotification();
-  const { profiles, editableProfile, updateEdit, clearEdit, saveEdit, remove, update, selfDisplayName } = useProfile();
-  const { openModal } = useModalManager();
+
+  const {
+    profiles,
+    editableProfile,
+    updateEdit,
+    clearEdit,
+    saveEdit,
+    remove,
+    update,
+    selfDisplayName,
+  } = useProfile();
+
   const { user } = useAuth();
+  const { openModal, closeModal } = useModalManager();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const [name, setName] = useState(editableProfile?.firstName ?? "");
   const [firebaseUserName, setFirebaseUserName] = useState<string>("");
   const [ageText, setAgeText] = useState(
     editableProfile?.age == null ? "" : String(editableProfile.age)
   );
+
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deletingAvatar, setDeletingAvatar] = useState(false);
 
   const didMountRef = useRef(false);
 
-  const targetProfile = profiles.find(p => p.profileId === editableProfile?.profileId);
+  const targetProfile = profiles.find(
+    (p) => p.profileId === editableProfile?.profileId
+  );
+
   const isPersisted = !!targetProfile;
   const isSelf = targetProfile?.relationship === "Self";
   const canDelete = isPersisted && !isSelf;
 
   const onAgeBlur = () => {
-    const n = Number(ageText)
-    updateEdit({ age: isNaN(n) ? 0 : n })
-  }
+    const n = Number(ageText);
+    updateEdit({ age: isNaN(n) ? 0 : n });
+  };
 
   const onNameChange = (text: string) => {
     setName(text);
@@ -60,12 +84,21 @@ export default function MembersEditPage() {
   /**
    * Toggle Handler using Functional Updates
    */
-  type ListField = "allergies" | "intolerances" | "dietaryForm" | "additives";
+  type ListField =
+    | "allergies"
+    | "intolerances"
+    | "dietaryForm"
+    | "additives";
+
   const toggle = useCallback(
     (field: ListField, item: string) => {
       const list = (editableProfile as any)?.[field] as string[] | undefined;
       const safe = Array.isArray(list) ? list : [];
-      const next = safe.includes(item) ? safe.filter(i => i !== item) : [...safe, item];
+
+      const next = safe.includes(item)
+        ? safe.filter((i) => i !== item)
+        : [...safe, item];
+
       updateEdit({ [field]: next } as any);
     },
     [editableProfile, updateEdit]
@@ -75,7 +108,11 @@ export default function MembersEditPage() {
   useEffect(() => {
     if (editableProfile) {
       setName(editableProfile.firstName ?? "");
-      setAgeText(editableProfile.age == null || editableProfile.age === 0 ? "" : String(editableProfile.age));
+      setAgeText(
+        editableProfile.age == null || editableProfile.age === 0
+          ? ""
+          : String(editableProfile.age)
+      );
     }
   }, [editableProfile?.profileId]);
 
@@ -84,12 +121,20 @@ export default function MembersEditPage() {
     const fetchUserName = async () => {
       if (user?.uid && isSelf) {
         const profileName = await getUserProfileName(user.uid);
+
         if (profileName) {
-          const fullName = `${profileName.firstName || ''} ${profileName.lastName || ''}`.trim() || profileName.userName || '';
+          const fullName =
+            `${profileName.firstName || ""} ${
+              profileName.lastName || ""
+            }`.trim() ||
+            profileName.userName ||
+            "";
+
           setFirebaseUserName(fullName);
         }
       }
     };
+
     fetchUserName();
   }, [user?.uid, isSelf]);
 
@@ -99,6 +144,7 @@ export default function MembersEditPage() {
       didMountRef.current = true;
       return;
     }
+
     if (!editableProfile) {
       router.back();
     }
@@ -106,39 +152,54 @@ export default function MembersEditPage() {
 
   if (!editableProfile) return null;
 
-
   /**
    * Handle Save
-   * @returns 
    */
   const handleSaveProfile = async () => {
     // normalize age (also done on blur, but safe to enforce here)
     const n = Number(ageText);
     const finalAge = Number.isNaN(n) || n < 0 ? 0 : n;
+
     updateEdit({ age: finalAge });
 
     try {
       setSaving(true);
+
       let uploadedUrl: string | null = null;
+
       // If avatarUrl is local, upload and replace with remote URL before saving
-      if (editableProfile?.avatarUrl && !isRemoteUri(editableProfile.avatarUrl) && user?.uid) {
+      if (
+        editableProfile?.avatarUrl &&
+        !isRemoteUri(editableProfile.avatarUrl) &&
+        user?.uid
+      ) {
         try {
-          uploadedUrl = await uploadProfileAvatar(user.uid, editableProfile.profileId, editableProfile.avatarUrl);
+          uploadedUrl = await uploadProfileAvatar(
+            user.uid,
+            editableProfile.profileId,
+            editableProfile.avatarUrl
+          );
+
           if (uploadedUrl) {
             updateEdit({ avatarUrl: uploadedUrl });
           }
         } catch (e) {
-          console.warn('Avatar upload failed during edit:', e);
+          console.warn("Avatar upload failed during edit:", e);
         }
       }
-      const saved = await saveEdit({ 
+
+      const saved = await saveEdit({
         avatarUrl: uploadedUrl ?? editableProfile.avatarUrl ?? "",
-        age: finalAge
+        age: finalAge,
       });
+
       // Upsert to Firestore for cross-device consistency
       if (saved && user?.uid) {
-        try { await upsertUserProfile(user.uid, saved.profileId, saved); } catch {}
+        try {
+          await upsertUserProfile(user.uid, saved.profileId, saved);
+        } catch {}
       }
+
       addNotification("Profile saved", "s");
     } catch (error) {
       console.log("Error Saving Profile", error);
@@ -150,18 +211,26 @@ export default function MembersEditPage() {
 
   /**
    * Handle Delete
+   *
+   * Deletes the selected non-primary member profile and shows a
+   * success notification only after the deletion completes.
    */
   const handleDeleteProfile = async () => {
     if (!canDelete) return;
 
+    setShowDeleteDialog(false);
+    setDeleting(true);
+
     try {
-      setDeleting(true);
-      // Avoid navigating before root layout is ready; rely on back button.
+      // Delete the selected member profile.
       await remove(editableProfile.profileId);
-      clearEdit();
+
+      // Confirm successful deletion to the user.
+      addNotification("Profile deleted successfully.", "s");
+      openModal("deleteProfileSuccess");
     } catch (err) {
       console.error("Delete profile failed:", err);
-      addNotification("Root profile cannot be deleted", "e");
+      addNotification("Profile deletion failed.", "e");
     } finally {
       setDeleting(false);
     }
@@ -169,16 +238,33 @@ export default function MembersEditPage() {
 
   const handleDeleteAvatar = async () => {
     if (!editableProfile?.avatarUrl) return;
+
     setDeletingAvatar(true);
+
     try {
       updateEdit({ avatarUrl: "" });
+
       if (user?.uid) {
-        await deleteProfileAvatar(user.uid, editableProfile.profileId);
+        await deleteProfileAvatar(
+          user.uid,
+          editableProfile.profileId
+        );
       }
-      const updated = await update(editableProfile.profileId, { avatarUrl: "" });
+
+      const updated = await update(editableProfile.profileId, {
+        avatarUrl: "",
+      });
+
       if (user?.uid) {
-        try { await upsertUserProfile(user.uid, updated.profileId, updated); } catch {}
+        try {
+          await upsertUserProfile(
+            user.uid,
+            updated.profileId,
+            updated
+          );
+        } catch {}
       }
+
       addNotification("Profile picture removed.", "s");
     } catch (err) {
       console.error("Avatar delete failed:", err);
@@ -188,8 +274,6 @@ export default function MembersEditPage() {
     }
   };
 
-
-
   return (
     <Screen className="p-safe">
       <Header />
@@ -198,75 +282,155 @@ export default function MembersEditPage() {
         <View className="w-[90%] self-center">
 
           <View className="flex-row items-center justify-between mb-4">
-            <Pressable onPress={() => router.back()}
-              className="flex-row justify-center items-center self-end px-2 py-1">
+            <Pressable
+              onPress={() => router.back()}
+              className="flex-row justify-center items-center self-end px-2 py-1"
+            >
               {({ pressed }) => (
-                <IconGeneral type="arrow-backward-ios" fill={pressed ? "#FF3F3F" : "hsl(0 0%, 30%)"} />
+                <IconGeneral
+                  type="arrow-backward-ios"
+                  fill={
+                    pressed
+                      ? "#FF3F3F"
+                      : "hsl(0 0%, 30%)"
+                  }
+                />
               )}
             </Pressable>
-            <Tt className="font-interBold text-xl">Nutritional Profile</Tt>
+
+            <Tt className="font-interBold text-xl">
+              Nutritional Profile
+            </Tt>
+
             <View style={{ width: 24, height: 24 }} />
           </View>
-
 
           <Pressable
             onPress={async () => {
               try {
-                const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                const { status } =
+                  await ImagePicker.requestMediaLibraryPermissionsAsync();
+
                 if (status !== "granted") {
-                  addNotification("Permission to access photos is required.", "e");
+                  addNotification(
+                    "Permission to access photos is required.",
+                    "e"
+                  );
                   return;
                 }
-                const result = await ImagePicker.launchImageLibraryAsync({
-                  mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                  allowsEditing: true,
-                  quality: 0.85,
-                });
-                if (!result.canceled && result.assets?.length) {
+
+                const result =
+                  await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes:
+                      ImagePicker.MediaTypeOptions.Images,
+                    allowsEditing: true,
+                    quality: 0.85,
+                  });
+
+                if (
+                  !result.canceled &&
+                  result.assets?.length
+                ) {
                   const uri = result.assets[0].uri;
+
                   updateEdit({ avatarUrl: uri });
-                  addNotification("Profile picture updated.", "s");
+
+                  addNotification(
+                    "Profile picture updated.",
+                    "s"
+                  );
                 }
               } catch (err: any) {
-                console.error("Image pick failed:", err);
-                addNotification("Failed to pick image.", "e");
+                console.error(
+                  "Image pick failed:",
+                  err
+                );
+
+                addNotification(
+                  "Failed to pick image.",
+                  "e"
+                );
               }
             }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            hitSlop={{
+              top: 8,
+              bottom: 8,
+              left: 8,
+              right: 8,
+            }}
             className="justify-center items-center my-2 mb-4"
           >
             {editableProfile.avatarUrl ? (
               <ProfileAvatar
                 uri={editableProfile.avatarUrl}
-                name={editableProfile.relationship === "Self" ? selfDisplayName : undefined}
+                name={
+                  editableProfile.relationship === "Self"
+                    ? selfDisplayName
+                    : undefined
+                }
                 size={120}
               />
             ) : (
-              <IconGeneral type="account" fill="hsl(0 0% 40%)" size={100} />
+              <IconGeneral
+                type="account"
+                fill="hsl(0 0% 40%)"
+                size={100}
+              />
             )}
-            <Tt className="text-xl font-interMedium text-left">{editableProfile.avatarUrl ? "Change Picture" : "Upload Picture"}</Tt>
+
+            <Tt className="text-xl font-interMedium text-left">
+              {editableProfile.avatarUrl
+                ? "Change Picture"
+                : "Upload Picture"}
+            </Tt>
           </Pressable>
+
           {editableProfile.avatarUrl ? (
             <Pressable
               onPress={handleDeleteAvatar}
               disabled={deletingAvatar}
-              hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+              hitSlop={{
+                top: 5,
+                bottom: 5,
+                left: 5,
+                right: 5,
+              }}
               className="self-center px-3 py-2 rounded-md border border-hsl80 mb-2"
             >
-              <Tt className={`text-sm font-interMedium ${deletingAvatar ? "text-hsl50 dark:text-hsl70" : "text-hsl30 dark:text-hsl90"}`}>
-                {deletingAvatar ? "Removing…" : "Remove Photo"}
+              <Tt
+                className={`text-sm font-interMedium ${
+                  deletingAvatar
+                    ? "text-hsl50 dark:text-hsl70"
+                    : "text-hsl30 dark:text-hsl90"
+                }`}
+              >
+                {deletingAvatar
+                  ? "Removing…"
+                  : "Remove Photo"}
               </Tt>
             </Pressable>
           ) : null}
 
           {/* Name Input */}
           <Input
-            value={isSelf && firebaseUserName ? firebaseUserName : name}
-            onChangeText={isSelf ? undefined : onNameChange}
-            placeholder={isSelf ? "Name (from Account Settings)" : "Name"}
+            value={
+              isSelf && firebaseUserName
+                ? firebaseUserName
+                : name
+            }
+            onChangeText={onNameChange}
+            placeholder={
+              isSelf
+                ? "Name (from Account Settings)"
+                : "Name"
+            }
             editable={!isSelf}
             className="my-2 py-3"
-            style={isSelf ? { opacity: 0.6 } : undefined}
+            style={
+              isSelf
+                ? { opacity: 0.6 }
+                : undefined
+            }
           />
 
           {/* Age Input */}
@@ -282,15 +446,34 @@ export default function MembersEditPage() {
 
           {/* Relation Modal Open */}
           {!isSelf ? (
-            <Pressable onPress={() => openModal('chooseMemberRelationship')}
-              className="flex-row justify-between items-center py-3 px-4 my-2 mb-8 rounded
-                border border-hsl70 active:border-primary bg-white dark:bg-hsl15">
+            <Pressable
+              onPress={() =>
+                openModal("chooseMemberRelationship")
+              }
+              className="flex-row justify-between items-center py-3 px-4 my-2 mb-8 rounded border border-hsl70 active:border-primary bg-white dark:bg-hsl15"
+            >
               {({ pressed }) => (
                 <>
-                  <Tt className={editableProfile.relationship.trim().length! ? 'text-hsl20 font-interSemiBold' : 'text-hsl50 dark:text-hsl70 font-interSemiBold'}>
-                    {editableProfile.relationship || "Relationship"}
+                  <Tt
+                    className={
+                      editableProfile.relationship.trim()
+                        .length!
+                        ? "text-hsl20 font-interSemiBold"
+                        : "text-hsl50 dark:text-hsl70 font-interSemiBold"
+                    }
+                  >
+                    {editableProfile.relationship ||
+                      "Relationship"}
                   </Tt>
-                  <IconGeneral type="arrow-down" fill={pressed ? "#FF3F3F" : "hsl(0, 0%, 30%)"} />
+
+                  <IconGeneral
+                    type="arrow-down"
+                    fill={
+                      pressed
+                        ? "#FF3F3F"
+                        : "hsl(0, 0%, 30%)"
+                    }
+                  />
                 </>
               )}
             </Pressable>
@@ -303,28 +486,38 @@ export default function MembersEditPage() {
             title="Select Allergies"
             items={ALLERGIES}
             selected={editableProfile.allergies ?? []}
-            onToggle={(i) => toggle("allergies", i)}
+            onToggle={(i) =>
+              toggle("allergies", i)
+            }
           />
 
           <ProfileMultiSelectSection
             title="Select Additives"
             items={ADDITIVES}
             selected={editableProfile.additives ?? []}
-            onToggle={(i) => toggle("additives", i)}
+            onToggle={(i) =>
+              toggle("additives", i)
+            }
           />
 
           <ProfileMultiSelectSection
             title="Select Intolerances"
             items={INTOLERANCES}
             selected={editableProfile.intolerances ?? []}
-            onToggle={(i) => toggle("intolerances", i)}
+            onToggle={(i) =>
+              toggle("intolerances", i)
+            }
           />
 
           <ProfileMultiSelectSection
             title="Select Dietary Preferences"
             items={DIETARIES}
-            selected={editableProfile.dietaryForm ?? []}
-            onToggle={(i) => toggle("dietaryForm", i)}
+            selected={
+              editableProfile.dietaryForm ?? []
+            }
+            onToggle={(i) =>
+              toggle("dietaryForm", i)
+            }
           />
 
         </View>
@@ -332,15 +525,37 @@ export default function MembersEditPage() {
 
       {/* BUTTONS */}
       <View className="flex-row justify-around items-center my-4">
+
         <Pressable
-          onPress={() => { !isPersisted ? router.back() : openModal("deleteProfile") }}
+          onPress={() => {
+            !isPersisted
+              ? router.back()
+              : setShowDeleteDialog(true);
+          }}
           disabled={deleting || isSelf}
-          hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+          hitSlop={{
+            top: 5,
+            bottom: 5,
+            left: 5,
+            right: 5,
+          }}
           className="py-2 px-6 rounded-lg bg-white dark:bg-hsl15 active:border-primary"
         >
           {({ pressed }) => (
-            <Tt className={`text-lg font-interSemiBold ${pressed ? 'text-primary' : 'text-hsl40 dark:text-hsl80'}`}>
-              {!isPersisted ? "Cancel" : isSelf ? "Primary (Locked)" : deleting ? "Deleting…" : "Delete"}
+            <Tt
+              className={`text-lg font-interSemiBold ${
+                pressed
+                  ? "text-primary"
+                  : "text-hsl40 dark:text-hsl80"
+              }`}
+            >
+              {!isPersisted
+                ? "Cancel"
+                : isSelf
+                ? "Primary (Locked)"
+                : deleting
+                ? "Deleting…"
+                : "Delete"}
             </Tt>
           )}
         </Pressable>
@@ -348,23 +563,88 @@ export default function MembersEditPage() {
         <Pressable
           onPress={handleSaveProfile}
           disabled={saving}
-          hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
+          hitSlop={{
+            top: 5,
+            bottom: 5,
+            left: 5,
+            right: 5,
+          }}
           className="py-2 px-6 rounded-lg border bg-primary border-hsl90 dark:border-hsl20 active:bg-transparent active:border-primary"
         >
           {({ pressed }) => (
-            <Tt className={`text-lg font-interSemiBold ${pressed ? 'text-primary' : 'text-white'}`}>
+            <Tt
+              className={`text-lg font-interSemiBold ${
+                pressed
+                  ? "text-primary"
+                  : "text-white"
+              }`}
+            >
               {saving ? "Saving…" : "Save"}
             </Tt>
           )}
         </Pressable>
+
       </View>
 
-      <ModalWrapper modalKey="deleteProfile">
-        <ModalResponse modalKey="deleteProfile"
+      <Modal
+        visible={showDeleteDialog}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteDialog(false)}
+      >
+        <View className="flex-1 bg-black/40 flex items-center justify-center">
+          <View className="bg-gray-300 rounded-3xl p-6 w-[85%] max-w-sm items-center" onStartShouldSetResponder={() => true}>
+            <View className="mb-4">
+              <IconGeneral type="warning" fill="#000000" size={40} />
+            </View>
+
+            <Tt className="text-center text-xl font-interBold mb-4 text-black">
+              Delete Profile?
+            </Tt>
+
+            <Tt className="text-center text-sm text-hsl30">
+              Are you sure you want to delete this profile? This can't be undone.
+            </Tt>
+
+            <View className="flex-row gap-4 w-full mt-6">
+              <Pressable
+                onPress={() => setShowDeleteDialog(false)}
+                disabled={deleting}
+                className="flex-1 py-4 px-5 rounded-xl bg-[#333333] active:opacity-90"
+              >
+                <Tt className="text-center font-interBold text-white text-lg">
+                  No
+                </Tt>
+              </Pressable>
+
+              <Pressable
+                onPress={handleDeleteProfile}
+                disabled={deleting}
+                className="flex-1 py-4 px-5 rounded-xl bg-[#C63328] active:opacity-90"
+              >
+                {deleting ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Tt className="text-center font-interBold text-white text-lg">
+                    Yes
+                  </Tt>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <ModalWrapper modalKey="deleteProfileSuccess">
+        <ModalResponse
+          modalKey="deleteProfileSuccess"
           isInput={false}
-          message="Delete this Profile?"
-          acceptLabel="Delete"
-          onAccept={handleDeleteProfile}
+          message="Profile deleted successfully."
+          acceptLabel="Done"
+          onAccept={() => {
+            closeModal("deleteProfileSuccess");
+            clearEdit();
+          }}
         />
       </ModalWrapper>
 

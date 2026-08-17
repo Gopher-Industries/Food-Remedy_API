@@ -9,7 +9,7 @@
   - ingredientsText: string | null
   - ingredientsAnalysis: string[] | null
   - additives: string[]
-  - allergens: string[]
+  - allergens: string[] (known values, or `["Unknown"]` when missing/empty)
   - categories: string[]
   - labels: string[]
   - ingredients: string[]
@@ -55,4 +55,3 @@
 - User profiles for sync are stored under `/USERS/{userId}/PROFILES/` (uppercase).
 - The `Product` interface in your code is the source of truth for product fields.
 - No direct `/profiles` root collection is used by the frontend.
-
