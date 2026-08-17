@@ -338,7 +338,8 @@ def runPipeline(
         stats["stages"]["enrich"] = checkpoints.get("enrich", {})
         completed_count += 1
         ck = stats["stages"].get("enrich", {})
-        res = ck.get('result') if isinstance(ck.get('result'), dict) else ck.get('result')
+        # Both branches of the previous ternary returned ck.get('result').
+        res = ck.get('result')
 
     elif pipeline_cfg.get("enrich", {}).get("enabled", True):
         enrich_cfg = pipeline_cfg.get("enrich", {})
@@ -415,7 +416,8 @@ def runPipeline(
         stats["stages"]["seed"] = checkpoints.get("seed", {})
         completed_count += 1
         ck = stats["stages"].get("seed", {})
-        res = ck.get('result') if isinstance(ck.get('result'), dict) else ck.get('result')
+        # Both branches of the previous ternary returned ck.get('result').
+        res = ck.get('result')
 
     elif pipeline_cfg.get("seed", {}).get("enabled", True):
         seed_cfg = pipeline_cfg.get("seed", {})
@@ -539,6 +541,12 @@ if __name__ == "__main__":
     p.add_argument("--force", dest="force", action="store_true", help="Ignore checkpoints and force re-run of stages")
 
     args = p.parse_args()
+
+    if args.seed is False:
+       print(
+            "[SAFE MODE] Seed stage disabled via --no-seed. "
+            "No Firestore seeding will be performed."
+        )
 
     runPipeline(
         config_path=args.config,

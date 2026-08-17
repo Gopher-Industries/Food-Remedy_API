@@ -1,6 +1,7 @@
 from utils.missing_value_utils import (
     normalize_string,
     normalize_list,
+    normalize_allergens,
     normalize_dict,
     clean_numeric,
     normalize_quantity_with_unit,
@@ -33,6 +34,18 @@ def test_normalize_list_handles_empty_and_missing():
 def test_normalize_list_cleans_internal_missing_strings():
     assert normalize_list(["milk", "", "eggs", "unknown"]) == ["milk", "eggs"]
     assert normalize_list(["  sugar  ", "salt"]) == ["sugar", "salt"]
+
+
+def test_normalize_allergens_marks_missing_and_empty_values_unknown():
+    assert normalize_allergens(None) == ["Unknown"]
+    assert normalize_allergens([]) == ["Unknown"]
+    assert normalize_allergens("") == ["Unknown"]
+    assert normalize_allergens(["", "unknown", "N/A"]) == ["Unknown"]
+
+
+def test_normalize_allergens_preserves_known_values_and_removes_sentinel():
+    assert normalize_allergens(["Milk", "Egg"]) == ["Milk", "Egg"]
+    assert normalize_allergens(["Unknown", "Milk"]) == ["Milk"]
 
 
 def test_normalize_dict_handles_empty_and_malformed():

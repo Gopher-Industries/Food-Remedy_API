@@ -10,6 +10,7 @@ import Tt from "@/components/ui/UIText";
 import { useProduct } from "@/components/providers/ProductProvider";
 import { useModalManager } from "@/components/providers/ModalManagerProvider";
 import { usePreferences } from "@/components/providers/PreferencesProvider";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 import SkeletonLoading from "../errorHandling/skeletonLoading";
 import ErrorState from "../errorHandling/errorState";
@@ -33,6 +34,7 @@ export default function ProductTabsScreen() {
   const { currentProduct, loading, error } = useProduct();
   const { openModal } = useModalManager();
   const { highContrast, ttsEnabled } = usePreferences();
+  const { sessionType } = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabKey>("Nutrients");
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
@@ -45,11 +47,31 @@ export default function ProductTabsScreen() {
   });
 
   const handleBack = () => {
+    if (sessionType === "guest") {
+      router.replace("/(app)/(tabs)/scan");
+      return;
+    }
     if (router.canGoBack()) {
       router.replace("/(app)/(tabs)");
     } else {
       router.replace("/(app)/(tabs)"); 
     }
+  };
+
+  const requestShoppingList = () => {
+    if (sessionType === "guest") {
+      router.push("/(app)/(tabs)/cart");
+      return;
+    }
+    openModal("addToList");
+  };
+
+  const selectTab = (tab: TabKey) => {
+    if (sessionType === "guest" && tab === "For you") {
+      router.push("/(app)/(tabs)/profiles");
+      return;
+    }
+    setActiveTab(tab);
   };
 
   const productImageUri = useMemo(() => {
@@ -171,7 +193,7 @@ export default function ProductTabsScreen() {
 
           <View className="flex-row items-center gap-x-2">
             <Pressable
-              onPress={() => openModal("addToList")}
+              onPress={requestShoppingList}
               className={`flex-row justify-center items-center px-3 py-2 rounded-lg ${primaryBtn}`}
             >
               {() => (
@@ -251,7 +273,7 @@ export default function ProductTabsScreen() {
               return (
                 <Pressable
                   key={tab}
-                  onPress={() => setActiveTab(tab)}
+                  onPress={() => selectTab(tab)}
                   className="flex-1 items-center py-3"
                 >
                   <Tt
@@ -276,7 +298,7 @@ export default function ProductTabsScreen() {
 
           {activeTab !== "Compare" && (
             <Pressable
-              onPress={() => openModal("addToList")}
+              onPress={requestShoppingList}
               className="bg-primary rounded-lg py-4 px-6 mt-8 mb-4 flex-row justify-center items-center active:bg-primary/80"
             >
               {() => (

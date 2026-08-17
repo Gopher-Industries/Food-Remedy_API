@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from database.logging_system.logger import PipelineLogger
 from database.Validation.schema_loader import load_schema
 from database.Validation.report_generator import generate_report
@@ -188,9 +189,41 @@ class DB021Validator:
     #  BARCODE VALIDATION
     # -----------------------------
 
+    _BARCODE_DIGIT_PATTERN = re.compile(r"^[0-9]+$")
+    BARCODE_LENGTHS = (8, 12, 13, 14)  # EAN-8, UPC-A, EAN-13, GTIN-14
+
+    @staticmethod
+    def _is_valid_barcode_format(barcode: str) -> bool:
+        """
+        Structural format check: ASCII digits only (0-9), standard retail
+        lengths - EAN-8 (8), UPC-A (12), EAN-13 (13), GTIN-14 (14).
+
+        Uses a regex rather than str.isdigit(), since isdigit() also
+        accepts non-ASCII "digit" characters (e.g. fullwidth digits,
+        superscripts) that are not valid barcode characters.
+
+        Note: this checks structural format only (digits + length). It
+        does NOT validate the GTIN/EAN check digit - the standard mod-10
+        checksum used to catch single-digit transcription errors. A
+        structurally valid-looking barcode could still fail real checksum
+        validation; recommend this as a follow-up ticket.
+
+        Also note: schema_definition.json's `description` field claims
+        barcodes are "13 digits, no leading zeros" - real sample data
+        (products_5k_test.json, 5000 records) contradicts this: 111 records
+        use 8-digit EAN-8, 4 use 14-digit GTIN-14, and 579 (~11.6%) have a
+        legitimate leading zero. This implementation follows real production
+        data and standard retail barcode formats instead. Flagged as a
+        schema documentation issue in the PR rather than enforced here.
+        """
+        return (
+            bool(DB021Validator._BARCODE_DIGIT_PATTERN.fullmatch(barcode))
+            and len(barcode) in DB021Validator.BARCODE_LENGTHS
+        )
+
     def validate_barcodes(self, products):
         empty = 0
-        invalid_type = 0
+        invalid_format = 0
         duplicates = 0
         seen = set()
 
@@ -201,9 +234,28 @@ class DB021Validator:
                 empty += 1
                 continue
 
+            # bool is a subclass of int in Python, so exclude it explicitly
+            # before the int check below.
+            if isinstance(raw_barcode, bool):
+                invalid_format += 1
+                continue
+
+            # Only str/int are safe to normalise into a barcode string.
+            # Other types (float, list, dict, etc.) are treated as invalid
+            # format rather than silently stringified - floats risk
+            # precision loss on long digit sequences, and other types
+            # have no sensible barcode representation.
+            if not isinstance(raw_barcode, (str, int)):
+                invalid_format += 1
+                continue
+
             barcode = str(raw_barcode).strip()
             if not barcode:
                 empty += 1
+                continue
+
+            if not self._is_valid_barcode_format(barcode):
+                invalid_format += 1
                 continue
 
             if barcode in seen:
@@ -211,16 +263,16 @@ class DB021Validator:
             else:
                 seen.add(barcode)
 
-        total = empty + invalid_type + duplicates
+        total = empty + invalid_format + duplicates
 
         logger.info(
-            f"Barcode issues: empty={empty}, invalid={invalid_type}, duplicates={duplicates}"
+            f"Barcode issues: empty={empty}, invalid={invalid_format}, duplicates={duplicates}"
         )
 
         return {
             "ok": total == 0,
             "empty": empty,
-            "invalid_format": invalid_type,
+            "invalid_format": invalid_format,
             "duplicates": duplicates,
             "total_issues": total
         }

@@ -128,7 +128,7 @@ See `Documents/Database/2026 Trimester 1/DB019_README.md` (edge cases).
 
 **Module:** `mapping/map_enriched_to_product_detail.py`
 
-- Empty lists for allergens/ingredients/tags become `[]`, not invented values.
+- Empty ingredients/tags remain `[]`. Since DB023, empty allergen information becomes `["Unknown"]` so it cannot be mistaken for a confirmed allergen-free product.
 - Tag conflict resolution failure **logs and preserves** source tags rather than dropping data silently.
 - Full `enrichment.alternatives` blob is **out of scope** for Product Detail v1-recommendation UIs must read enriched store fields separately.
 
