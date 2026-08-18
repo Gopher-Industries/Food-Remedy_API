@@ -183,6 +183,46 @@ def deduplicate_products(df: pd.DataFrame) -> pd.DataFrame:
 
     return result.reset_index(drop=True)
 
+def investigate_duplicates(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    DB029: Investigate possible duplicate product records.
+
+    Reports duplicate barcodes and matching product names.
+    This check is non-destructive and does not remove records.
+    """
+    # Checking duplicate product codes/barcodes
+    if 'code' in df.columns:
+        clean_codes = df['code'].astype(str).str.strip()
+
+        duplicate_codes = df[
+            clean_codes.ne('') & clean_codes.duplicated(keep=False)
+        ]
+
+        print(
+            f"DB029: Found {len(duplicate_codes)} records "
+            "with duplicate product codes."
+        )
+
+    # Checking matching product names
+    if 'product_name' in df.columns:
+        clean_names = (
+            df['product_name']
+            .fillna('')
+            .astype(str)
+            .str.strip()
+            .str.lower()
+        )
+
+        duplicate_names = df[
+            clean_names.ne('') & clean_names.duplicated(keep=False)
+        ]
+
+        print(
+            f"DB029: Found {len(duplicate_names)} records "
+            "with matching product names."
+        )
+
+    return df
 
 def ensure_code_field(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -816,6 +856,8 @@ def main(input_path: str, output_path: str):
     df = deduplicate_products(df)
     df = ensure_code_field(df)
     df = clean_text_fields(df)
+    # DB029: Investigate possible duplicate product records
+    df = investigate_duplicates(df)
     df = clean_quantity_fields(df)
     df = clean_nutriments(df)
     df = reduce_nutriments(df)
