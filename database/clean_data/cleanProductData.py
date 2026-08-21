@@ -743,12 +743,32 @@ def clean_ingredients_list(tags) -> list | None:
     return list(cleaned) if cleaned else None
 
 
+# DB032: Standard retail barcode lengths - EAN-8 (8), UPC-A (12),
+# EAN-13 (13), GTIN-14 (14). Mirrors db021_validator.BARCODE_LENGTHS so
+# the cleaning stage and the pre-seed batch validator agree on what
+# counts as a valid barcode length.
+_BARCODE_DIGIT_PATTERN = re.compile(r"^[0-9]+$")
+_BARCODE_LENGTHS = (8, 12, 13, 14)
+
+
 def validate_record(record: dict) -> list[str]:
     warnings = []
     # DB001: Fixed logic bug -> previously only warned when barcode was BOTH wrong-length 
     # AND numeric, so non-numeric/malformed barcodes silently passed validation.
-    if not (record['barcode'].isdigit() and len(record['barcode']) == 13):
-        warnings.append("Barcode must be 13 digits")
+    #
+    # DB032: This check previously accepted ONLY exactly-13-digit barcodes
+    # and used str.isdigit(), which is also true for non-ASCII "digit"
+    # characters (fullwidth digits, superscripts, Arabic-Indic digits) that
+    # are not valid barcode characters. Real seed data
+    # (database/seeding/products_enriched.json, 5000 records) contains 111
+    # legitimate 8-digit EAN-8 codes and 4 legitimate 14-digit GTIN-14 codes
+    # that were being incorrectly flagged as invalid here, even though
+    # db021_validator.py (the pre-seed batch validator) correctly accepts
+    # them. This now uses the same digit-regex + length-set check as
+    # db021_validator._is_valid_barcode_format so both validators agree.
+    barcode = record['barcode']
+    if not (bool(_BARCODE_DIGIT_PATTERN.fullmatch(barcode)) and len(barcode) in _BARCODE_LENGTHS):
+        warnings.append("Barcode must be 8, 12, 13, or 14 digits")
     if not isinstance(record['nutriments'], dict):
         warnings.append("Nutriments must be a dictionary")
     if not record['productQuantity'] >= 0:
