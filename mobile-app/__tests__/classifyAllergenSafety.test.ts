@@ -7,6 +7,7 @@ jest.mock("firebase/firestore", () => ({
 
 import { doc, getDoc } from "firebase/firestore";
 import { POST } from "@/app/api/products/classify+api";
+import { getRecommendationSummary } from "@/services/recommendations";
 import { incompleteAllergenDataFixtures } from "./fixtures/incompleteAllergenData";
 
 describe("POST /api/products/classify allergen safety", () => {
@@ -38,9 +39,11 @@ describe("POST /api/products/classify allergen safety", () => {
           }),
         })
       );
+
       const body = await response.json();
 
       expect(response.status).toBe(200);
+
       expect(body).toEqual(
         expect.objectContaining({
           colour: "grey",
@@ -50,6 +53,7 @@ describe("POST /api/products/classify allergen safety", () => {
           ]),
         })
       );
+
       expect(body.score).toBeLessThanOrEqual(50);
     }
   );
@@ -76,7 +80,10 @@ describe("POST /api/products/classify allergen safety", () => {
     );
 
     expect(await response.json()).toEqual(
-      expect.objectContaining({ colour: "green", score: 100 })
+      expect.objectContaining({
+        colour: "green",
+        score: 100,
+      })
     );
   });
 
@@ -131,12 +138,17 @@ describe("POST /api/products/classify allergen safety", () => {
     const response = await POST(
       new Request("http://localhost/api/products/classify", {
         method: "POST",
-        body: JSON.stringify({ barcode: "nutrition-red", profile: {} }),
+        body: JSON.stringify({
+          barcode: "nutrition-red",
+          profile: {},
+        }),
       })
     );
 
     expect(await response.json()).toEqual(
-      expect.objectContaining({ colour: "red" })
+      expect.objectContaining({
+        colour: "red",
+      })
     );
   });
 
@@ -196,7 +208,10 @@ describe("POST /api/products/classify allergen safety", () => {
     );
 
     expect(await response.json()).toEqual(
-      expect.objectContaining({ colour: "red", score: 0 })
+      expect.objectContaining({
+        colour: "red",
+        score: 0,
+      })
     );
   });
 
@@ -222,7 +237,235 @@ describe("POST /api/products/classify allergen safety", () => {
     );
 
     expect(await response.json()).toEqual(
-      expect.objectContaining({ colour: "red", score: 0 })
+      expect.objectContaining({
+        colour: "red",
+        score: 0,
+      })
     );
   });
+
+  it("matches the local safety service for a trace allergen conflict", async () => {
+    const product = {
+      barcode: "trace-parity",
+      productName: "Trace parity product",
+      allergens: ["soy"],
+      traces: "milk",
+      tracesFromIngredients: null,
+      additives: [],
+      labels: [],
+      categories: ["snacks"],
+      nutrientLevels: {
+        fat: "low",
+        salt: "low",
+        sugars: "low",
+        "saturated-fat": "low",
+      },
+      nutriscoreGrade: "A",
+      nutriments: {},
+    };
+
+    const profile = {
+      allergies: ["milk"],
+      intolerances: [],
+      additives: [],
+      dietaryForm: [],
+    };
+
+    (getDoc as jest.Mock).mockResolvedValue({
+      exists: () => true,
+      data: () => product,
+    });
+
+    const response = await POST(
+      new Request("http://localhost/api/products/classify", {
+        method: "POST",
+        body: JSON.stringify({
+          barcode: product.barcode,
+          profile,
+        }),
+      })
+    );
+
+    const routeResult = await response.json();
+    const localResult = getRecommendationSummary(
+      product as any,
+      profile as any
+    );
+
+    expect(routeResult.colour).toBe("red");
+    expect(routeResult.score).toBe(0);
+
+    expect(localResult.safetyRating).toBe("red");
+    expect(localResult.safe).toBe(false);
+  });
+
+  it("matches the local safety service for complete non-matching allergen data", async () => {
+    const product = {
+      barcode: "safe-parity",
+      productName: "Safe parity product",
+      allergens: ["soy"],
+      traces: "sesame",
+      tracesFromIngredients: null,
+      additives: [],
+      labels: [],
+      categories: ["snacks"],
+      nutrientLevels: {
+        fat: "low",
+        salt: "low",
+        sugars: "low",
+        "saturated-fat": "low",
+      },
+      nutriscoreGrade: "A",
+      nutriments: {},
+    };
+
+    const profile = {
+      allergies: ["milk"],
+      intolerances: [],
+      additives: [],
+      dietaryForm: [],
+    };
+
+    (getDoc as jest.Mock).mockResolvedValue({
+      exists: () => true,
+      data: () => product,
+    });
+
+    const response = await POST(
+      new Request("http://localhost/api/products/classify", {
+        method: "POST",
+        body: JSON.stringify({
+          barcode: product.barcode,
+          profile,
+        }),
+      })
+    );
+
+    const routeResult = await response.json();
+    const localResult = getRecommendationSummary(
+      product as any,
+      profile as any
+    );
+
+    expect(routeResult.colour).toBe("green");
+    expect(localResult.safetyRating).toBe("green");
+    expect(localResult.safe).toBe(true);
+  });
+
+  it("returns 400 INVALID_REQUEST for malformed JSON", async () => {
+    const response = await POST(
+      new Request("http://localhost/api/products/classify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: "{ invalid json",
+      })
+    );
+
+    expect(response.status).toBe(400);
+
+    expect(await response.json()).toEqual(
+      expect.objectContaining({
+        error: "INVALID_REQUEST",
+        message: expect.stringMatching(/valid json/i),
+      })
+    );
+
+    expect(getDoc).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    {},
+    { barcode: "" },
+    { barcode: "   " },
+    { barcode: 12345 },
+    { barcode: null },
+  ])(
+    "returns 400 for an invalid barcode request %#",
+    async (requestBody) => {
+      const response = await POST(
+        new Request("http://localhost/api/products/classify", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestBody),
+        })
+      );
+
+      expect(response.status).toBe(400);
+
+      expect(await response.json()).toEqual(
+        expect.objectContaining({
+          error: "INVALID_REQUEST",
+        })
+      );
+
+      expect(getDoc).not.toHaveBeenCalled();
+    }
+  );
+
+  it("returns 404 when the product does not exist", async () => {
+    (getDoc as jest.Mock).mockResolvedValue({
+      exists: () => false,
+    });
+
+    const response = await POST(
+      new Request("http://localhost/api/products/classify", {
+        method: "POST",
+        body: JSON.stringify({
+          barcode: "missing-product",
+          profile: {},
+        }),
+      })
+    );
+
+    expect(response.status).toBe(404);
+
+    expect(await response.json()).toEqual(
+      expect.objectContaining({
+        error: "PRODUCT_NOT_FOUND",
+      })
+    );
+  });
+
+  it("keeps the current route response shape", async () => {
+  (getDoc as jest.Mock).mockResolvedValue({
+    exists: () => true,
+    data: () => ({
+      barcode: "response-shape",
+      productName: "Test Product",
+      brand: "Test Brand",
+      allergens: ["soy"],
+      traces: "sesame",
+      nutrientLevels: {
+        sugars: "low",
+      },
+    }),
+  });
+
+  const response = await POST(
+    new Request("http://localhost/api/products/classify", {
+      method: "POST",
+      body: JSON.stringify({
+        barcode: "response-shape",
+        profile: {
+          allergies: ["milk"],
+        },
+      }),
+    })
+  );
+
+  const body = await response.json();
+
+  expect(response.status).toBe(200);
+
+  expect(body.barcode).toBe("response-shape");
+  expect(body.productName).toBe("Test Product");
+  expect(body.brand).toBe("Test Brand");
+  expect(["red", "green", "grey"]).toContain(body.colour);
+  expect(typeof body.score).toBe("number");
+  expect(Array.isArray(body.reasons)).toBe(true);
+});
 });
