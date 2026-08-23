@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, View, Image } from "react-native";
+import {
+  AccessibilityInfo,
+  Pressable,
+  ScrollView,
+  View,
+  Image,
+} from "react-native";
 import { router } from "expo-router";
 
 import Header from "@/components/layout/Header";
@@ -20,6 +26,7 @@ import {
   useScanVoiceSummary,
   speakProductSummary,
 } from "@/hooks/useScanVoiceSummary";
+import { useScanAnnouncements } from "@/hooks/useScanAnnouncements";
 
 import NutrientsTab from "./ProductTabs/NutrientsTab";
 import IngredientsTab from "./ProductTabs/IngredientsTab";
@@ -31,19 +38,50 @@ type TabKey = "Nutrients" | "Ingredients" | "For you" | "Compare";
 const FALLBACK_FOOD_ICON = require("../../assets/images/food_icon.png");
 
 export default function ProductTabsScreen() {
-  const { currentProduct, loading, error } = useProduct();
+  const { barcode, currentProduct, loading, error } = useProduct();
   const { openModal } = useModalManager();
   const { highContrast, ttsEnabled } = usePreferences();
   const { sessionType } = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabKey>("Nutrients");
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
+  const [screenReaderEnabled, setScreenReaderEnabled] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    AccessibilityInfo.isScreenReaderEnabled().then((enabled) => {
+      if (mounted) setScreenReaderEnabled(enabled);
+    });
+
+    const subscription = AccessibilityInfo.addEventListener(
+      "screenReaderChanged",
+      setScreenReaderEnabled,
+    );
+
+    return () => {
+      mounted = false;
+      subscription.remove();
+    };
+  }, []);
 
   const tabs: TabKey[] = ["Nutrients", "Ingredients", "For you"];
 
   useScanVoiceSummary({
     product: currentProduct ?? null,
-    enabled: ttsEnabled && !loading && !error && !!currentProduct,
+    enabled:
+      ttsEnabled &&
+      !screenReaderEnabled &&
+      !loading &&
+      !error &&
+      !!currentProduct,
+  });
+
+  useScanAnnouncements({
+    barcode,
+    loading,
+    error,
+    product: currentProduct,
   });
 
   const handleBack = () => {
