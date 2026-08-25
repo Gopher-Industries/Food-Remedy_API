@@ -9,10 +9,12 @@ import {
   Platform,
   ScrollView,
   Alert,
+  AccessibilityInfo,
 } from "react-native";
 import { Link } from "expo-router";
 import Input from "@/components/ui/UIInput";
 import IconGeneral from "@/components/icons/IconGeneral";
+import * as Speech from 'expo-speech';
 import Tt from "@/components/ui/UIText";
 import { Image } from "react-native";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -182,11 +184,29 @@ export default function LoginPage() {
                   autoCorrect={false}
                 />
 
+                {/* Eye toggle (accessibilityLabel changes with state) */}
                 <Pressable
-                  onPress={() => setShowPassword((previous) => !previous)}
+                  onPress={() =>
+                    setShowPassword((previous) => {
+                      const next = !previous;
+                      // Announce and speak a clear status for the NEW state
+                      const msg = next ? "Password hidden" : "Password visible";
+                      AccessibilityInfo.announceForAccessibility(msg);
+                      // Fallback: speak the message in case screen reader announcements are not audible
+                      try {
+                        Speech.speak(msg);
+                      } catch (e) {
+                        // swallow any errors from speech API
+                      }
+                      return next;
+                    })
+                  }
+                  accessible={true}
                   accessibilityRole="button"
                   accessibilityLabel={showPassword ? "Show password" : "Hide password"}
-                  className="absolute right-4 top-1/2 -translate-y-1/2"
+                  accessibilityState={{ checked: !showPassword }}
+                  accessibilityLiveRegion="polite"
+                  className="absolute right-12 top-1/2 -translate-y-1/2"
                   style={({ pressed }) => [
                     { borderColor: pressed ? "#FF3EB5" : "hsl(0 0% 13%)" },
                   ]}
@@ -200,7 +220,7 @@ export default function LoginPage() {
                     >
                       <IconGeneral
                         type={showPassword ? "visibility" : "visibility-off"}
-                        fill={pressed ? color.primary : "hsl(0 0% 70%)}"}
+                        fill={pressed ? color.primary : "hsl(0 0% 70%)"}
                       />
                     </View>
                   )}
