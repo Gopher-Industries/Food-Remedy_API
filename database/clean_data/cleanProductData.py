@@ -696,7 +696,12 @@ def save_cleaned_data(df: pd.DataFrame, output_path: str):
 
 TYPO_FIX = {
     "citiric-acid": "citric-acid",
-    # DB002: open to adding new fix(es)
+    "sulpher-dioxide": "sulphur-dioxide",
+    "tumeric": "turmeric",
+    "cococut-oil": "coconut-oil",
+    "choclate": "chocolate",
+    # DB027: added common ingredient typo fixes
+
 }
 
 
@@ -740,7 +745,7 @@ def clean_ingredients_list(tags) -> list | None:
         if tag:
             cleaned.add(tag)
     
-    return list(cleaned) if cleaned else None
+    return sorted(cleaned) if cleaned else None
 
 
 # DB032: Standard retail barcode lengths - EAN-8 (8), UPC-A (12),
