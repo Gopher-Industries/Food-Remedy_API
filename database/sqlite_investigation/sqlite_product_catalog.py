@@ -79,43 +79,42 @@ class SQLiteProductCatalog:
         if not primary_category and categories:
             primary_category = categories[0]
 
-        with self.conn:
-            self.conn.execute("""
-                INSERT OR REPLACE INTO local_products (
-                    barcode, product_name, brand, generic_name, primary_category,
-                    nutriscore_grade, completeness, ingredients_text, traces,
-                    product_quantity, product_quantity_unit, serving_quantity, serving_quantity_unit,
-                    categories_json, ingredients_json, allergens_json, additives_json, labels_json,
-                    nutrient_levels_json, nutriments_json, images_json, tags_json, metadata_json,
-                    date_added, last_updated
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                barcode,
-                mapped.get("productName") or "Unknown Product",
-                mapped.get("brand"),
-                mapped.get("genericName"),
-                primary_category,
-                mapped.get("nutriscoreGrade"),
-                mapped.get("completeness"),
-                mapped.get("ingredientsText"),
-                mapped.get("traces"),
-                mapped.get("productQuantity"),
-                mapped.get("productQuantityUnit"),
-                mapped.get("servingQuantity"),
-                mapped.get("servingQuantityUnit"),
-                json.dumps(mapped.get("categories", [])),
-                json.dumps(mapped.get("ingredients", [])),
-                json.dumps(mapped.get("allergens", ["Unknown"])),
-                json.dumps(mapped.get("additives", [])),
-                json.dumps(mapped.get("labels", [])),
-                json.dumps(mapped.get("nutrientLevels", {})),
-                json.dumps(mapped.get("nutriments_normalized") or mapped.get("nutriments") or {}),
-                json.dumps(mapped.get("images", {})),
-                json.dumps(mapped.get("tags", {})),
-                json.dumps(mapped.get("metadata", {})),
-                mapped.get("dateAdded"),
-                mapped.get("lastUpdated")
-            ))
+        self.conn.execute("""
+            INSERT OR REPLACE INTO local_products (
+                barcode, product_name, brand, generic_name, primary_category,
+                nutriscore_grade, completeness, ingredients_text, traces,
+                product_quantity, product_quantity_unit, serving_quantity, serving_quantity_unit,
+                categories_json, ingredients_json, allergens_json, additives_json, labels_json,
+                nutrient_levels_json, nutriments_json, images_json, tags_json, metadata_json,
+                date_added, last_updated
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            barcode,
+            mapped.get("productName") or "Unknown Product",
+            mapped.get("brand"),
+            mapped.get("genericName"),
+            primary_category,
+            mapped.get("nutriscoreGrade"),
+            mapped.get("completeness"),
+            mapped.get("ingredientsText"),
+            mapped.get("traces"),
+            mapped.get("productQuantity"),
+            mapped.get("productQuantityUnit"),
+            mapped.get("servingQuantity"),
+            mapped.get("servingQuantityUnit"),
+            json.dumps(mapped.get("categories", [])),
+            json.dumps(mapped.get("ingredients", [])),
+            json.dumps(mapped.get("allergens", ["Unknown"])),
+            json.dumps(mapped.get("additives", [])),
+            json.dumps(mapped.get("labels", [])),
+            json.dumps(mapped.get("nutrientLevels", {})),
+            json.dumps(mapped.get("nutriments_normalized") or mapped.get("nutriments") or {}),
+            json.dumps(mapped.get("images", {})),
+            json.dumps(mapped.get("tags", {})),
+            json.dumps(mapped.get("metadata", {})),
+            mapped.get("dateAdded"),
+            mapped.get("lastUpdated")
+        ))
         return barcode
 
     def bulk_insert(self, products: List[Dict[str, Any]]) -> int:
