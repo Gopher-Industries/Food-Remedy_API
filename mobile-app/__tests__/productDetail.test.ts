@@ -89,4 +89,69 @@ describe("Product detail response", () => {
 
     expect(product.allergens).toEqual(["Unknown"]);
   });
+
+  it("keeps malformed nested values inside the ProductDetailV1 contract", () => {
+    const product = buildProductDetailResponse({
+      barcode: "partial-product",
+      productName: "Partial Product",
+      categories: "snacks",
+      allergens: { tag: "milk" },
+      ingredients: { tag: "sugar" },
+      nutrientLevels: ["low"],
+      nutriments: ["not-an-object"],
+      nutriments_normalized: {
+        energy_kcal: "250",
+        fat_g: "not-a-number",
+        custom_value: "7",
+      },
+      productQuantity: "not-a-number",
+      servingQuantity: "30",
+      completeness: "not-a-number",
+      images: {
+        root: null,
+        primary: "  ",
+        variants: {
+          front_en: "3",
+          decimal: "1.5",
+          invalid: "not-a-number",
+        },
+      },
+      tags: ["not-an-object"],
+    });
+
+    expect(product).toEqual(
+      expect.objectContaining({
+        barcode: "partial-product",
+        productName: "Partial Product",
+        allergens: ["Unknown"],
+        ingredients: ["sugar"],
+        categories: ["snacks"],
+        category: "snacks",
+        nutrientLevels: {},
+        nutriments: {},
+        productQuantity: null,
+        servingQuantity: 30,
+        completeness: null,
+        images: {
+          root: "",
+          primary: null,
+          variants: { front_en: 3 },
+        },
+        tags: { final: [], removed: [] },
+      })
+    );
+    expect(product.nutriments_normalized).toEqual({
+      energy_kj: null,
+      energy_kcal: 250,
+      fat_g: null,
+      saturated_fat_g: null,
+      carbohydrates_g: null,
+      sugars_g: null,
+      proteins_g: null,
+      salt_g: null,
+      sodium_mg: null,
+      fiber_g: null,
+      custom_value: 7,
+    });
+  });
 });
