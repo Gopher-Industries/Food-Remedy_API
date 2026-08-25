@@ -177,13 +177,23 @@ export default function UpdatePasswordPage() {
                 cursorColor={color.primary}
               />
               <Pressable
-                onPress={() => setShowNewPassword(!showNewPassword)}
+                onPress={() => setShowNewPassword((previous) => !previous)}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  showNewPassword ? "Hide password" : "Show password"
+                }
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <IconGeneral
-                  type={showNewPassword ? "visibility" : "visibility-off"}
-                  fill="hsl(0 0% 70%)"
-                />
+                <View
+                  accessible={false}
+                  importantForAccessibility="no"
+                  pointerEvents="none"
+                >
+                  <IconGeneral
+                    type={showNewPassword ? "visibility" : "visibility-off"}
+                    fill="hsl(0 0% 70%)"
+                  />
+                </View>
               </Pressable>
             </View>
 
@@ -206,13 +216,23 @@ export default function UpdatePasswordPage() {
                 cursorColor={color.primary}
               />
               <Pressable
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                onPress={() => setShowConfirmPassword((previous) => !previous)}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  showConfirmPassword ? "Hide password" : "Show password"
+                }
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <IconGeneral
-                  type={showConfirmPassword ? "visibility" : "visibility-off"}
-                  fill="hsl(0 0% 70%)"
-                />
+                <View
+                  accessible={false}
+                  importantForAccessibility="no"
+                  pointerEvents="none"
+                >
+                  <IconGeneral
+                    type={showConfirmPassword ? "visibility" : "visibility-off"}
+                    fill="hsl(0 0% 70%)"
+                  />
+                </View>
               </Pressable>
             </View>
           </View>
