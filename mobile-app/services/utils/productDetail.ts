@@ -1,3 +1,5 @@
+import { normaliseAllergens } from "./allergens";
+
 type Images = {
   root: string;
   primary: string | null;
@@ -166,7 +168,10 @@ export function buildProductDetailResponse(
     brand: nullIfEmpty(rawProduct.brand),
     genericName: nullIfEmpty(rawProduct.genericName),
     additives: safeStringArray(rawProduct.additives),
-    allergens: safeStringArray(rawProduct.allergens),
+    allergens: normaliseAllergens(
+      rawProduct.allergens,
+      rawProduct.allergensDetected,
+    ),
     ingredients: safeStringArray(rawProduct.ingredients),
     ingredientsText: nullIfEmpty(rawProduct.ingredientsText),
     category: nullIfEmpty(rawProduct.category) ?? categories.category,
@@ -199,4 +204,3 @@ export function buildProductDetailResponse(
 
   return response;
 }
-

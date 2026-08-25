@@ -1,5 +1,5 @@
 {
-    "timestamp": "2026-05-06T18:02:29.810332",
+    "timestamp": "2026-08-20T04:53:11.243852+00:00",
     "total_records": 5000,
     "valid_records": 5000,
     "invalid_records": 0,
@@ -8,7 +8,7 @@
         "basic_schema": true,
         "nutrients": true,
         "allergens": true,
-        "barcode_ok": true,
+        "barcode_ok": false,
         "schema_valid": true
     }
 }
