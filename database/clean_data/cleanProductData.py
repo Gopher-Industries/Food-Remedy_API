@@ -387,9 +387,20 @@ CATEGORY_RULES_ORDERED: list[tuple[str, tuple[str, ...]]] = [
         "sweetened-beverages", "evaporated-milks", "plant-milks",
         "teas", "waters", "carbonated-drinks", "fruit-juices",
     )),
-    ("snacks and confectionery", (
+        ("snacks and confectionery", (
         "snacks", "sweet-snacks", "confectioneries",
         "chocolates", "chocolate-candies", "bonbons",
+    )),
+    # DB031: Dairy — added because "dairies"/"cheeses"/"yogurts" etc. were the single
+    # largest cluster of unmapped-but-unambiguous category tags found in the DB031
+    # investigation (see database/Reports/DB031_Product_Category_Consistency_Investigation.md).
+    # Placed AFTER "beverages" deliberately: drinkable dairy products (milkshakes,
+    # iced coffee) carry both dairy tags and beverages tags, and already classify correctly
+    # as "beverages" today. Putting "dairy" after preserves that existing behaviour and only
+    # catches dairy products (cheese, plain yogurt, etc.) that beverages does not claim.
+    ("dairy", (
+        "dairies", "cheeses", "yogurts",
+        "fermented-milk-products", "fermented-dairy-desserts",
     )),
 ]
 
