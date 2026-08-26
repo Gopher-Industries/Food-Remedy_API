@@ -32,10 +32,12 @@ describe("recommendation API source routing", () => {
   const originalSource = process.env.EXPO_PUBLIC_API_SOURCE;
   const originalBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
   let consoleErrorSpy: jest.SpyInstance;
+  let consoleWarnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     jest.clearAllMocks();
     consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => undefined);
     delete process.env.EXPO_PUBLIC_API_SOURCE;
     delete process.env.EXPO_PUBLIC_API_BASE_URL;
     mockGetProduct.mockResolvedValue(original);
@@ -52,6 +54,7 @@ describe("recommendation API source routing", () => {
 
   afterEach(() => {
     consoleErrorSpy.mockRestore();
+    consoleWarnSpy.mockRestore();
   });
 
   it("uses Firestore when the source is firestore", async () => {
@@ -142,6 +145,35 @@ describe("recommendation API source routing", () => {
       message: "Request timed out",
     });
     expect(mockGetProduct).not.toHaveBeenCalled();
+  });
+
+  it("falls back to Firestore when the HTTP API fails in auto mode", async () => {
+    process.env.EXPO_PUBLIC_API_SOURCE = "auto";
+    process.env.EXPO_PUBLIC_API_BASE_URL = "https://api.example";
+    mockApiPost.mockRejectedValue(new Error("Request timed out"));
+
+    await expect(getRecommendations("original", profile, 2)).resolves.toBe(recommendations);
+    expect(mockApiPost).toHaveBeenCalledTimes(1);
+    expect(mockGetProduct).toHaveBeenCalledWith("original");
+    expect(mockGetCandidates).toHaveBeenCalledWith(original, 200);
+    expect(mockGetAlternatives).toHaveBeenCalledWith(original, candidates, profile, 2);
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("falling back to Firestore"),
+      expect.any(Error)
+    );
+  });
+
+  it("surfaces a Firestore fallback failure in auto mode", async () => {
+    process.env.EXPO_PUBLIC_API_SOURCE = "auto";
+    process.env.EXPO_PUBLIC_API_BASE_URL = "https://api.example";
+    mockApiPost.mockRejectedValue(new Error("Request timed out"));
+    mockGetProduct.mockRejectedValue(new Error("Firestore unavailable"));
+
+    await expect(getRecommendations("original", profile)).rejects.toMatchObject({
+      message: "Firestore unavailable",
+    });
+    expect(mockApiPost).toHaveBeenCalledTimes(1);
+    expect(mockGetProduct).toHaveBeenCalledWith("original");
   });
 
   it("returns an empty result only when Firestore has no original product", async () => {

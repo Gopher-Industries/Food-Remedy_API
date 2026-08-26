@@ -1,6 +1,6 @@
 /**
  * Recommendation API Service
- * Provides recommendations via REST API (if configured) or fallback to local recommendation engine
+ * Provides recommendations via REST API or the Firestore-backed local engine.
  */
 
 import type { Product } from "@/types/Product";
@@ -57,8 +57,13 @@ async function getFirestoreRecommendations(
 }
 
 /**
- * Get alternative product recommendations from backend API
- * Falls back to local recommendation engine if API not available
+ * Get alternative product recommendations.
+ *
+ * Routing contract:
+ * - `firestore`: always use the Firestore-backed local engine.
+ * - `api`: require an API URL and surface API failures to the caller.
+ * - `auto`: prefer the API when configured, otherwise use Firestore; API failures
+ *   also fall back to Firestore.
  * @param productBarcode - Barcode of the original scanned product
  * @param profile - User's nutritional profile
  * @param limit - Max recommendations (default 5)
@@ -75,11 +80,22 @@ export async function getRecommendations(
       return await getFirestoreRecommendations(productBarcode, profile, limit);
     }
 
-    return await apiPost<RecommendationScore[]>("/recommendations", {
-      barcode: productBarcode,
-      profile,
-      limit,
-    });
+    try {
+      return await apiPost<RecommendationScore[]>("/recommendations", {
+        barcode: productBarcode,
+        profile,
+        limit,
+      });
+    } catch (err) {
+      if (source === "auto") {
+        console.warn(
+          "[Recommendations] API request failed in auto mode; falling back to Firestore",
+          err
+        );
+        return await getFirestoreRecommendations(productBarcode, profile, limit);
+      }
+      throw err;
+    }
   } catch (err) {
     console.error("[Recommendations API Error]", err);
     throw normalizeError(err);
