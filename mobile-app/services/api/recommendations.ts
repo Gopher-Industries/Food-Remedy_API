@@ -1,20 +1,69 @@
 /**
  * Recommendation API Service
- * Provides recommendations via REST API (if configured) or fallback to local recommendation engine
+ * Provides recommendations via REST API or the Firestore-backed local engine.
  */
 
 import type { Product } from "@/types/Product";
 import type { NutritionalProfile } from "@/types/NutritionalProfile";
 import type { RecommendationScore } from "@/services/recommendations";
 import { getAlternatives, isUnsuitableForProfile } from "@/services/recommendations";
-import { apiGet, apiPost } from "@/services/apiClient";
+import { apiPost } from "@/services/apiClient";
 import { normalizeError } from "@/services/errorHandler";
 import { getCandidatesForRecommendations } from "@/services/database/products/getCandidatesForRecommendations";
 import { getProductById as getProductFromFirestore } from "@/services/api/products";
 
+type RecommendationSource = "auto" | "api" | "firestore";
+
+function configurationError(code: string, message: string): Error & { code: string } {
+  return Object.assign(new Error(message), { code });
+}
+
+function resolveSource(): { source: RecommendationSource; apiBaseUrl: string } {
+  const apiBaseUrl = String(process.env.EXPO_PUBLIC_API_BASE_URL || "").trim();
+  const configuredSource = String(process.env.EXPO_PUBLIC_API_SOURCE || "")
+    .trim()
+    .toLowerCase() || "auto";
+
+  if (!["auto", "api", "firestore"].includes(configuredSource)) {
+    throw configurationError(
+      "UNSUPPORTED_RECOMMENDATION_SOURCE",
+      `Unsupported recommendation source: ${configuredSource}`
+    );
+  }
+
+  if (configuredSource === "api" && !apiBaseUrl) {
+    throw configurationError(
+      "RECOMMENDATION_API_NOT_CONFIGURED",
+      "Recommendation source is 'api' but EXPO_PUBLIC_API_BASE_URL is missing."
+    );
+  }
+
+  return {
+    source: configuredSource as RecommendationSource,
+    apiBaseUrl,
+  };
+}
+
+async function getFirestoreRecommendations(
+  productBarcode: string,
+  profile: NutritionalProfile,
+  limit: number
+): Promise<RecommendationScore[]> {
+  const original = await getProductFromFirestore(productBarcode);
+  if (!original) return [];
+
+  const pool = await getCandidatesForRecommendations(original, 200);
+  return getAlternatives(original, pool, profile, limit);
+}
+
 /**
- * Get alternative product recommendations from backend API
- * Falls back to local recommendation engine if API not available
+ * Get alternative product recommendations.
+ *
+ * Routing contract:
+ * - `firestore`: always use the Firestore-backed local engine.
+ * - `api`: require an API URL and surface API failures to the caller.
+ * - `auto`: prefer the API when configured, otherwise use Firestore; API failures
+ *   also fall back to Firestore.
  * @param productBarcode - Barcode of the original scanned product
  * @param profile - User's nutritional profile
  * @param limit - Max recommendations (default 5)
@@ -24,29 +73,29 @@ export async function getRecommendations(
   profile: NutritionalProfile,
   limit = 5
 ): Promise<RecommendationScore[]> {
-  const base = process.env.EXPO_PUBLIC_API_BASE_URL;
-  const source = String(process.env.EXPO_PUBLIC_API_SOURCE || "auto").toLowerCase();
-
   try {
-    if (source === "firestore") {
-      const original = await getProductFromFirestore(productBarcode);
-      if (!original) return [];
-      const pool = await getCandidatesForRecommendations(original, 200);
-      return getAlternatives(original, pool, profile, limit);
+    const { source, apiBaseUrl } = resolveSource();
+
+    if (source === "firestore" || (source === "auto" && !apiBaseUrl)) {
+      return await getFirestoreRecommendations(productBarcode, profile, limit);
     }
-    if (base) {
-      // REST API path: POST /recommendations with barcode + profile
+
+    try {
       return await apiPost<RecommendationScore[]>("/recommendations", {
         barcode: productBarcode,
         profile,
         limit,
       });
+    } catch (err) {
+      if (source === "auto") {
+        console.warn(
+          "[Recommendations] API request failed in auto mode; falling back to Firestore",
+          err
+        );
+        return await getFirestoreRecommendations(productBarcode, profile, limit);
+      }
+      throw err;
     }
-
-    // Fallback: return empty for now (backend data required)
-    // In production, integrate with a local product database or Firebase query
-    console.warn("[Recommendations] No API configured and local fallback not yet implemented");
-    return [];
   } catch (err) {
     console.error("[Recommendations API Error]", err);
     throw normalizeError(err);

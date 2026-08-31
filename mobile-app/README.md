@@ -97,20 +97,20 @@ Guest sessions are explicitly stored and are limited to scanning barcodes, searc
 Expo reads public environment variables from `.env`:
 
 - `EXPO_PUBLIC_API_BASE_URL` — Backend base URL (e.g. `http://127.0.0.1:8000`)
-- `EXPO_PUBLIC_API_SOURCE` — `backend` (default via auto) or `firestore` to force Firestore-only data access.
-- `EXPO_PUBLIC_RECOMMENDATION_SOURCE` — `backend` (default) or `firestore` to switch recommendation logic.
+- `EXPO_PUBLIC_API_SOURCE` — `auto` (default), `api`, or `firestore`. For recommendations,
+  `auto` prefers the HTTP API when a base URL is configured and falls back to Firestore
+  when it is missing or the request fails. `api` is strict and requires a base URL.
 
 Example `.env`:
 
 ```env
 EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
-EXPO_PUBLIC_API_SOURCE=firestore
-EXPO_PUBLIC_RECOMMENDATION_SOURCE=firestore
+EXPO_PUBLIC_API_SOURCE=auto
 ```
 
 ### Firestore Recommendation Mode
 
-When `EXPO_PUBLIC_RECOMMENDATION_SOURCE=firestore`:
+When `EXPO_PUBLIC_API_SOURCE=firestore`:
 
 - The app computes suitability and recommendations locally via `services/recommendations.ts`.
 - Candidate products are fetched from Firestore `PRODUCTS` using category-based queries (see `services/database/products/getCandidatesForRecommendations.ts`).
