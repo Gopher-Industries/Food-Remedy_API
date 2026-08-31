@@ -58,7 +58,32 @@ describe("GET /api/products/[barcode]", () => {
     const body = await response.json();
 
     expect(response.status).toBe(404);
-    expect(body.error).toBe("PRODUCT_NOT_FOUND");
+    expect(body).toMatchObject({
+      error: "PRODUCT_NOT_FOUND",
+      message: "Product not found.",
+      requestId: expect.any(String),
+    });
+    expect(response.headers.get("x-request-id")).toBe(body.requestId);
+  });
+
+  it("returns the stable sanitized error contract and preserves an approved request ID", async () => {
+    (getDoc as jest.Mock).mockRejectedValue(
+      new Error("provider body: user@example.com Bearer secret-token")
+    );
+
+    const response = await GET(
+      new Request("http://localhost/api/products/123", {
+        headers: { "x-request-id": "release_trace-123" },
+      }),
+      { params: { barcode: "123" } }
+    );
+
+    await expect(response.json()).resolves.toEqual({
+      error: "PRODUCT_DETAIL_FAILED",
+      message: "Unable to load product detail.",
+      requestId: "release_trace-123",
+    });
+    expect(response.status).toBe(500);
+    expect(response.headers.get("x-request-id")).toBe("release_trace-123");
   });
 });
-
