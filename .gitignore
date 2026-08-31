@@ -275,3 +275,10 @@ dataconnect/seed_data.gql
 data/
 
 *.db
+# Leadership credential artifacts - never commit
+Documents/Guides/Leadership/Credentials/FirebaseCredentials.zip
+Documents/Guides/Leadership/Credentials/FirebaseCredentials.xlsx
+
+# Leadership credential artifacts - never commit
+Documents/Guides/Leadership/Credentials/FirebaseCredentials.zip
+Documents/Guides/Leadership/Credentials/FirebaseCredentials.xlsx
