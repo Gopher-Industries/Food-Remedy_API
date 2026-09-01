@@ -1,0 +1,136 @@
+name: Release CI Gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-gate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mobile:
+    name: Mobile release checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20.19.0
+          cache: npm
+          cache-dependency-path: mobile-app/package-lock.json
+
+      - name: Set up Java for the Firebase Storage emulator
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21.0.12+8.0.LTS
+
+      - name: Install locked mobile dependencies
+        working-directory: mobile-app
+        run: npm ci
+
+      - name: Create release-check log directory
+        run: mkdir -p artifacts
+
+      - name: TypeScript compilation
+        working-directory: mobile-app
+        run: |
+          set -o pipefail
+          npm run typecheck 2>&1 | tee ../artifacts/mobile-typecheck.log
+
+      - name: Mobile lint
+        working-directory: mobile-app
+        run: |
+          set -o pipefail
+          npm run lint 2>&1 | tee ../artifacts/mobile-lint.log
+
+      - name: Mobile and API Jest regression suite
+        working-directory: mobile-app
+        run: |
+          set -o pipefail
+          npm test -- --runInBand 2>&1 | tee ../artifacts/mobile-jest.log
+
+      - name: Firebase Storage rules emulator suite
+        working-directory: mobile-app
+        run: |
+          set -o pipefail
+          npm run test:storage-rules 2>&1 | tee ../artifacts/storage-rules.log
+
+      - name: Release configuration validation
+        working-directory: mobile-app
+        run: |
+          set -o pipefail
+          npm run test:release-config 2>&1 | tee ../artifacts/release-config.log
+
+      - name: Upload mobile release-check logs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: release-gate-mobile-${{ github.run_attempt }}
+          path: artifacts
+          if-no-files-found: warn
+          retention-days: 14
+
+  database-and-rules:
+    name: Database and Firestore release checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20.19.0
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Set up Java for the Firestore emulator
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21.0.12+8.0.LTS
+
+      - name: Install locked database dependencies
+        run: npm ci
+
+      - name: Create release-check log directory
+        run: mkdir -p artifacts
+
+      - name: DB030 database integration suite
+        run: |
+          set -o pipefail
+          npm run test:db030 2>&1 | tee artifacts/db030.log
+
+      - name: Firestore rules emulator suite
+        run: |
+          set -o pipefail
+          npm run test:firestore-rules 2>&1 | tee artifacts/firestore-rules.log
+
+      - name: Verify the gate detects an intentional syntax failure
+        run: |
+          set -o pipefail
+          npm run test:ci-gate-failure-probe 2>&1 | tee artifacts/gate-failure-probe.log
+
+      - name: Upload database and rules release-check logs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: release-gate-database-and-rules-${{ github.run_attempt }}
+          path: artifacts
+          if-no-files-found: warn
+          retention-days: 14

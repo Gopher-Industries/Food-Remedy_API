@@ -59,7 +59,10 @@ describe("shopping-cart-api route", () => {
       const body = await readJson(response);
 
       expect(response.status).toBe(400);
-      expect(body).toEqual({ error: "userId is required." });
+      expect(body).toEqual({
+        error: "INVALID_REQUEST",
+        message: "userId is required.",
+      });
       expect(mockedGetDocs).not.toHaveBeenCalled();
     });
 
@@ -108,7 +111,10 @@ describe("shopping-cart-api route", () => {
       const body = await readJson(response);
 
       expect(response.status).toBe(500);
-      expect(body).toEqual({ error: "read failed" });
+      expect(body).toEqual({
+        error: "SERVER_ERROR",
+        message: "Unable to retrieve cart.",
+      });
     });
   });
 
@@ -135,7 +141,8 @@ describe("shopping-cart-api route", () => {
 
       expect(response.status).toBe(400);
       expect(responseBody).toEqual({
-        error: "userId, productId, and a valid quantity are required.",
+        error: "INVALID_REQUEST",
+        message: "userId, productId, and a valid quantity are required.",
       });
       expect(mockedSetDoc).not.toHaveBeenCalled();
     });
@@ -240,7 +247,10 @@ describe("shopping-cart-api route", () => {
       const body = await readJson(response);
 
       expect(response.status).toBe(404);
-      expect(body).toEqual({ error: "Product not found." });
+      expect(body).toEqual({
+        error: "PRODUCT_NOT_FOUND",
+        message: "Product not found.",
+      });
       expect(mockedSetDoc).not.toHaveBeenCalled();
     });
 
@@ -254,8 +264,11 @@ describe("shopping-cart-api route", () => {
       );
       const body = await readJson(response);
 
-      expect(response.status).toBe(500);
-      expect(body.error).toContain("JSON");
+      expect(response.status).toBe(400);
+      expect(body).toEqual({
+        error: "INVALID_REQUEST",
+        message: "Request body must contain valid JSON.",
+      });
       expect(mockedSetDoc).not.toHaveBeenCalled();
     });
 
@@ -278,7 +291,10 @@ describe("shopping-cart-api route", () => {
       const body = await readJson(response);
 
       expect(response.status).toBe(500);
-      expect(body).toEqual({ error: "write failed" });
+      expect(body).toEqual({
+        error: "SERVER_ERROR",
+        message: "Unable to add item to cart.",
+      });
     });
   });
 
@@ -301,7 +317,8 @@ describe("shopping-cart-api route", () => {
 
       expect(response.status).toBe(400);
       expect(responseBody).toEqual({
-        error: "userId, productId, and a valid quantity are required.",
+        error: "INVALID_REQUEST",
+        message: "userId, productId, and a valid quantity are required.",
       });
       expect(mockedSetDoc).not.toHaveBeenCalled();
     });
@@ -347,7 +364,10 @@ describe("shopping-cart-api route", () => {
       const body = await readJson(response);
 
       expect(response.status).toBe(404);
-      expect(body).toEqual({ error: "Cart item not found." });
+      expect(body).toEqual({
+        error: "CART_ITEM_NOT_FOUND",
+        message: "Cart item not found.",
+      });
       expect(mockedSetDoc).not.toHaveBeenCalled();
     });
 
@@ -365,7 +385,10 @@ describe("shopping-cart-api route", () => {
       const body = await readJson(response);
 
       expect(response.status).toBe(500);
-      expect(body).toEqual({ error: "update failed" });
+      expect(body).toEqual({
+        error: "SERVER_ERROR",
+        message: "Unable to update cart item.",
+      });
     });
   });
 
@@ -379,7 +402,8 @@ describe("shopping-cart-api route", () => {
 
       expect(response.status).toBe(400);
       expect(responseBody).toEqual({
-        error: "userId, and productId are required.",
+        error: "INVALID_REQUEST",
+        message: "userId and productId are required.",
       });
       expect(mockedDeleteDoc).not.toHaveBeenCalled();
     });
@@ -417,7 +441,10 @@ describe("shopping-cart-api route", () => {
       const body = await readJson(response);
 
       expect(response.status).toBe(404);
-      expect(body).toEqual({ error: "Cart item not found." });
+      expect(body).toEqual({
+        error: "CART_ITEM_NOT_FOUND",
+        message: "Cart item not found.",
+      });
       expect(mockedDeleteDoc).not.toHaveBeenCalled();
     });
 
@@ -434,7 +461,10 @@ describe("shopping-cart-api route", () => {
       const body = await readJson(response);
 
       expect(response.status).toBe(500);
-      expect(body).toEqual({ error: "delete failed" });
+      expect(body).toEqual({
+        error: "SERVER_ERROR",
+        message: "Unable to remove cart item.",
+      });
     });
   });
 });

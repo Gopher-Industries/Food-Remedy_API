@@ -41,7 +41,7 @@ const ConflictWarningModal: React.FC<ConflictWarningModalProps> = ({
         <View className="bg-hsl95 dark:bg-hsl10 rounded-xl p-3 mb-4">
           <Tt className="text-sm text-hsl40 dark:text-hsl80 mb-2 text-center leading-5">
             <Tt className="font-interSemiBold text-hsl20 dark:text-hsl95">
-              "{listName}"
+              &quot;{listName}&quot;
             </Tt>{" "}
             already has this item
           </Tt>

@@ -3,7 +3,8 @@
     "test:db012:cart": "node database/db012_cart_integration.js",
     "test:db030": "node database/integration_tests/run_db030_tests.js",
     "test:db030:full": "npm run test:db030 && npm --prefix mobile-app test -- db030_api_ui_flow.test.ts",
-    "test:firestore-rules": "node --test test/test_firestore_rules_regression.js"
+    "test:firestore-rules": "firebase emulators:exec --project demo-food-remedy-rules --only firestore \"node --test test/test_firestore_rules_regression.js\"",
+    "test:ci-gate-failure-probe": "node scripts/ci/verifyReleaseGateFailureProbe.js"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
