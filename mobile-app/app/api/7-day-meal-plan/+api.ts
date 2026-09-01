@@ -107,6 +107,198 @@ type ClassificationResult = {
     brand?: string;
 };
 
+/**
+ * Resource limits for one meal-plan request. These are deliberately kept in
+ * this route so the bound is applied consistently to Firestore and the
+ * internal classification calls.
+ */
+export const MEAL_PLAN_LIMITS = {
+    maxRequestBodyBytes: 10_000,
+    maxProfileStringLength: 100,
+    maxArrayItems: 25,
+    maxArrayItemLength: 100,
+    defaultProductLimit: 50,
+    maxProductLimit: 100,
+    classificationConcurrency: 4,
+    classificationTimeoutMs: 2_000,
+    requestTimeoutMs: 12_000,
+} as const;
+
+class InvalidMealPlanRequestError extends Error {}
+class MealPlanRequestTimeoutError extends Error {}
+class MealPlanRequestAbortedError extends Error {}
+class ClassificationTimeoutError extends Error {}
+class ClassificationFailureError extends Error {}
+class ClassificationUnavailableError extends Error {}
+
+type RequestControl = {
+    signal: AbortSignal;
+    abortError: () => MealPlanRequestTimeoutError | MealPlanRequestAbortedError;
+    throwIfAborted: () => void;
+    cleanup: () => void;
+};
+
+type ClassifiedProduct = {
+    doc: ProductDoc;
+    classification: ClassificationResult;
+};
+
+type ClassificationBatch = {
+    successful: ClassifiedProduct[];
+    failedCount: number;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isBoundedOptionalString(value: unknown, maxLength: number): boolean {
+    return value === undefined || (
+        typeof value === "string"
+        && value.trim().length > 0
+        && value.length <= maxLength
+    );
+}
+
+function isBoundedOptionalStringArray(value: unknown): boolean {
+    return value === undefined || (
+        Array.isArray(value)
+        && value.length <= MEAL_PLAN_LIMITS.maxArrayItems
+        && value.every((item) => (
+            typeof item === "string"
+            && item.trim().length > 0
+            && item.length <= MEAL_PLAN_LIMITS.maxArrayItemLength
+        ))
+    );
+}
+
+function isMealPlanRequest(value: unknown): value is MealPlanRequest {
+    if (!isRecord(value)) return false;
+
+    const allowedKeys = new Set([
+        "profileId",
+        "profileName",
+        "dietType",
+        "allergens",
+        "intolerances",
+        "dietaryPreferences",
+        "preferredCategories",
+        "productLimit",
+    ]);
+
+    if (Object.keys(value).some((key) => !allowedKeys.has(key))) return false;
+
+    if (!isBoundedOptionalString(value.profileId, MEAL_PLAN_LIMITS.maxProfileStringLength)) return false;
+    if (!isBoundedOptionalString(value.profileName, MEAL_PLAN_LIMITS.maxProfileStringLength)) return false;
+    if (value.dietType !== undefined && !["omnivore", "vegetarian", "vegan"].includes(value.dietType as string)) return false;
+
+    if (!isBoundedOptionalStringArray(value.allergens)) return false;
+    if (!isBoundedOptionalStringArray(value.intolerances)) return false;
+    if (!isBoundedOptionalStringArray(value.dietaryPreferences)) return false;
+    if (!isBoundedOptionalStringArray(value.preferredCategories)) return false;
+
+    return value.productLimit === undefined || (
+        typeof value.productLimit === "number"
+        && Number.isFinite(value.productLimit)
+        && Number.isInteger(value.productLimit)
+        && value.productLimit >= 1
+        && value.productLimit <= MEAL_PLAN_LIMITS.maxProductLimit
+    );
+}
+
+function createRequestControl(request: Request): RequestControl {
+    const controller = new AbortController();
+    let timedOut = false;
+
+    const abortFromRequest = () => controller.abort();
+    if (request.signal.aborted) {
+        controller.abort();
+    } else {
+        request.signal.addEventListener("abort", abortFromRequest, { once: true });
+    }
+
+    const timeout = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+    }, MEAL_PLAN_LIMITS.requestTimeoutMs);
+
+    const abortError = () => (
+        timedOut ? new MealPlanRequestTimeoutError() : new MealPlanRequestAbortedError()
+    );
+
+    return {
+        signal: controller.signal,
+        abortError,
+        throwIfAborted: () => {
+            if (controller.signal.aborted) throw abortError();
+        },
+        cleanup: () => {
+            clearTimeout(timeout);
+            request.signal.removeEventListener("abort", abortFromRequest);
+        },
+    };
+}
+
+function awaitWithAbort<T>(
+    work: Promise<T>,
+    signal: AbortSignal,
+    abortError: () => Error
+): Promise<T> {
+    if (signal.aborted) return Promise.reject(abortError());
+
+    return new Promise<T>((resolve, reject) => {
+        const onAbort = () => {
+            cleanup();
+            reject(abortError());
+        };
+        const cleanup = () => signal.removeEventListener("abort", onAbort);
+
+        signal.addEventListener("abort", onAbort, { once: true });
+        work.then(
+            (value) => {
+                cleanup();
+                resolve(value);
+            },
+            (error) => {
+                cleanup();
+                reject(error);
+            }
+        );
+    });
+}
+
+async function readMealPlanRequest(request: Request, control: RequestControl): Promise<MealPlanRequest> {
+    const declaredLength = request.headers.get("content-length");
+    if (declaredLength !== null && Number(declaredLength) > MEAL_PLAN_LIMITS.maxRequestBodyBytes) {
+        throw new InvalidMealPlanRequestError();
+    }
+
+    let rawBody: string;
+    try {
+        control.throwIfAborted();
+        rawBody = await awaitWithAbort(request.text(), control.signal, control.abortError);
+    } catch (error) {
+        if (error instanceof MealPlanRequestTimeoutError || error instanceof MealPlanRequestAbortedError) {
+            throw error;
+        }
+        throw new InvalidMealPlanRequestError();
+    }
+
+    if (rawBody.length > MEAL_PLAN_LIMITS.maxRequestBodyBytes) {
+        throw new InvalidMealPlanRequestError();
+    }
+
+    let body: unknown;
+    try {
+        body = JSON.parse(rawBody);
+    } catch {
+        throw new InvalidMealPlanRequestError();
+    }
+
+    if (!isMealPlanRequest(body)) throw new InvalidMealPlanRequestError();
+    return body;
+}
+
 // Function: getOriginFromRequest
 // Purpose: Build a base URL (origin) so server-side fetch works reliably
 function getOriginFromRequest(request: Request): string {
@@ -124,35 +316,78 @@ async function classifyViaApi(
         allergies?: string[];
         intolerances?: string[];
         dietaryPreferences?: string[];
-    }
-): Promise<{
-    barcode: string;
-    colour: "red" | "green" | "grey";
-    score: number;
-    reasons: string[];
-    productName?: string;
-    brand?: string;
-}> {
+    },
+    requestControl: RequestControl
+): Promise<ClassificationResult> {
     const origin = getOriginFromRequest(request);
-
-    // Build absolute URL to endpoint
     const url = `${origin}/api/products/classify`;
+    const controller = new AbortController();
+    let classificationTimedOut = false;
 
-    const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    // endpoint { barcode, profile }
-    body: JSON.stringify({ barcode, profile }),
-    });
-
-    // If classify endpoint fails, throw 
-    if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Classification API failed (${res.status}): ${text}`);
+    const abortForRequest = () => controller.abort();
+    if (requestControl.signal.aborted) {
+        controller.abort();
+    } else {
+        requestControl.signal.addEventListener("abort", abortForRequest, { once: true });
     }
 
-    // Parse classification result JSON
-    return (await res.json()) as any;
+    const timeout = setTimeout(() => {
+        classificationTimedOut = true;
+        controller.abort();
+    }, MEAL_PLAN_LIMITS.classificationTimeoutMs);
+
+    const abortError = () => {
+        if (classificationTimedOut) return new ClassificationTimeoutError();
+        return requestControl.abortError();
+    };
+
+    try {
+        requestControl.throwIfAborted();
+
+        const res = await awaitWithAbort(fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ barcode, profile }),
+            signal: controller.signal,
+        }), controller.signal, abortError);
+
+        // Do not read or surface a failed provider response. It may contain
+        // infrastructure details that must not be returned by this endpoint.
+        if (!res.ok) throw new ClassificationFailureError();
+
+        const classification = await awaitWithAbort(res.json(), controller.signal, abortError);
+        if (!isClassificationResult(classification)) throw new ClassificationFailureError();
+
+        return classification;
+    } catch (error) {
+        if (
+            error instanceof MealPlanRequestTimeoutError
+            || error instanceof MealPlanRequestAbortedError
+            || error instanceof ClassificationTimeoutError
+            || error instanceof ClassificationFailureError
+        ) {
+            throw error;
+        }
+        throw new ClassificationFailureError();
+    } finally {
+        clearTimeout(timeout);
+        requestControl.signal.removeEventListener("abort", abortForRequest);
+    }
+}
+
+function isClassificationResult(value: unknown): value is ClassificationResult {
+    if (!isRecord(value)) return false;
+
+    return (
+        typeof value.barcode === "string"
+        && ["red", "green", "grey"].includes(value.colour as string)
+        && typeof value.score === "number"
+        && Number.isFinite(value.score)
+        && Array.isArray(value.reasons)
+        && value.reasons.every((reason) => typeof reason === "string")
+        && (value.productName === undefined || typeof value.productName === "string")
+        && (value.brand === undefined || typeof value.brand === "string")
+    );
 }
 
 // Function: toJsonResponse
@@ -215,13 +450,18 @@ function resolveProfile(body: MealPlanRequest): Profile {
 
 // Function: loadProductsFromFirestore
 // Purpose: Load ProductDoc list from Firestore PRODUCTS collection
-async function loadProductsFromFirestore(productLimit: number): Promise<ProductDoc[]> {
+async function loadProductsFromFirestore(
+    productLimit: number,
+    requestControl: RequestControl
+): Promise<ProductDoc[]> {
 
     // Creating query: PRODUCTS collection limited to productLimit
     const q = query(collection(fdb, "PRODUCTS"), limit(productLimit));
 
-    // Fetching docs
-    const snap = await getDocs(q);
+    // Fetching docs. Firestore does not accept an AbortSignal, so race the
+    // route's deadline and stop waiting as soon as the request is cancelled.
+    requestControl.throwIfAborted();
+    const snap = await awaitWithAbort(getDocs(q), requestControl.signal, requestControl.abortError);
 
     // If none found, stop
     if (snap.empty) {
@@ -238,6 +478,55 @@ async function loadProductsFromFirestore(productLimit: number): Promise<ProductD
             barcode,
         } as ProductDoc;
     });
+}
+
+// Function: classifyProductsWithLimit
+// Purpose: Bound internal classifier work and keep document order deterministic.
+async function classifyProductsWithLimit(
+    request: Request,
+    docs: ProductDoc[],
+    profile: {
+        allergies?: string[];
+        intolerances?: string[];
+        dietaryPreferences?: string[];
+    },
+    requestControl: RequestControl
+): Promise<ClassificationBatch> {
+    const successful: Array<ClassifiedProduct | undefined> = new Array(docs.length);
+    let failedCount = 0;
+    let nextIndex = 0;
+
+    const worker = async () => {
+        while (true) {
+            requestControl.throwIfAborted();
+            const index = nextIndex;
+            nextIndex += 1;
+            if (index >= docs.length) return;
+
+            const doc = docs[index];
+            try {
+                const classification = await classifyViaApi(request, doc.barcode, profile, requestControl);
+                successful[index] = { doc, classification };
+            } catch (error) {
+                if (error instanceof MealPlanRequestTimeoutError || error instanceof MealPlanRequestAbortedError) {
+                    throw error;
+                }
+
+                // Partial-failure policy: exclude a product whose classifier
+                // cannot provide a valid result. A plan can still be generated
+                // from the successfully classified products.
+                failedCount += 1;
+            }
+        }
+    };
+
+    const workerCount = Math.min(MEAL_PLAN_LIMITS.classificationConcurrency, docs.length);
+    await Promise.all(Array.from({ length: workerCount }, () => worker()));
+
+    const completed = successful.filter((item): item is ClassifiedProduct => item !== undefined);
+    if (completed.length === 0) throw new ClassificationUnavailableError();
+
+    return { successful: completed, failedCount };
 }
 
 // Function: inferMealCategories
@@ -565,8 +854,10 @@ function generate7DayMealPlan(profile: Profile, mealProducts: MealProduct[]): Me
 // Function: POST
 // HTTP handler for /api/7-day meal plan
 export async function POST(request: Request): Promise<Response> {
+    const requestControl = createRequestControl(request);
+
     try {
-        const body = (await request.json()) as MealPlanRequest;
+        const body = await readMealPlanRequest(request, requestControl);
 
         // Resolve profile from request
         const profile = resolveProfile(body);
@@ -577,35 +868,69 @@ export async function POST(request: Request): Promise<Response> {
             dietaryPreferences: profile.dietaryPreferences,
         };
 
-        // Loading products from Firestore
-        // Choosing how many products to read (default 200, max 500)
-        const productLimit = Math.max(1, Math.min(500, Number(body.productLimit ?? 200)));
-        const docs = await loadProductsFromFirestore(productLimit);
+        // productLimit has already been validated as a bounded integer.
+        const productLimit = body.productLimit ?? MEAL_PLAN_LIMITS.defaultProductLimit;
+        const docs = await loadProductsFromFirestore(productLimit, requestControl);
 
-        // Calling EPIC 1 endpoint for each barcode to get colour/score/reasons
-        const classified = await Promise.all(
-            docs.map(async (d) => {
-                const classification = await classifyViaApi(request, d.barcode, classifierProfile);
-                return { doc: d, classification };
-            })
+        const classificationBatch = await classifyProductsWithLimit(
+            request,
+            docs,
+            classifierProfile,
+            requestControl
         );
 
         // Converting to meal products 
-        const mealProducts = classified.map(({ doc, classification }) => toMealProductFromApi(doc, classification));
+        const mealProducts = classificationBatch.successful.map(({ doc, classification }) => (
+            toMealProductFromApi(doc, classification)
+        ));
 
         // Generating Plan
         const plan = generate7DayMealPlan(profile, mealProducts);
+        if (classificationBatch.failedCount > 0) {
+            const partialFailureWarning = `${classificationBatch.failedCount} products could not be classified and were excluded from this plan.`;
+            plan.warning = plan.warning
+                ? `${plan.warning} ${partialFailureWarning}`
+                : partialFailureWarning;
+        }
 
         return toJsonResponse(plan, 200);
-    } catch (err: any) {
-        console.error("Error in /api/7-day-meal-plan:", err);
+    } catch (error) {
+        // Responses intentionally contain only stable public errors. Detailed
+        // infrastructure and provider failures remain in server logs.
+        if (error instanceof InvalidMealPlanRequestError) {
+            return toJsonResponse({
+                error: "INVALID_REQUEST",
+                message: "Request body does not match the meal-plan schema.",
+            }, 400);
+        }
 
-        return toJsonResponse(
-        {
+        if (error instanceof MealPlanRequestTimeoutError) {
+            return toJsonResponse({
+                error: "REQUEST_TIMEOUT",
+                message: "Meal-plan generation timed out. Please try again.",
+            }, 504);
+        }
+
+        if (error instanceof MealPlanRequestAbortedError) {
+            return toJsonResponse({
+                error: "REQUEST_ABORTED",
+                message: "Meal-plan generation was cancelled.",
+            }, 408);
+        }
+
+        if (error instanceof ClassificationUnavailableError) {
+            return toJsonResponse({
+                error: "CLASSIFICATION_UNAVAILABLE",
+                message: "Meal-plan generation is temporarily unavailable. Please try again.",
+            }, 503);
+        }
+
+        console.error("Error in /api/7-day-meal-plan:", error);
+        return toJsonResponse({
             error: "SERVER_ERROR",
-            message: err?.message ?? "Unexpected error while generating 7-day meal plan.",
-            
-        },
-        500);
+            message: "Unexpected error while generating 7-day meal plan.",
+        }, 500);
+    } finally {
+        requestControl.cleanup();
     }
 }
