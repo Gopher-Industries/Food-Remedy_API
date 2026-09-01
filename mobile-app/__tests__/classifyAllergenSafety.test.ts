@@ -200,6 +200,38 @@ describe("POST /api/products/classify allergen safety", () => {
     );
   });
 
+  it("flags punctuated precautionary seafood text for a Fish profile", async () => {
+    (getDoc as jest.Mock).mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        barcode: "fish-precaution",
+        allergens: ["soy"],
+        traces: "May-contain: SEA/FOOD",
+        nutrientLevels: { sugars: "low" },
+      }),
+    });
+
+    const response = await POST(
+      new Request("http://localhost/api/products/classify", {
+        method: "POST",
+        body: JSON.stringify({
+          barcode: "fish-precaution",
+          profile: { allergies: [" fIsH "] },
+        }),
+      })
+    );
+
+    expect(await response.json()).toEqual(
+      expect.objectContaining({
+        colour: "red",
+        score: 0,
+        reasons: expect.arrayContaining([
+          expect.stringMatching(/contains allergens.*fish/i),
+        ]),
+      })
+    );
+  });
+
   it("checks profile intolerances through the same canonical matcher", async () => {
     (getDoc as jest.Mock).mockResolvedValue({
       exists: () => true,
