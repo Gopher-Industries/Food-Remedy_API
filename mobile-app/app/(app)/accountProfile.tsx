@@ -192,13 +192,13 @@ export default function AccountProfileScreen() {
           >
             {({ pressed }) => (
               <>
-                <View className="flex-row items-center gap-2.5">
+                <View className="flex-row items-center gap-2.5 flex-1 pr-3">
                   <IconGeneral
                     type="update-user-settings"
                     fill="hsl(0, 0%, 40%)"
                     size={26}
                   />
-                  <View>
+                  <View className="flex-1">
                     <Tt className="font-interMedium">Update User Settings</Tt>
                     <Tt className="text-sm text-hsl30">Update your details</Tt>
                   </View>
@@ -221,13 +221,13 @@ export default function AccountProfileScreen() {
           >
             {({ pressed }) => (
               <>
-                <View className="flex-row items-center gap-3">
+                <View className="flex-row items-center gap-3 flex-1 pr-3">
                   <IconGeneral
                     type="update-password"
                     fill="hsl(0, 0%, 40%)"
                     size={24}
                   />
-                  <View>
+                  <View className="flex-1">
                     <Tt className="font-interMedium">Update Password</Tt>
                     <Tt className="text-sm text-hsl30">
                       Keep your account secure
@@ -252,9 +252,9 @@ export default function AccountProfileScreen() {
           >
             {({ pressed }) => (
               <>
-                <View className="flex-row items-center gap-2.5">
+                <View className="flex-row items-center gap-2.5 flex-1 pr-3">
                   <IconGeneral type="delete" fill="hsl(0, 0%, 40%)" size={26} />
-                  <View>
+                  <View className="flex-1">
                     <Tt className="font-interMedium">Delete Account</Tt>
                     <Tt className="text-sm text-hsl30">
                       Remove your account and data

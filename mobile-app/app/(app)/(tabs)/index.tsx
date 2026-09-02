@@ -66,13 +66,13 @@ export default function HistoryPage() {
           <Pressable
             onPress={() => router.push("/(app)/(tabs)/scan")}
             hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
-            className="mt-8 flex-row justify-between items-center py-3 px-4 rounded-lg 
-                border border-hsl90 dark:border-hsl20 active:border-primary bg-white dark:bg-hsl15 dark:border-hsl20 self-center"
+            className="mt-8 flex-row items-center gap-x-3 py-3 px-4 rounded-lg
+                border border-hsl90 dark:border-hsl20 active:border-primary bg-white dark:bg-hsl15 self-center"
           >
             {({ pressed }) => (
               <>
                 <Tt
-                  className={`text-lg font-interSemiBold flex-grow  ${pressed ? "text-primary" : "text-hsl30 dark:text-hsl90"}`}
+                  className={`text-lg font-interSemiBold ${pressed ? "text-primary" : "text-hsl30 dark:text-hsl90"}`}
                 >
                   Scan New Product
                 </Tt>
@@ -132,7 +132,7 @@ export default function HistoryPage() {
           >
             <View className="w-[95%] self-center">
               <View className="flex-row items-center justify-between mt-8">
-                <Tt className="font-interSemiBold text-hsl30 dark:text-hsl90">
+                <Tt className="font-interSemiBold text-hsl30 dark:text-hsl90 flex-1 pr-2">
                   Previously Scanned
                 </Tt>
                 <Pressable

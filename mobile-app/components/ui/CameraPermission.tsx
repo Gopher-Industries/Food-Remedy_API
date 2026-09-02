@@ -1,6 +1,6 @@
 // Camera Permissions
 
-import { ActivityIndicator, Linking, Pressable, View } from "react-native";
+import { ActivityIndicator, Linking, Pressable, ScrollView, View } from "react-native";
 import IconCameraPermission from "../icons/IconCameraPermission";
 import Tt from "./UIText";
 import { router } from "expo-router";
@@ -46,7 +46,10 @@ const CameraPermission = ({ permission, requestPermission }: CameraPermissionPro
 
   return (
     <View className="flex-1 p-safe bg-cyan-100/50">
-      <View className="items-center justify-center flex-1 w-[90%] self-center">
+      <ScrollView
+        style={{ flex: 1, width: "90%", alignSelf: "center" }}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", alignItems: "center" }}
+      >
         <IconCameraPermission width={150} height={150} />
 
         <View className="w-full mt-8">
@@ -98,7 +101,7 @@ const CameraPermission = ({ permission, requestPermission }: CameraPermissionPro
 
 
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
