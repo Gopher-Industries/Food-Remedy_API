@@ -128,6 +128,14 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
         return data;
       } catch (err: any) {
         if (err?.code === "ERR_CANCELED") return null;
+
+        if (err?.status === 404 || err?.code === "PRODUCT_NOT_FOUND") {
+          setError(null);
+          setCurrentProduct(null);
+          addNotification("No product found for that barcode.", "n");
+          return null;
+        }
+
         console.error("[Product][Error]", err);
         setError("error");
         addNotification("Failed to fetch product. Please try again.", "e");
