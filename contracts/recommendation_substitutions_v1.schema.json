@@ -1,0 +1,146 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://food-remedy.dev/schemas/recommendation-substitutions/v1",
+  "title": "RecommendationSubstitutionsV1",
+  "description": "Versioned Product Substitution Recommendation Contract v1.0.0. Shared between Backend, Scan, and Mobile Consumers.",
+  "definitions": {
+    "SubstitutionRequest": {
+      "type": "object",
+      "required": ["barcode"],
+      "properties": {
+        "barcode": {
+          "type": "string",
+          "pattern": "^[0-9]{8,14}$",
+          "description": "Scanned product GTIN / barcode (8 to 14 digits)"
+        },
+        "overrides": {
+          "type": "object",
+          "properties": {
+            "avoidAllergens": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": [],
+              "description": "List of allergen codes/names to strictly avoid"
+            },
+            "dietaryRestrictions": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": [],
+              "description": "List of dietary restrictions to strictly enforce (e.g. 'vegan', 'vegetarian')"
+            }
+          },
+          "additionalProperties": false,
+          "description": "Optional request-level profile preference overrides"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "default": 5,
+          "description": "Maximum number of substitute recommendations to return"
+        }
+      },
+      "additionalProperties": false
+    },
+    "SubstitutionItem": {
+      "type": "object",
+      "required": ["barcode", "productName", "safetyRating", "confidenceScore", "reasonCodes", "reasons"],
+      "properties": {
+        "barcode": { "type": "string", "description": "Candidate product barcode" },
+        "productName": { "type": "string", "description": "Candidate product display name" },
+        "brand": { "type": ["string", "null"], "description": "Candidate brand name" },
+        "nutriscoreGrade": {
+          "type": ["string", "null"],
+          "enum": ["a", "b", "c", "d", "e", "unknown", null],
+          "description": "Nutri-Score grade"
+        },
+        "safetyRating": {
+          "type": "string",
+          "enum": ["green", "grey"],
+          "description": "Evaluated safety rating. Unsafe ('red') candidates are hard-excluded."
+        },
+        "confidenceScore": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Recommendation confidence score between 0.0 and 1.0"
+        },
+        "reasonCodes": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Machine-readable reason codes from standardized catalogue"
+        },
+        "reasons": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Human-readable justification statements"
+        }
+      },
+      "additionalProperties": false
+    },
+    "SubstitutionResponse": {
+      "type": "object",
+      "required": ["version", "status", "targetProduct", "substitutions", "emptyStateReason"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "const": "1.0.0",
+          "description": "Contract schema version"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["success", "no_eligible_candidates", "insufficient_data"],
+          "description": "High-level execution status"
+        },
+        "targetProduct": {
+          "type": "object",
+          "required": ["barcode", "productName"],
+          "properties": {
+            "barcode": { "type": "string" },
+            "productName": { "type": "string" },
+            "category": { "type": ["string", "null"] },
+            "allergens": { "type": "array", "items": { "type": "string" } },
+            "nutriscoreGrade": { "type": ["string", "null"] }
+          },
+          "additionalProperties": true
+        },
+        "substitutions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/SubstitutionItem" }
+        },
+        "emptyStateReason": {
+          "type": ["string", "null"],
+          "enum": [
+            null,
+            "INSUFFICIENT_PRODUCT_DATA",
+            "NO_SAFE_ALTERNATIVES_IN_CATEGORY",
+            "STRICT_ALLERGEN_EXCLUSION_ALL_CANDIDATES",
+            "PRODUCT_NOT_FOUND"
+          ],
+          "description": "Explicit empty state taxonomy when substitutions array is empty"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ErrorEnvelope": {
+      "type": "object",
+      "required": ["error"],
+      "properties": {
+        "error": {
+          "type": "object",
+          "required": ["code", "message"],
+          "properties": {
+            "code": {
+              "type": "string",
+              "enum": ["INVALID_BARCODE", "INVALID_LIMIT", "MALFORMED_REQUEST_BODY", "INTERNAL_SERVER_ERROR"]
+            },
+            "message": { "type": "string" },
+            "details": { "type": ["object", "array", "null"] }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
