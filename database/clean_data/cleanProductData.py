@@ -833,6 +833,11 @@ def main(input_path: str, output_path: str):
     if "tagsRemoved" in df.columns:
         df = df.drop(columns=["tagsRemoved"])
 
+    # Populate normalized search fields
+    from database.clean_data.normalization.SearchNormalisation import normalize_search_text
+    df["productNameSearch"] = df.get("productName", pd.Series("", index=df.index)).apply(normalize_search_text)
+    df["brandSearch"] = df.get("brand", pd.Series("", index=df.index)).apply(normalize_search_text)
+
     for _, record in df.iterrows():
         record_warnings = validate_record(record.to_dict())
         if record_warnings:
