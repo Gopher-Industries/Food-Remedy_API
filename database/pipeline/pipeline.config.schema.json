@@ -1,9 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
+  "required": ["pipeline"],
   "properties": {
     "pipeline": {
       "type": "object",
+      "required": ["fail_on_error"],
       "properties": {
         "fail_on_error": { "type": "boolean" },
         "outputs": { "type": "object" },
@@ -26,6 +28,7 @@
               "type": "array",
               "items": {
                 "type": "object",
+                "required": ["name", "path", "enabled"],
                 "properties": {
                   "name": { "type": "string" },
                   "path": { "type": "string" },

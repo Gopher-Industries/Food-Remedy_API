@@ -9,7 +9,8 @@ export async function GET(
 ): Promise<Response> {
   const requestId = getRequestId(request);
   try {
-    const barcode = context.params?.barcode?.trim();
+    const rawBarcode = context.params?.barcode;
+    const barcode = typeof rawBarcode === "string" ? rawBarcode.trim() : "";
 
     if (!barcode) {
       return jsonResponse(errorEnvelope("INVALID_REQUEST", "Missing or invalid product barcode.", requestId), 400, requestId);

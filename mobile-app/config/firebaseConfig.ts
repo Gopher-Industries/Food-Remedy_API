@@ -35,8 +35,8 @@ if (Platform.OS === "web") {
 }
 
 // Firestore & Storage
-const fdb = getFirestore(app);
-const storage = getStorage(app);
+const fdb: Firestore = getFirestore(app);
+const storage: FirebaseStorage = getStorage(app);
 
 // Exports
 export { app as firebaseApp, auth, fdb, storage };

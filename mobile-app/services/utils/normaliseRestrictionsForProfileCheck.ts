@@ -5,6 +5,7 @@
 // 
 
 import { ADDITIVES, ALLERGIES, INTOLERANCES } from "../constants/NutritionalTags";
+import { findRestrictionMatches } from "@/services/allergenSafety";
 
 export type SimpleProduct = {
   allergens: string[];
@@ -26,7 +27,6 @@ export type NormalisedForCheck = {
   };
 };
 
-type AllergenLabel = typeof ALLERGIES[number];
 type AdditiveLabel = typeof ADDITIVES[number];
 type IntoleranceLabel = typeof INTOLERANCES[number];
 
@@ -42,77 +42,6 @@ const uniqPreserve = <T>(arr: T[]) => Array.from(new Set(arr));
 
 const has = (tag: string, needles: (string | RegExp)[]) =>
   needles.some(n => (typeof n === "string" ? tag.includes(n) : n.test(tag)));
-
-// --------------- allergen lexicon ---------------
-// Order matters. We resolve Peanuts before Tree Nuts to avoid double counting.
-const ALLERGEN_RULES: { label: AllergenLabel; needles: (string | RegExp)[] }[] = [
-  // Peanuts
-  { label: "Peanuts", needles: ["peanut", "peanuts", "groundnut"] },
-  // Egg
-  { label: "Egg", needles: ["egg", "eggs", "albumen", "ovalbumin", "lysozyme"] },
-  // Soy
-  { label: "Soy", needles: ["soy", "soya", "soybean", "soybeans", "tofu", /大.?豆/] },
-  // Garlic
-  { label: "Garlic", needles: ["garlic"] },
-  // Mustard
-  { label: "Mustard", needles: ["mustard"] },
-  // Seafood
-  {
-    label: "Seafood",
-    needles: [
-      "fish", "crustacea", "crustaceans", "prawn", "shrimp", "mollusc", "molluscs",
-      "oyster", "hoki", "anchovy", "anchovies"
-    ]
-  },
-  // Tree Nuts
-  {
-    label: "Tree Nuts",
-    needles: [
-      "tree-nuts", "nut-tree", "nuts", "hazelnut", "hazelnuts",
-      "cashew", "cashew-nuts", "pistach", "macadamia", "walnut", "wallnuts",
-      "almond", "brazil-nut", "pecan", "chestnut"
-    ]
-  },
-];
-
-// --------------- intolerance lexicon ---------------
-const INTOLERANCE_RULES: { label: IntoleranceLabel; needles: (string | RegExp)[]; fromENumbers?: (n: number) => boolean }[] = [
-  // Gluten and cereals
-  {
-    label: "Gluten",
-    needles: [
-      "gluten", "contains-cereals-containing-gluten", "gluten-containing-cereals",
-      "wheat", "wheaten", "wheat-gluten", "weizenmehl", /小.?麦/, // jp/zh for wheat
-      "barley", "rye", "spelt", "triticale",
-      "oat", "oats", "oat-bran", "rolled-barley", "avoine" // FR oats
-    ]
-  },
-  // Lactose and dairy signals
-  {
-    label: "Lactose",
-    needles: [
-      "milk", "contains-milk", "lait", "magemilchpulver", "butterfat", "lactic-culture",
-      "milk-solids", "cheese", "edamer", "kase", "cream", "yoghurt", "yogurt"
-    ]
-  },
-  // Caffeine
-  { label: "Caffeine", needles: ["caffeine", "guarana", "guarana-extract", "coffee", "mate"] },
-  // Glucose
-  { label: "Glucose", needles: ["glucose", "glucose-syrup"] },
-  // Sorbitol from tag or E420
-  {
-    label: "Sorbitol",
-    needles: ["sorbitol", "polyol"],
-    fromENumbers: (n) => n === 420
-  },
-  // Fructose only if explicit
-  { label: "Fructose", needles: ["fructose"] },
-  // Histamine and Salicylate are hard to infer reliably from OFF tags, leave to explicit tags if present
-  { label: "Histamine", needles: ["histamine"] },
-  { label: "Salicylate", needles: ["salicylate", "salicylates"] },
-  // Low-FODMAP cannot be auto-inferred, only respect explicit tag
-  { label: "Low-FODMAP", needles: ["low-fodmap"] },
-];
 
 // --------------- additive classification ---------------
 
@@ -160,15 +89,18 @@ export function normaliseRetrictionsForProfileCheck(product: SimpleProduct): Nor
 
   const addTags = uniqPreserve(product.additives || []).map(norm).filter(Boolean);
 
-  const allergenHits = new Set<AllergenLabel>();
+  const allergenMatches = findRestrictionMatches(
+    { allergens: product.allergens, traces: product.traces.join(",") },
+    ALLERGIES
+  );
+  const allergenHits = new Set<string>(allergenMatches);
   const allergenDebug: Record<string, string[]> = {};
-  for (const tag of raw) {
-    if (NOISE.has(tag)) continue;
-    for (const rule of ALLERGEN_RULES) {
-      if (has(tag, rule.needles)) {
-        allergenHits.add(rule.label);
-        (allergenDebug[rule.label] ||= []).push(tag);
-        break; // avoid double assignment
+  for (const label of allergenMatches) {
+    for (const tag of raw) {
+      if (
+        findRestrictionMatches({ allergens: [tag] }, [label]).length > 0
+      ) {
+        (allergenDebug[label] ||= []).push(tag);
       }
     }
   }
@@ -200,30 +132,38 @@ export function normaliseRetrictionsForProfileCheck(product: SimpleProduct): Nor
     additiveHits.add("Sweeteners");
   }
 
-  // intolerances from raw and additives
-  const intoleranceHits = new Set<IntoleranceLabel>();
+  // Intolerances use the same canonical matcher as backend and scan flows.
+  const intoleranceMatches = findRestrictionMatches(
+    {
+      allergens: product.allergens,
+      traces: product.traces.join(","),
+      ingredients: [...(product.ingredientAnalysis || []), ...addTags],
+    },
+    INTOLERANCES
+  );
+  const intoleranceHits = new Set<IntoleranceLabel>(
+    intoleranceMatches as IntoleranceLabel[]
+  );
   const intoleranceDebug: Record<string, string[]> = {};
+  for (const label of intoleranceMatches) {
+    for (const tag of [
+      ...raw,
+      ...(product.ingredientAnalysis || []).map(norm),
+      ...addTags,
+    ]) {
+      if (findRestrictionMatches({ ingredients: [tag] }, [label]).length > 0) {
+        (intoleranceDebug[label] ||= []).push(tag);
+      }
+    }
+  }
 
-  const checkAgainst = [...raw, ...addTags];
-  for (const tag of checkAgainst) {
-    if (NOISE.has(tag)) continue;
-    // by words
-    for (const rule of INTOLERANCE_RULES) {
-      if (has(tag, rule.needles)) {
-        intoleranceHits.add(rule.label);
-        (intoleranceDebug[rule.label] ||= []).push(tag);
-      }
-    }
-    // by E-number
-    const en = parseENumber(tag);
-    if (en !== null) {
-      for (const rule of INTOLERANCE_RULES) {
-        if (rule.fromENumbers && rule.fromENumbers(en)) {
-          intoleranceHits.add(rule.label);
-          (intoleranceDebug[rule.label] ||= []).push(`e${en}`);
-        }
-      }
-    }
+  // E420 remains a structured additive signal for Sorbitol.
+  if (addTags.some((tag) => parseENumber(tag) === 420)) {
+    intoleranceHits.add("Sorbitol");
+    (intoleranceDebug.Sorbitol ||= []).push("e420");
+  }
+
+  for (const tag of [...raw, ...addTags]) {
     // phenylalanine often signals aspartame warning on labels
     if (tag.includes("phenylalanine")) {
       additiveHits.add("Sweeteners");

@@ -2,6 +2,7 @@
 
 import { collection, getDocs, limit, query } from "firebase/firestore";
 import { fdb } from "@/config/firebaseConfig";
+import { assessAllergenSafety } from "@/services/allergenSafety";
 import { errorEnvelope, getRequestId, jsonResponse, safeLog } from "@/services/backend/safeErrors";
 
 type DietType = "omnivore" | "vegetarian" | "vegan";
@@ -51,6 +52,9 @@ type ProductDoc = {
     nutriscoreGrade?: string | null;
 
     traces?: string | null;
+    tracesFromIngredients?: string | null;
+    ingredients?: string[] | null;
+    ingredientsText?: string | null;
 
     [key: string]: any;
 };
@@ -60,7 +64,7 @@ type MealProduct = {
     name: string; // productName fallback if missing
 
     // which meal slots this product can be used for
-    mealCategories: Array<"breakfast" | "lunch" | "dinner" | "snack">;
+    mealCategories: ("breakfast" | "lunch" | "dinner" | "snack")[];
 
      // EPIC 1 classification output
      classification: ClassificationResult;
@@ -142,10 +146,7 @@ async function classifyViaApi(
 
     const res = await fetch(url, {
     method: "POST",
-    headers: {
-        "Content-Type": "application/json",
-        "x-request-id": requestId,
-    },
+    headers: { "Content-Type": "application/json", "x-request-id": requestId },
     // endpoint { barcode, profile }
     body: JSON.stringify({ barcode, profile }),
     });
@@ -174,13 +175,6 @@ function safeStringArray(value: unknown): string[] {
 
     // Keep only strings, normalise them
     return value.filter((x) => typeof x === "string").map((x) => normaliseToken(x));
-}
-
-// Function: splitCommaList
-// Purpose: Split comma-separated strings into normalised tokens
-function splitCommaList(value: string | null | undefined): string[] {
-    if (!value) return [];
-    return value.split(",").map((x) => normaliseToken(x)).filter(Boolean);
 }
 
 // Function: yyyyMmDdToday
@@ -236,7 +230,7 @@ async function loadProductsFromFirestore(productLimit: number): Promise<ProductD
 
 // Function: inferMealCategories
 // Purpose: Decide which meal slots a product can fit based on categories[]
-function inferMealCategories(categories?: string[] | null): Array<"breakfast" | "lunch" | "dinner" | "snack"> {
+function inferMealCategories(categories?: string[] | null): ("breakfast" | "lunch" | "dinner" | "snack")[] {
     // Normalise categories to lowercase for matching
     const c = (categories ?? []).map((x) => x.toLowerCase());
 
@@ -307,23 +301,19 @@ function isDietCompatible(dietType: DietType, ingredientsAnalysis?: string[] | n
     return true;
 }
 
-// Function: conflictWithRestrictions
-// Purpose: Extra allergen/intolerance filtering using allergens[] and traces string
-function conflictsWithRestrictions(profile: Profile, product: ProductDoc): boolean {
-    // Building restricted set from allergies + intolerances
-    const restricted = new Set(
-        [...profile.allergies, ...profile.intolerances].map(normaliseToken));
-    
-    // Get allergens list and traces list
-    const allergens = safeStringArray(product.allergens);
-    const traces = splitCommaList(product.traces);
+// Function: conflictsWithRestrictions
+// Purpose: Apply the same conservative matcher as classify/recommendations.
+export function conflictsWithRestrictions(profile: Profile, product: ProductDoc): boolean {
+    const restrictions = [...profile.allergies, ...profile.intolerances];
 
-    // If any restricted item appears, conflict = true
-    for (const a of [...allergens, ...traces]) {
-        if (restricted.has(a)) return true;
-    }
+    // With no restrictions there is no user-specific conflict to evaluate.
+    if (restrictions.length === 0) return false;
 
-    return false;
+    const assessment = assessAllergenSafety(product, restrictions);
+
+    // A meal plan is a safety-sensitive recommendation: an explicit match and
+    // incomplete/unsupported evidence must both be kept out of the plan.
+    return assessment.status !== "safe";
 }
 
 // Function: toMealProductFromApi
@@ -592,7 +582,7 @@ export async function POST(request: Request): Promise<Response> {
         const plan = generate7DayMealPlan(profile, mealProducts);
 
         return jsonResponse(plan, 200, requestId);
-    } catch (err: any) {
+    } catch (err) {
         safeLog("error", "meal_plan.failed", { requestId, error: err });
         return jsonResponse(
             errorEnvelope("MEAL_PLAN_FAILED", "Unable to generate meal plan.", requestId),

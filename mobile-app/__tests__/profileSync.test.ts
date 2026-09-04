@@ -1,607 +1,349 @@
-/*
-PURPOSE:
-This test file verifies that:
-- Profile sync service works correctly in both directions (Firebase -> SQLite and SQLite -> Firebase).
-- No duplicate profiles are created.
-- Conflicts are resolved correctly using the last-write-wins strategy.
-- All data is kept consistent throughout the sync process.
-
-JEST:
- - describe() groups the related tests together into a "suite".
- - it() or ()etst defines a single test case.
- - expect() checks that a value matches what we expect.
- - beforeEach() runs setup code before every test in its describe block.
- - jest.fn() creates a "mock" - a fake version of a function 
- - jest.clearAllMocks() resets all mocks between tests so they don't bleed into each other.
-*/
-
 import {
-    fetchProfilesFromFirebase,
-    fetchProfilesFromSQLite,
-    saveProfilesToSQLite,
-    syncProfilesToCloud,
-    syncProfiles,
-} from '../services/sync/syncProfilesServices';
+  fetchProfilesFromFirebase,
+  fetchProfilesFromSQLite,
+  saveProfilesToSQLite,
+  syncProfiles,
+  syncProfilesToCloud,
+} from "../services/sync/syncProfilesServices";
 
-// jest.mock() intercepts the import and replaces the entire module with fakes.
-// Replacing the Firebase config with a plain empty object.
-jest.mock('../config/firebaseConfig', () => ({ fdb: {} }));
+jest.mock("../config/firebaseConfig", () => ({ fdb: {} }));
 
-// Replacing all Firebase Firestore functions with jest mock functions.
-// This means that when the sync service calls getDocs90, setDoc(), etc...
-// It hits the fake versions instead of the real Firebase SDK.
-jest.mock('firebase/firestore', () => ({
-    collection: jest.fn(), // Used to reference a Firestore collection
-    getDocs: jest.fn(), // Used to read documents from Firestore
-    setDoc: jest.fn(), // Used to write a document to Firestore
-    doc: jest.fn(), // Used to build a reference to a specific document
-    getDoc: jest.fn, // Used to read a single document
+jest.mock("firebase/firestore", () => ({
+  collection: jest.fn(),
+  getDocs: jest.fn(),
+  setDoc: jest.fn(),
+  doc: jest.fn(),
 }));
 
-// Replacing the SQLite initialisation function
-// This opens a database file on the device, in tests it returns a fake empty object instead
-jest.mock('../config/sqlConfig', () => ({
-    initialiseSQLiteDatabase: jest.fn().mockResolvedValue({}),
+jest.mock("../config/sqlConfig", () => ({
+  initialiseSQLiteDatabase: jest.fn().mockResolvedValue({}),
 }));
 
-// Replacing the SQLite Data Access Object functions.
-jest.mock('../services/sqlDatabase/profiles.dao', () => ({
-    upsertProfile: jest.fn().mockResolvedValue(undefined), // INSERT OR UPDATE a profile row
-    listProfilesForUser: jest.fn().mockResolvedValue([]), // SELECT all profiles for a given userId
+jest.mock("../services/sqlDatabase/profiles.dao", () => ({
+  upsertProfile: jest.fn().mockResolvedValue(undefined),
+  listProfilesForUser: jest.fn().mockResolvedValue([]),
 }));
 
-// Importing the mocked versions to set return values and
-// also inspect how many times they were called, with what areguments, etc.
-import { collection, getDocs, setDoc, doc } from 'firebase/firestore';
-import { initialiseSQLiteDatabase } from '../config/sqlConfig';
-import { upsertProfile, listProfilesForUser } from '../services/sqlDatabase/profiles.dao';
+import { collection, doc, getDocs, setDoc } from "firebase/firestore";
+import { initialiseSQLiteDatabase } from "../config/sqlConfig";
+import {
+  listProfilesForUser,
+  upsertProfile,
+} from "../services/sqlDatabase/profiles.dao";
 
-// TEST HELPERS
-
-// A fake SQLite database oject. Something to pass around so mocks can receive it.
 const mockDb = {};
+const userId = "user-123";
 
-// Creating a fake NutritionalProfile with sensible defaults.
-// Any field can be overridden by passing an object of overrides.
-const makeProfile = (overrides: Record<string, any> = {}) => ({
-  profileId:    'profile-001',      // unique ID for this profile in both Firebase and SQLite
-  userId:       'user-123',         // the Firebase Auth user who owns this profile
-  firstName:    'Test',
-  lastName:     'User',
-  status:       true,               // whether the profile is active
-  relationship: 'self',             // e.g. 'self', 'child', 'partner'
-  age:          30,
-  avatarUrl:    null,
-  additives:    [],                 // list of food additives to flag
-  allergies:    [],                 // list of known allergies
-  intolerances: [],                 // list of food intolerances
-  dietaryForm:  [],                 // e.g. ['vegan', 'gluten-free']
-  updated_at:   '2026-01-01T00:00:00.000Z', // ISO timestamp used for conflict resolution
-  ...overrides,                     // spread overrides last so they win
+const makeProfile = (overrides: Record<string, unknown> = {}) => ({
+  profileId: "profile-001",
+  userId,
+  firstName: "Test",
+  lastName: "User",
+  status: true,
+  relationship: "Self",
+  age: 30,
+  avatarUrl: "",
+  additives: [],
+  allergies: [],
+  intolerances: [],
+  dietaryForm: [],
+  updated_at: "2026-01-01T00:00:00.000Z",
+  ...overrides,
 });
 
-// Creating a fake Firestore document snapshot.
-// This helper mimics shape so the mocked getDocs() returns something the sync service can actually work with.
-const makeFirestoreDoc = (profile: ReturnType<typeof makeProfile>) => ({
-    id: profile.profileId, // Firestore document ID
-    data: () => ({ ...profile }), // .data() returns the document fields
+const firestoreDoc = (profile: ReturnType<typeof makeProfile>) => ({
+  id: profile.profileId,
+  data: () => ({ ...profile }),
 });
 
-/* ========================================================================================================= 
-SUITE 1: DOWNSTREAM SYNC - Firebase -> SQLite
+async function settleWithFakeTimers<T>(operation: Promise<T>): Promise<T> {
+  await jest.runAllTimersAsync();
+  return operation;
+}
 
-These tests verify that when the app fetches profiles from the cloud,
-they are correctly saved into the local SQLite database.
-============================================================================================================*/
+describe("profile sync", () => {
+  let errorSpy: jest.SpyInstance;
+  let warnSpy: jest.SpyInstance;
 
-describe('Downstream sync - Firebase -> SQLite', () => {
-    // Before each test in this suite, reset all mocks and make initialiseSQLiteDatabase return the fake db object.
-    beforeEach(() => {
-        jest.clearAllMocks();
-        (initialiseSQLiteDatabase as jest.Mock).mockResolvedValue(mockDb);
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useRealTimers();
+    (initialiseSQLiteDatabase as jest.Mock).mockResolvedValue(mockDb);
+    (collection as jest.Mock).mockReturnValue({});
+    (doc as jest.Mock).mockReturnValue({});
+    (getDocs as jest.Mock).mockResolvedValue({ docs: [] });
+    (setDoc as jest.Mock).mockResolvedValue(undefined);
+    (listProfilesForUser as jest.Mock).mockResolvedValue([]);
+    (upsertProfile as jest.Mock).mockResolvedValue(undefined);
+    errorSpy = jest.spyOn(console, "error").mockImplementation();
+    jest.spyOn(console, "log").mockImplementation();
+    warnSpy = jest.spyOn(console, "warn").mockImplementation();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  it("maps Firestore documents to profiles", async () => {
+    const profile = makeProfile();
+    (getDocs as jest.Mock).mockResolvedValue({ docs: [firestoreDoc(profile)] });
+
+    await expect(fetchProfilesFromFirebase(userId)).resolves.toEqual([profile]);
+    expect(collection).toHaveBeenCalledWith({}, "USERS", userId, "PROFILES");
+  });
+
+  it("retries a failed Firebase read three times before returning an empty list", async () => {
+    jest.useFakeTimers();
+    (getDocs as jest.Mock).mockRejectedValue(new Error("network unavailable"));
+
+    const result = await settleWithFakeTimers(fetchProfilesFromFirebase(userId));
+
+    expect(result).toEqual([]);
+    expect(getDocs).toHaveBeenCalledTimes(4);
+    expect(warnSpy).toHaveBeenCalledTimes(3);
+  });
+
+  it("returns an empty list when SQLite cannot be initialised", async () => {
+    (initialiseSQLiteDatabase as jest.Mock).mockRejectedValue(new Error("database unavailable"));
+
+    await expect(fetchProfilesFromSQLite(userId)).resolves.toEqual([]);
+    expect(errorSpy).toHaveBeenCalledWith(
+      "SQLite fetch error:",
+      expect.any(Error)
+    );
+  });
+
+  it("normalises profile names before saving every profile to SQLite", async () => {
+    const profile = makeProfile({
+      profileId: "profile-002",
+      first_name: "Snake",
+      firstName: undefined,
+      last_name: "Case",
+      lastName: undefined,
     });
 
-    it('fetches profiles from Firebase and returns them with correct shape', async () => {
-        // ARRANGE: Setting up a fake profile and making getDocs return it
-        const profile = makeProfile();
-        (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockResolvedValue({
-            docs: [makeFirestoreDoc(profile)], // simulating one document in Firestore
-        });
+    await saveProfilesToSQLite([profile]);
 
-        // ACT: Call the function we are testing (Casting to any[] since Firebase returns untyped DocumentData)
-        const result = await fetchProfilesFromFirebase('user-123') as any[];
+    expect(upsertProfile).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({
+        profileId: "profile-002",
+        firstName: "Snake",
+        lastName: "Case",
+        updated_at: expect.any(String),
+      })
+    );
+  });
 
-        // ASSERT: Checking the return data has the right shape and values
-        expect(result).toHaveLength(1); // should return exactly 1 profile
-        expect(result[0].profileId).toBe('profile-001'); // profileId should be mapped correctly
-        expect(result[0].userId).toBe('user-123'); // userId should be included
+  it("retries a transient profile write and preserves the cloud path", async () => {
+    jest.useFakeTimers();
+    const profile = makeProfile({ profileId: "offline-profile" });
+    (listProfilesForUser as jest.Mock).mockResolvedValue([profile]);
+    (setDoc as jest.Mock)
+      .mockRejectedValueOnce(new Error("temporary write failure"))
+      .mockRejectedValueOnce(new Error("temporary write failure"))
+      .mockResolvedValueOnce(undefined);
+
+    await settleWithFakeTimers(syncProfilesToCloud(userId));
+
+    expect(setDoc).toHaveBeenCalledTimes(3);
+    expect(doc).toHaveBeenCalledWith(
+      {},
+      "USERS",
+      userId,
+      "PROFILES",
+      "offline-profile"
+    );
+    expect(setDoc).toHaveBeenLastCalledWith(
+      {},
+      expect.objectContaining({
+        profileId: "offline-profile",
+        updated_at: expect.any(String),
+      })
+    );
+  });
+
+  it("keeps the local version and writes it when the local timestamp is newer", async () => {
+    const cloud = makeProfile({
+      profileId: "shared-profile",
+      firstName: "Cloud",
+      updated_at: "2026-01-01T00:00:00.000Z",
     });
-
-    it('returns an empty array when Firebase is unreachable', async () => {
-        // ARRANGE: Make getDocs throw an error to simulate a network failure
-        (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockRejectedValue(new Error ('Network error'));
-
-        // ACT
-        const result = await fetchProfilesFromFirebase('user-123');
-
-        // ASSERT: The service should handle the error gracefully and return [], instead of crashing the app
-        expect(result).toEqual([]);
+    const local = makeProfile({
+      profileId: "shared-profile",
+      firstName: "Local",
+      updated_at: "2026-02-01T00:00:00.000Z",
     });
+    (getDocs as jest.Mock).mockResolvedValue({ docs: [firestoreDoc(cloud)] });
+    (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
 
-    it('calls upsertProfile for every profile saved to SQLite', async () => {
-        // ARRANGE: Two profiles to save
-        const profiles = [
-            makeProfile({ profileId: 'p-001' }),
-            makeProfile({ profileId: 'p-002' }),
-        ];
-        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
+    await syncProfiles(userId);
 
-        // ACT: Save both profiles to SQLite
-        await saveProfilesToSQLite(profiles);
+    expect(upsertProfile).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({ firstName: "Local" })
+    );
+    expect(setDoc).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({ firstName: "Local" })
+    );
+  });
 
-        // ASSERT: upsertProfile (the SQL INSERT OR UPDATE) should be called once per profile, with the correct data each time
-        expect(upsertProfile).toHaveBeenCalledTimes(2);
-        expect(upsertProfile).toHaveBeenCalledWith(
-            mockDb,
-            expect.objectContaining({ profileId: 'p-001' }) // first profile
-        );
-        expect(upsertProfile).toHaveBeenCalledWith(
-            mockDb,
-            expect.objectContaining({ profileId: 'p-002' }) // second profile
-        );
+  it("keeps the cloud version when the cloud timestamp is newer", async () => {
+    const cloud = makeProfile({
+      profileId: "shared-profile",
+      firstName: "Cloud",
+      updated_at: "2026-02-01T00:00:00.000Z",
     });
-
-    it('returns an empty array when SQLite is unavailable', async () => {
-        // ARRANGE: Simulate SQLite failing to initialise (e.g. storage permission denied)
-        (initialiseSQLiteDatabase as jest.Mock).mockRejectedValue(new Error('DB init failed'));
-
-        // ACT
-        const result = await fetchProfilesFromSQLite('user-123');
-
-        // ASSERT: Should return [] rather than throwing an unhandled error
-        expect(result).toEqual([]);
+    const local = makeProfile({
+      profileId: "shared-profile",
+      firstName: "Local",
+      updated_at: "2026-01-01T00:00:00.000Z",
     });
-});
+    (getDocs as jest.Mock).mockResolvedValue({ docs: [firestoreDoc(cloud)] });
+    (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
 
+    await syncProfiles(userId);
 
-/* =========================================================================================================
-SUITE 2: UPSTREAM SYNC - SQLite -> Firebase
+    expect(upsertProfile).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({ firstName: "Cloud" })
+    );
+    expect(setDoc).not.toHaveBeenCalled();
+  });
 
-These tests verify that local profile data is correctly pushed back up to Firestore,
-with the right paths and timestamps.
-============================================================================================================*/
-describe('Upstream sync - SQLite → Firebase', () => {
- 
-    beforeEach(() => {
-        jest.clearAllMocks();
-        (initialiseSQLiteDatabase as jest.Mock).mockResolvedValue(mockDb);
+  it("preserves all fields from the winning profile", async () => {
+    const cloud = makeProfile({
+      profileId: "complete-profile",
+      firstName: "Alice",
+      lastName: "Smith",
+      relationship: "Child",
+      age: 12,
+      additives: ["E330"],
+      allergies: ["peanuts", "dairy"],
+      intolerances: ["gluten"],
+      dietaryForm: ["vegan"],
+      updated_at: "2026-02-01T00:00:00.000Z",
     });
- 
-    it('reads all local profiles and pushes each one to Firestore', async () => {
-        // ARRANGE: Two profiles in SQLite
-        const profiles = [
-            makeProfile({ profileId: 'p-001' }),
-            makeProfile({ profileId: 'p-002' }),
-        ];
-        (listProfilesForUser as jest.Mock).mockResolvedValue(profiles);
-        (doc as jest.Mock).mockReturnValue({});
-        (setDoc as jest.Mock).mockResolvedValue(undefined);
- 
-        // ACT: Push local profiles up to Firebase
-        await syncProfilesToCloud('user-123');
- 
-        // ASSERT: Should have read from SQLite for user-123
-        expect(listProfilesForUser).toHaveBeenCalledWith(mockDb, 'user-123');
-        // And pushed both profiles to Firestore
-        expect(setDoc).toHaveBeenCalledTimes(2);
+    const local = makeProfile({
+      profileId: "complete-profile",
+      firstName: "Older local value",
+      updated_at: "2026-01-01T00:00:00.000Z",
     });
- 
-    it('pushes each profile to the correct Firestore path', async () => {
-        // ARRANGE: One profile in SQLite
-        const profile = makeProfile({ profileId: 'p-001' });
-        (listProfilesForUser as jest.Mock).mockResolvedValue([profile]);
-        (doc as jest.Mock).mockReturnValue({});
-        (setDoc as jest.Mock).mockResolvedValue(undefined);
- 
-        // ACT
-        await syncProfilesToCloud('user-123');
- 
-        // ASSERT: The Firestore document path must be:
-        //   USERS / {userId} / PROFILES / {profileId}
-        // If the path is wrong, the data ends up in the wrong place in Firestore.
-        expect(doc).toHaveBeenCalledWith(
-            {}, // fdb (mocked Firebase instance)
-            'USERS', 'user-123', 'PROFILES', 'p-001'
-        );
+    (getDocs as jest.Mock).mockResolvedValue({ docs: [firestoreDoc(cloud)] });
+    (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
+
+    await syncProfiles(userId);
+
+    expect(upsertProfile).toHaveBeenCalledWith(mockDb, cloud);
+    expect(setDoc).not.toHaveBeenCalled();
+  });
+
+  it("keeps the cloud version when timestamps are equal", async () => {
+    const cloud = makeProfile({
+      profileId: "shared-profile",
+      firstName: "Cloud",
     });
- 
-    it('stamps an updated_at timestamp on every profile pushed to Firebase', async () => {
-        // ARRANGE
-        const profile = makeProfile();
-        (listProfilesForUser as jest.Mock).mockResolvedValue([profile]);
-        (doc as jest.Mock).mockReturnValue({});
-        (setDoc as jest.Mock).mockResolvedValue(undefined);
- 
-        // ACT
-        await syncProfilesToCloud('user-123');
- 
-        // ASSERT: Grab what was actually passed to setDoc and check the timestamp.
-        // updated_at is what conflict resolution uses to decide
-        // which version of a profile is the most recent.
-        const pushedPayload = (setDoc as jest.Mock).mock.calls[0][1];
-        expect(pushedPayload.updated_at).toBeDefined();
-        expect(typeof pushedPayload.updated_at).toBe('string');
-        expect(new Date(pushedPayload.updated_at).toString()).not.toBe('Invalid Date');
+    const local = makeProfile({
+      profileId: "shared-profile",
+      firstName: "Local",
     });
+    (getDocs as jest.Mock).mockResolvedValue({ docs: [firestoreDoc(cloud)] });
+    (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
 
-    it('syncs a profile created offline (only in SQLite) up to Firebase when online', async () => {
-        // ARRANGE: Simulate a profile that was created while offline
-        // it exists in SQLite but not yet in Firebase (Firebase returns empty)
-        const offlineProfile = makeProfile({
-            profileId: 'offline-profile',
-            firstName: 'OfflineUser',
-        });
+    await syncProfiles(userId);
 
-         (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockResolvedValue({ docs: [] }); // nothing in Firebase yet
-        (listProfilesForUser as jest.Mock).mockResolvedValue([offlineProfile]);
-        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
-        (doc as jest.Mock).mockReturnValue({});
-        (setDoc as jest.Mock).mockResolvedValue(undefined);
+    expect(upsertProfile).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({ firstName: "Cloud" })
+    );
+    expect(setDoc).not.toHaveBeenCalled();
+  });
 
-        // ACT: User comes back online and sync runs
-        await syncProfiles('user-123');
-
-        // ASSERT: The offline profile should be pushed up to Firebase
-        expect(setDoc).toHaveBeenCalledTimes(1);
-        expect(doc).toHaveBeenCalledWith(
-            {},
-            'USERS', 'user-123', 'PROFILES', 'offline-profile'
-        );
+  it("keeps the cloud version when the local timestamp is missing", async () => {
+    const cloud = makeProfile({
+      profileId: "shared-profile",
+      firstName: "Cloud",
+      updated_at: "2026-02-01T00:00:00.000Z",
     });
-});
-
-
-/* =========================================================================================================
-SUITE 3: DUPLICATE PROFILE PREVENTION
-
-These tests verify that the sync does not create multiple rows for the same profile. 
-============================================================================================================*/
-describe('Duplicate profile prevention', () => {
- 
-    beforeEach(() => {
-        jest.clearAllMocks();
-        (initialiseSQLiteDatabase as jest.Mock).mockResolvedValue(mockDb);
+    const local = makeProfile({
+      profileId: "shared-profile",
+      firstName: "Local",
+      updated_at: undefined,
     });
- 
-    it('upserting the same profileId twice does not create two entries', async () => {
-        // ARRANGE: One profile that we will save twice
-        const profile = makeProfile();
-        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
- 
-        // ACT: Save the same profile twice (simulates two sync cycles running)
-        await saveProfilesToSQLite([profile]);
-        await saveProfilesToSQLite([profile]);
- 
-        // ASSERT: upsertProfile is called twice (once per save call)
-        const calledWithIds = (upsertProfile as jest.Mock).mock.calls.map((c) => c[1].profileId);
-        expect(calledWithIds).toEqual(['profile-001', 'profile-001']);
-    });
- 
-    it('syncProfiles produces exactly one upsert when the same profileId exists in both sources', async () => {
-        // ARRANGE: The same profileId exists in both Firebase and SQLite.
-        const sharedId = 'profile-shared';
-        const cloud    = makeProfile({ profileId: sharedId, updated_at: '2026-06-01T00:00:00.000Z' });
-        const local    = makeProfile({ profileId: sharedId, updated_at: '2026-01-01T00:00:00.000Z' });
- 
-        (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloud)] });
-        (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
-        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
-        (doc as jest.Mock).mockReturnValue({});
-        (setDoc as jest.Mock).mockResolvedValue(undefined);
- 
-        // ACT: Run the full two-way sync
-        await syncProfiles('user-123');
- 
-        // ASSERT: The Map inside syncProfiles deduplicates by profileId,
-        // only one upsert should be fired (the winning version of the profile)
-        expect(upsertProfile).toHaveBeenCalledTimes(1);
-    });
- 
-    it('syncProfiles fires one setDoc per unique profileId - no extra pushes', async () => {
-        // ARRANGE: Two distinct profileIds, one in each source
-        const p1 = makeProfile({ profileId: 'p-001' });
-        const p2 = makeProfile({ profileId: 'p-002' });
- 
-        (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(p1)] });
-        (listProfilesForUser as jest.Mock).mockResolvedValue([p2]);
-        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
-        (doc as jest.Mock).mockReturnValue({});
-        (setDoc as jest.Mock).mockResolvedValue(undefined);
- 
-        // ACT
-        await syncProfiles('user-123');
- 
-        // ASSERT: Two unique profiles -> exactly two setDoc calls, no duplicates
-        expect(setDoc).toHaveBeenCalledTimes(2);
-    });
-});
+    (getDocs as jest.Mock).mockResolvedValue({ docs: [firestoreDoc(cloud)] });
+    (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
 
+    await syncProfiles(userId);
 
-/* =========================================================================================================
-SUITE 4: CONFLICT RESOLUTION - LAST-WRITE-WINS
+    expect(upsertProfile).toHaveBeenCalledWith(
+      mockDb,
+      expect.objectContaining({ firstName: "Cloud" })
+    );
+    expect(setDoc).not.toHaveBeenCalled();
+  });
 
-When the same profileId exists in both Firebase and SQLite with different data, the sync must pick a winner.
-The resolveConflict() function inside syncProfilesServers.ts uses updated_at timestamps - whichever is more recent wins.
-============================================================================================================*/
-describe('Conflict resolution - last-write-wins by updated_at', () => {
+  it("keeps all unique profiles but only writes local-only profiles to Firestore", async () => {
+    const cloud = makeProfile({ profileId: "cloud-profile" });
+    const local = makeProfile({ profileId: "local-profile" });
+    (getDocs as jest.Mock).mockResolvedValue({ docs: [firestoreDoc(cloud)] });
+    (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
 
-    beforeEach(() => {
-        jest.clearAllMocks();
-        (initialiseSQLiteDatabase as jest.Mock).mockResolvedValue(mockDb);
-    });
+    await syncProfiles(userId);
 
-    it('keeps the cloud version when cloud updated_at is newer', async () => {
-        // ARRANGE: Cloud was updated in June, local was updated in January
-        // Cloud should win
-        const id = 'profile-conflict';
-        const cloud = makeProfile({ profileId: id, firstName: 'CloudName', updated_at: '2026-06-01T00:00:00.000Z' });
-        const local = makeProfile({ profileId: id, firstName: 'LocalName', updated_at: '2026-01-01T00:00:00.000Z' });
+    expect(upsertProfile).toHaveBeenCalledTimes(2);
+    expect(setDoc).toHaveBeenCalledTimes(1);
+    expect(setDoc).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({ profileId: "local-profile" })
+    );
+  });
 
-        (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloud)] });
-        (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
-        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
-        (doc as jest.Mock).mockReturnValue({});
-        (setDoc as jest.Mock).mockResolvedValue(undefined);
+  it("does not save or write when neither store contains a profile", async () => {
+    await syncProfiles(userId);
 
-        // ACT
-        await syncProfiles('user-123');
+    expect(upsertProfile).not.toHaveBeenCalled();
+    expect(setDoc).not.toHaveBeenCalled();
+  });
 
-        // ASSERT: The profile saved to SQLite should have the cloud's firstName
-        const saved = (upsertProfile as jest.Mock).mock.calls[0][1];
-        expect(saved.firstName).toBe('CloudName');
-    });
+  it("does not write local profiles when the Firebase read fails", async () => {
+    jest.useFakeTimers();
+    const local = makeProfile({ profileId: "local-profile" });
+    (getDocs as jest.Mock).mockRejectedValue(new Error("network unavailable"));
+    (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
 
-    it('keeps the local version when local updated_at is newer', async () => {
-        // ARRANGE: Local was updated in June, cloud was updated in January
-        // Local should win
-        const id = 'profile-conflict';
-        const cloud = makeProfile({ profileId: id, firstName: 'CloudName', updated_at: '2026-01-01T00:00:00.000Z' });
-        const local = makeProfile({ profileId: id, firstName: 'LocalName', updated_at: '2026-06-01T00:00:00.000Z' });
+    await settleWithFakeTimers(syncProfiles(userId));
 
-        (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloud)] });
-        (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
-        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
-        (doc as jest.Mock).mockReturnValue({});
-        (setDoc as jest.Mock).mockResolvedValue(undefined);
+    expect(upsertProfile).not.toHaveBeenCalled();
+    expect(setDoc).not.toHaveBeenCalled();
+    expect(errorSpy).toHaveBeenCalledWith(
+      "Failed fetching profiles, aborting sync"
+    );
+  });
 
-        // ACT
-        await syncProfiles('user-123');
+  it("continues syncing later profiles after one write exhausts its retries", async () => {
+    jest.useFakeTimers();
+    const failedProfile = makeProfile({ profileId: "failed-profile" });
+    const successfulProfile = makeProfile({ profileId: "successful-profile" });
+    (listProfilesForUser as jest.Mock).mockResolvedValue([
+      failedProfile,
+      successfulProfile,
+    ]);
+    (setDoc as jest.Mock)
+      .mockRejectedValueOnce(new Error("write failed"))
+      .mockRejectedValueOnce(new Error("write failed"))
+      .mockRejectedValueOnce(new Error("write failed"))
+      .mockRejectedValueOnce(new Error("write failed"))
+      .mockResolvedValueOnce(undefined);
 
-        // ASSERT: The profile saved to SQLite should have the local firstName
-        const saved = (upsertProfile as jest.Mock).mock.calls[0][1];
-        expect(saved.firstName).toBe('LocalName');
-    });
+    await settleWithFakeTimers(syncProfiles(userId));
 
-    it('defaults to the cloud version when local has no updated_at', async () => {
-        //ARRANGE: Local profile has no timestamp (created before timestamps were added)
-        // resolveConflict() treats a missing timestamp as epoch 0 (1970), so cloud always wins in this case
-        const id = 'profile-conflict';
-        const cloud = makeProfile({ profileId: id, firstName: 'CloudName', updated_at: '2026-01-01T00:00:00.000Z' });
-        const local = makeProfile({ profileId: id, firstName: 'LocalName', updated_at: undefined });
-
-        (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloud)] });
-        (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
-        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
-        (doc as jest.Mock).mockReturnValue({});
-        (setDoc as jest.Mock).mockResolvedValue(undefined);
-        
-        // ACT
-        await syncProfiles('user-123');
-
-        // ASSERT
-        const saved = (upsertProfile as jest.Mock).mock.calls[0][1];
-        expect(saved.firstName).toBe('CloudName');
-    });
-
-    it('resolves a conflict where both sources have different allergies lists', async () => {
-        // ARRANGE: Both devices updated the allergies list at different times
-        const profileId = 'p-conflict';
-        const cloud = makeProfile({
-            profileId,
-            allergies: ['peanuts'],
-            updated_at: '2026-06-01T00:00:00.000Z', // cloud is newer
-        });
-        const local = makeProfile ({
-            profileId,
-            allergies: ['dairy', 'gluten'],
-            updated_at: '2026-01-01T00:00:00.000Z',
-        });
-
-        (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloud)] });
-        (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
-        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
-        (doc as jest.Mock).mockReturnValue({});
-        (setDoc as jest.Mock).mockResolvedValue(undefined);
-
-        // ACT
-        await syncProfiles('user-123');
-
-        // ASSERT: Cloud is newer so cloud's allergies list should win
-        const saved = (upsertProfile as jest.Mock).mock.calls[0][1];
-        expect(saved.allergies).toEqual(['peanuts']);
-    });
-
-    it('resolves a conflict where both sources have different dietary preferences', async () => {
-        // ARRANGE: Local device has a more recent dietary update
-        const profileId = 'p-conflict-diet';
-        const cloud = makeProfile({
-            profileId,
-            dietaryForm: ['vegetarian'],
-            updated_at: '2026-01-01T00:00:00.000Z',
-        });
-        const local = makeProfile({
-            profileId,
-            dietaryForm: ['vegan'],
-            updated_at: '2026-06-01T00:00:00.000Z', // local is newer
-        });
- 
-        (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloud)] });
-        (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
-        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
-        (doc as jest.Mock).mockReturnValue({});
-        (setDoc as jest.Mock).mockResolvedValue(undefined);
-
-        // ACT
-        await syncProfiles('user-123');
-
-        // ASSERT: Local is newer so local's dietary preference should win
-        const saved = (upsertProfile as jest.Mock).mock.calls[0][1];
-        expect(saved.dietaryForm).toEqual(['vegan']);
-    });
-
-    it('handles a conflict where both timestamps are identical by keeping the cloud version', async () => {
-        // ARRANGE: Exact same timestamps on both - this is an edge case that can happen
-        // if two devices sync at exactly the same millisecond.
-        // The resolveConflict function should retun cloud because locolTime is not greater than
-        // cloudTime when they are equal.
-        const profileId = 'p-tie';
-        const sameTime = '2026-06-01T00:00:00.000Z';
-        const cloud = makeProfile({ profileId, firstName: 'CloudWins', updated_at: sameTime });
-        const local = makeProfile({ profileId, firstName: 'LocalLoses', updated_at: sameTime });
-        
-        (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloud)] });
-        (listProfilesForUser as jest.Mock).mockResolvedValue([local]);
-        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
-        (doc as jest.Mock).mockReturnValue({});
-        (setDoc as jest.Mock).mockResolvedValue(undefined);
- 
-        // ACT
-        await syncProfiles('user-123');
-
-        // ASSERT: Tie goes to cloud (local is not strictly greater than cloud)
-        const saved = (upsertProfile as jest.Mock).mock.calls[0][1];
-        expect(saved.firstName).toBe('CloudWins');
-    });
-});
-
-
-/* =========================================================================================================
-SUITE 5: DATA CONSISTENCY
-
-These tests verify that no data is lost, corrupted, or silently dropped during the sync process. 
-Every field in a profile should survive the trip from Firebase -> merge -> SQLite -> Firebase intact.
-============================================================================================================*/
-describe('Data consistency', () => {
-
-    beforeEach(() => {
-        jest.clearAllMocks();
-        (initialiseSQLiteDatabase as jest.Mock).mockResolvedValue(mockDb);
-    });
-
-    it('preserves all profile fields intact after a sync round-trip', async () => {
-        // ARRANGE: A profile with non-default values in every field
-        const profile = makeProfile({
-        firstName: 'Alice',
-        lastName: 'Smith',
-        age: 25,
-        relationship: 'child',
-        allergies: ['peanuts', 'dairy'], // array fields stored as JSON in SQLite
-        dietaryForm: ['vegan'],
-        intolerances: ['gluten'],
-        additives: ['E330'],
-        });
-
-        (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(profile)] });
-        (listProfilesForUser as jest.Mock).mockResolvedValue([]); // nothing in SQLite yet
-        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
-        (doc as jest.Mock).mockReturnValue({});
-        (setDoc as jest.Mock).mockResolvedValue(undefined);
-
-        // ACT
-        await syncProfiles('user-123');
-
-        // ASSERT: Everything that came from Firebase should be saved to SQLite
-        // exactly as is, no fields dropped, no type coercion issues
-        const saved = (upsertProfile as jest.Mock).mock.calls[0][1];
-        expect(saved.firstName).toBe('Alice');
-        expect(saved.lastName).toBe('Smith');
-        expect(saved.age).toBe(25);
-        expect(saved.relationship).toBe('child');
-        expect(saved.allergies).toEqual(['peanuts', 'dairy']);
-        expect(saved.dietaryForm).toEqual(['vegan']);
-        expect(saved.intolerances).toEqual(['gluten']);
-        expect(saved.additives).toEqual(['E330']);
-    });
-
-    it('saves profiles from both Firebase and SQLite sources after a full sync', async () => {
-        // ARRANGE: One profile only in Firebase, one profile only in SQLite
-        // Simulates two different devices adding a profile each while offline
-        const cloudProfile = makeProfile({ profileId: 'cloud-only', firstName: 'CloudOnly' });
-        const localProfile = makeProfile({ profileId: 'local-only', firstName: 'LocalOnly' });
-
-        (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(cloudProfile)] });
-        (listProfilesForUser as jest.Mock).mockResolvedValue([localProfile]);
-        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
-        (doc as jest.Mock).mockReturnValue({});
-        (setDoc as jest.Mock).mockResolvedValue(undefined);
-
-        // ACT
-        await syncProfiles('user-123');
-
-        // ASSERT: Both profiles should end up saved in SQLite, neither is dropped
-        const savedIds = (upsertProfile as jest.Mock).mock.calls.map((c) => c[1].profileId);
-        expect(savedIds).toContain('cloud-only');
-        expect(savedIds).toContain('local-only');
-        expect(savedIds).toHaveLength(2);
-    });
-
-    it('handles a user with no profiles in either source without throwing', async () => {
-        // ARRANGE: Empty state - new user with no profiles yet
-        (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockResolvedValue({ docs: [] }); // nothing in Firebase
-        (listProfilesForUser as jest.Mock).mockResolvedValue([]); // nothing in SQLite
-        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
-        (doc as jest.Mock).mockReturnValue({});
-        (setDoc as jest.Mock).mockResolvedValue(undefined);
-
-        // ACT + ASSERT: Should complete without throwing, and not attempt to save or push anything
-        // (nothing to sync)
-        await expect(syncProfiles('user-123')).resolves.not.toThrow();
-        expect(upsertProfile).not.toHaveBeenCalled();
-        expect(setDoc).not.toHaveBeenCalled();
-    });
-
-    it('handles multiple profiles being updated at once across both sources', async () => {
-        // ARRANGE: Three profiles updated across both sources simultaneoulsy
-        const p1 = makeProfile({ profileId: 'p-001', firstName: 'Alice', updated_at: '2026-01-01T00:00:00.000Z' });
-        const p2 = makeProfile({ profileId: 'p-002', firstName: 'Bob', updated_at: '2026-01-01T00:00:00.000Z' });
-        const p3 = makeProfile({ profileId: 'p-003', firstName: 'Tom', updated_at: '2026-01-01T00:00:00.000Z' });
-
-        (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(p1), makeFirestoreDoc(p2)] });
-        (listProfilesForUser as jest.Mock).mockResolvedValue([p3]);
-        (upsertProfile as jest.Mock).mockResolvedValue(undefined);
-        (doc as jest.Mock).mockReturnValue({});
-        (setDoc as jest.Mock).mockResolvedValue(undefined);
-
-        // ACT
-        await syncProfiles('user-123');
-
-        // ASSERT: All three profiles should be saved and pushed - none dropped
-        expect(upsertProfile).toHaveBeenCalledTimes(3);
-        expect(setDoc).toHaveBeenCalledTimes(3);
-    });
+    expect(setDoc).toHaveBeenCalledTimes(5);
+    expect(setDoc).toHaveBeenLastCalledWith(
+      {},
+      expect.objectContaining({ profileId: "successful-profile" })
+    );
+    expect(warnSpy).toHaveBeenCalledWith("1 profiles failed to sync");
+  });
 });

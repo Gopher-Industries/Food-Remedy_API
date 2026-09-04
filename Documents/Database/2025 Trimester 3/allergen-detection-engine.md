@@ -92,19 +92,21 @@ The engine applies a multi-stage, rule-based matching process across several pro
 
 ## Output Schema
 
-The engine produces a single structured field as output:
+The detector produces a list of matched allergen names. DB023 defines how that
+internal result is exposed at cleaning, enrichment, and API boundaries:
 
-- **allergensDetected**  
+- **allergens / allergensDetected**
   - Type: array<string>  
-  - Required: false (defaults to empty array [] if no allergens are detected)  
+  - Required: false (defaults to `["Unknown"]` when information is missing or no allergen is detected)
   - Format: Canonical allergen names (from the 14 AU/NZ major allergens list), exactly matching the canonical names (e.g., "Milk", "Gluten", "Peanuts", not "milk" or "peanut")  
   - Semantics:  
-    - Empty array [] indicates no allergens detected after applying all matching and suppression rules.  
+    - The low-level `detect_allergens()` function returns `[]` when its scan has no matches.
+    - Pipeline/API boundaries convert that internal empty result to `["Unknown"]`; it must not be interpreted as allergen-free.
     - Multiple allergens are listed without duplicates (deduplicated during processing).  
     - Order is not significant (can be sorted alphabetically for consistency if desired).  
   - Example outputs:  
     - ["Milk", "Gluten"] (from "milk powder, wheat flour")  
-    - [] (from "gluten-free, dairy-free bread")  
+    - `["Unknown"]` (no known allergen after detection)
     - ["Tree Nuts", "Peanuts"] (from "almond butter with peanut traces")  
 
 This field is stored in the enriched product document and used by the front-end for user preference filtering and safety warnings.
@@ -127,11 +129,10 @@ The detection engine is validated through a combination of unit tests and manual
 
 ## Examples
 - "Ingredients: milk powder, wheat flour" → ["Milk", "Gluten"]
-- "Gluten-free, no dairy" → [] (negation suppression)
+- "Gluten-free, no dairy" → detector `[]`, pipeline/API `["Unknown"]` (negation suppression)
 - "Almond butter, sugar, salt" → ["Tree Nuts"] (special handling: milk suppressed in nut‑butter case)
 
 ## Reference
 Food Standards Australia New Zealand. (2015a). *Australia New Zealand Food Standards Code – Schedule 9: Mandatory advisory statements.* Federal Register of Legislation.
 
 Food Standards Australia New Zealand. (2015b). *Australia New Zealand Food Standards Code – Standard 1.2.3: Information requirements – warning statements, advisory statements and declarations.* Federal Register of Legislation.
-

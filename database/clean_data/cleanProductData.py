@@ -19,6 +19,7 @@ import re
 from utils.missing_value_utils import (
     normalize_string,
     normalize_list,
+    normalize_allergens,
     normalize_dict,
     clean_numeric,
     clean_completeness
@@ -387,9 +388,20 @@ CATEGORY_RULES_ORDERED: list[tuple[str, tuple[str, ...]]] = [
         "sweetened-beverages", "evaporated-milks", "plant-milks",
         "teas", "waters", "carbonated-drinks", "fruit-juices",
     )),
-    ("snacks and confectionery", (
+        ("snacks and confectionery", (
         "snacks", "sweet-snacks", "confectioneries",
         "chocolates", "chocolate-candies", "bonbons",
+    )),
+    # DB031: Dairy — added because "dairies"/"cheeses"/"yogurts" etc. were the single
+    # largest cluster of unmapped-but-unambiguous category tags found in the DB031
+    # investigation (see database/Reports/DB031_Product_Category_Consistency_Investigation.md).
+    # Placed AFTER "beverages" deliberately: drinkable dairy products (milkshakes,
+    # iced coffee) carry both dairy tags and beverages tags, and already classify correctly
+    # as "beverages" today. Putting "dairy" after preserves that existing behaviour and only
+    # catches dairy products (cheese, plain yogurt, etc.) that beverages does not claim.
+    ("dairy", (
+        "dairies", "cheeses", "yogurts",
+        "fermented-milk-products", "fermented-dairy-desserts",
     )),
 ]
 
@@ -695,7 +707,12 @@ def save_cleaned_data(df: pd.DataFrame, output_path: str):
 
 TYPO_FIX = {
     "citiric-acid": "citric-acid",
-    # DB002: open to adding new fix(es)
+    "sulpher-dioxide": "sulphur-dioxide",
+    "tumeric": "turmeric",
+    "cococut-oil": "coconut-oil",
+    "choclate": "chocolate",
+    # DB027: added common ingredient typo fixes
+
 }
 
 
@@ -739,15 +756,35 @@ def clean_ingredients_list(tags) -> list | None:
         if tag:
             cleaned.add(tag)
     
-    return list(cleaned) if cleaned else None
+    return sorted(cleaned) if cleaned else None
+
+
+# DB032: Standard retail barcode lengths - EAN-8 (8), UPC-A (12),
+# EAN-13 (13), GTIN-14 (14). Mirrors db021_validator.BARCODE_LENGTHS so
+# the cleaning stage and the pre-seed batch validator agree on what
+# counts as a valid barcode length.
+_BARCODE_DIGIT_PATTERN = re.compile(r"^[0-9]+$")
+_BARCODE_LENGTHS = (8, 12, 13, 14)
 
 
 def validate_record(record: dict) -> list[str]:
     warnings = []
     # DB001: Fixed logic bug -> previously only warned when barcode was BOTH wrong-length 
     # AND numeric, so non-numeric/malformed barcodes silently passed validation.
-    if not (record['barcode'].isdigit() and len(record['barcode']) == 13):
-        warnings.append("Barcode must be 13 digits")
+    #
+    # DB032: This check previously accepted ONLY exactly-13-digit barcodes
+    # and used str.isdigit(), which is also true for non-ASCII "digit"
+    # characters (fullwidth digits, superscripts, Arabic-Indic digits) that
+    # are not valid barcode characters. Real seed data
+    # (database/seeding/products_enriched.json, 5000 records) contains 111
+    # legitimate 8-digit EAN-8 codes and 4 legitimate 14-digit GTIN-14 codes
+    # that were being incorrectly flagged as invalid here, even though
+    # db021_validator.py (the pre-seed batch validator) correctly accepts
+    # them. This now uses the same digit-regex + length-set check as
+    # db021_validator._is_valid_barcode_format so both validators agree.
+    barcode = record['barcode']
+    if not (bool(_BARCODE_DIGIT_PATTERN.fullmatch(barcode)) and len(barcode) in _BARCODE_LENGTHS):
+        warnings.append("Barcode must be 8, 12, 13, or 14 digits")
     if not isinstance(record['nutriments'], dict):
         warnings.append("Nutriments must be a dictionary")
     if not record['productQuantity'] >= 0:
@@ -820,7 +857,11 @@ def main(input_path: str, output_path: str):
         record["servingQuantity"] = clean_numeric(record.get("servingQuantity"))
         record["completeness"] = clean_completeness(record.get("completeness"))
         
-        record["allergensDetected"] = detect_allergens(record)  # DB009: list[str]
+        # DB023: a failed/empty detection is unknown, never an implicit
+        # declaration that the product has no allergens.
+        allergens = normalize_allergens(detect_allergens(record))
+        record["allergens_tags"] = allergens
+        record["allergensDetected"] = allergens  # DB009 compatibility alias
         df.loc[idx] = record  # write back (includes allergensDetected)
         
     df = add_image_urls(df)
