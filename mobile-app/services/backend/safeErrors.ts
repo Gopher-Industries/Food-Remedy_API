@@ -1,9 +1,11 @@
 const REDACTED = "[REDACTED]";
 
-const SENSITIVE_KEYS = /^(authorization|cookie|set-cookie|token|accessToken|refreshToken|idToken|email|uid|userId|allerg(?:y|ies)|intolerances?|dietaryPreferences|diet|health|medicalConditions?|conditions?|restrictions?|profile|rawBody|providerBody|responseBody)$/i;
+const SENSITIVE_KEYS = /^(authorization|cookie|set[-_]?cookie|.*(?:token|secret|password|api[-_]?key)|email|uid|user[-_]?id|allerg(?:y|ies)|intolerances?|dietary[-_]?preferences|diet(?:ary[-_]?form)?|health|medical[-_]?conditions?|conditions?|restrictions?|profile|raw[-_]?body|provider[-_]?(?:body|response)|response[-_]?body)$/i;
 const EMAIL = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
 const BEARER = /\b(?:Bearer|Firebase)\s+[A-Za-z0-9._~+\/-]+=*/gi;
-const TOKEN_QUERY = /([?&](?:token|access_token|auth|key)=)[^&#\s]+/gi;
+const TOKEN_QUERY = /([?&](?:token|access_token|id_token|auth|key|api_key)=)[^&#\s]+/gi;
+const LABELED_IDENTIFIER = /\b((?:user[-_]?id|uid)\s*[=:]\s*)[A-Za-z0-9._-]+/gi;
+const FIREBASE_USER_PATH = /(\bUSERS\/)[^/\s]+/gi;
 
 export type ErrorCode =
   | "INVALID_REQUEST"
@@ -28,7 +30,12 @@ export class SafeServiceError extends Error {
 }
 
 function redactString(value: string): string {
-  return value.replace(EMAIL, REDACTED).replace(BEARER, REDACTED).replace(TOKEN_QUERY, `$1${REDACTED}`);
+  return value
+    .replace(EMAIL, REDACTED)
+    .replace(BEARER, REDACTED)
+    .replace(TOKEN_QUERY, `$1${REDACTED}`)
+    .replace(LABELED_IDENTIFIER, `$1${REDACTED}`)
+    .replace(FIREBASE_USER_PATH, `$1${REDACTED}`);
 }
 
 export function redactForLog(value: unknown, seen = new WeakSet<object>()): unknown {

@@ -2,6 +2,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { fdb } from "@/config/firebaseConfig";
 import type { Product } from "@/types/Product";
 import { normaliseFirestoreProduct } from "@/services/utils/normaliseFirestoreProduct";
+import { getRequestId, safeLog } from "@/services/backend/safeErrors";
 
 /**
  * Fetch a single Product by its Firestore ID
@@ -9,6 +10,7 @@ import { normaliseFirestoreProduct } from "@/services/utils/normaliseFirestorePr
  * @returns Product object or null
  */
 export default async function getProductByBarcode(barcode: string): Promise<Product | null> {
+  const requestId = getRequestId();
   try {
     const ref = doc(fdb, "PRODUCTS", barcode);
     const snap = await getDoc(ref);
@@ -19,7 +21,7 @@ export default async function getProductByBarcode(barcode: string): Promise<Prod
 
     return normaliseFirestoreProduct({ id: snap.id, ...snap.data() }) as Product;
   } catch (err) {
-    console.error("[Firestore] getProductByBarcode error:", err);
+    safeLog("error", "product_lookup.failed", { requestId, error: err });
     return null;
   }
 }

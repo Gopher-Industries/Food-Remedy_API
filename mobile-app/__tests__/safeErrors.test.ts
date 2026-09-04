@@ -1,4 +1,4 @@
-import { errorEnvelope, getRequestId, redactForLog } from "@/services/backend/safeErrors";
+import { errorEnvelope, getRequestId, redactForLog, safeLog } from "@/services/backend/safeErrors";
 
 describe("privacy-safe backend errors", () => {
   it("keeps the shared error envelope stable", () => {
@@ -23,9 +23,12 @@ describe("privacy-safe backend errors", () => {
       },
       providerBody: '{"error":"account person@example.com failed"}',
       nested: {
-        message: "contact person@example.com using Bearer abc.def.ghi",
+        message: "contact person@example.com using Bearer abc.def.ghi uid=firebase-user-123",
         url: "https://provider.invalid/file?token=download-secret&safe=yes",
+        firebasePath: "USERS/firebase-user-123/PROFILES/profile-456",
       },
+      api_key: "provider-api-key",
+      provider_response: "raw upstream payload",
     };
 
     const sanitized = JSON.stringify(redactForLog(fixture));
@@ -35,9 +38,41 @@ describe("privacy-safe backend errors", () => {
     expect(sanitized).not.toContain("diabetes");
     expect(sanitized).not.toContain("top-secret-token");
     expect(sanitized).not.toContain("download-secret");
+    expect(sanitized).not.toContain("provider-api-key");
+    expect(sanitized).not.toContain("raw upstream payload");
     expect(sanitized).toMatchInlineSnapshot(
-      `"{\"authorization\":\"[REDACTED]\",\"email\":\"[REDACTED]\",\"uid\":\"[REDACTED]\",\"profile\":\"[REDACTED]\",\"providerBody\":\"[REDACTED]\",\"nested\":{\"message\":\"contact [REDACTED] using [REDACTED]\",\"url\":\"https://provider.invalid/file?token=[REDACTED]&safe=yes\"}}"`
+      `"{\"authorization\":\"[REDACTED]\",\"email\":\"[REDACTED]\",\"uid\":\"[REDACTED]\",\"profile\":\"[REDACTED]\",\"providerBody\":\"[REDACTED]\",\"nested\":{\"message\":\"contact [REDACTED] using [REDACTED] uid=[REDACTED]\",\"url\":\"https://provider.invalid/file?token=[REDACTED]&safe=yes\",\"firebasePath\":\"USERS/[REDACTED]/PROFILES/profile-456\"},\"api_key\":\"[REDACTED]\",\"provider_response\":\"[REDACTED]\"}"`
     );
+  });
+
+  it("emits sanitized structured JSON in production", () => {
+    const originalNodeEnv = process.env.NODE_ENV;
+    const output = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    process.env.NODE_ENV = "production";
+
+    try {
+      safeLog("error", "provider.failed", {
+        requestId: "trace_12345678",
+        error: new Error("USERS/firebase-user-123 failed for person@example.com"),
+        response_body: "private provider response",
+      });
+
+      expect(output).toHaveBeenCalledTimes(1);
+      const entry = JSON.parse(output.mock.calls[0][0] as string);
+      expect(entry).toMatchObject({
+        level: "error",
+        event: "provider.failed",
+        requestId: "trace_12345678",
+        response_body: "[REDACTED]",
+        error: { name: "Error", message: "USERS/[REDACTED] failed for [REDACTED]" },
+      });
+      expect(output.mock.calls[0][0]).not.toContain("firebase-user-123");
+      expect(output.mock.calls[0][0]).not.toContain("person@example.com");
+      expect(entry.timestamp).toEqual(expect.any(String));
+    } finally {
+      process.env.NODE_ENV = originalNodeEnv;
+      output.mockRestore();
+    }
   });
 
   it("accepts only bounded safe correlation identifiers", () => {

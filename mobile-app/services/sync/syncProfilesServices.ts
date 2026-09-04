@@ -3,14 +3,14 @@
 // Profiles Sync 
 // ==============================
 
-import { collection, getDocs, setDoc, doc } from "firebase/firestore";
+import { collection, getDocs, setDoc, doc, QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 import { fdb } from "../../config/firebaseConfig";
 import { initialiseSQLiteDatabase } from "../../config/sqlConfig";
-import { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 import {
   upsertProfile,
   listProfilesForUser,
 } from "../sqlDatabase/profiles.dao";
+import { getRequestId, safeLog } from "../backend/safeErrors";
 
 type Profile = {
   profileId: string;
@@ -24,17 +24,18 @@ type Profile = {
 const retryOperation = async <T>(
   operation: () => Promise<T>,
   retries: number = 3,
-  delay: number = 1000
+  delay: number = 1000,
+  requestId: string = getRequestId()
 ): Promise<T> => {
   try {
     return await operation();
   } catch (error) {
     if (retries === 0) throw error;
 
-    console.warn(`Retry attempt... Remaining: ${retries}`);
+    safeLog("warn", "profile_sync.retry", { requestId, retriesRemaining: retries });
     await new Promise((res) => setTimeout(res, delay));
 
-    return retryOperation(operation, retries - 1, delay * 2);
+    return retryOperation(operation, retries - 1, delay * 2, requestId);
   }
 };
 
@@ -42,11 +43,12 @@ const retryOperation = async <T>(
 // 1. FETCH FROM FIREBASE (CLOUD)
 // ==============================
 export const fetchProfilesFromFirebase = async (
-  userId: string
+  userId: string,
+  requestId: string = getRequestId()
 ): Promise<Profile[]> => {
   try {
     const ref = collection(fdb, "USERS", userId, "PROFILES");
-    const snapshot = await retryOperation(() => getDocs(ref));
+    const snapshot = await retryOperation(() => getDocs(ref), 3, 1000, requestId);
 
     return snapshot.docs.map(
       (docSnap: QueryDocumentSnapshot<DocumentData>): Profile => ({
@@ -55,7 +57,7 @@ export const fetchProfilesFromFirebase = async (
       })
     );
   } catch (error) {
-    console.error("Firebase fetch error:", error);
+    safeLog("error", "profile_sync.cloud_fetch_failed", { requestId, error });
     return [];
   }
 };
@@ -63,12 +65,12 @@ export const fetchProfilesFromFirebase = async (
 // ==============================
 // 2. FETCH FROM SQLITE (LOCAL)
 // ==============================
-export const fetchProfilesFromSQLite = async (userId: string) => {
+export const fetchProfilesFromSQLite = async (userId: string, requestId: string = getRequestId()) => {
   try {
     const db = await initialiseSQLiteDatabase();
     return await listProfilesForUser(db, userId);
   } catch (error) {
-    console.error("SQLite fetch error:", error);
+    safeLog("error", "profile_sync.local_fetch_failed", { requestId, error });
     return [];
   }
 };
@@ -76,7 +78,7 @@ export const fetchProfilesFromSQLite = async (userId: string) => {
 // ==============================
 // 3. SAVE TO SQLITE (UPSERT)
 // ==============================
-export const saveProfilesToSQLite = async (profiles: any[]) => {
+export const saveProfilesToSQLite = async (profiles: any[], requestId: string = getRequestId()) => {
   try {
     const db = await initialiseSQLiteDatabase();
 
@@ -91,12 +93,11 @@ export const saveProfilesToSQLite = async (profiles: any[]) => {
     updated_at: profile.updated_at ?? new Date().toISOString(),
   };
 
-  console.log("Saving profile:", normalizedProfile);
-
   await upsertProfile(db, normalizedProfile);
 }
+    safeLog("info", "profile_sync.local_save_complete", { requestId, profileCount: profiles.length });
   } catch (error) {
-    console.error("SQLite save error:", error);
+    safeLog("error", "profile_sync.local_save_failed", { requestId, error });
   }
 };
 
@@ -104,8 +105,9 @@ export const saveProfilesToSQLite = async (profiles: any[]) => {
 // 4. PUSH TO FIREBASE (CLOUD)
 // ==============================
 export const syncProfilesToCloud = async (userId: string) => {
+  const requestId = getRequestId();
   try {
-    const profiles = await fetchProfilesFromSQLite(userId);
+    const profiles = await fetchProfilesFromSQLite(userId, requestId);
 
     for (const profile of profiles) {
       await retryOperation(() =>
@@ -119,7 +121,7 @@ export const syncProfilesToCloud = async (userId: string) => {
       );
     }
   } catch (error) {
-    console.error("Firebase push error:", error);
+    safeLog("error", "profile_sync.cloud_push_failed", { requestId, error });
   }
 };
 
@@ -140,26 +142,30 @@ const resolveConflict = (local: any, cloud: any) => {
 // 6. MAIN SYNC FUNCTION
 // ==============================
 export const syncProfiles = async (userId: string) => {
+  const requestId = getRequestId();
   try {
-    console.log(` Starting profile sync for user: ${userId}`);
+    safeLog("info", "profile_sync.started", { requestId });
 
     let cloudProfiles: Profile[] = [];
     let localProfiles: Profile[] = [];
 
     try {
-      cloudProfiles = await fetchProfilesFromFirebase(userId);
-      localProfiles = await fetchProfilesFromSQLite(userId);
+      cloudProfiles = await fetchProfilesFromFirebase(userId, requestId);
+      localProfiles = await fetchProfilesFromSQLite(userId, requestId);
     } catch (err) {
-      console.error("Failed fetching profiles, aborting sync");
+      safeLog("error", "profile_sync.fetch_aborted", { requestId, error: err });
       return;
     }
     if (cloudProfiles.length === 0 && localProfiles.length === 0) {
-      console.log("ℹ️ No profiles to sync");
+      safeLog("info", "profile_sync.empty", { requestId });
       return;
     }
 
-    console.log(`Cloud profiles: ${cloudProfiles.length}`);
-    console.log(`Local profiles: ${localProfiles.length}`);
+    safeLog("info", "profile_sync.loaded", {
+      requestId,
+      cloudProfileCount: cloudProfiles.length,
+      localProfileCount: localProfiles.length,
+    });
 
     const mergedMap = new Map<string, any>();
 
@@ -175,10 +181,9 @@ export const syncProfiles = async (userId: string) => {
     }
 
     const finalProfiles = Array.from(mergedMap.values());
-    console.log(`Merged profiles: ${finalProfiles.length}`);
 
     // Save locally
-    await saveProfilesToSQLite(finalProfiles);
+    await saveProfilesToSQLite(finalProfiles, requestId);
 
     // Push back to Firebase
     let failedCount = 0;
@@ -201,16 +206,16 @@ export const syncProfiles = async (userId: string) => {
             )
           );
         }
-      } catch (err) {
+      } catch {
         failedCount++;
       }
     }
     if (failedCount > 0) {
-      console.warn(`${failedCount} profiles failed to sync`);
+      safeLog("warn", "profile_sync.partial_failure", { requestId, failedCount });
     }
 
-    console.log(`Profile sync complete. Synced ${finalProfiles.length} profiles`);
+    safeLog("info", "profile_sync.completed", { requestId, profileCount: finalProfiles.length });
   } catch (error) {
-    console.error("Sync error:", error);
+    safeLog("error", "profile_sync.failed", { requestId, error });
   }
 };
