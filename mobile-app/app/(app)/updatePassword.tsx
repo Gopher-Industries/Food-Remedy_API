@@ -7,12 +7,14 @@ import { color, spacing } from "@/app/design/token";
 import Header from "@/components/layout/Header";
 import { updatePassword } from "firebase/auth";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useDirtyForm } from "@/hooks/useDirtyForm";
 
 export default function UpdatePasswordScreen() {
   const router = useRouter();
   const { currentPassword: currentPasswordParam } = useLocalSearchParams<{ currentPassword?: string }>();
   const currentPassword = typeof currentPasswordParam === "string" ? currentPasswordParam : "";
   const { user } = useAuth();
+  const { markDirty, markClean, confirmLeave } = useDirtyForm();
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -50,6 +52,7 @@ export default function UpdatePasswordScreen() {
       setSuccessMessage("Password updated successfully");
       setNewPassword("");
       setConfirmPassword("");
+      markClean();
       router.replace({ pathname: "/(app)/accountProfile", params: { pwUpdated: "1" } });
     } catch (error: any) {
       const code = error?.code || "";
@@ -72,7 +75,7 @@ export default function UpdatePasswordScreen() {
         {/* Back button on left + Title in center */}
         <View className="flex-row items-center justify-between px-4 mb-6 mt-4">
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => confirmLeave(() => router.back())}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             {({ pressed }) => (
@@ -100,7 +103,7 @@ export default function UpdatePasswordScreen() {
                 placeholderTextColor="hsl(0, 0%, 70%)"
                 secureTextEntry={!showNewPassword}
                 value={newPassword}
-                onChangeText={setNewPassword}
+                onChangeText={(text) => { setNewPassword(text); markDirty(); }}
                 className="flex-1 py-3 text-base"
               />
               <Pressable
@@ -127,7 +130,7 @@ export default function UpdatePasswordScreen() {
                 placeholderTextColor="hsl(0, 0%, 70%)"
                 secureTextEntry={!showConfirmPassword}
                 value={confirmPassword}
-                onChangeText={setConfirmPassword}
+                onChangeText={(text) => { setConfirmPassword(text); markDirty(); }}
                 className="flex-1 py-3 text-base"
               />
               <Pressable
