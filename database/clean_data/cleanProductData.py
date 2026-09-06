@@ -740,7 +740,7 @@ def clean_ingredients_list(tags) -> list | None:
     - Return None if result is empty
     """
     if not tags:
-        return None
+        return []
 
     if isinstance(tags, str):
         tags = [t.strip() for t in tags.split(",") if t.strip()]
@@ -756,7 +756,7 @@ def clean_ingredients_list(tags) -> list | None:
         if tag:
             cleaned.add(tag)
     
-    return sorted(cleaned) if cleaned else None
+    return sorted(cleaned) if cleaned else []
 
 
 # DB032: Standard retail barcode lengths - EAN-8 (8), UPC-A (12),
@@ -831,17 +831,21 @@ def main(input_path: str, output_path: str):
         axis=1,
     )
     # DB002: Enhanced ingredient cleaning
-    if 'ingredientsText' in df.columns:
-        df['ingredientsText'] = df['ingredientsText'].apply(clean_ingredients_text)
+    # DB048: Fixed column naming bug — use snake_case names here as rename happens later
+    if 'ingredients_text' in df.columns:
+        df['ingredients_text'] = df['ingredients_text'].apply(clean_ingredients_text)
     if 'ingredients_tags' in df.columns:
-        df['ingredients_tags'] = df['ingredients_tags'].apply(clean_ingredients_list)    
-
+        df['ingredients_tags'] = df['ingredients_tags'].apply(clean_ingredients_list)
+    
     # Store list[str]; pandas StringDtype columns reject list assignment via .at / .loc cell writes.
     df["allergensDetected"] = pd.Series(index=df.index, dtype=object)
 
     for idx, record in df.iterrows():
         # String fields
-        record["ingredientsText"] = normalize_string(record.get("ingredientsText"))
+        
+        # DB048: ensure ingredients is always a list never None per contract default []
+        ingredients_raw = record.get("ingredients") or record.get("ingredients_tags")
+        record["ingredients"] = normalize_list(ingredients_raw) or []
         record["traces"] = normalize_string(record.get("traces"))
         
         # List fields
