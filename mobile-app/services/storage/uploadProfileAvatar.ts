@@ -4,9 +4,11 @@ import { deleteObject, getDownloadURL, listAll, ref, uploadBytes, uploadString }
 import { auth, storage } from '@/config/firebaseConfig';
 // Use legacy FileSystem API to avoid deprecation warning in Expo SDK 54
 import * as FileSystem from 'expo-file-system/legacy';
+import { getRequestId, SafeServiceError, safeLog } from '@/services/backend/safeErrors';
 
 /** Upload a local image URI to Firebase Storage for a profile avatar and return the download URL. */
 export async function uploadProfileAvatar(uid: string, profileId: string, localUri: string): Promise<string> {
+  const requestId = getRequestId();
   const ext = chooseExt(localUri);
   const path = buildAvatarPath(uid, profileId, ext);
   const contentType = guessContentType(localUri) ?? 'image/jpeg';
@@ -24,7 +26,7 @@ export async function uploadProfileAvatar(uid: string, profileId: string, localU
     const base64 = await FileSystem.readAsStringAsync(localUri, { encoding: 'base64' as any });
     await uploadString(r, base64, 'base64', { contentType });
   } catch (e) {
-    console.warn('[avatar-upload] base64 upload failed, falling back to blob:', e);
+    safeLog('warn', 'avatar_upload.base64_fallback', { requestId, error: e });
     try {
       // Fallback for web or when FileSystem read fails: fetch -> blob
       const resp = await fetch(localUri);
@@ -32,8 +34,8 @@ export async function uploadProfileAvatar(uid: string, profileId: string, localU
       const blobContentType = blob.type || contentType || 'application/octet-stream';
       await uploadBytes(r, blob, { contentType: blobContentType });
     } catch (err) {
-      console.warn('[avatar-upload] blob upload failed:', err);
-      throw err;
+      safeLog('error', 'avatar_upload.failed', { requestId, error: err });
+      throw new SafeServiceError('AVATAR_STORAGE_FAILED', 'Unable to upload profile image.', requestId);
     }
   }
 
@@ -85,19 +87,20 @@ export async function getProfileAvatarDownloadUrl(uid: string, profileId: string
 }
 
 async function uploadProfileAvatarViaRest(objectPath: string, localUri: string, contentType: string): Promise<string> {
+  const requestId = getRequestId();
   const bucket = normalizeBucketName(process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET ?? storage.app.options.storageBucket);
   if (!bucket) {
-    throw new Error('[avatar-upload] Missing Firebase storageBucket (check EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET)');
+    safeLog('error', 'avatar_upload.configuration_missing', { requestId });
+    throw new SafeServiceError('AVATAR_STORAGE_FAILED', 'Unable to upload profile image.', requestId);
   }
 
   const user = auth.currentUser;
   if (!user) {
-    throw new Error('[avatar-upload] Not authenticated');
+    safeLog('warn', 'avatar_upload.unauthenticated', { requestId });
+    throw new SafeServiceError('AVATAR_STORAGE_FAILED', 'Unable to upload profile image.', requestId);
   }
 
   const projectId = storage.app.options.projectId;
-  const uid = user.uid;
-
   const authToken = await user.getIdToken();
   const encodedName = encodeURIComponent(objectPath);
   const uploadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?uploadType=media&name=${encodedName}`;
@@ -113,14 +116,8 @@ async function uploadProfileAvatarViaRest(objectPath: string, localUri: string, 
   });
 
   if (result.status < 200 || result.status >= 300) {
-    if (result.status === 402) {
-      throw new Error(
-        `[avatar-upload] Firebase Storage billing blocked (402). ` +
-          `Verify the SAME Firebase project is on Blaze and billing is active. ` +
-          `projectId=${projectId} bucket=${bucket} uid=${uid} url=${uploadUrl} body=${result.body}`
-      );
-    }
-    throw new Error(`[avatar-upload] REST upload failed (status ${result.status}) url=${uploadUrl}: ${result.body}`);
+    safeLog('error', 'avatar_upload.provider_rejected', { requestId, status: result.status, projectId });
+    throw new SafeServiceError('AVATAR_STORAGE_FAILED', 'Unable to upload profile image.', requestId);
   }
 
   // Firebase Storage returns metadata including downloadTokens; use it to construct a public download URL.

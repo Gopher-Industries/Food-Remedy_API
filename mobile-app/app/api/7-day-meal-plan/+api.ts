@@ -3,6 +3,7 @@
 import { collection, getDocs, limit, query } from "firebase/firestore";
 import { fdb } from "@/config/firebaseConfig";
 import { assessAllergenSafety } from "@/services/allergenSafety";
+import { errorEnvelope, getRequestId, jsonResponse, safeLog } from "@/services/backend/safeErrors";
 
 type DietType = "omnivore" | "vegetarian" | "vegan";
 
@@ -63,7 +64,7 @@ type MealProduct = {
     name: string; // productName fallback if missing
 
     // which meal slots this product can be used for
-    mealCategories: Array<"breakfast" | "lunch" | "dinner" | "snack">;
+    mealCategories: ("breakfast" | "lunch" | "dinner" | "snack")[];
 
      // EPIC 1 classification output
      classification: ClassificationResult;
@@ -128,7 +129,8 @@ async function classifyViaApi(
         allergies?: string[];
         intolerances?: string[];
         dietaryPreferences?: string[];
-    }
+    },
+    requestId: string
 ): Promise<{
     barcode: string;
     colour: "red" | "green" | "grey";
@@ -144,29 +146,18 @@ async function classifyViaApi(
 
     const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "x-request-id": requestId },
     // endpoint { barcode, profile }
     body: JSON.stringify({ barcode, profile }),
     });
 
     // If classify endpoint fails, throw 
     if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Classification API failed (${res.status}): ${text}`);
+        throw new Error(`Classification API failed with status ${res.status}`);
     }
 
     // Parse classification result JSON
     return (await res.json()) as any;
-}
-
-// Function: toJsonResponse
-// Purpose: Return JSON response with HTTP status
-function toJsonResponse(body: unknown, status = 200): Response {
-    return new Response(JSON.stringify(body, null, 2), {
-        status,
-        headers: { "Content-Type": "application/json" },
-        
-    });
 }
 
 // Function: normaliseToken
@@ -239,7 +230,7 @@ async function loadProductsFromFirestore(productLimit: number): Promise<ProductD
 
 // Function: inferMealCategories
 // Purpose: Decide which meal slots a product can fit based on categories[]
-function inferMealCategories(categories?: string[] | null): Array<"breakfast" | "lunch" | "dinner" | "snack"> {
+function inferMealCategories(categories?: string[] | null): ("breakfast" | "lunch" | "dinner" | "snack")[] {
     // Normalise categories to lowercase for matching
     const c = (categories ?? []).map((x) => x.toLowerCase());
 
@@ -558,6 +549,7 @@ function generate7DayMealPlan(profile: Profile, mealProducts: MealProduct[]): Me
 // Function: POST
 // HTTP handler for /api/7-day meal plan
 export async function POST(request: Request): Promise<Response> {
+    const requestId = getRequestId(request);
     try {
         const body = (await request.json()) as MealPlanRequest;
 
@@ -578,7 +570,7 @@ export async function POST(request: Request): Promise<Response> {
         // Calling EPIC 1 endpoint for each barcode to get colour/score/reasons
         const classified = await Promise.all(
             docs.map(async (d) => {
-                const classification = await classifyViaApi(request, d.barcode, classifierProfile);
+                const classification = await classifyViaApi(request, d.barcode, classifierProfile, requestId);
                 return { doc: d, classification };
             })
         );
@@ -589,16 +581,13 @@ export async function POST(request: Request): Promise<Response> {
         // Generating Plan
         const plan = generate7DayMealPlan(profile, mealProducts);
 
-        return toJsonResponse(plan, 200);
-    } catch (err: any) {
-        console.error("Error in /api/7-day-meal-plan:", err);
-
-        return toJsonResponse(
-        {
-            error: "SERVER_ERROR",
-            message: err?.message ?? "Unexpected error while generating 7-day meal plan.",
-            
-        },
-        500);
+        return jsonResponse(plan, 200, requestId);
+    } catch (err) {
+        safeLog("error", "meal_plan.failed", { requestId, error: err });
+        return jsonResponse(
+            errorEnvelope("MEAL_PLAN_FAILED", "Unable to generate meal plan.", requestId),
+            500,
+            requestId
+        );
     }
 }

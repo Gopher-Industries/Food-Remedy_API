@@ -1,6 +1,7 @@
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { fdb } from "@/config/firebaseConfig";
 import type { Status } from "@/types/Status";
+import { getRequestId, safeLog } from "@/services/backend/safeErrors";
 
 export interface FeedbackPayload {
   message: string;
@@ -12,9 +13,12 @@ export interface FeedbackPayload {
 
 export interface SubmitFeedbackResult extends Status {
   id?: string;
+  error?: "FEEDBACK_SUBMISSION_FAILED";
+  requestId?: string;
 }
 
 export default async function submitFeedback(payload: FeedbackPayload): Promise<SubmitFeedbackResult> {
+  const requestId = getRequestId();
   try {
     const docRef = await addDoc(collection(fdb, "FEEDBACK"), {
       message: payload.message,
@@ -27,9 +31,12 @@ export default async function submitFeedback(payload: FeedbackPayload): Promise<
 
     return { success: true, id: docRef.id };
   } catch (error: any) {
+    safeLog("error", "feedback_submission.failed", { requestId, error });
     return {
       success: false,
-      message: error?.message ?? "Failed to submit feedback",
+      error: "FEEDBACK_SUBMISSION_FAILED",
+      message: "Unable to submit feedback. Please try again.",
+      requestId,
     };
   }
 }
