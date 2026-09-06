@@ -38,6 +38,18 @@ const retryOperation = async <T>(
   }
 };
 
+const loadProfilesFromFirebase = async (userId: string): Promise<Profile[]> => {
+  const ref = collection(fdb, "USERS", userId, "PROFILES");
+  const snapshot = await retryOperation(() => getDocs(ref));
+
+  return snapshot.docs.map(
+    (docSnap: QueryDocumentSnapshot<DocumentData>): Profile => ({
+      profileId: docSnap.id,
+      ...docSnap.data(),
+    })
+  );
+};
+
 // ==============================
 // 1. FETCH FROM FIREBASE (CLOUD)
 // ==============================
@@ -45,15 +57,7 @@ export const fetchProfilesFromFirebase = async (
   userId: string
 ): Promise<Profile[]> => {
   try {
-    const ref = collection(fdb, "USERS", userId, "PROFILES");
-    const snapshot = await retryOperation(() => getDocs(ref));
-
-    return snapshot.docs.map(
-      (docSnap: QueryDocumentSnapshot<DocumentData>): Profile => ({
-        profileId: docSnap.id,
-        ...docSnap.data(),
-      })
-    );
+    return await loadProfilesFromFirebase(userId);
   } catch (error) {
     console.error("Firebase fetch error:", error);
     return [];
@@ -147,7 +151,9 @@ export const syncProfiles = async (userId: string) => {
     let localProfiles: Profile[] = [];
 
     try {
-      cloudProfiles = await fetchProfilesFromFirebase(userId);
+      // Do not treat a failed cloud read as an empty cloud collection. Doing so
+      // would make the sync write local data against an unknown cloud state.
+      cloudProfiles = await loadProfilesFromFirebase(userId);
       localProfiles = await fetchProfilesFromSQLite(userId);
     } catch (err) {
       console.error("Failed fetching profiles, aborting sync");

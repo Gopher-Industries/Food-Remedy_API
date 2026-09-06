@@ -49,6 +49,7 @@ export function useShoppingList() {
     (ShoppingListItem & { product: Product })[]
   >([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [hasSyncedFromCloud, setHasSyncedFromCloud] = useState(false);
   const lastUserIdRef = useRef<string | null>(null);
 
@@ -62,9 +63,13 @@ export function useShoppingList() {
   const refreshLists = useCallback(async () => {
     if (!db || !isDbReady || !userId) return;
     setLoading(true);
+    setLoadError(null);
     try {
-      const allLists = await getShoppingLists(db, userId);
-      setLists(allLists);
+        const allLists = await getShoppingLists(db, userId);
+        setLists(allLists);
+    } catch (e) {
+        console.error("[useShoppingList] Failed to load shopping lists:", e);
+        setLoadError("We couldn't load your shopping lists.");
     } finally {
       setLoading(false);
     }
@@ -437,6 +442,7 @@ export function useShoppingList() {
   return {
     ready: isDbReady && !!userId,
     loading,
+    loadError,
     lists,
     currentList,
     currentItems,
