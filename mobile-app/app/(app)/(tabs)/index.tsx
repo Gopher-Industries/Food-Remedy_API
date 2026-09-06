@@ -56,12 +56,13 @@ export default function HistoryPage() {
       <Tt className="text-xl font-interBold text-center my-4">History</Tt>
 
       {filtered.length <= 0 && (
-        <View className="flex-1 w-[95%] mx-auto items-center justify-center">
-          <View className="flex-1 justify-center items-center">
-            <Tt className="text-hsl40 dark:text-hsl80">
-              {ready ? "No history yet." : "Preparing history…"}
-            </Tt>
-          </View>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ flexGrow: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: "5%", paddingVertical: 32 }}
+        >
+          <Tt className="text-hsl40 dark:text-hsl80">
+            {ready ? "No history yet." : "Preparing history…"}
+          </Tt>
 
           <Pressable
             onPress={() => router.push("/(app)/(tabs)/scan")}
@@ -84,7 +85,7 @@ export default function HistoryPage() {
               </>
             )}
           </Pressable>
-        </View>
+        </ScrollView>
       )}
 
       {/* See Favourites Button */}

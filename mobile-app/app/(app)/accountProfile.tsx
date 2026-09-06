@@ -3,7 +3,8 @@ import { Pressable, ScrollView, View, Modal, ActivityIndicator, TextInput } from
 import { useEffect, useState } from "react";
 import Tt from "@/components/ui/UIText";
 import IconGeneral from "@/components/icons/IconGeneral";
-import { color, spacing } from "@/app/design/token";
+import { spacing } from "@/app/design/token";
+import { BackButton } from "@/components/shared";
 import Header from "@/components/layout/Header";
 import Screen from "@/components/layout/Screen";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -149,18 +150,7 @@ export default function AccountProfileScreen() {
 
       {/* Back button and Title */}
       <View className="flex-row items-center justify-between px-4 my-4">
-        <Pressable
-          onPress={() => router.back()}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          {({ pressed }) => (
-            <IconGeneral
-              type="arrow-backward-ios"
-              fill={pressed ? color.primary : "hsl(0, 0%, 50%)"}
-              size={24}
-            />
-          )}
-        </Pressable>
+        <BackButton />
 
         <Tt className="text-xl font-interBold">Account</Tt>
 
@@ -192,13 +182,13 @@ export default function AccountProfileScreen() {
           >
             {({ pressed }) => (
               <>
-                <View className="flex-row items-center gap-2.5 flex-1 pr-3">
+                <View className="flex-row items-center gap-2.5">
                   <IconGeneral
                     type="update-user-settings"
                     fill="hsl(0, 0%, 40%)"
                     size={26}
                   />
-                  <View className="flex-1">
+                  <View>
                     <Tt className="font-interMedium">Update User Settings</Tt>
                     <Tt className="text-sm text-hsl30">Update your details</Tt>
                   </View>
@@ -221,13 +211,13 @@ export default function AccountProfileScreen() {
           >
             {({ pressed }) => (
               <>
-                <View className="flex-row items-center gap-3 flex-1 pr-3">
+                <View className="flex-row items-center gap-3">
                   <IconGeneral
                     type="update-password"
                     fill="hsl(0, 0%, 40%)"
                     size={24}
                   />
-                  <View className="flex-1">
+                  <View>
                     <Tt className="font-interMedium">Update Password</Tt>
                     <Tt className="text-sm text-hsl30">
                       Keep your account secure
@@ -252,9 +242,9 @@ export default function AccountProfileScreen() {
           >
             {({ pressed }) => (
               <>
-                <View className="flex-row items-center gap-2.5 flex-1 pr-3">
+                <View className="flex-row items-center gap-2.5">
                   <IconGeneral type="delete" fill="hsl(0, 0%, 40%)" size={26} />
-                  <View className="flex-1">
+                  <View>
                     <Tt className="font-interMedium">Delete Account</Tt>
                     <Tt className="text-sm text-hsl30">
                       Remove your account and data
