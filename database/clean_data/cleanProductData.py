@@ -749,7 +749,7 @@ def clean_ingredients_list(tags) -> list | None:
     - Return None if result is empty
     """
     if not tags:
-        return None
+        return []
 
     if isinstance(tags, str):
         tags = [t.strip() for t in tags.split(",") if t.strip()]
@@ -765,7 +765,7 @@ def clean_ingredients_list(tags) -> list | None:
         if tag:
             cleaned.add(tag)
     
-    return sorted(cleaned) if cleaned else None
+    return sorted(cleaned) if cleaned else []
 
 
 # DB032: Standard retail barcode lengths - EAN-8 (8), UPC-A (12),
@@ -839,12 +839,7 @@ def main(input_path: str, output_path: str):
         lambda r: {"final": r["search_tags"], "removed": r["tags_removed"]},
         axis=1,
     )
-    # DB002: Enhanced ingredient cleaning
-    # DB056: the DataFrame is still snake_case here — camelCase renaming only
-    # happens later, in rename_specific_columns()/camelise_columns() below —
-    # so checking for 'ingredientsText' meant this cleanup silently never ran
-    # and raw empty-string ingredient text passed straight through uncleaned.
-    # Fixed to check/operate on the real column name at this point.
+    # DB002/DB056/DB048: Enhanced ingredient cleaning
     if 'ingredients_text' in df.columns:
         df['ingredients_text'] = df['ingredients_text'].apply(clean_ingredients_text)
     if 'ingredients_tags' in df.columns:
@@ -855,13 +850,13 @@ def main(input_path: str, output_path: str):
 
     for idx, record in df.iterrows():
         # String fields
-        # DB056: reference the real pre-rename column names — 'ingredientsText'
-        # doesn't exist yet at this point (rename/camelCase happens later), so
-        # record.get("ingredientsText") previously always returned None and
-        # silently created a brand-new, all-None "ingredientsText" column that
-        # could collide with the real, correctly-cleaned data once renamed.
         record["ingredients_text"] = normalize_string(record.get("ingredients_text"))
         record["traces"] = normalize_string(record.get("traces"))
+
+        # List fields
+        # DB048: ensure ingredients_tags is always a list never None per contract default []
+        ingredients_raw = record.get("ingredients") or record.get("ingredients_tags")
+        record["ingredients_tags"] = normalize_list(ingredients_raw) or []
 
         # List fields
         record["ingredients_tags"] = normalize_list(record.get("ingredients_tags"))
