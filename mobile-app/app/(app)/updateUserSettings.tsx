@@ -297,7 +297,7 @@ export default function UpdateUserSettingsScreen() {
           </View>
 
           {/* Buttons on Right Side */}
-          <View className="flex-row justify-end gap-2 mt-4">
+          <View className="flex-row flex-wrap justify-end gap-2 mt-4">
             {isEditing ? (
               <>
                 {/* Cancel Button */}
@@ -414,7 +414,7 @@ export default function UpdateUserSettingsScreen() {
           </View>
         
           {/* Buttons on Right Side */}
-          <View className="flex-row justify-end gap-2 mt-4">
+          <View className="flex-row flex-wrap justify-end gap-2 mt-4">
             {/* Sync Button */}
             <Pressable
               onPress={handleSync}
