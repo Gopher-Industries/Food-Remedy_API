@@ -4,6 +4,7 @@ import { useCallback, useState, useEffect } from "react";
 import Tt from "@/components/ui/UIText";
 import IconGeneral from "@/components/icons/IconGeneral";
 import { color, spacing } from "@/app/design/token";
+import { BackButton } from "@/components/shared";
 import Header from "@/components/layout/Header";
 import { useProfile } from "@/components/providers/ProfileProvider";
 import ProfileAvatar from "@/components/ui/ProfileAvatar";
@@ -106,18 +107,7 @@ export default function NutritionalProfilesScreen() {
         }
       >
         <View className="w-[95%] mx-auto mt-4 mb-6 flex-row items-center justify-between">
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            className="px-2 py-1"
-          >
-            {({ pressed }) => (
-              <IconGeneral
-                type="arrow-backward-ios"
-                fill={pressed ? "#FF3F3F" : darkMode ? "#FFFFFF" : "hsl(0 0%, 30%)"}
-              />
-            )}
-          </Pressable>
+          <BackButton />
 
           <Tt className={`text-xl font-interBold ${darkMode ? "text-white" : "text-hsl20"}`}>
             Nutritional Profiles

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Tt from "@/components/ui/UIText";
 import Input from "@/components/ui/UIInput";
 import IconGeneral from "@/components/icons/IconGeneral";
-import { color, spacing } from "@/app/design/token";
+import { BackButton } from "@/components/shared";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useNotification } from "@/components/providers/NotificationProvider";
 import { useProfile } from "@/components/providers/ProfileProvider";
@@ -182,18 +182,7 @@ export default function UpdateUserSettingsScreen() {
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         {/* Back button on top left */}
         <View className="flex-row items-center px-4 mb-8 mt-4">
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            {({ pressed }) => (
-              <IconGeneral
-                type="arrow-backward-ios"
-                fill={pressed ? color.primary : "hsl(0, 0%, 50%)"}
-                size={spacing.lg}
-              />
-            )}
-          </Pressable>
+          <BackButton />
         </View>
 
         {/* Profile Avatar with Edit Icon */}

@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import Tt from "@/components/ui/UIText";
 import Screen from "@/components/layout/Screen";
-import IconGeneral from "@/components/icons/IconGeneral";
+import { BackButton } from "@/components/shared";
 import IconLogoHoriz from "@/components/icons/IconLogoHoriz";
 import { useShoppingList } from "@/hooks/useShoppingList";
 import { usePreferences } from "@/components/providers/PreferencesProvider";
@@ -286,16 +286,7 @@ export default function CheckoutPage() {
       </View>
 
       <View className="flex-row items-center px-4 mt-4">
-        <Pressable
-          onPress={() => router.back()}
-          className="mr-4 p-2 rounded-full active:bg-hsl95 dark:active:bg-hsl18"
-        >
-          <IconGeneral
-            type="arrow-backward-ios"
-            fill={darkMode ? "hsl(0, 0%, 90%)" : "hsl(0, 0%, 40%)"}
-            size={24}
-          />
-        </Pressable>
+        <BackButton />
 
         <Tt
           className={`text-xl font-interBold ${

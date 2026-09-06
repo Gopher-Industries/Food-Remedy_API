@@ -1,7 +1,6 @@
 // Search Page
 
 import { Pressable, ScrollView, View } from "react-native";
-import { router } from "expo-router";
 import { useSearchProduct } from "@/components/providers/SearchProductProvider";
 import Header from "@/components/layout/Header";
 import Screen from "@/components/layout/Screen";
@@ -9,7 +8,7 @@ import ProductBanner from "@/components/product/ProductBanner";
 import IconGeneral from "@/components/icons/IconGeneral";
 import Input from "@/components/ui/UIInput";
 import Tt from "@/components/ui/UIText";
-import { color } from "@/app/design/token";
+import { BackButton } from "@/components/shared";
 
 export default function SearchPage() {
   const {
@@ -28,17 +27,7 @@ export default function SearchPage() {
       <Header />
       <View className="w-[95%] mx-auto">
         <View className="flex-row items-center justify-between mb-4">
-          <Pressable
-            onPress={() => router.back()}
-            className="flex-row justify-center items-center self-end px-2 py-1"
-          >
-            {({ pressed }) => (
-              <IconGeneral
-                type="arrow-backward-ios"
-                fill={pressed ? color.primary : color.iconDefault}
-              />
-            )}
-          </Pressable>
+          <BackButton />
           <Tt className="font-interBold text-xl">Search</Tt>
           <View style={{ width: 24, height: 24 }} />
         </View>

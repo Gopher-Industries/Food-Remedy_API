@@ -9,6 +9,7 @@ import Screen from "@/components/layout/Screen";
 import Tt from "@/components/ui/UIText";
 import Input from "@/components/ui/UIInput";
 import IconGeneral from "@/components/icons/IconGeneral";
+import { BackButton } from "@/components/shared";
 import ProfileAvatar from "@/components/ui/ProfileAvatar";
 import { useModalManager } from "@/components/providers/ModalManagerProvider";
 import { useProfile } from "@/components/providers/ProfileProvider";
@@ -282,6 +283,10 @@ export default function MembersEditPage() {
         <View className="w-[90%] self-center">
 
           <View className="flex-row items-center justify-between mb-4">
+<<<<<<< HEAD
+            <BackButton />
+            <Tt className="font-interBold text-xl">Nutritional Profile</Tt>
+=======
             <Pressable
               onPress={() => router.back()}
               className="flex-row justify-center items-center self-end px-2 py-1"
@@ -302,6 +307,7 @@ export default function MembersEditPage() {
               Nutritional Profile
             </Tt>
 
+>>>>>>> main
             <View style={{ width: 24, height: 24 }} />
           </View>
 
