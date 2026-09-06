@@ -3,11 +3,11 @@
 import Header from "@/components/layout/Header";
 import Screen from "@/components/layout/Screen";
 import IconGeneral from "@/components/icons/IconGeneral";
-import BarcodeScanning from "@react-native-ml-kit/barcode-scanning";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { Platform, Pressable, ScrollView, View } from "react-native";
 import {
+  Camera,
   CameraType,
   CameraView,
   useCameraPermissions,
@@ -173,7 +173,18 @@ export default function ScanPage() {
 
     try {
       // Scan the selected image for barcodes
-      const barcodes = await BarcodeScanning.scan(imageUri);
+      const barcodes = await Camera.scanFromURLAsync(imageUri, [
+        "ean13",
+        "ean8",
+        "upc_a",
+        "upc_e",
+        "code128",
+        "code39",
+        "code93",
+        "itf14",
+        "codabar",
+        "qr",
+      ]);
 
       if (barcodes.length === 0) {
         addNotification(
@@ -183,7 +194,7 @@ export default function ScanPage() {
         return;
       }
 
-      const barcode = barcodes[0].value;
+      const barcode = barcodes[0].data;
 
       if (!barcode) {
         addNotification(
