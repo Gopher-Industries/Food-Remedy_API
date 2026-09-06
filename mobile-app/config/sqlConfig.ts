@@ -166,7 +166,7 @@ export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
           await db.execAsync(`ALTER TABLE shopping_list_items_new RENAME TO shopping_list_items;`);
         }
         // If only 'note' is missing, add it via ALTER TABLE
-        if (!hasNoteCol) {
+        if (hasIsCheckedCol && hasUpdatedAtCol && hasProductJsonCol && !hasNoteCol) {
           await db.execAsync(`ALTER TABLE shopping_list_items ADD COLUMN note TEXT;`);
         }
 
