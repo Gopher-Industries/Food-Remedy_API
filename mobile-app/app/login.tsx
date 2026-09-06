@@ -25,6 +25,7 @@ import { color } from "@/app/design/token";
 import CaptchaModal from "@/components/security/CaptchaModal";
 import { CAPTCHA_ENABLED, HCAPTCHA_SITE_KEY } from "@/config/captchaConfig";
 import { useTheme } from "@/theme";
+import { verifyCaptchaToken } from "@/services/security/verifyCaptchaToken";
 
 
 export default function LoginPage() {
@@ -38,7 +39,7 @@ export default function LoginPage() {
   const [loadingLogin, setLoadingLogin] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [captchaVisible, setCaptchaVisible] = useState<boolean>(false);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaVerified, setCaptchaVerified] = useState<boolean>(false);
 
   /**
    * Handle Log In
@@ -54,7 +55,7 @@ export default function LoginPage() {
       if (response.trim().length > 0) {
         setErrorMessage(response);
         // Require captcha again for the next attempt
-        setCaptchaToken(null);
+        setCaptchaVerified(false);
       }
     } catch (error) {
       console.error("Error Logging in: ", error);
@@ -67,7 +68,7 @@ export default function LoginPage() {
   const handleLogin = async () => {
     // Only show captcha on user-initiated login
     setErrorMessage("");
-    if (CAPTCHA_ENABLED && !captchaToken) {
+    if (CAPTCHA_ENABLED && !captchaVerified) {
       setCaptchaVisible(true);
       return;
     }
@@ -75,13 +76,21 @@ export default function LoginPage() {
   };
 
   const onCaptchaVerified = async (token: string) => {
-    console.log('[Login] Captcha verified token:', token);
-    setCaptchaToken(token);
-    setCaptchaVisible(false);
-    addNotification('Captcha verified', 's');
-    // Note: Proper security requires server-side verification of the token
-    // Proceed with login after captcha success
-    await proceedLogin();
+    try {
+      setLoadingLogin(true);
+      setErrorMessage("");
+      await verifyCaptchaToken(token);
+      setCaptchaVerified(true);
+      setCaptchaVisible(false);
+      addNotification('Captcha verified', 's');
+      await proceedLogin();
+    } catch {
+      setCaptchaVerified(false);
+      setCaptchaVisible(false);
+      setErrorMessage("Captcha verification failed. Please try again.");
+    } finally {
+      setLoadingLogin(false);
+    }
   };
 
   /**
@@ -262,7 +271,7 @@ export default function LoginPage() {
         onVerified={onCaptchaVerified}
         onCancel={() => {
           setCaptchaVisible(false);
-          setCaptchaToken(null);
+          setCaptchaVerified(false);
           setLoadingLogin(false);
           setErrorMessage("Please complete the captcha to continue");
         }}
