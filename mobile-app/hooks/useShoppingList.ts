@@ -20,6 +20,7 @@ import {
   clearAllItemsFirestore,
   upsertItemInListFirestore,
 } from "@/services/database/user/shoppingLists";
+
 import {
   createShoppingList,
   getShoppingLists,
@@ -40,6 +41,15 @@ import {
   upsertListItem,
 } from "@/services/sqlDatabase/shoppingList.dao";
 
+import {
+  enqueueShoppingListOperation,
+  getShoppingListSyncState,
+} from "@/services/sync/shoppingListOutbox";
+
+import {
+  flushShoppingListOutbox,
+} from "@/services/sync/shoppingListSyncService";
+
 export function useShoppingList() {
   const { db, isDbReady } = useSQLiteDatabase();
   const userId = useAuthUserId();
@@ -51,7 +61,38 @@ export function useShoppingList() {
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [hasSyncedFromCloud, setHasSyncedFromCloud] = useState(false);
+  const [syncState, setSyncState] = useState<
+    "synced" | "pending" | "failed"
+  >("synced");
   const lastUserIdRef = useRef<string | null>(null);
+  const refreshSyncState = useCallback(async () => {
+  if (!db) return;
+
+  const state = await getShoppingListSyncState(db);
+  setSyncState(state.state);
+}, [db]);
+
+const queueSyncOperation = useCallback(
+  async (
+    operationType: Parameters<typeof enqueueShoppingListOperation>[1]["operationType"],
+    listId: string,
+    barcode: string | null,
+    payload: unknown
+  ) => {
+    if (!db || !userId) return;
+
+    await enqueueShoppingListOperation(db, {
+      userId,
+      listId,
+      barcode,
+      operationType,
+      payload,
+    });
+
+    await refreshSyncState();
+  },
+  [db, userId, refreshSyncState]
+);
 
   const ensureUid = useCallback(async (): Promise<string | null> => {
     return userId;
@@ -239,6 +280,17 @@ export function useShoppingList() {
         }
       } catch (e) {
         console.warn("Failed to sync item add to Firestore:", e);
+
+        await queueSyncOperation(
+          "UPSERT_ITEM",
+          listId,
+          product.barcode,
+          {
+            product,
+            quantity,
+            note: note ?? null,
+          }
+        );
       }
 
       // If this is the current list, refresh items
@@ -247,7 +299,7 @@ export function useShoppingList() {
         setCurrentItems(items);
       }
     },
-    [db, userId, currentList, lists, ensureUid]
+    [db, userId, currentList, lists, ensureUid, queueSyncOperation]
   );
 
   /**
@@ -260,7 +312,7 @@ export function useShoppingList() {
         throw new Error('Database not ready');
       }
       console.log('[useShoppingList] updateQuantity called:', { listId, barcode, quantity });
-      
+
       try {
         await updateItemQuantity(db, listId, barcode, quantity);
         console.log('[useShoppingList] Successfully updated quantity in database');
@@ -277,6 +329,17 @@ export function useShoppingList() {
         }
       } catch (e) {
         console.warn("Failed to sync quantity to Firestore:", e);
+
+        const item = await getItemInList(db, listId, barcode);
+
+        if (item) {
+          await queueSyncOperation(
+            "UPSERT_ITEM",
+            listId,
+            barcode,
+            item
+          );
+        }
       }
 
       if (currentList?.listId === listId) {
@@ -287,7 +350,7 @@ export function useShoppingList() {
         );
       }
     },
-    [db, userId, currentList, lists, ensureUid]
+    [db, userId, currentList, lists, ensureUid, queueSyncOperation]
   );
 
   /**
@@ -303,6 +366,17 @@ export function useShoppingList() {
         if (uid) await updateItemNoteFirestore(uid, listId, barcode, note ?? null);
       } catch (e) {
         console.warn("Failed to sync note to Firestore:", e);
+
+        const item = await getItemInList(db, listId, barcode);
+
+        if (item) {
+          await queueSyncOperation(
+            "UPSERT_ITEM",
+            listId,
+            barcode,
+            item
+          );
+        }
       }
 
       if (currentList?.listId === listId) {
@@ -313,7 +387,7 @@ export function useShoppingList() {
         );
       }
     },
-    [db, userId, currentList, lists, ensureUid]
+    [db, userId, currentList, lists, ensureUid, queueSyncOperation]
   );
 
   /**
@@ -329,6 +403,17 @@ export function useShoppingList() {
         if (uid) await toggleItemCheckedFirestore(uid, listId, barcode);
       } catch (e) {
         console.warn("Failed to sync check toggle to Firestore:", e);
+
+        const item = await getItemInList(db, listId, barcode);
+
+        if (item) {
+          await queueSyncOperation(
+            "UPSERT_ITEM",
+            listId,
+            barcode,
+            item
+          );
+        }
       }
 
       if (currentList?.listId === listId) {
@@ -340,7 +425,7 @@ export function useShoppingList() {
       }
       return newState;
     },
-    [db, userId, currentList, lists, ensureUid]
+    [db, userId, currentList, lists, ensureUid, queueSyncOperation]
   );
 
   /**
@@ -356,6 +441,13 @@ export function useShoppingList() {
         if (uid) await removeItemFromListFirestore(uid, listId, barcode);
       } catch (e) {
         console.warn("Failed to sync item removal to Firestore:", e);
+
+        await queueSyncOperation(
+          "DELETE_ITEM",
+          listId,
+          barcode,
+          null
+        );
       }
 
       if (currentList?.listId === listId) {
@@ -386,7 +478,7 @@ export function useShoppingList() {
         setCurrentItems((prev) => prev.filter((item) => !item.isChecked));
       }
     },
-    [db, userId, currentList, lists, ensureUid]
+    [db, userId, currentList, lists, ensureUid, queueSyncOperation]
   );
 
   /**
@@ -402,13 +494,20 @@ export function useShoppingList() {
         if (uid) await clearAllItemsFirestore(uid, listId);
       } catch (e) {
         console.warn("Failed to sync clear all to Firestore:", e);
+
+        await queueSyncOperation(
+          "CLEAR_ALL",
+          listId,
+          null,
+          null
+        );
       }
 
       if (currentList?.listId === listId) {
         setCurrentItems([]);
       }
     },
-    [db, userId, currentList, lists, ensureUid]
+    [db, userId, currentList, lists, ensureUid, queueSyncOperation]
   );
 
   /**
@@ -442,6 +541,7 @@ export function useShoppingList() {
   return {
     ready: isDbReady && !!userId,
     loading,
+    syncState,
     loadError,
     lists,
     currentList,
