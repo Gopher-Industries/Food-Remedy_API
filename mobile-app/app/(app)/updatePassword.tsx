@@ -104,15 +104,25 @@ export default function UpdatePasswordScreen() {
                 className="flex-1 py-3 text-base"
               />
               <Pressable
-                onPress={() => setShowNewPassword(!showNewPassword)}
+                onPress={() => setShowNewPassword((previous) => !previous)}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  showNewPassword ? "Hide password" : "Show password"
+                }
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 {({ pressed }) => (
-                  <IconGeneral
-                    type={showNewPassword ? "visibility" : "visibility-off"}
-                    fill={pressed ? color.primary : color.iconDefault}
-                    size={spacing.lg}
-                  />
+                  <View
+                    accessible={false}
+                    importantForAccessibility="no"
+                    pointerEvents="none"
+                  >
+                    <IconGeneral
+                      type={showNewPassword ? "visibility" : "visibility-off"}
+                      fill={pressed ? color.primary : color.iconDefault}
+                      size={spacing.lg}
+                    />
+                  </View>
                 )}
               </Pressable>
             </View>
@@ -131,15 +141,25 @@ export default function UpdatePasswordScreen() {
                 className="flex-1 py-3 text-base"
               />
               <Pressable
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                onPress={() => setShowConfirmPassword((previous) => !previous)}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  showConfirmPassword ? "Hide password" : "Show password"
+                }
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 {({ pressed }) => (
-                  <IconGeneral
-                    type={showConfirmPassword ? "visibility" : "visibility-off"}
-                    fill={pressed ? color.primary : color.iconDefault}
-                    size={spacing.lg}
-                  />
+                  <View
+                    accessible={false}
+                    importantForAccessibility="no"
+                    pointerEvents="none"
+                  >
+                    <IconGeneral
+                      type={showConfirmPassword ? "visibility" : "visibility-off"}
+                      fill={pressed ? color.primary : color.iconDefault}
+                      size={spacing.lg}
+                    />
+                  </View>
                 )}
               </Pressable>
             </View>

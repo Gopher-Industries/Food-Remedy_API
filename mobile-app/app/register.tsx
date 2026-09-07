@@ -178,7 +178,9 @@ export default function RegisterPage() {
                 />
 
                 <Pressable
-                  onPress={() => setShowPassword(!showPassword)}
+                  onPress={() => setShowPassword((previous) => !previous)}
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? "Show password" : "Hide password"}
                   className="absolute right-4 top-1/2 -translate-y-1/2"
                   style={({ pressed }) => [
                     { borderColor: pressed ? "#FF3EB5" : "hsl(0 0% 13%)" },
@@ -186,10 +188,16 @@ export default function RegisterPage() {
                   hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
                 >
                   {({ pressed }) => (
-                    <IconGeneral
-                      type={showPassword ? "visibility" : "visibility-off"}
-                      fill={pressed ? color.primary : "hsl(0 0% 70%)}"}
-                    />
+                    <View
+                      accessible={false}
+                      importantForAccessibility="no"
+                      pointerEvents="none"
+                    >
+                      <IconGeneral
+                        type={showPassword ? "visibility" : "visibility-off"}
+                        fill={pressed ? color.primary : "hsl(0 0% 70%)}"}
+                      />
+                    </View>
                   )}
                 </Pressable>
               </View>
@@ -208,7 +216,11 @@ export default function RegisterPage() {
                 />
 
                 <Pressable
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  onPress={() => setShowConfirmPassword((previous) => !previous)}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    showConfirmPassword ? "Show password" : "Hide password"
+                  }
                   className="absolute right-4 top-1/2 -translate-y-1/2"
                   style={({ pressed }) => [
                     { borderColor: pressed ? "#FF3EB5" : "hsl(0 0% 13%)" },
@@ -216,12 +228,18 @@ export default function RegisterPage() {
                   hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
                 >
                   {({ pressed }) => (
-                    <IconGeneral
-                      type={
-                        showConfirmPassword ? "visibility" : "visibility-off"
-                      }
-                      fill={pressed ? color.primary : "hsl(0 0% 70%)}"}
-                    />
+                    <View
+                      accessible={false}
+                      importantForAccessibility="no"
+                      pointerEvents="none"
+                    >
+                      <IconGeneral
+                        type={
+                          showConfirmPassword ? "visibility" : "visibility-off"
+                        }
+                        fill={pressed ? color.primary : "hsl(0 0% 70%)}"}
+                      />
+                    </View>
                   )}
                 </Pressable>
               </View>
