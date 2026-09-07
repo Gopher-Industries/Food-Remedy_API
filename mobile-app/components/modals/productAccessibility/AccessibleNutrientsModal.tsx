@@ -47,17 +47,27 @@ const AccessibleNutrientsModal = () => {
         {/* Header */}
         < View className="flex-row items-center justify-between" >
           <View className="flex-row items-center justify-between gap-x-2" >
-            <Pressable onPress={dec} className="flex-row items-center px-3 py-1 rounded bg-hsl98 dark:bg-hsl10 border border-primary">
+            <Pressable
+              onPress={dec}
+              accessibilityRole="button"
+              accessibilityLabel="Decrease text size"
+              className="flex-row items-center px-3 py-1 rounded bg-hsl98 dark:bg-hsl10 border border-primary"
+            >
               <Tt className="text-xl font-interSemiBold text-primary" > A </Tt>
               <IconGeneral type="minus" fill="red" size={20} />
             </Pressable>
-            <Pressable onPress={inc} className="flex-row items-center px-3 py-1 rounded bg-hsl98 dark:bg-hsl10 border border-primary">
+            <Pressable
+              onPress={inc}
+              accessibilityRole="button"
+              accessibilityLabel="Increase text size"
+              className="flex-row items-center px-3 py-1 rounded bg-hsl98 dark:bg-hsl10 border border-primary"
+            >
               <Tt className="text-xl font-interSemiBold text-primary" > A </Tt>
               <IconGeneral type="add" fill="red" size={20} />
             </Pressable>
           </View>
 
-          <Pressable onPress={() => closeModal("accessibleNutrients")} className="p-2 rounded-lg">
+          <Pressable onPress={() => closeModal("accessibleNutrients")} accessibilityRole="button" accessibilityLabel="Close nutrients" className="p-2 rounded-lg">
             {({ pressed }) => (
               <IconGeneral type="close" size={30} fill={pressed ? "#FF3F3F" : "hsl(0, 0%, 20%)"} />
             )}

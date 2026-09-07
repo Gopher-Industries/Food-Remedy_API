@@ -92,10 +92,20 @@ export const PersonalNoteSection: React.FC<Props> = ({ barcode }) => {
         <View style={styles.noteBox}>
           <UIText style={styles.noteText}>{note.content}</UIText>
           <View style={styles.actions}>
-            <TouchableOpacity onPress={() => { setEditing(true); setInput(note.content); }}>
+            <TouchableOpacity
+              onPress={() => { setEditing(true); setInput(note.content); }}
+              accessibilityRole="button"
+              accessibilityLabel="Edit personal note"
+            >
               <IconGeneral type="edit" size={20} fill={color.primary} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleDelete} style={styles.deleteBtn}>
+            <TouchableOpacity
+              onPress={handleDelete}
+              accessibilityRole="button"
+              accessibilityLabel="Delete personal note"
+              accessibilityHint="Removes this personal note"
+              style={styles.deleteBtn}
+            >
               <IconGeneral type="trash" size={20} fill={color.danger} />
             </TouchableOpacity>
           </View>

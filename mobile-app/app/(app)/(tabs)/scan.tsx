@@ -178,6 +178,8 @@ export default function ScanPage() {
           <View className="absolute right-4 top-4">
             <Pressable
               onPress={toggleCameraFacing}
+              accessibilityRole="button"
+              accessibilityLabel="Switch camera"
               className="flex flex-col items-center gap-y-1"
             >
               {({ pressed }) => (
