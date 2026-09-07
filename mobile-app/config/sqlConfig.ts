@@ -85,6 +85,35 @@ export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
             FOREIGN KEY (list_id) REFERENCES shopping_lists(list_id) ON DELETE CASCADE
           );
           CREATE INDEX IF NOT EXISTS idx_items_list_added ON shopping_list_items(list_id, added_at);
+
+          -- SHOPPING LIST SYNC OUTBOX
+          CREATE TABLE IF NOT EXISTS shopping_list_outbox (
+            operation_id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            list_id TEXT NOT NULL,
+            barcode TEXT,
+            operation_type TEXT NOT NULL CHECK (
+              operation_type IN (
+                'CREATE_LIST',
+                'UPDATE_LIST',
+                'DELETE_LIST',
+                'UPSERT_ITEM',
+                'DELETE_ITEM',
+                'CLEAR_CHECKED',
+                'CLEAR_ALL'
+              )
+            ),
+            payload_json TEXT,
+            revision INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            retry_count INTEGER NOT NULL DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'pending'
+              CHECK (status IN ('pending', 'failed'))
+          );
+
+          CREATE INDEX IF NOT EXISTS idx_shopping_list_outbox_status
+          ON shopping_list_outbox(status, created_at);
         `);
 
         // Versioning
@@ -183,7 +212,7 @@ export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
           await db.execAsync(`ALTER TABLE profiles ADD COLUMN guardrail_level TEXT;`);
         }
 
-        await db.execAsync(`PRAGMA user_version = 5;`);
+        await db.execAsync(`PRAGMA user_version = 6;`);
       });
 
       return db;
