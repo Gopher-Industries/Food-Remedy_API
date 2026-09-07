@@ -1,95 +1,122 @@
 # 🔐 Firebase & Firestore Access Guide
 
-This document explains how to securely manage access to the **Firebase project** and **Firestore service account** used by the Food Remedy App.  
-These credentials allow authorised scripts to upload or modify data in the database.  
-Only approved team members should have this access.  
+This document explains how to securely manage access to the **Firebase project** and **Firestore service account** used by the Food Remedy App.
 
+These credentials allow authorised users and scripts to access or modify project resources.
+
+Only approved team members should have this access.
 
 <br />
-
 
 ## ⚠️ Important Security Rules
 
-- Never upload any credentials (JSON keys, passwords) to GitHub.  
-- Never share Firebase or Google account logins through email or chat.  
-- Only **team leaders** and **database members** should have access.  
-- Remove all old keys and accounts when new members take over.  
-- All sensitive files must be stored in secure university folders, not in the public repository.
-
+- Never upload credentials, passwords, recovery codes, private keys, or service account files to GitHub.
+- Never store credential values directly in repository documentation.
+- Never share Firebase or Google account credentials through tickets, pull requests, email, or public chat.
+- Only authorised team members should have access.
+- Revoke access and rotate credentials when they are exposed or no longer required.
+- Sensitive credentials must be stored in an approved secure credential store outside the repository.
 
 <br />
 
+## 🧭 Firebase Project Access
 
-## 🧭 Firebase Project Access (Google Account)
-
-The Firebase project is linked to a protected Google account.  
-Only authorised users can access the project dashboard and Firestore data.
+Access to the Firebase project should be provided through individual authorised accounts rather than shared credentials where possible.
 
 ### Access Control
-- **Owner / Editor:** Team Leaders only  
-- **Viewer / Firestore User:** Database members  
-- **No Access:** Other project members
 
-Leaders can manage permissions under:  
+- **Owner / Editor:** Approved Team Leads
+- **Viewer / Firestore User:** Approved project members requiring database access
+- **No Access:** Users who do not require Firebase access
+
+Leads can manage permissions through:
+
 **Firebase Console → Project Settings → Users and Permissions**
 
-### Login Credentials
+### Credential Storage
 
-The Google account login details and 2FA recovery codes are stored securely in one of the following files:  
-- `Documents\Guides\Leadership\Credentials\FirebaseCredentials.zip`  
-- `Documents\Guides\Leadership\Credentials\FirebaseCredentials.xlsx`  
-  *(Restricted access – only team leaders and the academic supervisor)*  
+Google account credentials, recovery codes, service account keys, and other secret material must not be stored in this repository.
 
-Both files are **password protected**.  
-Do **not** upload or share these files publicly, and never commit them to GitHub.
+The previously tracked credential archives and spreadsheets have been removed from the current repository tree.
 
-### 📂 How to Open the Credentials File
+Approved Leads are responsible for maintaining access through an authorised secure credential-management location outside GitHub.
 
-> Password to open credentials:  
-> `foodremedy`
-
-#### If you are using the ZIP file:
-1. Ensure **7-Zip** is installed (download from [7-zip.org](https://www.7-zip.org/)).  
-2. Right-click the file → select **7-Zip → Extract Here** or **Open archive**.  
-3. Enter the password when prompted.  
-4. Once extracted, you will see the credentials text file inside.  
-   Open it with a simple text editor like Notepad.
-
-> ⚠️ Note: Do not double-click the ZIP to open it using Windows Explorer,  
-> as Windows may show an “Unspecified Error” for encrypted ZIPs.  
-> Always use 7-Zip.
+No passwords, recovery codes, private keys, or other secret values should be recorded in this document.
 
 <br />
-
-#### If you are using the Excel file:
-1. Double-click `FirebaseCredentials.xlsx`.  
-2. Enter the password when Excel asks for it.  
-3. Review or update details inside the workbook as needed.  
-4. Save and close the file securely after use.
-
-> 🔐 Excel files use strong encryption (AES-256).  
-> Always keep the password private and store it separately.
-
-
-<br />
-
 
 ## 🧰 Firestore Service Account Key
 
-The Firestore service account key allows scripts to connect to Firebase securely.  
-It is stored as a private JSON file named:  
-`serviceAccountKey.json`
+A Firestore service account key may be required by authorised scripts that connect to Firebase.
 
+The private JSON key must never be committed to GitHub.
 
-### File Location
-Store the file **locally** (not in GitHub) within:  
+### Local File Location
+
+Where a local service account key is required, store it locally as:
+
 `database/seeding/serviceAccountKey.json`
 
+This path is excluded from Git tracking.
 
-### Generating a New Key
-Only team leaders can generate a new service account key:  
-1. In Firebase Console, go to  
-   **Project Settings → Service Accounts → Generate New Private Key**  
-2. Rename the file to `serviceAccountKey.json`  
-3. Replace the old key and delete previous copies  
-4. Share securely with authorised members only
+### Generating or Rotating a Key
+
+Only an authorised Firebase administrator should generate or rotate a service account key.
+
+1. Open the Firebase/Google Cloud project using an authorised account.
+2. Locate the relevant service account.
+3. Revoke or disable an exposed or obsolete key.
+4. Generate a replacement key only when required.
+5. Store the replacement securely outside the repository.
+6. Verify that authorised integrations work with the replacement credential.
+7. Where rotation occurred, verify that the previous credential can no longer be used.
+
+Never include the generated key or its contents in a ticket, pull request, screenshot, documentation file, or Git commit.
+
+<br />
+
+## 🔄 Access Recovery
+
+Critical Firebase access should not depend on a credential stored in the repository.
+
+Where organisationally possible:
+
+- At least two approved Leads should have appropriate administrative access.
+- Leads should use their individually authorised accounts.
+- Recovery information should be stored in an approved secure location outside GitHub.
+- Changes to Firebase ownership or administrative access should be documented without recording secret values.
+- When project leadership changes, access should be reviewed and obsolete access removed.
+
+If access is lost, an approved Lead or project owner should use the organisation's authorised account-recovery process rather than retrieving credentials from the repository.
+
+<br />
+
+## 🛡️ Repository Credential Controls
+
+The repository must exclude known credential artifacts, including:
+
+- `FirebaseCredentials.zip`
+- `FirebaseCredentials.xlsx`
+- `serviceAccountKey.json`
+- Environment files containing secrets
+- Private keys and certificate credential files
+
+Credential files must remain outside Git even when they are encrypted or password protected.
+
+Before release, the current repository tree should be checked for credential-named or secret-containing files.
+
+<br />
+
+## 📋 Credential Rotation Responsibility
+
+If a credential is discovered in the repository:
+
+1. Do not publish or copy the credential into a ticket, PR, or chat.
+2. Notify an approved Lead or account owner.
+3. Determine whether the credential is still active.
+4. Revoke or rotate it if it is active or its status cannot be safely established.
+5. Verify replacement access.
+6. Record the outcome without recording secret values.
+7. Confirm the repository no longer contains the credential material.
+
+Repository history must not be rewritten without Lead approval.

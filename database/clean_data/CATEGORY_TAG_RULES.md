@@ -13,7 +13,7 @@ All of the following live in **`database/clean_data/cleanProductData.py`** and r
 | **Structured output for apps / contract** | **`tags`**: `{ "final": [...], "removed": [...] }` aligned with **`product_v1`** `tags` (same shape). **`searchTags`** duplicates **`tags.final`** for simple **`array-contains`** queries. |
 | **Pipeline order** | `labels_tags` → **`standardise_tags`** → **`apply_conflict_rules`** → build **`tags`**; **`category`** / **`standardCategory`** come from DB004 harmonisation (needed as input to conflict rules). |
 
-**Note:** `tags.removed` is only non-empty when a product’s labels actually trigger a rule; many real rows will show `removed: []`.
+**Note:** `tags.removed` is only non-empty when a product's labels actually trigger a rule; many real rows will show `removed: []`.
 
 ## Harmonised primary category (`standardCategory` / `category`) — DB004
 
@@ -22,6 +22,13 @@ All of the following live in **`database/clean_data/cleanProductData.py`** and r
 - Rules are evaluated **in order** (more specific buckets before generic ones) to avoid misclassification - e.g. **`breads`** is chosen before drink categories even when the umbrella slug `plant-based-foods-and-beverages` is present.
 - Matching uses **whole hyphen segments** (`_keyword_matches_tag`), not naive substring search, so keywords like `beverages` do not match inside unrelated slugs.
 - The umbrella slug `plant-based-foods-and-beverages` is on a **denylist** for the **beverages** bucket so it cannot trigger drink classification by segment overlap alone.
+
+## DB031 update — `dairy` bucket added
+
+- **Finding:** investigation for DB031 found `dairies` / `cheeses` / `yogurts` / `fermented-milk-products` were the single largest cluster of unmapped-but-unambiguous category tags — none of the 8 original buckets covered them, so these products fell into `"other"`.
+- **Fix:** a new `("dairy", ("dairies", "cheeses", "yogurts", "fermented-milk-products", "fermented-dairy-desserts"))` rule was added to `CATEGORY_RULES_ORDERED`.
+- **Placement matters:** `dairy` is placed **after** `beverages` in the ordered list, not before. Drinkable dairy products (milkshakes, kefir, iced coffee) carry both dairy tags and a beverages sub-type tag and were already correctly classified as `beverages`. Placing `dairy` after preserves that existing behaviour; `dairy` only catches products beverages doesn't already claim (plain cheese, plain yogurt, etc.).
+- See `database/Reports/DB031_Product_Category_Consistency_Investigation.md` for the full investigation and `database/test_db031_category_consistency.py` for test coverage.
 
 ## Contract fields (filtering / recommendations)
 
@@ -53,4 +60,4 @@ Implemented in code; extend here and in the same function together:
 
 ## Optional hierarchy
 
-- OFF hierarchy is preserved in the **order** of raw taxonomy in source data before normalisation; **`categories`** in the API contract is **sorted** for deterministic comparisons. For “path from broad to narrow”, use source pipeline docs or future `categoryPath` if added to the contract.
+- OFF hierarchy is preserved in the **order** of raw taxonomy in source data before normalisation; **`categories`** in the API contract is **sorted** for deterministic comparisons. For "path from broad to narrow", use source pipeline docs or future `categoryPath` if added to the contract.

@@ -6,6 +6,31 @@ export interface RestrictionRule {
 }
 
 /**
+ * Normalize safety labels and product evidence before comparing them.
+ *
+ * Product data contains a mixture of Open Food Facts tags, human-written
+ * label text, punctuation, and precautionary statements. Keeping this
+ * normalization in one place prevents each backend path from making a
+ * slightly different safety decision.
+ */
+export function normalizeSafetyText(value: string): string {
+  return value
+    .normalize("NFKC")
+    .trim()
+    .toLowerCase()
+    .replace(/^([a-z]{2,3})\s*:\s*/, "")
+    .replace(/[\u2010-\u2015\u2212]/g, "-")
+    .replace(/[_\s]+/g, "-")
+    .replace(/[^\p{L}\p{N}-]+/gu, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function normalizeRestrictionKey(value: string): string {
+  return normalizeSafetyText(value).replace(/-/g, "");
+}
+
+/**
  * Canonical profile-to-product evidence mapping.
  *
  * `declaration` restrictions may resolve safe when the product's allergen and
@@ -36,13 +61,19 @@ export const RESTRICTION_RULES: Readonly<Record<string, RestrictionRule>> = {
   Seafood: {
     resolution: "declaration",
     aliases: [
-      "seafood",
-      "fish", "fishes", "salmon", "tuna", "sardine", "sardines", "anchovy", "anchovies",
-      "cod", "haddock", "basa", "hoki", "fish oil", "fish sauce",
+      "seafood", "sea food",
+      "fish", "fishes", "finfish", "fin fish", "fishmeal", "fish meal",
+      "salmon", "tuna", "sardine", "sardines", "anchovy", "anchovies",
+      "cod", "haddock", "basa", "hoki", "trout", "mackerel", "herring",
+      "pollock", "eel", "eels", "halibut", "snapper", "barramundi", "trevally",
+      "fish oil", "fish sauce", "fish stock", "fish extract", "fish gelatin",
+      "fish protein", "fish collagen", "surimi",
       "crustacea", "crustacean", "crustaceans", "shellfish", "crab", "crabs", "prawn",
       "prawns", "shrimp", "shrimps", "lobster", "lobsters", "crayfish", "krill", "yabby",
+      "langoustine", "langoustines", "scampi",
       "mollusc", "molluscs", "mollusk", "mollusks", "oyster", "oysters", "mussel",
       "mussels", "clam", "clams", "scallop", "scallops", "squid", "octopus", "abalone",
+      "cockle", "cockles", "whelk", "whelks",
     ],
   },
   "Tree Nuts": {
@@ -111,22 +142,37 @@ export const RESTRICTION_RULES: Readonly<Record<string, RestrictionRule>> = {
   },
   Fish: {
     resolution: "declaration",
-    aliases: ["fish", "fishes", "salmon", "tuna", "sardine", "sardines", "anchovy", "anchovies", "cod", "haddock", "basa", "hoki"],
+    aliases: [
+      "seafood", "sea food", "fish", "fishes", "finfish", "fin fish",
+      "fishmeal", "fish meal", "salmon", "tuna", "sardine", "sardines",
+      "anchovy", "anchovies", "cod", "haddock", "basa", "hoki", "trout",
+      "mackerel", "herring", "pollock", "eel", "eels", "halibut", "snapper",
+      "barramundi", "trevally", "fish oil", "fish sauce", "fish stock",
+      "fish extract", "fish gelatin", "fish protein", "fish collagen", "surimi",
+    ],
   },
   Crustacea: {
     resolution: "declaration",
-    aliases: ["crustacea", "crustacean", "crustaceans", "crab", "prawn", "prawns", "shrimp", "lobster", "crayfish", "krill", "yabby"],
+    aliases: [
+      "seafood", "sea food", "shellfish", "crustacea", "crustacean", "crustaceans",
+      "crab", "crabs", "prawn", "prawns", "shrimp", "shrimps", "lobster",
+      "lobsters", "crayfish", "krill", "yabby", "langoustine", "langoustines", "scampi",
+    ],
   },
   Molluscs: {
     resolution: "declaration",
-    aliases: ["mollusc", "molluscs", "mollusk", "mollusks", "oyster", "mussel", "clam", "scallop", "squid", "octopus", "abalone"],
+    aliases: [
+      "seafood", "sea food", "shellfish", "mollusc", "molluscs", "mollusk", "mollusks",
+      "oyster", "oysters", "mussel", "mussels", "clam", "clams", "scallop", "scallops",
+      "squid", "octopus", "abalone", "cockle", "cockles", "whelk", "whelks",
+    ],
   },
 };
 
 export function findRestrictionRule(value: string): RestrictionRule | undefined {
-  const normalized = value.trim().toLowerCase();
+  const normalized = normalizeRestrictionKey(value);
   const entry = Object.entries(RESTRICTION_RULES).find(
-    ([label]) => label.toLowerCase() === normalized
+    ([label]) => normalizeRestrictionKey(label) === normalized
   );
   return entry?.[1];
 }

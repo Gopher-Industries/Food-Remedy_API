@@ -17,7 +17,12 @@ export default async function getProductByBarcode(barcode: string): Promise<Prod
       return null;
     }
 
-    return normaliseFirestoreProduct({ id: snap.id, ...snap.data() }) as Product;
+    const productData = snap.data();
+    return normaliseFirestoreProduct({
+      id: snap.id,
+      ...productData,
+      barcode,
+    }) as Product;
   } catch (err) {
     console.error("[Firestore] getProductByBarcode error:", err);
     return null;

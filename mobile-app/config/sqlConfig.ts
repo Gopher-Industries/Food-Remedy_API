@@ -48,14 +48,16 @@ export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
 
           -- HISTORY
           CREATE TABLE IF NOT EXISTS product_history (
-            barcode TEXT PRIMARY KEY CHECK (length(barcode) > 0),
+            owner_scope TEXT NOT NULL CHECK (length(owner_scope) > 0),
+            barcode TEXT NOT NULL CHECK (length(barcode) > 0),
             product_name TEXT NOT NULL,
             brand TEXT,
             product_json TEXT NOT NULL,
             created_at TEXT NOT NULL,
-            last_seen_at TEXT NOT NULL
+            last_seen_at TEXT NOT NULL,
+            PRIMARY KEY (owner_scope, barcode)
           );
-          CREATE INDEX IF NOT EXISTS idx_hist_last_seen ON product_history(last_seen_at);
+          CREATE INDEX IF NOT EXISTS idx_hist_owner_last_seen ON product_history(owner_scope, last_seen_at);
 
           -- SHOPPING LISTS (aligned with DAO)
           CREATE TABLE IF NOT EXISTS shopping_lists (
@@ -85,35 +87,6 @@ export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
             FOREIGN KEY (list_id) REFERENCES shopping_lists(list_id) ON DELETE CASCADE
           );
           CREATE INDEX IF NOT EXISTS idx_items_list_added ON shopping_list_items(list_id, added_at);
-
-          -- SHOPPING LIST SYNC OUTBOX
-          CREATE TABLE IF NOT EXISTS shopping_list_outbox (
-            operation_id TEXT PRIMARY KEY,
-            user_id TEXT NOT NULL,
-            list_id TEXT NOT NULL,
-            barcode TEXT,
-            operation_type TEXT NOT NULL CHECK (
-              operation_type IN (
-                'CREATE_LIST',
-                'UPDATE_LIST',
-                'DELETE_LIST',
-                'UPSERT_ITEM',
-                'DELETE_ITEM',
-                'CLEAR_CHECKED',
-                'CLEAR_ALL'
-              )
-            ),
-            payload_json TEXT,
-            revision INTEGER NOT NULL,
-            created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL,
-            retry_count INTEGER NOT NULL DEFAULT 0,
-            status TEXT NOT NULL DEFAULT 'pending'
-              CHECK (status IN ('pending', 'failed'))
-          );
-
-          CREATE INDEX IF NOT EXISTS idx_shopping_list_outbox_status
-          ON shopping_list_outbox(status, created_at);
         `);
 
         // Versioning
@@ -211,6 +184,73 @@ export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
         if (!hasGuardrailLevelCol) {
           await db.execAsync(`ALTER TABLE profiles ADD COLUMN guardrail_level TEXT;`);
         }
+
+        // BE028: product history/cache snapshots must be isolated per account/guest scope.
+        // Legacy rows had no reliable owner, so keep them under an unowned scope that normal
+        // account/guest reads never use.
+        const historyCols = await db.getAllAsync<{ name: string }>(`PRAGMA table_info('product_history');`);
+        const hasHistoryOwnerScopeCol = historyCols.some(c => c.name === 'owner_scope');
+        const historyPkCols = historyCols
+          .filter(c => (c as any).pk > 0)
+          .sort((a, b) => ((a as any).pk ?? 0) - ((b as any).pk ?? 0))
+          .map(c => c.name);
+        const hasScopedHistoryPrimaryKey =
+          historyPkCols.length === 2 &&
+          historyPkCols[0] === 'owner_scope' &&
+          historyPkCols[1] === 'barcode';
+
+        if (!hasHistoryOwnerScopeCol || !hasScopedHistoryPrimaryKey) {
+          await db.execAsync(`
+            CREATE TABLE IF NOT EXISTS product_history_new (
+              owner_scope TEXT NOT NULL CHECK (length(owner_scope) > 0),
+              barcode TEXT NOT NULL CHECK (length(barcode) > 0),
+              product_name TEXT NOT NULL,
+              brand TEXT,
+              product_json TEXT NOT NULL,
+              created_at TEXT NOT NULL,
+              last_seen_at TEXT NOT NULL,
+              PRIMARY KEY (owner_scope, barcode)
+            );
+          `);
+
+          if (historyCols.length > 0 && hasHistoryOwnerScopeCol) {
+            await db.execAsync(`
+              INSERT OR REPLACE INTO product_history_new (
+                owner_scope, barcode, product_name, brand, product_json, created_at, last_seen_at
+              )
+              SELECT
+                COALESCE(NULLIF(owner_scope, ''), 'legacy:unowned') AS owner_scope,
+                barcode,
+                product_name,
+                brand,
+                product_json,
+                created_at,
+                last_seen_at
+              FROM product_history;
+            `);
+          } else if (historyCols.length > 0) {
+            await db.execAsync(`
+              INSERT OR REPLACE INTO product_history_new (
+                owner_scope, barcode, product_name, brand, product_json, created_at, last_seen_at
+              )
+              SELECT
+                'legacy:unowned' AS owner_scope,
+                barcode,
+                product_name,
+                brand,
+                product_json,
+                created_at,
+                last_seen_at
+              FROM product_history;
+            `);
+          }
+
+          await db.execAsync(`DROP TABLE product_history;`);
+          await db.execAsync(`ALTER TABLE product_history_new RENAME TO product_history;`);
+        }
+
+        await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_hist_owner_last_seen ON product_history(owner_scope, last_seen_at);`);
+        await db.execAsync(`DROP INDEX IF EXISTS idx_hist_last_seen;`);
 
         await db.execAsync(`PRAGMA user_version = 6;`);
       });
