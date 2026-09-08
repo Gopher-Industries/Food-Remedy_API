@@ -128,7 +128,11 @@ describe('Authentication Services Mappings', () => {
     });
 
     it('should return success: true without creating DB user if user already exists in database', async () => {
-      const mockUser = { uid: 'existing-uid-456', email: 'existing@example.com' };
+      const mockUser = {
+      uid: 'existing-uid-456',
+      email: 'existing@example.com',
+      emailVerified: true,
+      };
       (createUserWithEmailAndPassword as jest.Mock).mockResolvedValueOnce({
         user: mockUser,
       });
@@ -182,13 +186,191 @@ describe('Authentication Services Mappings', () => {
       });
     });
 
-    it('should rethrow unexpected error codes', async () => {
-      const unexpectedError = { code: 'auth/network-request-failed' };
-      (createUserWithEmailAndPassword as jest.Mock).mockRejectedValueOnce(unexpectedError);
+    it('should sanitize unexpected registration errors', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-      await expect(
-        registerWithEmail('John', 'Doe', 'test@example.com', 'securepass123')
-      ).rejects.toEqual(unexpectedError);
+      const unexpectedError = {
+        code: 'auth/network-request-failed',
+        message: 'Sensitive Firebase provider error',
+      };
+
+      (createUserWithEmailAndPassword as jest.Mock).mockRejectedValueOnce(
+        unexpectedError
+      );
+
+      const result = await registerWithEmail(
+        'John',
+        'Doe',
+        'test@example.com',
+        'securepass123'
+      );
+
+      expect(result).toEqual({
+        success: false,
+        message: 'Unable to complete registration. Please try again later.',
+      });
+
+      expect(result.message).not.toContain(
+        'Sensitive Firebase provider error'
+      );
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should return a safe recoverable error when Firestore provisioning fails', async () => {
+      const mockUser = {
+        uid: 'partial-user-123',
+        email: 'partial@example.com',
+        emailVerified: false,
+      };
+
+      (createUserWithEmailAndPassword as jest.Mock).mockResolvedValueOnce({
+        user: mockUser,
+      });
+
+      (getDoc as jest.Mock).mockResolvedValueOnce({
+        exists: () => false,
+      });
+
+      (setDoc as jest.Mock).mockRejectedValueOnce(
+        new Error('Sensitive Firestore internal error')
+      );
+
+      const result = await registerWithEmail(
+        'John',
+        'Doe',
+        'partial@example.com',
+        'securepass123'
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.message).not.toContain('Sensitive Firestore internal error');
+      expect(sendEmailVerification).not.toHaveBeenCalled();
+    });
+
+    it('should recover an existing Auth user when the Firestore user document is missing', async () => {
+      const mockUser = {
+        uid: 'recover-user-123',
+        email: 'recover@example.com',
+        emailVerified: false,
+      };
+
+      // Registration retry finds that Firebase Auth already contains the account.
+      (createUserWithEmailAndPassword as jest.Mock).mockRejectedValueOnce({
+        code: 'auth/email-already-in-use',
+      });
+
+      // Authenticate the existing account using the supplied credentials.
+      (signInWithEmailAndPassword as jest.Mock).mockResolvedValueOnce({
+        user: mockUser,
+      });
+
+      // The previous registration failed before Firestore provisioning.
+      (getDoc as jest.Mock).mockResolvedValueOnce({
+        exists: () => false,
+      });
+
+      (setDoc as jest.Mock).mockResolvedValueOnce(undefined);
+      (sendEmailVerification as jest.Mock).mockResolvedValueOnce(undefined);
+
+      const result = await registerWithEmail(
+        'John',
+        'Doe',
+        'recover@example.com',
+        'securepass123'
+      );
+
+      expect(signInWithEmailAndPassword).toHaveBeenCalledWith(
+        expect.anything(),
+        'recover@example.com',
+        'securepass123'
+      );
+
+      expect(setDoc).toHaveBeenCalledTimes(1);
+
+      expect(setDoc).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          uid: 'recover-user-123',
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'recover@example.com',
+        })
+      );
+
+      expect(sendEmailVerification).toHaveBeenCalledWith(mockUser);
+      expect(result).toEqual({ success: true });
+    });
+
+    it('should not create a duplicate Firestore document when recovering an already provisioned user', async () => {
+      const mockUser = {
+        uid: 'existing-user-123',
+        email: 'existing@example.com',
+        emailVerified: false,
+      };
+
+      (createUserWithEmailAndPassword as jest.Mock).mockRejectedValueOnce({
+        code: 'auth/email-already-in-use',
+      });
+
+      (signInWithEmailAndPassword as jest.Mock).mockResolvedValueOnce({
+        user: mockUser,
+      });
+
+      (getDoc as jest.Mock).mockResolvedValueOnce({
+        exists: () => true,
+      });
+
+      const result = await registerWithEmail(
+        'Jane',
+        'Doe',
+        'existing@example.com',
+        'securepass123'
+      );
+
+      expect(setDoc).not.toHaveBeenCalled();
+      expect(setDoc).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        success: false,
+        message: 'This email is already in use.',
+      });
+    });
+
+    it('should return a safe recoverable error when verification email sending fails', async () => {
+      const mockUser = {
+        uid: 'verification-user-123',
+        email: 'verify@example.com',
+        emailVerified: false,
+      };
+
+      (createUserWithEmailAndPassword as jest.Mock).mockResolvedValueOnce({
+        user: mockUser,
+      });
+
+      (getDoc as jest.Mock).mockResolvedValueOnce({
+        exists: () => false,
+      });
+
+      (setDoc as jest.Mock).mockResolvedValueOnce(undefined);
+
+      (sendEmailVerification as jest.Mock).mockRejectedValueOnce(
+        new Error('Sensitive Firebase verification provider error')
+      );
+
+      const result = await registerWithEmail(
+        'John',
+        'Doe',
+        'verify@example.com',
+        'securepass123'
+      );
+
+      // Firestore provisioning completed before verification failed.
+      expect(setDoc).toHaveBeenCalledTimes(1);
+
+      expect(result.success).toBe(false);
+      expect(result.message).not.toContain(
+        'Sensitive Firebase verification provider error'
+      );
     });
   });
 });
