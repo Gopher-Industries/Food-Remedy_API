@@ -403,6 +403,9 @@ CATEGORY_RULES_ORDERED: list[tuple[str, tuple[str, ...]]] = [
         "dairies", "cheeses", "yogurts",
         "fermented-milk-products", "fermented-dairy-desserts",
     )),
+    # DB051: Condiments added as a category
+    # Keep it last so existing category matches are not changed
+    ("condiments", ("condiments",)),
 ]
 
 # OFF slugs that look beverage-like but are umbrella paths for non-drinks — never classify as beverages alone.

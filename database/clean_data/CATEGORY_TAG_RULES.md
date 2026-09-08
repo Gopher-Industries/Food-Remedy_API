@@ -30,6 +30,13 @@ All of the following live in **`database/clean_data/cleanProductData.py`** and r
 - **Placement matters:** `dairy` is placed **after** `beverages` in the ordered list, not before. Drinkable dairy products (milkshakes, kefir, iced coffee) carry both dairy tags and a beverages sub-type tag and were already correctly classified as `beverages`. Placing `dairy` after preserves that existing behaviour; `dairy` only catches products beverages doesn't already claim (plain cheese, plain yogurt, etc.).
 - See `database/Reports/DB031_Product_Category_Consistency_Investigation.md` for the full investigation and `database/test_db031_category_consistency.py` for test coverage.
 
+## DB051 update - `condiments` bucket added
+
+- Added a `condiments` category for products already tagged with `condiments`.
+- The rule was added at the end of `CATEGORY_RULES_ORDERED` so existing category matches are not changed.
+- In the 5,000-product sample, 23 products moved from `other` to `condiments`.
+- Existing DB031 and DB051 category tests all passed.
+
 ## Contract fields (filtering / recommendations)
 
 | Field | Role |
