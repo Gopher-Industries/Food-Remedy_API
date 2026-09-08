@@ -310,14 +310,14 @@ const DemographicsForm = () => {
             onPress={handleNext}
             disabled={submitting}
             hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
-            className={`mb-16 flex-row justify-between items-center py-3 px-4 rounded-lg border active:border-primary disabled:opacity-60 ${
+            className={`mb-16 flex-row items-center gap-x-3 py-3 px-4 rounded-lg border active:border-primary disabled:opacity-60 ${
               darkMode ? "bg-hsl20 border-hsl30" : "bg-white border-hsl90"
             }`}
           >
             {({ pressed }) => (
               <>
                 <Tt
-                  className={`text-lg font-interSemiBold flex-grow ${
+                  className={`text-lg font-interSemiBold flex-1 ${
                     pressed
                       ? "text-primary"
                       : darkMode
