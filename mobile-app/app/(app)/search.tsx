@@ -106,8 +106,8 @@ export default function SearchPage() {
               <Tt className="mt-6 -mb-2 font-interSemiBold text-hsl20">
                 Results
               </Tt>
-              {productResults.map((p, idx) => (
-                <ProductBanner key={idx} product={p} isSearchResult={true} />
+              {productResults.map((p) => (
+                <ProductBanner key={p.barcode} product={p} isSearchResult={true} />
               ))}
             </>
           )}
