@@ -1,6 +1,7 @@
 import { collection, getDocs, limit, query, where } from "firebase/firestore";
 import { fdb } from "@/config/firebaseConfig";
 import type { Product } from "@/types/Product";
+import { normaliseFirestoreProduct } from "@/services/utils/normaliseFirestoreProduct";
 
 const BROAD_CATEGORIES = new Set([
   "food",
@@ -17,8 +18,13 @@ const BROAD_CATEGORIES = new Set([
 ]);
 
 function cleanTag(x: unknown): string {
-  const s = String(x ?? "").trim().toLowerCase();
+  if (typeof x !== "string") return "";
+  const s = x.trim().toLowerCase();
   return s.startsWith("en:") ? s.slice(3) : s;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function pickSpecificCategories(categories: string[]): string[] {
@@ -53,12 +59,20 @@ export async function getCandidatesForRecommendations(
   const currentBarcode = String(original?.barcode || "").trim();
 
   snap.forEach((doc) => {
-    const p = doc.data() as Product;
-    const b = String((p as any)?.barcode || doc.id || "").trim();
+    const raw = doc.data();
+    if (!isRecord(raw)) return;
+
+    const documentBarcode = typeof doc.id === "string" ? doc.id.trim() : "";
+    const storedBarcode = typeof raw.barcode === "string" ? raw.barcode.trim() : "";
+    const b = storedBarcode || documentBarcode;
     if (!b || b === currentBarcode) return;
     if (seen.has(b)) return;
     seen.add(b);
-    out.push(p);
+    out.push(normaliseFirestoreProduct({
+      ...raw,
+      id: documentBarcode || b,
+      barcode: b,
+    }));
   });
 
   return out;
