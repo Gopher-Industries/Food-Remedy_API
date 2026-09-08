@@ -92,7 +92,7 @@ export default function ShoppingCartDetailPage() {
             Your cart is empty
           </Tt>
           <Tt className="text-hsl50 dark:text-hsl70 text-xs text-center mt-1">
-            Tap "Add to Cart" on items in your list
+            Tap &quot;Add to Cart&quot; on items in your list
           </Tt>
           <Pressable
             onPress={() => router.back()}

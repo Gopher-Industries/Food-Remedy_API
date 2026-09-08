@@ -39,10 +39,10 @@ export default function TermsOfServicePage() {
           <Tt className="text-hsl30 dark:text-hsl90 text-sm">Last Updated 14 January 2026</Tt>
 
           <Tt className="text-sm text-justify mt-4 mb-4">
-            These Terms of Service ("Terms") govern your use of the Food Remedy
-            App ("App", "Service"), developed and maintained by Deakin
-            University students in collaboration with Gohper Industries ("we",
-            "our", "us"). By accessing or using the App, you agree to comply
+            These Terms of Service (&quot;Terms&quot;) govern your use of the Food Remedy
+            App (&quot;App&quot;, &quot;Service&quot;), developed and maintained by Deakin
+            University students in collaboration with Gohper Industries (&quot;we&quot;,
+            &quot;our&quot;, &quot;us&quot;). By accessing or using the App, you agree to comply
             with and be bound by these Terms. If you do not agree with any part
             of these Terms, you must not use the App.
           </Tt>
@@ -62,10 +62,10 @@ export default function TermsOfServicePage() {
           <Tt className="text-sm text-justify mb-4">
             We collect and store data you provide, including personal details
             such as allergen preferences, and scan history, to deliver the
-            App's core functionality. You retain ownership of your data, but by
+            App&apos;s core functionality. You retain ownership of your data, but by
             using the Service, you grant us permission to process and store it
             as necessary to provide and improve the Service. You may delete
-            your account and all associated data at any time through the App's
+            your account and all associated data at any time through the App&apos;s
             settings or by contacting us. Once deleted, your data cannot be
             recovered.
           </Tt>
@@ -85,7 +85,7 @@ export default function TermsOfServicePage() {
             Health and Safety Disclaimer
           </Tt>
           <Tt className="text-sm text-justify mb-4">
-            Food Remedy is provided "as is" and is intended for general
+            Food Remedy is provided &quot;as is&quot; and is intended for general
             informational purposes only. It does not replace medical advice.
             Always read product labels and consult a healthcare professional if
             you have food allergies or dietary concerns. We are not responsible

@@ -471,4 +471,4 @@ if (require.main === module) {
     .catch((error) => {
       console.error("Reconnect sync failed:", error.message);
     });
-
+}

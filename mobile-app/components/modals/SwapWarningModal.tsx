@@ -39,7 +39,7 @@ const SwapWarningModal: React.FC<SwapWarningModalProps> = ({
         {/* Message Section */}
         <View className="bg-hsl95 dark:bg-hsl10 rounded-xl p-3 mb-4">
           <Tt className="text-sm text-hsl40 dark:text-hsl80 mb-3 text-center leading-5">
-            <Tt className="font-interSemiBold text-hsl20 dark:text-hsl95">"{listName}"</Tt> contains the original product. Do you want to swap it with this recommendation?
+            <Tt className="font-interSemiBold text-hsl20 dark:text-hsl95">&quot;{listName}&quot;</Tt> contains the original product. Do you want to swap it with this recommendation?
           </Tt>
           
           <View className="flex-row items-center justify-between px-2">

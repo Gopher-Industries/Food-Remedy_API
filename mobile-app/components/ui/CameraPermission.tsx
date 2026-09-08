@@ -91,7 +91,7 @@ const CameraPermission = ({ permission, requestPermission }: CameraPermissionPro
           >
             {({ pressed }) => (
               <Tt className={`text-lg text-center text-black ${pressed && "text-white"}`}>
-                Don't Allow
+                Don&apos;t Allow
               </Tt>
             )}
           </Pressable>

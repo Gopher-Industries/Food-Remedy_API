@@ -1,7 +1,25 @@
+rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedInOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    match /USERS/{uid}/PROFILES/{profileId} {
+      allow read, write: if isSignedInOwner(uid);
+    }
+
+    match /USERS/{uid}/SHOPPING_LISTS/{listId} {
+      allow read, write: if isSignedInOwner(uid);
+
+      match /ITEMS/{barcode} {
+        allow read, write: if isSignedInOwner(uid);
+      }
+    }
+
     match /{document=**} {
-      allow read, write: if true; // Open for development, restrict for production!
+      allow read, write: if false;
     }
   }
 }
