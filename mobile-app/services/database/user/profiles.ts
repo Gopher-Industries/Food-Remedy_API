@@ -3,6 +3,7 @@ import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, deleteF
 import { fdb } from '@/config/firebaseConfig';
 import type { NutritionalProfile } from '@/types/NutritionalProfile';
 import { deleteProfileAvatar } from '@/services/storage/uploadProfileAvatar';
+import { getRequestId, safeLog } from '@/services/backend/safeErrors';
 
 const usersCol = (uid: string) => doc(fdb, `USERS/${uid}`);
 const profilesCol = (uid: string) => collection(fdb, `USERS/${uid}/PROFILES`);
@@ -100,7 +101,7 @@ export async function deleteUserProfile(uid: string, profileId: string): Promise
   try {
     await deleteProfileAvatar(uid, profileId);
   } catch (e) {
-    console.warn('Failed to delete profile avatar in Storage:', e);
+    safeLog('warn', 'avatar_delete.failed', { requestId: getRequestId(), error: e });
   }
   await deleteDoc(profileDoc(uid, profileId));
 }
