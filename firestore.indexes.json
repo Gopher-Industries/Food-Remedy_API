@@ -1,0 +1,35 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "PRODUCTS",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "productNameSearch", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "PRODUCTS",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "brandSearch", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "PRODUCTS",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "brandSearch", "order": "ASCENDING" },
+        { "fieldPath": "productNameSearch", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "PRODUCTS",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "brandSearch", "order": "ASCENDING" },
+        { "fieldPath": "nutriscoreGrade", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
