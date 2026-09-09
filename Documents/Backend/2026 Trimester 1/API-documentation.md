@@ -19,7 +19,8 @@ This document covers all backend API endpoints for the Food Remedy mobile applic
 - [Shopping Cart - PATCH](#3-patch-apishopping-cart-api)
 - [Shopping Cart - DELETE](#4-delete-apishopping-cart-api)
 - [Product Classification - POST](#5-post-apiproductsclassify)
-- [7-Day Meal Plan - POST](#6-post-api7-day-meal-plan)
+- [Missing Product Submission - POST](#6-post-apiproduct-submissions)
+- [7-Day Meal Plan - POST](#7-post-api7-day-meal-plan)
 
 ---
 
@@ -289,6 +290,123 @@ Scoring starts at 100 and applies penalties for high fat, saturated fat, sugars,
 
 ---
 
+## Missing Product Submission
+
+**Route:** `/api/product-submissions`
+**Contract version:** `v1`
+**Data source:** Admin Firestore only — `PRODUCT_SUBMISSIONS/{submissionId}`
+
+The machine-readable request, success, and error envelopes are in
+[`api/contracts/product_submission_v1.schema.json`](../../../api/contracts/product_submission_v1.schema.json).
+
+### 6. POST /api/product-submissions
+
+Creates an untrusted, moderation-only report for a barcode that is missing from
+the live catalogue. The endpoint requires a verified Firebase ID token in the
+`Authorization: Bearer <token>` header. It derives the reporter from that token;
+`userId` and every other unknown request field are rejected.
+
+The route validates the checksum and canonical digits for EAN-8, UPC-A,
+EAN-13, and GTIN-14 values. It preserves leading zeroes and checks
+`PRODUCTS/{barcode}` inside the write transaction before creating a moderation
+record. It never writes to `PRODUCTS`.
+
+**Request body**
+
+| Field | Type | Required | Constraints |
+|---|---|---:|---|
+| `version` | string | Yes | Must be `"v1"`. |
+| `barcode` | string | Yes | Valid EAN-8, UPC-A, EAN-13, or GTIN-14 with a valid check digit. |
+| `productName` | string | No | Normalized non-empty text without control characters, maximum 140 characters. |
+| `brand` | string | No | Normalized non-empty text without control characters, maximum 100 characters. |
+| `retailer` | string | No | Normalized non-empty text without control characters, maximum 100 characters. |
+| `note` | string | No | Normalized non-empty text without control characters, maximum 500 characters. |
+
+The complete JSON request is limited to 2,048 bytes. Submitted text is
+unverified, never returned by this API, and must be escaped by any future
+moderation UI.
+
+**Example request**
+
+```http
+POST /api/product-submissions
+Authorization: Bearer <Firebase ID token>
+Content-Type: application/json
+
+{
+  "version": "v1",
+  "barcode": "036000291452",
+  "productName": "Example Sparkling Water",
+  "brand": "Example Brand",
+  "retailer": "Example Retailer",
+  "note": "Not found on the store shelf."
+}
+```
+
+**Example response — 201 Created**
+
+```json
+{
+  "version": "v1",
+  "submissionId": "ps_036000291452",
+  "barcode": "036000291452",
+  "status": "PENDING",
+  "idempotent": false
+}
+```
+
+Submitting the same barcode again as the same authenticated user returns the
+existing pending report instead of creating another one:
+
+```json
+{
+  "version": "v1",
+  "submissionId": "ps_036000291452",
+  "barcode": "036000291452",
+  "status": "PENDING",
+  "idempotent": true
+}
+```
+
+One `PRODUCT_SUBMISSIONS` queue document is maintained per barcode. An opaque,
+capped server-only reporter ledger provides idempotency and a non-identifying
+`reportCount`; it is not readable or writable by Firestore clients.
+
+**Error responses**
+
+| Status | Error code | Meaning |
+|---:|---|---|
+| 400 | `INVALID_REQUEST` | Invalid JSON, version, or field value. |
+| 400 | `INVALID_BARCODE` | Unsupported, malformed, or check-digit-invalid barcode. |
+| 400 | `UNSUPPORTED_FIELD` | The request includes an unknown field, including `userId`. |
+| 401 | `UNAUTHENTICATED` | Missing, invalid, or revoked Firebase ID token. |
+| 409 | `PRODUCT_ALREADY_EXISTS` | The barcode is now present in `PRODUCTS`. |
+| 413 | `REQUEST_TOO_LARGE` | The JSON body exceeds the request bound. |
+| 429 | `RATE_LIMITED` | The authenticated reporter has exhausted the hourly submission allowance. |
+| 503 | `SUBMISSION_UNAVAILABLE` | Firestore timed out or could not safely persist the report. |
+
+Every error uses the sanitized envelope below and does not include a raw note,
+email address, token, profile data, or internal Firestore error.
+
+```json
+{
+  "version": "v1",
+  "error": {
+    "code": "PRODUCT_ALREADY_EXISTS",
+    "message": "This barcode is already available in the product catalogue."
+  }
+}
+```
+
+**Server configuration**
+
+The deployment that serves Expo API routes must provide Firebase Admin
+credentials through Application Default Credentials or the `FIREBASE_SERVICE_ACCOUNT_JSON`
+secret. This value is server-only: do not prefix it with `EXPO_PUBLIC_`, commit
+it, or expose it to the mobile application.
+
+---
+
 ## 7-Day Meal Plan
 
 **Route:** `/api/7-day-meal-plan`  
@@ -296,7 +414,7 @@ Scoring starts at 100 and applies penalties for high fat, saturated fat, sugars,
 
 ---
 
-### 6. POST /api/7-day-meal-plan
+### 7. POST /api/7-day-meal-plan
 
 Generates a personalised 7-day meal plan for a user profile. Fetches products from Firestore, classifies each one using the `/api/products/classify` endpoint, filters out unsuitable products (red classification, allergens, diet incompatibility), and assigns meals to breakfast, lunch, dinner, and snack slots for each day.
 
