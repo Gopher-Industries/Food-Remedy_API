@@ -8,6 +8,7 @@ import { useRouter } from "expo-router";
 import { Pressable, ScrollView, View } from "react-native";
 import { color, spacing } from "@/app/design/token";
 import Screen from "@/components/layout/Screen";
+import Constants from 'expo-constants';
 
 /**
  * High contrast helpers (className strings)
@@ -356,7 +357,7 @@ export default function SettingsPage() {
                 />
                 <View>
                   <Tt className="font-interMedium">About</Tt>
-                  <Tt className="text-sm">Version {"1.0.0"}</Tt>
+                  <Tt className="text-sm">Version {Constants.expoConfig?.version}</Tt>
                 </View>
               </View>
 
