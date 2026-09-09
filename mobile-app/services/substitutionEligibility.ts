@@ -57,6 +57,20 @@ export interface RankedSubstitution {
 export interface SubstitutionRankingResult {
   substitutions: RankedSubstitution[];
   emptyStateReason: SubstitutionEmptyStateReason | null;
+  metrics: SubstitutionRankingMetrics;
+}
+
+/** Aggregate-only outcomes suitable for operational metrics; no profile values. */
+export interface SubstitutionRankingMetrics {
+  candidatesExamined: number;
+  eligibleCandidates: number;
+  excludedAllergenConflict: number;
+  excludedAllergenEvidenceIncomplete: number;
+  excludedAvoidedAdditive: number;
+  excludedDietaryRestriction: number;
+  categoryDataFailures: number;
+  targetCategoryMissing: boolean;
+  reasonCodeCounts: Partial<Record<SubstitutionReasonCode, number>>;
 }
 
 const REASON_TEXT: Record<SubstitutionReasonCode, string> = {
@@ -241,7 +255,22 @@ function compareRanked(left: RankedSubstitution, right: RankedSubstitution): num
  * order cannot affect ordering, deduplication, or a no-results reason.
  */
 export function rankSubstitutionCandidates(original: Product, candidates: Product[], profile: NutritionalProfile, limit = 5): SubstitutionRankingResult {
-  if (!categories(original).length) return { substitutions: [], emptyStateReason: "INSUFFICIENT_PRODUCT_DATA" };
+  const metrics: SubstitutionRankingMetrics = {
+    candidatesExamined: 0,
+    eligibleCandidates: 0,
+    excludedAllergenConflict: 0,
+    excludedAllergenEvidenceIncomplete: 0,
+    excludedAvoidedAdditive: 0,
+    excludedDietaryRestriction: 0,
+    categoryDataFailures: 0,
+    targetCategoryMissing: false,
+    reasonCodeCounts: {},
+  };
+  if (!categories(original).length) {
+    metrics.targetCategoryMissing = true;
+    metrics.categoryDataFailures = 1;
+    return { substitutions: [], emptyStateReason: "INSUFFICIENT_PRODUCT_DATA", metrics };
+  }
   const bounded = Array.isArray(candidates) ? candidates.slice(0, MAX_SUBSTITUTION_CANDIDATES) : [];
   const byBarcode = new Map<string, RankedSubstitution>();
   let categoryDataMissing = 0;
@@ -250,19 +279,44 @@ export function rankSubstitutionCandidates(original: Product, candidates: Produc
   for (const candidate of bounded) {
     if (!candidate || String(candidate.barcode || "").trim() === String(original.barcode || "").trim()) continue;
     usableCandidates += 1;
+    metrics.candidatesExamined += 1;
     const safety = assessCandidateSafety(candidate, profile);
     if (!safety.eligible) {
-      if (safety.exclusionReason === "ALLERGEN_CONFLICT" || safety.exclusionReason === "ALLERGEN_EVIDENCE_INCOMPLETE") strictAllergenExclusions += 1;
+      if (safety.exclusionReason === "ALLERGEN_CONFLICT") {
+        strictAllergenExclusions += 1;
+        metrics.excludedAllergenConflict += 1;
+      } else if (safety.exclusionReason === "ALLERGEN_EVIDENCE_INCOMPLETE") {
+        strictAllergenExclusions += 1;
+        metrics.excludedAllergenEvidenceIncomplete += 1;
+      } else if (safety.exclusionReason === "AVOIDED_ADDITIVE") {
+        metrics.excludedAvoidedAdditive += 1;
+      } else if (safety.exclusionReason === "DIETARY_RESTRICTION") {
+        metrics.excludedDietaryRestriction += 1;
+      }
       continue;
     }
+    metrics.eligibleCandidates += 1;
     const ranked = rankCandidate(original, candidate, profile, safety);
-    if (!ranked) { categoryDataMissing += 1; continue; }
+    if (!ranked) {
+      categoryDataMissing += 1;
+      metrics.categoryDataFailures += 1;
+      continue;
+    }
     const existing = byBarcode.get(ranked.barcode);
     if (!existing || compareRanked(ranked, existing) < 0) byBarcode.set(ranked.barcode, ranked);
   }
   const substitutions = [...byBarcode.values()].sort(compareRanked).slice(0, Math.max(1, Math.min(MAX_SUBSTITUTION_RESULTS, Math.floor(limit) || 5)));
-  if (substitutions.length) return { substitutions, emptyStateReason: null };
-  if (usableCandidates > 0 && strictAllergenExclusions === usableCandidates) return { substitutions, emptyStateReason: "STRICT_ALLERGEN_EXCLUSION_ALL_CANDIDATES" };
-  if (usableCandidates > 0 && categoryDataMissing === usableCandidates) return { substitutions, emptyStateReason: "INSUFFICIENT_PRODUCT_DATA" };
-  return { substitutions, emptyStateReason: "NO_SAFE_ALTERNATIVES_IN_CATEGORY" };
+  for (const substitution of substitutions) {
+    for (const code of substitution.reasonCodes) {
+      metrics.reasonCodeCounts[code] = (metrics.reasonCodeCounts[code] ?? 0) + 1;
+    }
+  }
+  if (substitutions.length) return { substitutions, emptyStateReason: null, metrics };
+  if (usableCandidates > 0 && strictAllergenExclusions === usableCandidates) {
+    return { substitutions, emptyStateReason: "STRICT_ALLERGEN_EXCLUSION_ALL_CANDIDATES", metrics };
+  }
+  if (usableCandidates > 0 && categoryDataMissing === usableCandidates) {
+    return { substitutions, emptyStateReason: "INSUFFICIENT_PRODUCT_DATA", metrics };
+  }
+  return { substitutions, emptyStateReason: "NO_SAFE_ALTERNATIVES_IN_CATEGORY", metrics };
 }
