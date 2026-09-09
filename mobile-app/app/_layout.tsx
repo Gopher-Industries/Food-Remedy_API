@@ -10,6 +10,7 @@ import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, } 
 import * as SplashScreen from "expo-splash-screen";
 import Providers from "@/components/providers/Providers";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import AppErrorBoundary from "@/components/errorHandling/AppErrorBoundary";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -55,11 +56,13 @@ export default function RootLayout() {
   if (onboardingLoading) return null;
 
   return (
-    <Providers>
-      <SafeAreaProvider>
-        <Slot />
-      </SafeAreaProvider>
-    </Providers>
+    <AppErrorBoundary>
+      <Providers>
+        <SafeAreaProvider>
+          <Slot />
+        </SafeAreaProvider>
+      </Providers>
+    </AppErrorBoundary>
 
   );
 }
