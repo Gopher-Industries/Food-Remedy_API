@@ -2,6 +2,7 @@ import { getAdminAuth, getAdminFirestore } from "@/server/firebaseAdmin";
 import { FirestoreProductSubstitutionRepository } from "@/server/firestoreProductSubstitutionRepository";
 import { createProductSubstitutionHandler } from "@/server/productSubstitutionHandler";
 import { SUBSTITUTION_CONTRACT_VERSION } from "@/server/productSubstitutionService";
+import { ConsoleSubstitutionMetrics, EnvironmentSubstitutionRollout } from "@/server/substitutionObservability";
 
 /** POST /api/recommendations/substitutions — authenticated substitutions v1. */
 export async function POST(request: Request): Promise<Response> {
@@ -9,6 +10,8 @@ export async function POST(request: Request): Promise<Response> {
     return await createProductSubstitutionHandler({
       tokenVerifier: getAdminAuth(),
       repository: new FirestoreProductSubstitutionRepository(getAdminFirestore()),
+      rollout: new EnvironmentSubstitutionRollout(),
+      metrics: new ConsoleSubstitutionMetrics(),
     })(request);
   } catch {
     return new Response(JSON.stringify({
