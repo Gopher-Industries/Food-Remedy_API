@@ -6,8 +6,13 @@
   "definitions": {
     "SubstitutionRequest": {
       "type": "object",
-      "required": ["barcode"],
+      "required": ["version", "barcode"],
       "properties": {
+        "version": {
+          "type": "string",
+          "const": "1.0.0",
+          "description": "Substitution contract version"
+        },
         "barcode": {
           "type": "string",
           "pattern": "^[0-9]{8,14}$",
@@ -79,11 +84,11 @@
           "properties": {
             "barcode": { "type": "string" },
             "productName": { "type": "string" },
+            "brand": { "type": ["string", "null"] },
             "category": { "type": ["string", "null"] },
-            "allergens": { "type": "array", "items": { "type": "string" } },
             "nutriscoreGrade": { "type": ["string", "null"] }
           },
-          "additionalProperties": true
+          "additionalProperties": false
         },
         "substitutions": {
           "type": "array",
@@ -105,15 +110,26 @@
     },
     "ErrorEnvelope": {
       "type": "object",
-      "required": ["error"],
+      "required": ["version", "error"],
       "properties": {
+        "version": { "type": "string", "const": "1.0.0" },
         "error": {
           "type": "object",
           "required": ["code", "message"],
           "properties": {
             "code": {
               "type": "string",
-              "enum": ["INVALID_BARCODE", "INVALID_LIMIT", "MALFORMED_REQUEST_BODY", "INTERNAL_SERVER_ERROR"]
+              "enum": [
+                "UNAUTHENTICATED",
+                "INVALID_REQUEST",
+                "INVALID_BARCODE",
+                "INVALID_LIMIT",
+                "UNSUPPORTED_FIELD",
+                "REQUEST_TOO_LARGE",
+                "PRODUCT_NOT_FOUND",
+                "PROFILE_UNAVAILABLE",
+                "SUBSTITUTIONS_UNAVAILABLE"
+              ]
             },
             "message": { "type": "string" },
             "details": { "type": ["object", "array", "null"] }

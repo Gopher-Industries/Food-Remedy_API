@@ -20,6 +20,7 @@ This document covers all backend API endpoints for the Food Remedy mobile applic
 - [Shopping Cart - DELETE](#4-delete-apishopping-cart-api)
 - [Product Classification - POST](#5-post-apiproductsclassify)
 - [7-Day Meal Plan - POST](#6-post-api7-day-meal-plan)
+- [Authenticated Product Substitutions - POST](#7-post-apirecommendationssubstitutions)
 
 ---
 
@@ -412,6 +413,73 @@ Generates a personalised 7-day meal plan for a user profile. Fetches products fr
 | Status | Error Code   | Reason                                    |
 |--------|--------------|-------------------------------------------|
 | 500    | SERVER_ERROR | Firestore fetch failed or classifier error |
+
+---
+
+## Authenticated Product Substitutions
+
+### 7. POST /api/recommendations/substitutions
+
+Returns bounded, profile-aware product substitutions for the authenticated user. The server verifies the Firebase bearer token and loads only that user’s `USERS/{uid}/PROFILES` profile with `relationship: "Self"`. The request cannot select a user or profile, or provide dietary/allergen overrides.
+
+**Request headers**
+
+```text
+Authorization: Bearer <Firebase ID token>
+Content-Type: application/json
+```
+
+**Request body**
+
+```json
+{
+  "version": "1.0.0",
+  "barcode": "036000291452",
+  "limit": 5
+}
+```
+
+`barcode` must be a check-digit-valid EAN-8, UPC-A, EAN-13, or GTIN-14. Leading zeroes are preserved. `limit` defaults to 5 and is capped at 20. The request body permits only `version`, `barcode`, and `limit`.
+
+**Example response**
+
+```json
+{
+  "version": "1.0.0",
+  "status": "success",
+  "targetProduct": {
+    "barcode": "036000291452",
+    "productName": "Original snack",
+    "brand": "Example Foods",
+    "category": "snacks",
+    "nutriscoreGrade": "c"
+  },
+  "substitutions": [
+    {
+      "barcode": "036000291469",
+      "productName": "Alternative snack",
+      "brand": "Example Foods",
+      "nutriscoreGrade": "b",
+      "safetyRating": "green",
+      "confidenceScore": 0.68,
+      "reasonCodes": ["MATCH_CATEGORY_EXACT", "SAFE_ALLERGEN_FREE", "BETTER_NUTRI_SCORE"],
+      "reasons": ["Matches the product category.", "Allergen and trace declarations show no profile conflict.", "Has a better Nutri-Score."]
+    }
+  ],
+  "emptyStateReason": null
+}
+```
+
+The response omits profile values, matched restrictions, and raw Firestore documents. `emptyStateReason` is one of `INSUFFICIENT_PRODUCT_DATA`, `NO_SAFE_ALTERNATIVES_IN_CATEGORY`, or `STRICT_ALLERGEN_EXCLUSION_ALL_CANDIDATES` when there are no results.
+
+| Status | Error code | Meaning |
+| --- | --- | --- |
+| 401 | `UNAUTHENTICATED` | Missing, invalid, or revoked Firebase token. |
+| 400 | `INVALID_REQUEST`, `INVALID_BARCODE`, `INVALID_LIMIT`, `UNSUPPORTED_FIELD` | Malformed or unsupported caller input. |
+| 404 | `PRODUCT_NOT_FOUND` | The target barcode is not in `PRODUCTS`. |
+| 409 | `PROFILE_UNAVAILABLE` | The verified user has no `Self` profile. |
+| 413 | `REQUEST_TOO_LARGE` | Body exceeds 1 KiB. |
+| 503 | `SUBSTITUTIONS_UNAVAILABLE` | The request timed out, was cancelled, or Firestore was unavailable. |
 
 ---
 
