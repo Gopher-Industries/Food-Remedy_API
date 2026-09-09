@@ -25,20 +25,37 @@ const EmptyState = () => {
           or enter it manually.
         </Tt>
 
-        <Pressable
-          onPress={() => router.replace("/scan")}
-          className="bg-primary rounded-lg py-3 px-6 mt-10 border border-primary active:bg-transparent"
-        >
-          {({ pressed }) => (
-            <Tt
-              className={`text-lg text-center font-interSemiBold ${
-                pressed ? "text-primary" : "text-white"
-              }`}
-            >
-              Go Back
-            </Tt>
-          )}
-        </Pressable>
+        <View className="mt-10 gap-y-6">
+          <Pressable
+            onPress={() => router.replace("/scan")}
+            className="bg-primary rounded-lg py-3 px-6 border border-primary active:bg-transparent"
+            accessibilityRole="button"
+            accessibilityLabel="Retry Scan"
+          >
+            {({ pressed }) => (
+              <Tt
+                className={`text-lg text-center font-interSemiBold ${pressed ? "text-primary" : "text-white"
+                  }`}
+              >
+                Retry Scan
+              </Tt>
+            )}
+          </Pressable>
+          <Pressable
+            onPress={() => router.replace("/search")}
+            className="bg-transparent rounded-lg py-3 px-6 border border-primary active:bg-primary"
+            accessibilityRole="button"
+            accessibilityLabel="Enter Barcode Manually"
+          >
+            {({ pressed }) =>
+              <Tt
+                className={`text-lg text-center font-interSemiBold text-primary ${pressed ? 'text-white' : 'text-primary'}`}
+              >
+                Enter Barcode Manually
+              </Tt>
+            }
+          </Pressable>
+        </View>
       </View>
     </Screen>
   );
