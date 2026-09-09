@@ -38,3 +38,9 @@ python scripts/validate_db037_contract.py
 ```
 
 See [`Documents/Database/2026 Trimester 1/DB037-API-LOCK.md`](../../Documents/Database/2026%20Trimester%201/DB037-API-LOCK.md) for the cross-team sign-off checklist.
+
+## Product search contract
+
+[`product_search_v1.schema.json`](product_search_v1.schema.json) defines the
+compact response and sanitized errors for `GET /api/products/search`. Search
+uses the BE040 normalized fields; it never returns raw Firestore documents.
