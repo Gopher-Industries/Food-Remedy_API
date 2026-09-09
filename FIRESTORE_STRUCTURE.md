@@ -46,6 +46,21 @@
 - `/USERS/{userId}/PROFILES/{profileId}`
   - All profile fields (dynamic, but typically includes: allergies, intolerances, dietaryPreferences, preferredCategories, updated_at, etc.)
 
+## Product Submission Moderation Boundary
+- `/PRODUCT_SUBMISSIONS/ps_{normalizedBarcode}`
+  - `submissionId`: stable string derived from the normalized barcode
+  - `barcode`: canonical EAN-8, UPC-A, EAN-13, or GTIN-14 digit string
+  - `status`: `PENDING`
+  - `unverified`: `true`
+  - `productName`, `brand`, `retailer`, `note`: optional, bounded and unverified reporter text
+  - `reportCount`: bounded aggregate count; it contains no reporter identity
+  - `createdAt`, `lastReportedAt`: server timestamps
+- `/PRODUCT_SUBMISSION_REPORTERS/{opaqueHash}`
+  - Server-only, capped idempotency ledger for a reporter/barcode pair.
+  - Document IDs are hashes; no raw UID, email address, or note is used as an ID.
+- `/PRODUCT_SUBMISSION_RATE_LIMITS/{opaqueHash}`
+  - Server-only per-reporter rate-limit counter. Document IDs are hashes.
+
 ---
 
 ## Notes & Discrepancies
@@ -55,3 +70,5 @@
 - User profiles for sync are stored under `/USERS/{userId}/PROFILES/` (uppercase).
 - The `Product` interface in your code is the source of truth for product fields.
 - No direct `/profiles` root collection is used by the frontend.
+- Product submissions are a moderation queue, never a `PRODUCTS` write. Firestore
+  clients cannot read or write the submission, reporter-ledger, or rate-limit paths.

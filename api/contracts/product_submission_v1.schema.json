@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://food-remedy.dev/schemas/product-submission/v1",
+  "title": "ProductSubmissionV1",
+  "description": "Versioned moderation-only contract for POST /api/product-submissions (BE042). Barcode checksum validation and text normalization are enforced by the server in addition to this schema.",
+  "definitions": {
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "barcode"],
+      "properties": {
+        "version": { "const": "v1" },
+        "barcode": {
+          "type": "string",
+          "anyOf": [
+            { "pattern": "^\\d{8}$" },
+            { "pattern": "^\\d{12}$" },
+            { "pattern": "^\\d{13}$" },
+            { "pattern": "^\\d{14}$" }
+          ],
+          "description": "Canonical EAN-8, UPC-A, EAN-13, or GTIN-14 digits. Leading zeroes are significant."
+        },
+        "productName": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "brand": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "retailer": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "note": { "type": "string", "minLength": 1, "maxLength": 500 }
+      }
+    },
+    "success": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "submissionId", "barcode", "status", "idempotent"],
+      "properties": {
+        "version": { "const": "v1" },
+        "submissionId": { "type": "string", "pattern": "^ps_\\d{8,14}$" },
+        "barcode": { "type": "string", "pattern": "^\\d{8}$|^\\d{12}$|^\\d{13}$|^\\d{14}$" },
+        "status": { "const": "PENDING" },
+        "idempotent": { "type": "boolean" }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "error"],
+      "properties": {
+        "version": { "const": "v1" },
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "message"],
+          "properties": {
+            "code": {
+              "enum": [
+                "INVALID_REQUEST",
+                "INVALID_BARCODE",
+                "UNSUPPORTED_FIELD",
+                "UNAUTHENTICATED",
+                "PRODUCT_ALREADY_EXISTS",
+                "REQUEST_TOO_LARGE",
+                "RATE_LIMITED",
+                "SUBMISSION_UNAVAILABLE"
+              ]
+            },
+            "message": { "type": "string" }
+          }
+        },
+        "retryAfterSeconds": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}
