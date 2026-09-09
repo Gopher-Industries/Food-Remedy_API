@@ -18,8 +18,9 @@ This document covers all backend API endpoints for the Food Remedy mobile applic
 - [Shopping Cart - POST](#2-post-apishopping-cart-api)
 - [Shopping Cart - PATCH](#3-patch-apishopping-cart-api)
 - [Shopping Cart - DELETE](#4-delete-apishopping-cart-api)
-- [Product Classification - POST](#5-post-apiproductsclassify)
-- [7-Day Meal Plan - POST](#6-post-api7-day-meal-plan)
+- [Product Search - GET](#5-get-apiproductssearch)
+- [Product Classification - POST](#6-post-apiproductsclassify)
+- [7-Day Meal Plan - POST](#7-post-api7-day-meal-plan)
 
 ---
 
@@ -198,6 +199,83 @@ Removes an item completely from the user's cart.
 
 ---
 
+## Product Search
+
+**Route:** `/api/products/search`
+**Contract version:** `v1`
+**Data source:** Firestore `PRODUCTS` using BE040 `productNameSearch` and `brandSearch` fields
+
+The machine-readable response contract is in
+[`api/contracts/product_search_v1.schema.json`](../../../api/contracts/product_search_v1.schema.json).
+
+### 5. GET /api/products/search
+
+Returns compact, deduplicated product summaries for a barcode or normalized
+product-name and brand prefix. It does not return raw Firestore documents.
+
+| Parameter | Type | Required | Constraints |
+|---|---|---:|---|
+| `q` | string | Yes | NFC-normalized, curly quotes normalized, lowercased, and whitespace-collapsed using BE040. At least 2 characters and at most 80 characters, except a valid exact GTIN is permitted. |
+| `limit` | integer | No | Default 20; between 1 and 25. |
+| `cursor` | string | No | Opaque cursor returned by the previous response for the same normalized query. |
+
+Valid EAN-8, UPC-A, EAN-13, and GTIN-14 queries use an exact document lookup
+and preserve leading zeroes. Other valid queries make at most two prefix reads,
+one each against `productNameSearch` and `brandSearch`, with 50 source documents
+per read. The route produces at most 101 ranked candidates before applying the
+page limit.
+
+**Relevance order**
+
+1. Exact barcode
+2. Exact product name
+3. Product-name prefix
+4. Exact brand
+5. Brand prefix
+6. Canonical barcode, ascending, to break every remaining tie
+
+**Example request**
+
+```http
+GET /api/products/search?q=%20Oat%20Milk%20&limit=2
+```
+
+**Example response — 200 OK**
+
+```json
+{
+  "version": "v1",
+  "results": [
+    {
+      "barcode": "036000291452",
+      "productName": "Oat Milk",
+      "brand": "Example Brand",
+      "category": "Plant milks",
+      "nutriscoreGrade": "B"
+    }
+  ],
+  "nextCursor": null
+}
+```
+
+For an unchanged catalogue, callers pass `nextCursor` unchanged with the same
+`q` and `limit` to obtain the adjacent page without repeated or skipped
+barcodes. A cursor is invalid for another normalized query.
+
+The route emits only request duration, outcome, and result count metrics. It
+does not log raw search terms, profile information, or Firestore exceptions.
+
+**Error responses**
+
+| Status | Error code | Meaning |
+|---:|---|---|
+| 400 | `INVALID_QUERY` | Missing, empty, too-short, malformed, or oversized `q`. |
+| 400 | `INVALID_LIMIT` | `limit` is not an integer between 1 and 25. |
+| 400 | `INVALID_CURSOR` | Cursor is malformed or does not belong to the normalized query. |
+| 503 | `SEARCH_UNAVAILABLE` | Firestore timed out or did not return a safe response. |
+
+---
+
 ## Product Classification
 
 **Route:** `/api/products/classify`  
@@ -205,7 +283,7 @@ Removes an item completely from the user's cart.
 
 ---
 
-### 5. POST /api/products/classify
+### 6. POST /api/products/classify
 
 Classifies a product as `green`, `grey`, or `red` based on its nutritional content and the user's dietary profile. Used by other endpoints such as the meal plan generator.
 
@@ -296,7 +374,7 @@ Scoring starts at 100 and applies penalties for high fat, saturated fat, sugars,
 
 ---
 
-### 6. POST /api/7-day-meal-plan
+### 7. POST /api/7-day-meal-plan
 
 Generates a personalised 7-day meal plan for a user profile. Fetches products from Firestore, classifies each one using the `/api/products/classify` endpoint, filters out unsuitable products (red classification, allergens, diet incompatibility), and assigns meals to breakfast, lunch, dinner, and snack slots for each day.
 
