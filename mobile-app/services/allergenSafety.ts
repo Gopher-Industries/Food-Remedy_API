@@ -1,0 +1,71 @@
+import { findRestrictionRule } from "@/services/constants/AllergenTaxonomy";
+
+export const INCOMPLETE_ALLERGEN_DATA_REASON = "Allergen information is incomplete; safety is unknown.";
+export type AllergenSafetyStatus = "safe" | "unsafe" | "unknown";
+
+export interface AllergenSafetyAssessment {
+  status: AllergenSafetyStatus;
+  matchedAllergen?: string;
+  matchedAllergens?: string[];
+}
+
+export interface ProductAllergenFields {
+  allergens?: unknown;
+  traces?: unknown;
+  tracesFromIngredients?: unknown;
+  ingredients?: unknown;
+  ingredientsText?: unknown;
+}
+
+function normalizeEvidence(value: string): string {
+  return value.trim().toLowerCase().replace(/^([a-z]{2,3}):/, "").replace(/[_\s]+/g, "-").replace(/[^\p{L}\p{N}-]+/gu, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+}
+
+function normalizeRawEvidence(raw: string[]): string[] {
+  return raw.flatMap((item) => item.split(/[;,]/)).map(normalizeEvidence).filter(Boolean);
+}
+
+function readArrayEvidence(value: unknown): string[] {
+  return Array.isArray(value) ? normalizeRawEvidence(value.filter((item): item is string => typeof item === "string")) : [];
+}
+
+function readStringEvidence(value: unknown): string[] {
+  return typeof value === "string" ? normalizeRawEvidence([value]) : [];
+}
+
+function normalizeRestrictions(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return Array.from(new Set(value.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean)));
+}
+
+function containsAlias(evidence: string, alias: string): boolean {
+  const normalizedAlias = normalizeEvidence(alias);
+  return Boolean(normalizedAlias) && (`-${evidence}-`).includes(`-${normalizedAlias}-`);
+}
+
+function productEvidence(product: ProductAllergenFields): string[] {
+  return Array.from(new Set([
+    ...readArrayEvidence(product.allergens), ...readStringEvidence(product.traces),
+    ...readStringEvidence(product.tracesFromIngredients), ...readArrayEvidence(product.ingredients),
+    ...readStringEvidence(product.ingredientsText),
+  ]));
+}
+
+export function findRestrictionMatches(product: ProductAllergenFields, profileRestrictions: unknown): string[] {
+  const evidence = productEvidence(product);
+  return normalizeRestrictions(profileRestrictions).filter((restriction) => {
+    const rule = findRestrictionRule(restriction);
+    return Boolean(rule && rule.aliases.some((alias) => evidence.some((item) => containsAlias(item, alias))));
+  });
+}
+
+/** A safe result requires complete allergen and trace declarations. */
+export function assessAllergenSafety(product: ProductAllergenFields, profileRestrictions: unknown): AllergenSafetyAssessment {
+  const restrictions = normalizeRestrictions(profileRestrictions);
+  const matchedAllergens = findRestrictionMatches(product, restrictions);
+  if (matchedAllergens.length) return { status: "unsafe", matchedAllergen: matchedAllergens[0], matchedAllergens };
+
+  const hasPositiveOnlyRestriction = restrictions.some((restriction) => findRestrictionRule(restriction)?.resolution !== "declaration");
+  const declarationsComplete = Array.isArray(product.allergens) && product.allergens.length > 0 && product.allergens.every((item) => typeof item === "string" && item.trim().length > 0) && typeof product.traces === "string" && product.traces.trim().length > 0;
+  return (!declarationsComplete || hasPositiveOnlyRestriction) ? { status: "unknown" } : { status: "safe" };
+}

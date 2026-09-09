@@ -26,7 +26,8 @@ Reason codes provide standardized, language-agnostic machine tags explaining why
 
 | Code | Description |
 | :--- | :--- |
-| `SAFE_ALLERGEN_FREE` | Candidate product is verified free from all allergens flagged in user profile/overrides. |
+| `SAFE_ALLERGEN_FREE` | Candidate product is verified free from all allergens flagged in the authenticated user's profile. |
+| `ALLERGEN_EVIDENCE_INCOMPLETE` | Candidate has no active-profile allergen restriction, but its declarations are incomplete and it is returned with caution. |
 | `DIET_ALIGNED_VEGAN` | Candidate product is verified compliant with Vegan dietary restrictions. |
 | `DIET_ALIGNED_VEGETARIAN` | Candidate product is verified compliant with Vegetarian dietary restrictions. |
 | `DIET_ALIGNED_GLUTEN_FREE` | Candidate product is verified Gluten-Free. |
@@ -43,6 +44,8 @@ Reason codes provide standardized, language-agnostic machine tags explaining why
 | `LOWER_SATURATED_FAT` | Candidate product contains lower saturated fat per 100g. |
 | `HIGHER_FIBER` | Candidate product contains higher dietary fiber per 100g. |
 | `HIGHER_PROTEIN` | Candidate product contains higher protein per 100g. |
+| `HEALTH_GOAL_WEIGHT_LOSS_ALIGNED` | Candidate has lower energy per 100g for a weight-loss goal. |
+| `HEALTH_GOAL_MUSCLE_GAIN_ALIGNED` | Candidate has higher protein per 100g for a muscle-gain goal. |
 
 ---
 

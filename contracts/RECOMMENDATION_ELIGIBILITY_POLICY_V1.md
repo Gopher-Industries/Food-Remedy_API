@@ -16,7 +16,7 @@ This policy governs the eligibility of food product candidates for substitution 
 
 ### 2.1 Hard Exclusion Rules (Unsafe Candidates)
 A candidate product is **hard-excluded** (dropped completely from substitution results) if any of the following apply:
-1. **Direct Allergen Match**: The candidate contains any allergen listed in the user's active profile or request-level `avoidAllergens` overrides.
+1. **Direct Allergen Match**: The candidate contains any allergen listed in the authenticated user's active profile.
 2. **Traces / Cross-Contamination Warning**: The candidate lists traces of an allergen flagged as severe in the user profile.
 3. **Violated Dietary Restriction**: The user specifies a mandatory diet (e.g., `vegan`, `vegetarian`) and the candidate fails compliance (e.g. contains animal derivatives).
 
@@ -33,7 +33,7 @@ If evidence regarding a product's safety is missing, unparsed, or incomplete:
 ## 3. Privacy & Profile Non-Leakage
 
 To prevent leaking sensitive user health data (e.g., specific medical allergies or dietary conditions) via network response logs:
-- Profile matching is evaluated securely on the backend server.
+- Profile matching is evaluated securely on the backend server from the authenticated user's authoritative profile. Request bodies cannot override protected restrictions.
 - The API response payload **MUST NOT** echo back the user's full nutritional profile or sensitive allergen preferences.
 - Only non-sensitive, machine-readable reason codes (e.g., `SAFE_ALLERGEN_FREE`, `DIET_ALIGNED_VEGAN`) are returned.
 
