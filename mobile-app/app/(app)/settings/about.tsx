@@ -7,6 +7,7 @@ import Screen from "@/components/layout/Screen";
 import IconGeneral from "@/components/icons/IconGeneral";
 import Tt from "@/components/ui/UIText";
 import { color } from "@/app/design/token";
+import Constants from "expo-constants"
 
 export default function AboutPage() {
   return (
@@ -37,7 +38,7 @@ export default function AboutPage() {
       >
         <View className="w-[95%] mx-auto">
           <Tt className="text-lg font-interBold mt-2">Version Information</Tt>
-          <Tt className="text-sm">Current Release: 1.0.0</Tt>
+          <Tt className="text-sm">Current Release: {Constants.expoConfig?.version}</Tt>
           <Tt className="text-sm mb-4">Initial Lunch Date: To be Reviewed</Tt>
 
           <Tt className="text-lg font-interBold mt-4 mb-1">Purpose</Tt>
