@@ -170,13 +170,19 @@ class TestRecommendationContractV1(unittest.TestCase):
             "barcode": "9300601234567",
             "productName": "Dairy Milk Chocolate 180g",
             "category": "chocolates",
-            "allergens": ["Milk"],
             "nutriscoreGrade": "e",
         }
 
     def test_schema_file_exists_and_is_valid_json(self):
         self.assertIn("definitions", self.schema)
         self.assertEqual(self.schema["title"], "RecommendationSubstitutionsV1")
+
+    def test_request_contract_is_versioned_and_cannot_override_authoritative_profile(self):
+        request = self.schema["definitions"]["SubstitutionRequest"]
+        self.assertIn("version", request["required"])
+        self.assertEqual(request["properties"]["version"]["const"], "1.0.0")
+        self.assertNotIn("overrides", request["properties"])
+        self.assertFalse(request["additionalProperties"])
 
     def test_malformed_barcode_returns_sanitized_error_envelope(self):
         err = validate_barcode("INVALID_BARCODE_ABC")
@@ -234,6 +240,7 @@ class TestRecommendationContractV1(unittest.TestCase):
         self.assertNotIn("userMedicalProfile", resp_str)
         self.assertNotIn("avoidAllergens", resp_str)
         self.assertNotIn("userEmail", resp_str)
+        self.assertNotIn("allergens", resp["targetProduct"])
         self.assertEqual(resp["status"], "success")
         self.assertEqual(len(resp["substitutions"]), 1)
 
