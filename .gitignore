@@ -284,3 +284,5 @@ Documents/Guides/Leadership/Credentials/FirebaseCredentials.zip
 Documents/Guides/Leadership/Credentials/FirebaseCredentials.xlsx
 database/Release/DB052-repro/run1/products_enriched.json
 database/Release/DB052-repro/run2/products_enriched.json
+database/Release/DB052-repro/run1_v3/products_enriched.json
+database/Release/DB052-repro/run2_v3/products_enriched.json
