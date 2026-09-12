@@ -85,3 +85,96 @@ class TestExistingBehaviorPreserved:
 
     def test_tumeric_typo_fix(self):
         assert fix_common_typos('tumeric') == 'turmeric'
+class TestMainPipelineEndToEnd:
+    def test_main_produces_empty_list_for_missing_ingredients(self, tmp_path):
+        """DB048: end-to-end test — main() must never produce ingredients: null."""
+        import json
+        import os
+        from database.clean_data.cleanProductData import main
+
+        record = {
+            'code': '9310072002678',
+            'product_name': 'Test Product',
+            'brands': 'Test Brand',
+            'ingredients_text': '',
+            'ingredients_tags': [],
+            'additives_tags': [],
+            'allergens_tags': [],
+            'ingredients_analysis_tags': [],
+            'categories_tags': [],
+            'labels_tags': [],
+            'nutriments': {},
+            'product_quantity': 100,
+            'product_quantity_unit': 'g',
+            'serving_quantity': 30,
+            'serving_quantity_unit': 'g',
+            'completeness': 0.5,
+            'traces': None,
+        }
+
+        in_path = str(tmp_path / 'input.jsonl')
+        out_path = str(tmp_path / 'output.json')
+
+        with open(in_path, 'w') as f:
+            f.write(json.dumps(record) + '\n')
+
+        main(in_path, out_path)
+
+        with open(out_path) as f:
+            output = json.load(f)
+
+        if isinstance(output, list):
+            product = output[0]
+        else:
+            product = output
+
+        # ingredients must never be null — must be a list
+        assert product.get('ingredients') is not None
+        assert isinstance(product.get('ingredients'), list)
+
+    def test_main_trims_ingredients_text(self, tmp_path):
+        """DB048: main() must trim whitespace from ingredientsText."""
+        import json
+        from database.clean_data.cleanProductData import main
+
+        record = {
+            'code': '9310072002678',
+            'product_name': 'Test Product',
+            'brands': 'Test Brand',
+            'ingredients_text': '  Sugar, Salt  ',
+            'ingredients_tags': ['en:sugar', 'en:salt'],
+            'additives_tags': [],
+            'allergens_tags': [],
+            'ingredients_analysis_tags': [],
+            'categories_tags': [],
+            'labels_tags': [],
+            'nutriments': {},
+            'product_quantity': 100,
+            'product_quantity_unit': 'g',
+            'serving_quantity': 30,
+            'serving_quantity_unit': 'g',
+            'completeness': 0.5,
+            'traces': None,
+        }
+
+        in_path = str(tmp_path / 'input.jsonl')
+        out_path = str(tmp_path / 'output.json')
+
+        with open(in_path, 'w') as f:
+            f.write(json.dumps(record) + '\n')
+
+        main(in_path, out_path)
+
+        with open(out_path) as f:
+            output = json.load(f)
+
+        if isinstance(output, list):
+            product = output[0]
+        else:
+            product = output
+
+        # ingredientsText must be trimmed
+        ingredients_text = product.get('ingredientsText')
+        if ingredients_text:
+            assert not ingredients_text.startswith(' ')
+            assert not ingredients_text.endswith(' ')
