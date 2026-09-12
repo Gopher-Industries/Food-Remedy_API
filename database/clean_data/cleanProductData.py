@@ -834,21 +834,31 @@ def main(input_path: str, output_path: str):
         axis=1,
     )
     # DB002: Enhanced ingredient cleaning
-    if 'ingredientsText' in df.columns:
-        df['ingredientsText'] = df['ingredientsText'].apply(clean_ingredients_text)
+    # DB056: the DataFrame is still snake_case here — camelCase renaming only
+    # happens later, in rename_specific_columns()/camelise_columns() below —
+    # so checking for 'ingredientsText' meant this cleanup silently never ran
+    # and raw empty-string ingredient text passed straight through uncleaned.
+    # Fixed to check/operate on the real column name at this point.
+    if 'ingredients_text' in df.columns:
+        df['ingredients_text'] = df['ingredients_text'].apply(clean_ingredients_text)
     if 'ingredients_tags' in df.columns:
-        df['ingredients_tags'] = df['ingredients_tags'].apply(clean_ingredients_list)    
+        df['ingredients_tags'] = df['ingredients_tags'].apply(clean_ingredients_list)
 
     # Store list[str]; pandas StringDtype columns reject list assignment via .at / .loc cell writes.
     df["allergensDetected"] = pd.Series(index=df.index, dtype=object)
 
     for idx, record in df.iterrows():
         # String fields
-        record["ingredientsText"] = normalize_string(record.get("ingredientsText"))
+        # DB056: reference the real pre-rename column names — 'ingredientsText'
+        # doesn't exist yet at this point (rename/camelCase happens later), so
+        # record.get("ingredientsText") previously always returned None and
+        # silently created a brand-new, all-None "ingredientsText" column that
+        # could collide with the real, correctly-cleaned data once renamed.
+        record["ingredients_text"] = normalize_string(record.get("ingredients_text"))
         record["traces"] = normalize_string(record.get("traces"))
-        
+
         # List fields
-        record["ingredients"] = normalize_list(record.get("ingredients"))
+        record["ingredients_tags"] = normalize_list(record.get("ingredients_tags"))
         # OpenFoodFacts category slugs → contract: sorted, deduped (product_v1.categories)
         record["categories_tags"] = normalize_categories(record.get("categories_tags"))
         
