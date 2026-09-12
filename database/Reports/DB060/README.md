@@ -93,8 +93,8 @@ ticket; release approval should remain blocked while these items are unresolved.
 - **Ingredients/categories:** missing source information is measured and left
   unchanged. DB047 allows documented limitations where release-critical behaviour
   is unaffected; the relevant teams must confirm that assumption.
-- **DB059 dependency:** this branch validates current main independently of
-  DB059. Category-rule replay therefore shows 249 mapped and 4,751 `other`.
+- **DB059 dependency:** this report was captured with the pre-DB059 classifier
+  identified in its provenance. Category-rule replay therefore shows 249 mapped and 4,751 `other`.
   DB059's separate change improves rule coverage by 30 products. These baseline
   counts are not evidence that DB059 was applied to a regenerated candidate.
 - **Regeneration/provenance:** release-critical fixes must be merged and the
@@ -129,12 +129,15 @@ python -m pytest database/test_db060_release_validation.py \
   database/test_db040_validation_reporting.py -q
 ```
 
-Result: **20 passed**. Coverage includes saved names versus in-memory fallback,
+Result: **23 passed**. Coverage includes saved names versus in-memory fallback,
 overlapping errors, duplicate-group traceability, supported barcode lengths and
 leading zeros, integer identifiers, empty/malformed datasets, unknown allergens,
-CLI exit codes, report provenance and input preservation.
+CLI exit codes, report provenance and input preservation. Review also verified
+that failed DB021 nutrient/allergen structure diagnostics block release even
+when its optional-field schema passes, and schema-load failures return exit 2.
+The existing batch-gate result remains separately reported without changing it.
 
-I also ran `database/test_db032_barcode.py` with those tests: **37 passed, 1
+I also ran `database/test_db032_barcode.py` with those tests: **40 passed, 1
 failed**. The failure is the existing
 `test_none_barcode_is_silently_dropped_during_dedup` assertion at line 149. On
 pandas 2.3.3, the row survives but that characterisation test expects zero rows.

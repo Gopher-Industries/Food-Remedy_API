@@ -81,6 +81,12 @@ def validate(products):
         elif name.strip().lower() in PLACEHOLDER_NAMES:
             raw_name_placeholder += 1
             reasons.append("stored_product_name_placeholder")
+        # DB021's diagnostic checks can reject null structures that its optional
+        # schema fields accept. Keep those failures visible in release status.
+        if not isinstance(product.get("nutriments", {}), dict):
+            reasons.append("nutrient_structure_invalid")
+        if not isinstance(product.get("allergens", []), list):
+            reasons.append("allergen_structure_invalid")
 
     # All members of an ambiguous identifier group need review, including the first.
     for indices in barcode_groups.values():
@@ -113,6 +119,10 @@ def validate(products):
                       "Confirm conservative handling through enrichment and the API before approval.",
         })
     dataset_errors = [] if products else ["empty_dataset"]
+    dataset_errors.extend(
+        "db021_" + check + "_failed"
+        for check in ("basic_schema", "nutrients", "allergens") if not current[check]
+    )
     status = "BLOCKED" if failures or dataset_errors else (
         "REVIEW_REQUIRED" if reviews else "CHECKS_PASSED_PENDING_APPROVAL"
     )
@@ -191,7 +201,9 @@ def main():
             raise ValueError("Dataset changed during validation; rerun against a stable candidate")
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    except (OSError, ValueError, subprocess.CalledProcessError) as exc:
+    except Exception as exc:
+        # CLI boundary: schema_loader also raises generic Exception on load
+        # failure. Execution failures must return 2, not the blocked-data code 1.
         print(f"Validation could not complete: {exc}", file=sys.stderr)
         return 2
     print(f"{report['status']}: total={report['total_records']}, "

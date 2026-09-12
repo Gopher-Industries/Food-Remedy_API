@@ -9,6 +9,7 @@ import sys
 import pytest
 
 from scripts.db060_release_validation import validate
+from scripts import db060_release_validation as release_validation
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -73,6 +74,29 @@ def test_empty_allergens_require_review_without_claiming_confirmed_safety():
     assert report["invalid_records"] == 0
     assert report["status"] == "REVIEW_REQUIRED"
     assert report["required_reviews"][0]["records"] == 1
+
+
+@pytest.mark.parametrize("field,check,reason", [
+    ("nutriments", "nutrients", "nutrient_structure_invalid"),
+    ("allergens", "allergens", "allergen_structure_invalid"),
+])
+def test_failed_db021_diagnostic_cannot_report_checks_passed(field, check, reason):
+    report = validate([{**product(), field: None}])
+    assert report["current_validation"]["batch_gate_passed"] is True
+    assert report["current_validation"]["result"][check] is False
+    assert report["status"] == "BLOCKED"
+    assert report["invalid_records"] == 1
+    assert report["failed_records"][0]["reasons"] == [reason]
+    assert "db021_" + check + "_failed" in report["dataset_errors"]
+
+
+def test_schema_load_failure_returns_execution_error(tmp_path, monkeypatch):
+    source, output = tmp_path / "candidate.json", tmp_path / "report.json"
+    source.write_text(json.dumps([product()]))
+    monkeypatch.setattr(release_validation, "SCHEMA", tmp_path / "missing-schema.json")
+    monkeypatch.setattr(sys, "argv", ["db060", "--input", str(source), "--output", str(output)])
+    assert release_validation.main() == 2
+    assert not output.exists()
 
 
 @pytest.mark.parametrize("records", [{}, [product(), None], [123]])
