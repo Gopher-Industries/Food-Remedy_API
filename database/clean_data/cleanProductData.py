@@ -737,7 +737,7 @@ def clean_ingredients_list(tags) -> list | None:
     - Lowercase + strip
     - Fix known typos
     - Deduplicate
-    - Return None if result is empty
+    - RDB048: Return [] (never None) if result is empty, per contract
     """
     if not tags:
         return []
