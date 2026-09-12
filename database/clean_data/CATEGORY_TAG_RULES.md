@@ -37,6 +37,21 @@ All of the following live in **`database/clean_data/cleanProductData.py`** and r
 - In the 5,000-product sample, 23 products moved from `other` to `condiments`.
 - Existing DB031 and DB051 category tests all passed.
 
+## DB059 update — explicit beverage fallback
+
+- After every existing ordered rule, the exact cleaned tag `beverages` now maps
+  an otherwise unmapped product to `beverages`.
+- This is an exact tag check, not a segment keyword. Neither
+  `plant-based-foods-and-beverages` nor `beverages-and-beverages-preparations`
+  is sufficient on its own.
+- Existing bread, dairy, condiment and other bucket matches retain priority.
+  The raw `categories` list is preserved by the existing cleaner normalisation.
+- On the committed release candidate, rule replay changes 30 products from
+  `other` to `beverages`, with zero changes to the 249 previously mapped products.
+  This does not populate the 4,523 products with missing source categories.
+- See `database/Reports/DB059/README.md` for reproducible before/after evidence
+  and the remaining dataset-generation limitation.
+
 ## Contract fields (filtering / recommendations)
 
 | Field | Role |
