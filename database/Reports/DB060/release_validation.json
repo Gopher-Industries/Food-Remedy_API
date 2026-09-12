@@ -1,0 +1,2246 @@
+{
+  "status": "BLOCKED",
+  "release_approved": false,
+  "total_records": 5000,
+  "valid_records": 4731,
+  "invalid_records": 269,
+  "count_definition": "Unique rows passing/failing DB021 plus stored required-field checks; dataset-wide reviews are separate. Valid does not mean release approved.",
+  "dataset_errors": [],
+  "current_validation": {
+    "batch_gate_passed": false,
+    "valid_records": 4997,
+    "invalid_records": 3,
+    "result": {
+      "total_records": 5000,
+      "basic_schema": true,
+      "nutrients": true,
+      "allergens": true,
+      "barcode": {
+        "ok": false,
+        "empty": 0,
+        "invalid_format": 3,
+        "duplicates": 0,
+        "total_issues": 3
+      },
+      "schema_validation": {
+        "valid": true,
+        "invalid_count": 0,
+        "errors": []
+      }
+    }
+  },
+  "stored_required_fields": {
+    "missing_or_unusable_names": 7,
+    "placeholder_names": 259,
+    "non_string_barcodes": 0,
+    "approved_exceptions_applied": []
+  },
+  "quality": {
+    "missing_ingredient_text": 4627,
+    "missing_or_empty_allergens": 4750,
+    "missing_categories": 4523,
+    "category_rule_replay_counts": {
+      "beverages": 23,
+      "breads": 17,
+      "condiments": 23,
+      "dairy": 57,
+      "noodles and pasta": 9,
+      "oils": 3,
+      "other": 4751,
+      "seafood": 11,
+      "snacks and confectionery": 84,
+      "spreads": 22
+    }
+  },
+  "reason_counts": {
+    "barcode_invalid_format": 3,
+    "stored_product_name_missing_or_unusable": 7,
+    "stored_product_name_placeholder": 259
+  },
+  "failed_records": [
+    {
+      "index": 3,
+      "barcode": "9310012059431",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 10,
+      "barcode": "2000031938196",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 23,
+      "barcode": "9310645242972",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 24,
+      "barcode": "0475941080303",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 31,
+      "barcode": "123456789101112",
+      "productName": "Bakers Delight Hot Cross Buns",
+      "reasons": [
+        "barcode_invalid_format"
+      ]
+    },
+    {
+      "index": 36,
+      "barcode": "0300357301189",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 39,
+      "barcode": "0736697140018",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 59,
+      "barcode": "0350957020003",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 90,
+      "barcode": "793144417118850103601",
+      "productName": "Double Brie",
+      "reasons": [
+        "barcode_invalid_format"
+      ]
+    },
+    {
+      "index": 107,
+      "barcode": "793251630047590107102",
+      "productName": "Fortescue Bay",
+      "reasons": [
+        "barcode_invalid_format"
+      ]
+    },
+    {
+      "index": 125,
+      "barcode": "9357636000005",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 127,
+      "barcode": "9322214007387",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 128,
+      "barcode": "9310645309286",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 136,
+      "barcode": "9300639617749",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 139,
+      "barcode": "9314441707918",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 140,
+      "barcode": "9332703000287",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 146,
+      "barcode": "8713734320413",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 154,
+      "barcode": "9316389000441",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 155,
+      "barcode": "9322666002169",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 160,
+      "barcode": "9316389199701",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 174,
+      "barcode": "4088700044063",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 175,
+      "barcode": "7088240045268",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 201,
+      "barcode": "9326105005155",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 212,
+      "barcode": "5060070664385",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 213,
+      "barcode": "9359956000123",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 223,
+      "barcode": "4088700127278",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 224,
+      "barcode": "9338475039074",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 228,
+      "barcode": "9339337003899",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 235,
+      "barcode": "5941390017252",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 238,
+      "barcode": "9324336001847",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 262,
+      "barcode": "72102831066798",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 274,
+      "barcode": "0200911413399",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 280,
+      "barcode": "0097744081372",
+      "productName": null,
+      "reasons": [
+        "stored_product_name_missing_or_unusable"
+      ]
+    },
+    {
+      "index": 286,
+      "barcode": "9331372010719",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 306,
+      "barcode": "4352009000243",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 344,
+      "barcode": "9311208000398",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 352,
+      "barcode": "9312336042113",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 353,
+      "barcode": "4061463923585",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 354,
+      "barcode": "1340670510539",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 365,
+      "barcode": "0344645072931",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 369,
+      "barcode": "9318693048911",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 379,
+      "barcode": "9318471001480",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 385,
+      "barcode": "9317750290300",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 386,
+      "barcode": "9336318001417",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 387,
+      "barcode": "0225901012246",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 393,
+      "barcode": "93502887",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 394,
+      "barcode": "0324807058300",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 396,
+      "barcode": "0202804509110",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 401,
+      "barcode": "0744708746838",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 408,
+      "barcode": "0806809660564",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 419,
+      "barcode": "0227159250432",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 435,
+      "barcode": "9310645235882",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 444,
+      "barcode": "0097923001160",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 453,
+      "barcode": "93506885",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 456,
+      "barcode": "9310645423876",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 457,
+      "barcode": "0344643292393",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 460,
+      "barcode": "9310988016759",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 462,
+      "barcode": "9340784006708",
+      "productName": null,
+      "reasons": [
+        "stored_product_name_missing_or_unusable"
+      ]
+    },
+    {
+      "index": 463,
+      "barcode": "9320000100069",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 466,
+      "barcode": "9311770589994",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 468,
+      "barcode": "1973403840032",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 469,
+      "barcode": "22601223",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 476,
+      "barcode": "4310416026973",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 482,
+      "barcode": "9335695000204",
+      "productName": null,
+      "reasons": [
+        "stored_product_name_missing_or_unusable"
+      ]
+    },
+    {
+      "index": 483,
+      "barcode": "3317824403441",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 484,
+      "barcode": "0344643618384",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 485,
+      "barcode": "9339687340347",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 486,
+      "barcode": "4314645650381",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 488,
+      "barcode": "9300633308384",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 489,
+      "barcode": "9329000015595",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 490,
+      "barcode": "9300605153714",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 492,
+      "barcode": "4440939448614",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 493,
+      "barcode": "0342055536609",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 494,
+      "barcode": "4102330320004",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 498,
+      "barcode": "9337824003773",
+      "productName": null,
+      "reasons": [
+        "stored_product_name_missing_or_unusable"
+      ]
+    },
+    {
+      "index": 511,
+      "barcode": "9300633202866",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 521,
+      "barcode": "9333838008872",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 522,
+      "barcode": "4775997915830",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 523,
+      "barcode": "9335193009310",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 525,
+      "barcode": "0355844000151",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 537,
+      "barcode": "7076847075283",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 538,
+      "barcode": "9330798007631",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 541,
+      "barcode": "2011009806867",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 551,
+      "barcode": "4562214821278",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 553,
+      "barcode": "4902881001250",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 556,
+      "barcode": "4088700000922",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 567,
+      "barcode": "4078700218830",
+      "productName": null,
+      "reasons": [
+        "stored_product_name_missing_or_unusable"
+      ]
+    },
+    {
+      "index": 569,
+      "barcode": "0304317000303",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 574,
+      "barcode": "0031146035205",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 579,
+      "barcode": "9339687350261",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 593,
+      "barcode": "0371011003831",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 596,
+      "barcode": "9340955001143",
+      "productName": null,
+      "reasons": [
+        "stored_product_name_missing_or_unusable"
+      ]
+    },
+    {
+      "index": 601,
+      "barcode": "9310797281744",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 602,
+      "barcode": "0082184045367",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 626,
+      "barcode": "9322715005110",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 645,
+      "barcode": "0822249007417",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 657,
+      "barcode": "4314851004237",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 658,
+      "barcode": "9774645421957",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 664,
+      "barcode": "0200207004881",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 669,
+      "barcode": "5310603324065",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 671,
+      "barcode": "0097402661205",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 679,
+      "barcode": "4314753800739",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 680,
+      "barcode": "9310645389714",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 685,
+      "barcode": "9310495088171",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 695,
+      "barcode": "0344643022587",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 700,
+      "barcode": "1700960403604",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 701,
+      "barcode": "0750991003336",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 732,
+      "barcode": "5403103305556",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 734,
+      "barcode": "8009550007608",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 738,
+      "barcode": "9300653434667",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 745,
+      "barcode": "9380242000015",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 750,
+      "barcode": "9315248011758",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 773,
+      "barcode": "9346430445235",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 786,
+      "barcode": "6974675110910",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 792,
+      "barcode": "9338053009581",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 794,
+      "barcode": "9300633777678",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 841,
+      "barcode": "9310246055544",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 845,
+      "barcode": "9339687252589",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 928,
+      "barcode": "9342221008924",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 929,
+      "barcode": "2000010036004",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 969,
+      "barcode": "9300705605335",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 985,
+      "barcode": "7310895738180",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1040,
+      "barcode": "9310645220277",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1044,
+      "barcode": "1340437490685",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1068,
+      "barcode": "9351918010119",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1090,
+      "barcode": "0072302444530",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1123,
+      "barcode": "0028895000141",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1125,
+      "barcode": "8413178398145",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1181,
+      "barcode": "9310161017320",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1191,
+      "barcode": "93559454",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1203,
+      "barcode": "0027000002261",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1239,
+      "barcode": "5081120178300",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1252,
+      "barcode": "0404041850783",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1262,
+      "barcode": "1322238221231",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1280,
+      "barcode": "9350181005419",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1340,
+      "barcode": "9310015251382",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1369,
+      "barcode": "4335646000005",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1371,
+      "barcode": "9310645321905",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1384,
+      "barcode": "9333160016002",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1410,
+      "barcode": "9334176006520",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1411,
+      "barcode": "0324252961712",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1422,
+      "barcode": "9359901000123",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1423,
+      "barcode": "9359901000154",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1443,
+      "barcode": "10085549",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1449,
+      "barcode": "7355820000895",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1468,
+      "barcode": "0148555116095",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1568,
+      "barcode": "5316320005997",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1574,
+      "barcode": "9338308008819",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1628,
+      "barcode": "0354032870217",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1661,
+      "barcode": "8906094877585",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1689,
+      "barcode": "4304789065660",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1698,
+      "barcode": "3306682022284",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1710,
+      "barcode": "9321941004447",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1715,
+      "barcode": "9300830045259",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1719,
+      "barcode": "9325514001499",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1726,
+      "barcode": "9339687225712",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1767,
+      "barcode": "0200102408494",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1796,
+      "barcode": "0320194912768",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1800,
+      "barcode": "4088700342947",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1804,
+      "barcode": "0342653105788",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1807,
+      "barcode": "9300633636869",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1820,
+      "barcode": "0799600585061",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1821,
+      "barcode": "0704056046523",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1864,
+      "barcode": "9329000009976",
+      "productName": null,
+      "reasons": [
+        "stored_product_name_missing_or_unusable"
+      ]
+    },
+    {
+      "index": 1865,
+      "barcode": "0833990056012",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1885,
+      "barcode": "8938525269140",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1906,
+      "barcode": "5310807001403",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1919,
+      "barcode": "0325906006681",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1952,
+      "barcode": "9324510002295",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1977,
+      "barcode": "8710482534451",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 1983,
+      "barcode": "0344643636937",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2045,
+      "barcode": "8904063216533",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2046,
+      "barcode": "0350762005769",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2114,
+      "barcode": "8392347005773",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2156,
+      "barcode": "9313559653261",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2195,
+      "barcode": "9310645436159",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2233,
+      "barcode": "9331927004767",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2254,
+      "barcode": "9346587009991",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2273,
+      "barcode": "9300657236946",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2281,
+      "barcode": "9310645357188",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2438,
+      "barcode": "0411016151363",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2488,
+      "barcode": "0985380957048",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2492,
+      "barcode": "9312209301507",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2519,
+      "barcode": "5300600043601",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2556,
+      "barcode": "9352042002025",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2559,
+      "barcode": "0444605139862",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2571,
+      "barcode": "9300607230260",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2579,
+      "barcode": "9310645354972",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2725,
+      "barcode": "4711269679352",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2793,
+      "barcode": "4061461778217",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2795,
+      "barcode": "9934539006503",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 2891,
+      "barcode": "4304635468331",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 3131,
+      "barcode": "4088700006290",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 3275,
+      "barcode": "0789806928915",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 3283,
+      "barcode": "11411222",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 3375,
+      "barcode": "4712966210527",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 3380,
+      "barcode": "0357627227335",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 3412,
+      "barcode": "9335777004236",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 3413,
+      "barcode": "9337896003466",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 3438,
+      "barcode": "9317471001261",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 3564,
+      "barcode": "9300657225773",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 3657,
+      "barcode": "0342653103807",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 3698,
+      "barcode": "8019239742256",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 3984,
+      "barcode": "3415581311761",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4168,
+      "barcode": "9333948000162",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4172,
+      "barcode": "0344641075660",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4389,
+      "barcode": "9331880023966",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4484,
+      "barcode": "0759033000753",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4505,
+      "barcode": "9314807080129",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4610,
+      "barcode": "9351597000302",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4613,
+      "barcode": "9310246047273",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4615,
+      "barcode": "9351597000104",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4616,
+      "barcode": "9351597000517",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4618,
+      "barcode": "9351597000494",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4619,
+      "barcode": "9343882000272",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4621,
+      "barcode": "9351597000043",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4622,
+      "barcode": "9351597000531",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4623,
+      "barcode": "9351597000807",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4624,
+      "barcode": "9351597000036",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4625,
+      "barcode": "9351597000869",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4626,
+      "barcode": "9041597000562",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4627,
+      "barcode": "9351597000357",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4629,
+      "barcode": "0030000182154",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4630,
+      "barcode": "9343882000920",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4631,
+      "barcode": "9343882000173",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4633,
+      "barcode": "9343882000906",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4634,
+      "barcode": "9310053107924",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4635,
+      "barcode": "9351597000050",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4637,
+      "barcode": "9311594048172",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4638,
+      "barcode": "9343882000012",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4640,
+      "barcode": "9343882000913",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4641,
+      "barcode": "9351597000852",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4642,
+      "barcode": "9351597000029",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4643,
+      "barcode": "9351597000845",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4644,
+      "barcode": "9351597000500",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4645,
+      "barcode": "9351597000364",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4646,
+      "barcode": "9351597000074",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4647,
+      "barcode": "9343882000890",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4648,
+      "barcode": "9343882000708",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4649,
+      "barcode": "9351597000524",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4650,
+      "barcode": "9343882000111",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4651,
+      "barcode": "9343882000210",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4652,
+      "barcode": "9351597000340",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4653,
+      "barcode": "9351597000548",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4682,
+      "barcode": "9300658411007",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4688,
+      "barcode": "4088700503348",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4693,
+      "barcode": "9311755301313",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4694,
+      "barcode": "9310179187763",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4695,
+      "barcode": "9310246053403",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4696,
+      "barcode": "9310246053380",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4697,
+      "barcode": "9332428011223",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4698,
+      "barcode": "9349277000599",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4700,
+      "barcode": "9310371160373",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4701,
+      "barcode": "9310246053373",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4702,
+      "barcode": "9351597000005",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4739,
+      "barcode": "9310077313011",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4740,
+      "barcode": "9333022030214",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4804,
+      "barcode": "9300613100335",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4805,
+      "barcode": "93341912",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4806,
+      "barcode": "9315596006949",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4807,
+      "barcode": "6008470000739",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4808,
+      "barcode": "6008470000715",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4809,
+      "barcode": "9300675090858",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4810,
+      "barcode": "9311710100012",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4864,
+      "barcode": "4061461938772",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4868,
+      "barcode": "9310645315850",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4883,
+      "barcode": "9343249001027",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4898,
+      "barcode": "0001404795431",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    },
+    {
+      "index": 4961,
+      "barcode": "0810019600012",
+      "productName": "nan",
+      "reasons": [
+        "stored_product_name_placeholder"
+      ]
+    }
+  ],
+  "required_reviews": [
+    {
+      "code": "allergen_unknown_state_review",
+      "records": 4750,
+      "reason": "Missing/empty stored allergens do not prove allergen-free status. Confirm conservative handling through enrichment and the API before approval."
+    }
+  ],
+  "limitations": [
+    "No source generation/version approval is inferred from committed filenames or pipeline configuration.",
+    "DB021 validates normalised copies; this report separately checks saved barcode/name values.",
+    "Placeholder names nan/null/none/n/a require source correction or an explicit reviewed exception.",
+    "Barcode checks cover format and uniqueness, not GTIN check digits.",
+    "Missing source ingredients/categories are measured, not inferred or repaired.",
+    "This is an offline candidate check, not a Firestore, API, reproducibility or full nutrition-safety certification."
+  ],
+  "provenance": {
+    "validated_at_utc": "2026-09-12T06:50:34.801867+00:00",
+    "dataset": "products_enriched.json",
+    "dataset_sha256": "203492101ee555cc2cc09fc52a215bc325e2878b72dc075f3980181b3bb17f23",
+    "dataset_version": "unapproved-candidate-203492101ee5",
+    "dataset_generation_date": null,
+    "checkout_commit": "5f717fb6364de6415c0d7f90a5c7d0021bc72a55",
+    "validation_script_sha256": "1852d1703ac94a708fbdfd859da178c25990ad47138f29b7f4ff8db3d8f17109",
+    "db021_validator_sha256": "c019aace4efced242c67a1f8d3185b93f91d6f59b912ddaa0db0267f0c757eb6",
+    "schema_sha256": "571fc7ba295aafd7ab9bbfb821588b359c5d374f9292e8033a7eecca70d8cd87",
+    "category_classifier_sha256": "28161e7e5bf1f98b93f795ed566cd2917ed2f7ea90cba4ae960a4950776f7a51",
+    "pipeline_config_sha256": "2a993e29f4b2ffcd40b08aa62355c7035857fec8211fd9b7e47846d73d37e20f",
+    "configured_enrichment_input": "database/seeding/products_5k_enriched.json",
+    "configured_enrichment_input_sha256": "fd6648f6560a37086b0399e1b7ba3615d4158efe68217bef08056fcecda9d2a7",
+    "configured_seed_input": "database/seeding/products_enriched.json",
+    "config_note": "Observed configuration; not proof that it generated this candidate"
+  }
+}
