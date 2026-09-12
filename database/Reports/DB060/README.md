@@ -15,7 +15,7 @@ release workflow can proceed. No product records or Firestore data were changed.
 
 - Candidate: `database/seeding/products_enriched.json`
 - SHA-256: `203492101ee555cc2cc09fc52a215bc325e2878b72dc075f3980181b3bb17f23`
-- Checkout: `07ac3f45178fe49fe7935351ae6610c61794fda2`
+- Validation checkout: `5f717fb6364de6415c0d7f90a5c7d0021bc72a55`
 - Criteria: `database/Release/RELEASE_DATASET_CRITERIA.md` (DB047).
 - Agreed validator: `DB021Validator.run_all_validations()`; its full result is
   saved under `current_validation.result` in `release_validation.json`.

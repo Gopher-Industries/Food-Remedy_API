@@ -2227,13 +2227,13 @@
     "This is an offline candidate check, not a Firestore, API, reproducibility or full nutrition-safety certification."
   ],
   "provenance": {
-    "validated_at_utc": "2026-09-12T06:18:35.189445+00:00",
+    "validated_at_utc": "2026-09-12T06:50:34.801867+00:00",
     "dataset": "products_enriched.json",
     "dataset_sha256": "203492101ee555cc2cc09fc52a215bc325e2878b72dc075f3980181b3bb17f23",
     "dataset_version": "unapproved-candidate-203492101ee5",
     "dataset_generation_date": null,
-    "checkout_commit": "07ac3f45178fe49fe7935351ae6610c61794fda2",
-    "validation_script_sha256": "57ac65cfe6917a36ed12b125728e0cd742f34342795e9ae79e13fdcab138640e",
+    "checkout_commit": "5f717fb6364de6415c0d7f90a5c7d0021bc72a55",
+    "validation_script_sha256": "1852d1703ac94a708fbdfd859da178c25990ad47138f29b7f4ff8db3d8f17109",
     "db021_validator_sha256": "c019aace4efced242c67a1f8d3185b93f91d6f59b912ddaa0db0267f0c757eb6",
     "schema_sha256": "571fc7ba295aafd7ab9bbfb821588b359c5d374f9292e8033a7eecca70d8cd87",
     "category_classifier_sha256": "28161e7e5bf1f98b93f795ed566cd2917ed2f7ea90cba4ae960a4950776f7a51",
