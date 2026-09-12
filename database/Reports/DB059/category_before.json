@@ -1,0 +1,2714 @@
+{
+  "dataset": "products_enriched.json",
+  "dataset_sha256": "203492101ee555cc2cc09fc52a215bc325e2878b72dc075f3980181b3bb17f23",
+  "classifier_sha256": "28161e7e5bf1f98b93f795ed566cd2917ed2f7ea90cba4ae960a4950776f7a51",
+  "measurement": "Rule replay on stored categories; source and stored category fields are unchanged",
+  "total_records": 5000,
+  "missing_category_tags": 4523,
+  "tagged_records": 477,
+  "tag_representation_issues": 3,
+  "stored_primary_categories": 0,
+  "stored_primary_rule_conflicts_for_review": 0,
+  "mapped_records": 249,
+  "tagged_but_unmapped": 228,
+  "bucket_counts": {
+    "beverages": 23,
+    "breads": 17,
+    "condiments": 23,
+    "dairy": 57,
+    "noodles and pasta": 9,
+    "oils": 3,
+    "other": 4751,
+    "seafood": 11,
+    "snacks and confectionery": 84,
+    "spreads": 22
+  },
+  "unmapped_tag_counts": {
+    "plant-based-foods-and-beverages": 81,
+    "plant-based-foods": 76,
+    "cereals-and-potatoes": 40,
+    "cereals-and-their-products": 39,
+    "breakfasts": 31,
+    "breakfast-cereals": 30,
+    "beverages": 30,
+    "beverages-and-beverages-preparations": 28,
+    "meals": 27,
+    "fruits-and-vegetables-based-foods": 15,
+    "alcoholic-beverages": 14,
+    "dietary-supplements": 12,
+    "legumes-and-their-products": 11,
+    "dairy-substitutes": 10,
+    "vegetables-based-foods": 9,
+    "eggs": 8,
+    "farming-products": 8,
+    "plant-based-beverages": 8,
+    "frozen-foods": 8,
+    "bodybuilding-supplements": 8,
+    "soups": 8,
+    "chicken-eggs": 7,
+    "seeds": 7,
+    "dried-products": 7,
+    "meats-and-their-products": 7,
+    "frozen-desserts": 7,
+    "desserts": 7,
+    "meat-alternatives": 7,
+    "dried-plant-based-foods": 6,
+    "milk-substitutes": 6,
+    "plant-based-milk-alternatives": 6,
+    "fruits-based-foods": 6,
+    "microwave-meals": 6,
+    "extruded-cereals": 5,
+    "sandwiches": 5,
+    "tomatoes-and-their-products": 5,
+    "beers": 5,
+    "canned-foods": 5,
+    "canned-plant-based-foods": 5,
+    "meats": 5,
+    "ice-creams-and-sorbets": 5,
+    "vegetables": 5,
+    "dried-fruits": 5,
+    "flakes": 5,
+    "cereal-flakes": 5,
+    "cereals-with-fruits": 4,
+    "soy-based-drinks": 4,
+    "legume-based-drinks": 4,
+    "mueslis": 4,
+    "tofu": 4,
+    "rolled-flakes": 4,
+    "rolled-oats": 4,
+    "cereal-grains": 4,
+    "nuts-and-their-products": 4,
+    "instant-beverages": 4,
+    "beverage-preparations": 4,
+    "cereal-flakes-with-fruits": 3,
+    "wraps": 3,
+    "legumes": 3,
+    "canned-legumes": 3,
+    "prepared-meats": 3,
+    "pizzas-pies-and-quiches": 3,
+    "ice-creams": 3,
+    "protein-powders": 3,
+    "meal-replacements": 3,
+    "pasta-dishes": 3,
+    "broths": 3,
+    "cocoa-and-its-products": 3,
+    "rices": 3,
+    "energy-drinks": 3,
+    "nuts": 3,
+    "juices-and-nectars": 2,
+    "non-alcoholic-beverages": 2,
+    "tomato-pastes": 2,
+    "cereals-with-nuts": 2,
+    "pork-and-its-products": 2,
+    "pork": 2,
+    "pizzas": 2,
+    "protein-bars": 2,
+    "porridge": 2,
+    "baked-beans-in-tomato-sauce": 2,
+    "prepared-vegetables": 2,
+    "combination-meals": 2,
+    "ready-to-eat-combination-meals": 2,
+    "vegetable-based-foods-and-beverages": 2,
+    "tomatoes": 2,
+    "canned-tomatoes": 2,
+    "canned-vegetables": 2,
+    "dried-figs": 2,
+    "leaf-vegetables": 2,
+    "soups-prepared-shelf-stable": 2,
+    "pickles": 2,
+    "plant-based-pickles": 2,
+    "poultries": 2,
+    "chicken-and-its-products": 2,
+    "chickens": 2,
+    "aromatic-rices": 2,
+    "long-grain-rices": 2,
+    "indica-rices": 2,
+    "meat-analogues": 2,
+    "chicken-karaage": 2,
+    "plant-based-ice-creams": 2,
+    "meals-with-meat": 2,
+    "sultana-raisins": 2,
+    "raisins": 2,
+    "lentil-crisps": 2,
+    "cereal-based-drinks": 2,
+    "instant-coffees": 2,
+    "cocoa-and-chocolate-powders": 2,
+    "free-range-chicken-eggs": 2,
+    "chicken-wraps": 1,
+    "tea-based-beverages": 1,
+    "kombuchas": 1,
+    "fermented-drinks": 1,
+    "fermented-foods": 1,
+    "prepared-salads": 1,
+    "ginger-beer": 1,
+    "non-alcoholic-beers": 1,
+    "fruit-drink": 1,
+    "pomegranate-juice-not-from-concentrate": 1,
+    "cheese-substitutes": 1,
+    "premixed-alcoholic-beverages": 1,
+    "rum-based-alcoholic-beverages": 1,
+    "bran": 1,
+    "cereal-brans": 1,
+    "rice-brans": 1,
+    "dried-vegetables": 1,
+    "dried-tomatoes": 1,
+    "potato-preparations": 1,
+    "purees": 1,
+    "industrial-beer": 1,
+    "samosas": 1,
+    "oven-cooked-items": 1,
+    "flours": 1,
+    "diet-breakfast-cereals-fortified-with-vitamins-and-chemical-elements": 1,
+    "breakfast-cereals-fortified-with-vitamins-and-chemical-elements": 1,
+    "breakfast-cereals-diet-with-dried-fruits-fortified-with-vitamins-and-chemical-elements": 1,
+    "diet-breakfast-cereals": 1,
+    "diet-breakfast-cereals-with-fruits": 1,
+    "crunchy-cereal-clusters": 1,
+    "cereal-clusters-with-nuts": 1,
+    "free-range-boneless-whole-chicken": 1,
+    "cured-sausages": 1,
+    "salami": 1,
+    "pork-salami": 1,
+    "smoked-oysters": 1,
+    "5-beer": 1,
+    "dates": 1,
+    "fruits": 1,
+    "medjool-dates": 1,
+    "ice-cream-tubs": 1,
+    "vanilla-ice-cream-tubs": 1,
+    "mueslis-with-nuts": 1,
+    "plant-based-creams-for-cooking": 1,
+    "coconut-milks-and-creams": 1,
+    "plant-based-creams": 1,
+    "hamburgers": 1,
+    "vegetarian-hamburgers": 1,
+    "low-calorie-meal-replacement": 1,
+    "low-calorie-milkshake-meal-replacement-in-powder-reconstituted-with-skimmed-milk": 1,
+    "good": 1,
+    "hot-cross-bun": 1,
+    "white-corn-strips": 1,
+    "wholemeal-plain-flour": 1,
+    "ch": 1,
+    "flavoured-fava-beans-snack": 1,
+    "instant-pasta": 1,
+    "plain-tofu": 1,
+    "peeled-tomatoes": 1,
+    "pulses": 1,
+    "canned-chickpeas": 1,
+    "legume-seeds": 1,
+    "chickpeas": 1,
+    "products-for-specific-diets": 1,
+    "espirales-integrales": 1,
+    "specific-products": 1,
+    "ice-cream-bars": 1,
+    "corn-salad": 1,
+    "dehydrated-broths": 1,
+    "broth-stock": 1,
+    "dried-products-to-be-rehydrated": 1,
+    "chocolate-eggs": 1,
+    "easter-eggs": 1,
+    "festive-foods": 1,
+    "easter-food": 1,
+    "soup-mixes": 1,
+    "wines": 1,
+    "non-alcoholic-wines": 1,
+    "brown-rice-flour": 1,
+    "salted-pies": 1,
+    "pastilla-filled-with-chicken-pie": 1,
+    "reheatable-soups": 1,
+    "pie-dough": 1,
+    "frozen-puff-pastry": 1,
+    "puff-pastry-sheets": 1,
+    "vitamins": 1,
+    "leaf-salads": 1,
+    "salads-without-dressing": 1,
+    "grain-sourdough": 1,
+    "pastry-helpers": 1,
+    "cooking-helpers": 1,
+    "bacon": 1,
+    "mixed-vegetables": 1,
+    "corn": 1,
+    "creatine": 1,
+    "fermented-vegetables": 1,
+    "kimchi": 1,
+    "buttery-spread": 1,
+    "desert-sauce": 1,
+    "chicken-wings": 1,
+    "breakfast-cereals-rich-in-fibre": 1,
+    "plant-protein": 1,
+    "sourdough-bread": 1,
+    "coles-trio-yoghurt": 1,
+    "coles-vanilla-yoghurt": 1,
+    "whisky": 1,
+    "hard-liquors": 1,
+    "distilled-beverages": 1,
+    "bourbon-whiskeys": 1,
+    "eaux-de-vie": 1,
+    "american-whiskeys": 1,
+    "oils": 1,
+    "basmati-rices": 1,
+    "crumpets": 1,
+    "banana-daifuku-rice-cakes": 1,
+    "plant-based-ice-cream-bars": 1,
+    "weet-bix-little-kids": 1,
+    "beers-from-japan": 1,
+    "fish-analogues": 1,
+    "offals": 1,
+    "black-pudding": 1,
+    "boudins": 1,
+    "tripe-dishes": 1,
+    "fish-and-meat-and-eggs": 1,
+    "stock-beef-liquid": 1,
+    "almonds": 1,
+    "olive-tree-products": 1,
+    "whole-olives": 1,
+    "olives": 1,
+    "green-olives": 1,
+    "whole-green-olives": 1,
+    "beef-jerkies": 1,
+    "dried-meats": 1,
+    "sadi-sure": 1,
+    "bolognese-style-pasta": 1,
+    "greens-powder": 1,
+    "energy-gel": 1,
+    "baguette-sandwiches-with-and-chicken-and-vegetables-and-mayonnaise": 1,
+    "sandwiches-filled-with-cold-cuts": 1,
+    "chicken-sandwiches": 1,
+    "poultry-sandwiches": 1,
+    "french-bread-sandwiches": 1,
+    "extruded-flakes": 1,
+    "corn-flakes": 1,
+    "frozen-chicken-eggs": 1,
+    "electrolyte-powder": 1,
+    "sports-drinks": 1,
+    "nuts-and-dried-fruits": 1,
+    "yumi-s-green-olive-dip": 1,
+    "green-olive-dip": 1,
+    "beef-stock": 1,
+    "jasmine-rice": 1,
+    "sweet-potato-chickpea-chips": 1,
+    "oat-based-drinks": 1,
+    "rice-dishes": 1,
+    "beef-dishes": 1,
+    "dishwashing-liquid": 1,
+    "ju": 1,
+    "fruity-rolls": 1,
+    "woolworths-bakery-cookie-choc-chip": 1,
+    "corn-thins": 1,
+    "savoury-crackers": 1,
+    "rice-based-drinks": 1,
+    "coconut-flakes": 1,
+    "vitality": 1,
+    "shortcut-bacon": 1,
+    "puffed-rice-cakes": 1,
+    "puffed-cereal-cakes": 1,
+    "instant-chocolate-powders": 1,
+    "armaforce": 1,
+    "bioceuticals": 1,
+    "sausages": 1,
+    "canned-white-common-beans": 1,
+    "cannellini-beans": 1,
+    "canned-common-beans": 1,
+    "instant-meal": 1,
+    "bakery": 1,
+    "hard-seltzer": 1,
+    "fruit-based-beverages": 1,
+    "fruit-and-plant-milk-beverages": 1,
+    "fruit-and-soy-beverages": 1,
+    "lagers": 1,
+    "vegetable-supplement-powder": 1,
+    "chocolate-powders": 1,
+    "extra-virgin-olive-oil-spray": 1,
+    "mueslis-with-fruits": 1,
+    "open-pet-food-facts": 1,
+    "non-food-products": 1,
+    "banana-bread": 1
+  },
+  "classified_records": [
+    {
+      "index": 3,
+      "barcode": "9310012059431",
+      "bucket": "condiments"
+    },
+    {
+      "index": 7,
+      "barcode": "4088700213483",
+      "bucket": "other"
+    },
+    {
+      "index": 20,
+      "barcode": "9354792003116",
+      "bucket": "beverages"
+    },
+    {
+      "index": 23,
+      "barcode": "9310645242972",
+      "bucket": "dairy"
+    },
+    {
+      "index": 25,
+      "barcode": "9310751002057",
+      "bucket": "other"
+    },
+    {
+      "index": 26,
+      "barcode": "9300657802059",
+      "bucket": "spreads"
+    },
+    {
+      "index": 39,
+      "barcode": "0736697140018",
+      "bucket": "condiments"
+    },
+    {
+      "index": 50,
+      "barcode": "9351422000064",
+      "bucket": "other"
+    },
+    {
+      "index": 108,
+      "barcode": "9310232957876",
+      "bucket": "dairy"
+    },
+    {
+      "index": 118,
+      "barcode": "9310560015651",
+      "bucket": "dairy"
+    },
+    {
+      "index": 121,
+      "barcode": "9339687303694",
+      "bucket": "other"
+    },
+    {
+      "index": 122,
+      "barcode": "9300633539771",
+      "bucket": "other"
+    },
+    {
+      "index": 123,
+      "barcode": "9348207001231",
+      "bucket": "other"
+    },
+    {
+      "index": 125,
+      "barcode": "9357636000005",
+      "bucket": "breads"
+    },
+    {
+      "index": 128,
+      "barcode": "9310645309286",
+      "bucket": "breads"
+    },
+    {
+      "index": 148,
+      "barcode": "9310645258379",
+      "bucket": "dairy"
+    },
+    {
+      "index": 149,
+      "barcode": "9310645405322",
+      "bucket": "other"
+    },
+    {
+      "index": 156,
+      "barcode": "9324924000627",
+      "bucket": "dairy"
+    },
+    {
+      "index": 157,
+      "barcode": "9314441707925",
+      "bucket": "dairy"
+    },
+    {
+      "index": 167,
+      "barcode": "9314957074993",
+      "bucket": "dairy"
+    },
+    {
+      "index": 176,
+      "barcode": "9416050683550",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 204,
+      "barcode": "9310988021296",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 205,
+      "barcode": "9344844002204",
+      "bucket": "other"
+    },
+    {
+      "index": 211,
+      "barcode": "9343787098961",
+      "bucket": "dairy"
+    },
+    {
+      "index": 212,
+      "barcode": "5060070664385",
+      "bucket": "other"
+    },
+    {
+      "index": 213,
+      "barcode": "9359956000123",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 218,
+      "barcode": "93560825",
+      "bucket": "dairy"
+    },
+    {
+      "index": 222,
+      "barcode": "9300633349936",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 226,
+      "barcode": "9354853001457",
+      "bucket": "other"
+    },
+    {
+      "index": 227,
+      "barcode": "9311866011620",
+      "bucket": "other"
+    },
+    {
+      "index": 228,
+      "barcode": "9339337003899",
+      "bucket": "other"
+    },
+    {
+      "index": 232,
+      "barcode": "9354237000717",
+      "bucket": "other"
+    },
+    {
+      "index": 240,
+      "barcode": "9315431001894",
+      "bucket": "dairy"
+    },
+    {
+      "index": 241,
+      "barcode": "9354628000685",
+      "bucket": "other"
+    },
+    {
+      "index": 243,
+      "barcode": "9314441709127",
+      "bucket": "dairy"
+    },
+    {
+      "index": 244,
+      "barcode": "9314441713315",
+      "bucket": "dairy"
+    },
+    {
+      "index": 258,
+      "barcode": "9332956010514",
+      "bucket": "other"
+    },
+    {
+      "index": 267,
+      "barcode": "9300633714390",
+      "bucket": "seafood"
+    },
+    {
+      "index": 280,
+      "barcode": "0097744081372",
+      "bucket": "other"
+    },
+    {
+      "index": 287,
+      "barcode": "9310645405919",
+      "bucket": "other"
+    },
+    {
+      "index": 304,
+      "barcode": "10922206",
+      "bucket": "other"
+    },
+    {
+      "index": 306,
+      "barcode": "4352009000243",
+      "bucket": "spreads"
+    },
+    {
+      "index": 309,
+      "barcode": "9358432010816",
+      "bucket": "other"
+    },
+    {
+      "index": 315,
+      "barcode": "8005110003912",
+      "bucket": "other"
+    },
+    {
+      "index": 323,
+      "barcode": "4088700129449",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 333,
+      "barcode": "9314441716262",
+      "bucket": "dairy"
+    },
+    {
+      "index": 343,
+      "barcode": "8904063211460",
+      "bucket": "other"
+    },
+    {
+      "index": 344,
+      "barcode": "9311208000398",
+      "bucket": "noodles and pasta"
+    },
+    {
+      "index": 352,
+      "barcode": "9312336042113",
+      "bucket": "other"
+    },
+    {
+      "index": 353,
+      "barcode": "4061463923585",
+      "bucket": "other"
+    },
+    {
+      "index": 354,
+      "barcode": "1340670510539",
+      "bucket": "other"
+    },
+    {
+      "index": 365,
+      "barcode": "0344645072931",
+      "bucket": "dairy"
+    },
+    {
+      "index": 366,
+      "barcode": "5300647153790",
+      "bucket": "other"
+    },
+    {
+      "index": 367,
+      "barcode": "9341994000135",
+      "bucket": "beverages"
+    },
+    {
+      "index": 368,
+      "barcode": "9300605153776",
+      "bucket": "other"
+    },
+    {
+      "index": 370,
+      "barcode": "5010477356215",
+      "bucket": "other"
+    },
+    {
+      "index": 378,
+      "barcode": "9300605153783",
+      "bucket": "other"
+    },
+    {
+      "index": 380,
+      "barcode": "9300605152830",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 381,
+      "barcode": "9339423009538",
+      "bucket": "breads"
+    },
+    {
+      "index": 386,
+      "barcode": "9336318001417",
+      "bucket": "condiments"
+    },
+    {
+      "index": 387,
+      "barcode": "0225901012246",
+      "bucket": "other"
+    },
+    {
+      "index": 388,
+      "barcode": "9311594462794",
+      "bucket": "other"
+    },
+    {
+      "index": 389,
+      "barcode": "9310174113538",
+      "bucket": "other"
+    },
+    {
+      "index": 401,
+      "barcode": "0744708746838",
+      "bucket": "other"
+    },
+    {
+      "index": 407,
+      "barcode": "9341650001742",
+      "bucket": "other"
+    },
+    {
+      "index": 414,
+      "barcode": "9416312270092",
+      "bucket": "other"
+    },
+    {
+      "index": 416,
+      "barcode": "9354628000326",
+      "bucket": "other"
+    },
+    {
+      "index": 419,
+      "barcode": "0227159250432",
+      "bucket": "other"
+    },
+    {
+      "index": 430,
+      "barcode": "0735006004249",
+      "bucket": "dairy"
+    },
+    {
+      "index": 435,
+      "barcode": "9310645235882",
+      "bucket": "dairy"
+    },
+    {
+      "index": 436,
+      "barcode": "9354175000725",
+      "bucket": "other"
+    },
+    {
+      "index": 440,
+      "barcode": "9311485001255",
+      "bucket": "condiments"
+    },
+    {
+      "index": 442,
+      "barcode": "0018822062748",
+      "bucket": "spreads"
+    },
+    {
+      "index": 443,
+      "barcode": "9336243001612",
+      "bucket": "dairy"
+    },
+    {
+      "index": 444,
+      "barcode": "0097923001160",
+      "bucket": "other"
+    },
+    {
+      "index": 446,
+      "barcode": "0068958034096",
+      "bucket": "other"
+    },
+    {
+      "index": 448,
+      "barcode": "0931300001322",
+      "bucket": "breads"
+    },
+    {
+      "index": 449,
+      "barcode": "9317772107259",
+      "bucket": "spreads"
+    },
+    {
+      "index": 452,
+      "barcode": "9345856005030",
+      "bucket": "other"
+    },
+    {
+      "index": 453,
+      "barcode": "93506885",
+      "bucket": "other"
+    },
+    {
+      "index": 455,
+      "barcode": "9421021172698",
+      "bucket": "other"
+    },
+    {
+      "index": 456,
+      "barcode": "9310645423876",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 457,
+      "barcode": "0344643292393",
+      "bucket": "other"
+    },
+    {
+      "index": 462,
+      "barcode": "9340784006708",
+      "bucket": "other"
+    },
+    {
+      "index": 463,
+      "barcode": "9320000100069",
+      "bucket": "other"
+    },
+    {
+      "index": 464,
+      "barcode": "9313958009362",
+      "bucket": "other"
+    },
+    {
+      "index": 468,
+      "barcode": "1973403840032",
+      "bucket": "spreads"
+    },
+    {
+      "index": 469,
+      "barcode": "22601223",
+      "bucket": "other"
+    },
+    {
+      "index": 470,
+      "barcode": "9350848008517",
+      "bucket": "other"
+    },
+    {
+      "index": 472,
+      "barcode": "9310036063292",
+      "bucket": "other"
+    },
+    {
+      "index": 473,
+      "barcode": "9323536001015",
+      "bucket": "other"
+    },
+    {
+      "index": 474,
+      "barcode": "7825792228202",
+      "bucket": "other"
+    },
+    {
+      "index": 475,
+      "barcode": "8379763633650",
+      "bucket": "breads"
+    },
+    {
+      "index": 479,
+      "barcode": "9343723007514",
+      "bucket": "other"
+    },
+    {
+      "index": 480,
+      "barcode": "8410660083060",
+      "bucket": "oils"
+    },
+    {
+      "index": 481,
+      "barcode": "9351948000548",
+      "bucket": "other"
+    },
+    {
+      "index": 482,
+      "barcode": "9335695000204",
+      "bucket": "other"
+    },
+    {
+      "index": 483,
+      "barcode": "3317824403441",
+      "bucket": "other"
+    },
+    {
+      "index": 484,
+      "barcode": "0344643618384",
+      "bucket": "other"
+    },
+    {
+      "index": 485,
+      "barcode": "9339687340347",
+      "bucket": "dairy"
+    },
+    {
+      "index": 490,
+      "barcode": "9300605153714",
+      "bucket": "other"
+    },
+    {
+      "index": 492,
+      "barcode": "4440939448614",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 496,
+      "barcode": "30152960",
+      "bucket": "other"
+    },
+    {
+      "index": 498,
+      "barcode": "9337824003773",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 500,
+      "barcode": "17396998",
+      "bucket": "other"
+    },
+    {
+      "index": 501,
+      "barcode": "9337172000769",
+      "bucket": "dairy"
+    },
+    {
+      "index": 507,
+      "barcode": "9403110142102",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 516,
+      "barcode": "9314869005009",
+      "bucket": "other"
+    },
+    {
+      "index": 519,
+      "barcode": "5000232030764",
+      "bucket": "other"
+    },
+    {
+      "index": 521,
+      "barcode": "9333838008872",
+      "bucket": "dairy"
+    },
+    {
+      "index": 522,
+      "barcode": "4775997915830",
+      "bucket": "other"
+    },
+    {
+      "index": 524,
+      "barcode": "2000000150446",
+      "bucket": "dairy"
+    },
+    {
+      "index": 540,
+      "barcode": "9315303022842",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 542,
+      "barcode": "9334714000614",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 543,
+      "barcode": "9314820020553",
+      "bucket": "other"
+    },
+    {
+      "index": 549,
+      "barcode": "9300605153745",
+      "bucket": "other"
+    },
+    {
+      "index": 555,
+      "barcode": "5300782000164",
+      "bucket": "beverages"
+    },
+    {
+      "index": 556,
+      "barcode": "4088700000922",
+      "bucket": "dairy"
+    },
+    {
+      "index": 559,
+      "barcode": "9314441716279",
+      "bucket": "dairy"
+    },
+    {
+      "index": 567,
+      "barcode": "4078700218830",
+      "bucket": "other"
+    },
+    {
+      "index": 568,
+      "barcode": "0881314882922",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 578,
+      "barcode": "9310645423937",
+      "bucket": "other"
+    },
+    {
+      "index": 583,
+      "barcode": "9319133338180",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 586,
+      "barcode": "0353000000168",
+      "bucket": "beverages"
+    },
+    {
+      "index": 589,
+      "barcode": "9300601246496",
+      "bucket": "beverages"
+    },
+    {
+      "index": 593,
+      "barcode": "0371011003831",
+      "bucket": "spreads"
+    },
+    {
+      "index": 596,
+      "barcode": "9340955001143",
+      "bucket": "dairy"
+    },
+    {
+      "index": 597,
+      "barcode": "9351103000147",
+      "bucket": "other"
+    },
+    {
+      "index": 620,
+      "barcode": "9377172107259",
+      "bucket": "spreads"
+    },
+    {
+      "index": 622,
+      "barcode": "9310082133239",
+      "bucket": "other"
+    },
+    {
+      "index": 627,
+      "barcode": "0319745005110",
+      "bucket": "other"
+    },
+    {
+      "index": 631,
+      "barcode": "9300698502284",
+      "bucket": "other"
+    },
+    {
+      "index": 636,
+      "barcode": "9300667015142",
+      "bucket": "other"
+    },
+    {
+      "index": 647,
+      "barcode": "9403113135026",
+      "bucket": "condiments"
+    },
+    {
+      "index": 648,
+      "barcode": "4088700061992",
+      "bucket": "seafood"
+    },
+    {
+      "index": 652,
+      "barcode": "9310619001178",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 653,
+      "barcode": "9389374674866",
+      "bucket": "spreads"
+    },
+    {
+      "index": 661,
+      "barcode": "9338973000040",
+      "bucket": "other"
+    },
+    {
+      "index": 664,
+      "barcode": "0200207004881",
+      "bucket": "other"
+    },
+    {
+      "index": 666,
+      "barcode": "9335874008021",
+      "bucket": "other"
+    },
+    {
+      "index": 669,
+      "barcode": "5310603324065",
+      "bucket": "other"
+    },
+    {
+      "index": 671,
+      "barcode": "0097402661205",
+      "bucket": "spreads"
+    },
+    {
+      "index": 672,
+      "barcode": "4061464949201",
+      "bucket": "breads"
+    },
+    {
+      "index": 679,
+      "barcode": "4314753800739",
+      "bucket": "other"
+    },
+    {
+      "index": 680,
+      "barcode": "9310645389714",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 683,
+      "barcode": "9310036075943",
+      "bucket": "dairy"
+    },
+    {
+      "index": 696,
+      "barcode": "9310653106259",
+      "bucket": "beverages"
+    },
+    {
+      "index": 701,
+      "barcode": "0750991003336",
+      "bucket": "other"
+    },
+    {
+      "index": 703,
+      "barcode": "9310036079415",
+      "bucket": "dairy"
+    },
+    {
+      "index": 706,
+      "barcode": "7741913638180",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 715,
+      "barcode": "9300605155381",
+      "bucket": "other"
+    },
+    {
+      "index": 719,
+      "barcode": "9310077205675",
+      "bucket": "beverages"
+    },
+    {
+      "index": 730,
+      "barcode": "9310140012278",
+      "bucket": "other"
+    },
+    {
+      "index": 732,
+      "barcode": "5403103305556",
+      "bucket": "other"
+    },
+    {
+      "index": 733,
+      "barcode": "9348378001603",
+      "bucket": "other"
+    },
+    {
+      "index": 744,
+      "barcode": "9315596008578",
+      "bucket": "beverages"
+    },
+    {
+      "index": 745,
+      "barcode": "9380242000015",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 747,
+      "barcode": "4061459693577",
+      "bucket": "other"
+    },
+    {
+      "index": 761,
+      "barcode": "9300617075721",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 770,
+      "barcode": "9310988021173",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 773,
+      "barcode": "9346430445235",
+      "bucket": "other"
+    },
+    {
+      "index": 783,
+      "barcode": "9341650001735",
+      "bucket": "other"
+    },
+    {
+      "index": 796,
+      "barcode": "9310653106105",
+      "bucket": "dairy"
+    },
+    {
+      "index": 799,
+      "barcode": "9310072034645",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 807,
+      "barcode": "9310036079286",
+      "bucket": "beverages"
+    },
+    {
+      "index": 815,
+      "barcode": "9310264115886",
+      "bucket": "dairy"
+    },
+    {
+      "index": 821,
+      "barcode": "4061461987756",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 824,
+      "barcode": "9310645436241",
+      "bucket": "seafood"
+    },
+    {
+      "index": 842,
+      "barcode": "9300644706889",
+      "bucket": "other"
+    },
+    {
+      "index": 843,
+      "barcode": "9325651000300",
+      "bucket": "oils"
+    },
+    {
+      "index": 846,
+      "barcode": "0020662020000",
+      "bucket": "condiments"
+    },
+    {
+      "index": 861,
+      "barcode": "9353333005053",
+      "bucket": "other"
+    },
+    {
+      "index": 867,
+      "barcode": "9311648000309",
+      "bucket": "other"
+    },
+    {
+      "index": 897,
+      "barcode": "8076809583541",
+      "bucket": "noodles and pasta"
+    },
+    {
+      "index": 899,
+      "barcode": "4061459791426",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 904,
+      "barcode": "9300605155398",
+      "bucket": "other"
+    },
+    {
+      "index": 914,
+      "barcode": "0197444051870",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 919,
+      "barcode": "9341650001698",
+      "bucket": "dairy"
+    },
+    {
+      "index": 922,
+      "barcode": "4901005512610",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 925,
+      "barcode": "9354350014998",
+      "bucket": "other"
+    },
+    {
+      "index": 935,
+      "barcode": "9319133338494",
+      "bucket": "other"
+    },
+    {
+      "index": 960,
+      "barcode": "9300639618111",
+      "bucket": "dairy"
+    },
+    {
+      "index": 962,
+      "barcode": "9310434006419",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 969,
+      "barcode": "9300705605335",
+      "bucket": "other"
+    },
+    {
+      "index": 990,
+      "barcode": "9300633598976",
+      "bucket": "other"
+    },
+    {
+      "index": 991,
+      "barcode": "9300650452534",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 995,
+      "barcode": "9421904909571",
+      "bucket": "noodles and pasta"
+    },
+    {
+      "index": 1033,
+      "barcode": "9310072034942",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1035,
+      "barcode": "6006990027281",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1041,
+      "barcode": "9339067003992",
+      "bucket": "other"
+    },
+    {
+      "index": 1043,
+      "barcode": "9319133338357",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1066,
+      "barcode": "9316105010037",
+      "bucket": "other"
+    },
+    {
+      "index": 1068,
+      "barcode": "9351918010119",
+      "bucket": "seafood"
+    },
+    {
+      "index": 1071,
+      "barcode": "9321941006205",
+      "bucket": "other"
+    },
+    {
+      "index": 1074,
+      "barcode": "9300633579838",
+      "bucket": "other"
+    },
+    {
+      "index": 1076,
+      "barcode": "0324056039730",
+      "bucket": "dairy"
+    },
+    {
+      "index": 1112,
+      "barcode": "9310653105894",
+      "bucket": "dairy"
+    },
+    {
+      "index": 1130,
+      "barcode": "9310653106242",
+      "bucket": "beverages"
+    },
+    {
+      "index": 1134,
+      "barcode": "9350007004442",
+      "bucket": "other"
+    },
+    {
+      "index": 1147,
+      "barcode": "9351594002712",
+      "bucket": "other"
+    },
+    {
+      "index": 1148,
+      "barcode": "9354849006596",
+      "bucket": "noodles and pasta"
+    },
+    {
+      "index": 1150,
+      "barcode": "9326666610430",
+      "bucket": "other"
+    },
+    {
+      "index": 1159,
+      "barcode": "9310232954042",
+      "bucket": "beverages"
+    },
+    {
+      "index": 1161,
+      "barcode": "9311485600618",
+      "bucket": "spreads"
+    },
+    {
+      "index": 1163,
+      "barcode": "8801024057054",
+      "bucket": "other"
+    },
+    {
+      "index": 1174,
+      "barcode": "9319133338470",
+      "bucket": "other"
+    },
+    {
+      "index": 1179,
+      "barcode": "9310653105665",
+      "bucket": "dairy"
+    },
+    {
+      "index": 1186,
+      "barcode": "9328327002257",
+      "bucket": "condiments"
+    },
+    {
+      "index": 1192,
+      "barcode": "9313820002798",
+      "bucket": "beverages"
+    },
+    {
+      "index": 1198,
+      "barcode": "9300675095075",
+      "bucket": "beverages"
+    },
+    {
+      "index": 1203,
+      "barcode": "0027000002261",
+      "bucket": "other"
+    },
+    {
+      "index": 1213,
+      "barcode": "5060175391049",
+      "bucket": "other"
+    },
+    {
+      "index": 1222,
+      "barcode": "01777116",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1232,
+      "barcode": "9350002000364",
+      "bucket": "other"
+    },
+    {
+      "index": 1233,
+      "barcode": "11897017",
+      "bucket": "other"
+    },
+    {
+      "index": 1235,
+      "barcode": "9300605153721",
+      "bucket": "other"
+    },
+    {
+      "index": 1239,
+      "barcode": "5081120178300",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1241,
+      "barcode": "0810116123568",
+      "bucket": "beverages"
+    },
+    {
+      "index": 1252,
+      "barcode": "0404041850783",
+      "bucket": "breads"
+    },
+    {
+      "index": 1253,
+      "barcode": "9339687335992",
+      "bucket": "breads"
+    },
+    {
+      "index": 1258,
+      "barcode": "9322248002044",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1269,
+      "barcode": "9326666710222",
+      "bucket": "other"
+    },
+    {
+      "index": 1271,
+      "barcode": "9300605154797",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1276,
+      "barcode": "4088700284759",
+      "bucket": "seafood"
+    },
+    {
+      "index": 1280,
+      "barcode": "9350181005419",
+      "bucket": "other"
+    },
+    {
+      "index": 1295,
+      "barcode": "9310072034607",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1296,
+      "barcode": "9312336048283",
+      "bucket": "other"
+    },
+    {
+      "index": 1332,
+      "barcode": "9338033006456",
+      "bucket": "other"
+    },
+    {
+      "index": 1338,
+      "barcode": "9349965000849",
+      "bucket": "spreads"
+    },
+    {
+      "index": 1348,
+      "barcode": "9326666710208",
+      "bucket": "other"
+    },
+    {
+      "index": 1369,
+      "barcode": "4335646000005",
+      "bucket": "other"
+    },
+    {
+      "index": 1371,
+      "barcode": "9310645321905",
+      "bucket": "other"
+    },
+    {
+      "index": 1374,
+      "barcode": "4061459334210",
+      "bucket": "other"
+    },
+    {
+      "index": 1384,
+      "barcode": "9333160016002",
+      "bucket": "condiments"
+    },
+    {
+      "index": 1407,
+      "barcode": "9316417002348",
+      "bucket": "other"
+    },
+    {
+      "index": 1410,
+      "barcode": "9334176006520",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1411,
+      "barcode": "0324252961712",
+      "bucket": "beverages"
+    },
+    {
+      "index": 1415,
+      "barcode": "9352359000561",
+      "bucket": "breads"
+    },
+    {
+      "index": 1421,
+      "barcode": "8886467126239",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1422,
+      "barcode": "9359901000123",
+      "bucket": "other"
+    },
+    {
+      "index": 1424,
+      "barcode": "9300617304555",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1425,
+      "barcode": "9309000318155",
+      "bucket": "other"
+    },
+    {
+      "index": 1429,
+      "barcode": "9415382007508",
+      "bucket": "other"
+    },
+    {
+      "index": 1432,
+      "barcode": "4061459317589",
+      "bucket": "seafood"
+    },
+    {
+      "index": 1441,
+      "barcode": "9329521002760",
+      "bucket": "other"
+    },
+    {
+      "index": 1449,
+      "barcode": "7355820000895",
+      "bucket": "breads"
+    },
+    {
+      "index": 1456,
+      "barcode": "9310653106563",
+      "bucket": "dairy"
+    },
+    {
+      "index": 1482,
+      "barcode": "4061461988678",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1488,
+      "barcode": "9329982024998",
+      "bucket": "other"
+    },
+    {
+      "index": 1495,
+      "barcode": "9354853001211",
+      "bucket": "other"
+    },
+    {
+      "index": 1508,
+      "barcode": "9316169400652",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1516,
+      "barcode": "9354849002819",
+      "bucket": "other"
+    },
+    {
+      "index": 1523,
+      "barcode": "9310645342382",
+      "bucket": "breads"
+    },
+    {
+      "index": 1529,
+      "barcode": "9300617306542",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1535,
+      "barcode": "9314869004002",
+      "bucket": "other"
+    },
+    {
+      "index": 1542,
+      "barcode": "9300605157095",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1549,
+      "barcode": "9346758005333",
+      "bucket": "other"
+    },
+    {
+      "index": 1573,
+      "barcode": "9310663563400",
+      "bucket": "noodles and pasta"
+    },
+    {
+      "index": 1592,
+      "barcode": "4061463792969",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1597,
+      "barcode": "9347801003115",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1604,
+      "barcode": "9350465010214",
+      "bucket": "condiments"
+    },
+    {
+      "index": 1628,
+      "barcode": "0354032870217",
+      "bucket": "other"
+    },
+    {
+      "index": 1637,
+      "barcode": "9300617305989",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1638,
+      "barcode": "9333515007037",
+      "bucket": "dairy"
+    },
+    {
+      "index": 1658,
+      "barcode": "9310113905682",
+      "bucket": "other"
+    },
+    {
+      "index": 1680,
+      "barcode": "9400581052848",
+      "bucket": "other"
+    },
+    {
+      "index": 1688,
+      "barcode": "9300830083268",
+      "bucket": "condiments"
+    },
+    {
+      "index": 1689,
+      "barcode": "4304789065660",
+      "bucket": "condiments"
+    },
+    {
+      "index": 1694,
+      "barcode": "9339687327294",
+      "bucket": "other"
+    },
+    {
+      "index": 1698,
+      "barcode": "3306682022284",
+      "bucket": "other"
+    },
+    {
+      "index": 1699,
+      "barcode": "8329662018904",
+      "bucket": "other"
+    },
+    {
+      "index": 1701,
+      "barcode": "9300617301424",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1704,
+      "barcode": "9369998198221",
+      "bucket": "other"
+    },
+    {
+      "index": 1710,
+      "barcode": "9321941004447",
+      "bucket": "other"
+    },
+    {
+      "index": 1715,
+      "barcode": "9300830045259",
+      "bucket": "other"
+    },
+    {
+      "index": 1718,
+      "barcode": "9310645368085",
+      "bucket": "other"
+    },
+    {
+      "index": 1726,
+      "barcode": "9339687225712",
+      "bucket": "other"
+    },
+    {
+      "index": 1729,
+      "barcode": "0070177231590",
+      "bucket": "beverages"
+    },
+    {
+      "index": 1733,
+      "barcode": "9300605153578",
+      "bucket": "other"
+    },
+    {
+      "index": 1734,
+      "barcode": "4061461988319",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1736,
+      "barcode": "4061464789470",
+      "bucket": "other"
+    },
+    {
+      "index": 1777,
+      "barcode": "9354628000692",
+      "bucket": "other"
+    },
+    {
+      "index": 1778,
+      "barcode": "9300602378226",
+      "bucket": "other"
+    },
+    {
+      "index": 1794,
+      "barcode": "9369900022941",
+      "bucket": "beverages"
+    },
+    {
+      "index": 1796,
+      "barcode": "0320194912768",
+      "bucket": "dairy"
+    },
+    {
+      "index": 1800,
+      "barcode": "4088700342947",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1804,
+      "barcode": "0342653105788",
+      "bucket": "dairy"
+    },
+    {
+      "index": 1805,
+      "barcode": "9416892502088",
+      "bucket": "dairy"
+    },
+    {
+      "index": 1816,
+      "barcode": "9300830084845",
+      "bucket": "condiments"
+    },
+    {
+      "index": 1826,
+      "barcode": "4088700092354",
+      "bucket": "dairy"
+    },
+    {
+      "index": 1835,
+      "barcode": "4061459735048",
+      "bucket": "other"
+    },
+    {
+      "index": 1848,
+      "barcode": "9300605153806",
+      "bucket": "other"
+    },
+    {
+      "index": 1849,
+      "barcode": "8696487008671",
+      "bucket": "oils"
+    },
+    {
+      "index": 1865,
+      "barcode": "0833990056012",
+      "bucket": "condiments"
+    },
+    {
+      "index": 1867,
+      "barcode": "4061459801569",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1868,
+      "barcode": "5014998004037",
+      "bucket": "dairy"
+    },
+    {
+      "index": 1879,
+      "barcode": "4061464640399",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1885,
+      "barcode": "8938525269140",
+      "bucket": "other"
+    },
+    {
+      "index": 1888,
+      "barcode": "9310146972187",
+      "bucket": "noodles and pasta"
+    },
+    {
+      "index": 1919,
+      "barcode": "0325906006681",
+      "bucket": "beverages"
+    },
+    {
+      "index": 1929,
+      "barcode": "9314488207501",
+      "bucket": "spreads"
+    },
+    {
+      "index": 1932,
+      "barcode": "9315303018913",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 1947,
+      "barcode": "9310645290836",
+      "bucket": "breads"
+    },
+    {
+      "index": 1964,
+      "barcode": "9310645422138",
+      "bucket": "other"
+    },
+    {
+      "index": 1972,
+      "barcode": "9310645363295",
+      "bucket": "seafood"
+    },
+    {
+      "index": 1977,
+      "barcode": "8710482534451",
+      "bucket": "breads"
+    },
+    {
+      "index": 1978,
+      "barcode": "9052845678907",
+      "bucket": "other"
+    },
+    {
+      "index": 1986,
+      "barcode": "9369999627614",
+      "bucket": "beverages"
+    },
+    {
+      "index": 1990,
+      "barcode": "5027324003543",
+      "bucket": "other"
+    },
+    {
+      "index": 1992,
+      "barcode": "9300605155435",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 2004,
+      "barcode": "9310645422022",
+      "bucket": "condiments"
+    },
+    {
+      "index": 2005,
+      "barcode": "9356335003881",
+      "bucket": "other"
+    },
+    {
+      "index": 2033,
+      "barcode": "9310434006297",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 2040,
+      "barcode": "9310645436142",
+      "bucket": "other"
+    },
+    {
+      "index": 2044,
+      "barcode": "8850939915881",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 2045,
+      "barcode": "8904063216533",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 2046,
+      "barcode": "0350762005769",
+      "bucket": "other"
+    },
+    {
+      "index": 2059,
+      "barcode": "9310881915418",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 2064,
+      "barcode": "9335779000045",
+      "bucket": "other"
+    },
+    {
+      "index": 2089,
+      "barcode": "9312726072225",
+      "bucket": "spreads"
+    },
+    {
+      "index": 2099,
+      "barcode": "4061464756250",
+      "bucket": "other"
+    },
+    {
+      "index": 2100,
+      "barcode": "9339687096749",
+      "bucket": "other"
+    },
+    {
+      "index": 2101,
+      "barcode": "9314807087586",
+      "bucket": "other"
+    },
+    {
+      "index": 2110,
+      "barcode": "4061459735055",
+      "bucket": "other"
+    },
+    {
+      "index": 2112,
+      "barcode": "9310012062578",
+      "bucket": "condiments"
+    },
+    {
+      "index": 2113,
+      "barcode": "9310015256592",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 2114,
+      "barcode": "8392347005773",
+      "bucket": "other"
+    },
+    {
+      "index": 2116,
+      "barcode": "9310645422145",
+      "bucket": "other"
+    },
+    {
+      "index": 2141,
+      "barcode": "9330752004522",
+      "bucket": "other"
+    },
+    {
+      "index": 2146,
+      "barcode": "9300617301462",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 2165,
+      "barcode": "9421905238236",
+      "bucket": "other"
+    },
+    {
+      "index": 2167,
+      "barcode": "9421025552793",
+      "bucket": "dairy"
+    },
+    {
+      "index": 2168,
+      "barcode": "9343518008528",
+      "bucket": "other"
+    },
+    {
+      "index": 2187,
+      "barcode": "9319946008416",
+      "bucket": "other"
+    },
+    {
+      "index": 2189,
+      "barcode": "6317814401676",
+      "bucket": "other"
+    },
+    {
+      "index": 2193,
+      "barcode": "9311796701035",
+      "bucket": "other"
+    },
+    {
+      "index": 2195,
+      "barcode": "9310645436159",
+      "bucket": "other"
+    },
+    {
+      "index": 2196,
+      "barcode": "9339687354795",
+      "bucket": "other"
+    },
+    {
+      "index": 2202,
+      "barcode": "9310645406107",
+      "bucket": "breads"
+    },
+    {
+      "index": 2206,
+      "barcode": "0434023660239",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 2239,
+      "barcode": "9317444000208",
+      "bucket": "other"
+    },
+    {
+      "index": 2242,
+      "barcode": "4061464755215",
+      "bucket": "seafood"
+    },
+    {
+      "index": 2281,
+      "barcode": "9310645357188",
+      "bucket": "other"
+    },
+    {
+      "index": 2285,
+      "barcode": "9310645423999",
+      "bucket": "spreads"
+    },
+    {
+      "index": 2293,
+      "barcode": "9320000119122",
+      "bucket": "other"
+    },
+    {
+      "index": 2302,
+      "barcode": "0931803323235",
+      "bucket": "condiments"
+    },
+    {
+      "index": 2305,
+      "barcode": "8711327603912",
+      "bucket": "other"
+    },
+    {
+      "index": 2310,
+      "barcode": "9319133338111",
+      "bucket": "other"
+    },
+    {
+      "index": 2351,
+      "barcode": "9310140005737",
+      "bucket": "other"
+    },
+    {
+      "index": 2378,
+      "barcode": "9339687338887",
+      "bucket": "other"
+    },
+    {
+      "index": 2386,
+      "barcode": "9315031211631",
+      "bucket": "other"
+    },
+    {
+      "index": 2391,
+      "barcode": "9356335003959",
+      "bucket": "other"
+    },
+    {
+      "index": 2394,
+      "barcode": "9339687276776",
+      "bucket": "other"
+    },
+    {
+      "index": 2412,
+      "barcode": "9315737006289",
+      "bucket": "spreads"
+    },
+    {
+      "index": 2418,
+      "barcode": "9310645442808",
+      "bucket": "other"
+    },
+    {
+      "index": 2482,
+      "barcode": "4061464955813",
+      "bucket": "breads"
+    },
+    {
+      "index": 2496,
+      "barcode": "9312353007690",
+      "bucket": "noodles and pasta"
+    },
+    {
+      "index": 2500,
+      "barcode": "4061459794984",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 2504,
+      "barcode": "9310354218398",
+      "bucket": "dairy"
+    },
+    {
+      "index": 2519,
+      "barcode": "5300600043601",
+      "bucket": "other"
+    },
+    {
+      "index": 2547,
+      "barcode": "9315431000606",
+      "bucket": "dairy"
+    },
+    {
+      "index": 2550,
+      "barcode": "9319946008911",
+      "bucket": "other"
+    },
+    {
+      "index": 2559,
+      "barcode": "0444605139862",
+      "bucket": "other"
+    },
+    {
+      "index": 2562,
+      "barcode": "9355848015084",
+      "bucket": "other"
+    },
+    {
+      "index": 2571,
+      "barcode": "9300607230260",
+      "bucket": "other"
+    },
+    {
+      "index": 2619,
+      "barcode": "9300605154407",
+      "bucket": "other"
+    },
+    {
+      "index": 2627,
+      "barcode": "9332428009794",
+      "bucket": "dairy"
+    },
+    {
+      "index": 2638,
+      "barcode": "9332428012282",
+      "bucket": "dairy"
+    },
+    {
+      "index": 2639,
+      "barcode": "9332428009787",
+      "bucket": "dairy"
+    },
+    {
+      "index": 2661,
+      "barcode": "9300617301530",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 2713,
+      "barcode": "0344643227197",
+      "bucket": "other"
+    },
+    {
+      "index": 2720,
+      "barcode": "4061459392890",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 2722,
+      "barcode": "0810019602863",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 2734,
+      "barcode": "9310761731121",
+      "bucket": "other"
+    },
+    {
+      "index": 2745,
+      "barcode": "9300658410871",
+      "bucket": "dairy"
+    },
+    {
+      "index": 2792,
+      "barcode": "9319133338586",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 2827,
+      "barcode": "4061462110801",
+      "bucket": "other"
+    },
+    {
+      "index": 2836,
+      "barcode": "4710022062332",
+      "bucket": "other"
+    },
+    {
+      "index": 2837,
+      "barcode": "9337944001130",
+      "bucket": "condiments"
+    },
+    {
+      "index": 2838,
+      "barcode": "9300617301448",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 2877,
+      "barcode": "9339687336012",
+      "bucket": "breads"
+    },
+    {
+      "index": 2881,
+      "barcode": "4088700172711",
+      "bucket": "dairy"
+    },
+    {
+      "index": 2891,
+      "barcode": "4304635468331",
+      "bucket": "other"
+    },
+    {
+      "index": 2915,
+      "barcode": "9300605155152",
+      "bucket": "other"
+    },
+    {
+      "index": 2964,
+      "barcode": "0746160021799",
+      "bucket": "other"
+    },
+    {
+      "index": 2979,
+      "barcode": "5200314301182",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 3049,
+      "barcode": "9310560024264",
+      "bucket": "condiments"
+    },
+    {
+      "index": 3064,
+      "barcode": "0098444034415",
+      "bucket": "condiments"
+    },
+    {
+      "index": 3086,
+      "barcode": "3453669000015",
+      "bucket": "other"
+    },
+    {
+      "index": 3094,
+      "barcode": "9300650452572",
+      "bucket": "other"
+    },
+    {
+      "index": 3095,
+      "barcode": "9300650452763",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 3102,
+      "barcode": "93625340",
+      "bucket": "other"
+    },
+    {
+      "index": 3103,
+      "barcode": "93600439",
+      "bucket": "other"
+    },
+    {
+      "index": 3121,
+      "barcode": "9341650001711",
+      "bucket": "other"
+    },
+    {
+      "index": 3129,
+      "barcode": "9319946007204",
+      "bucket": "other"
+    },
+    {
+      "index": 3131,
+      "barcode": "4088700006290",
+      "bucket": "other"
+    },
+    {
+      "index": 3140,
+      "barcode": "9323536580022",
+      "bucket": "other"
+    },
+    {
+      "index": 3185,
+      "barcode": "4800361424820",
+      "bucket": "other"
+    },
+    {
+      "index": 3193,
+      "barcode": "9354792005769",
+      "bucket": "other"
+    },
+    {
+      "index": 3216,
+      "barcode": "9339687105038",
+      "bucket": "other"
+    },
+    {
+      "index": 3222,
+      "barcode": "9317276005525",
+      "bucket": "spreads"
+    },
+    {
+      "index": 3238,
+      "barcode": "4061464959002",
+      "bucket": "other"
+    },
+    {
+      "index": 3278,
+      "barcode": "9353333005817",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 3285,
+      "barcode": "4061464755130",
+      "bucket": "seafood"
+    },
+    {
+      "index": 3313,
+      "barcode": "9358432021966",
+      "bucket": "other"
+    },
+    {
+      "index": 3324,
+      "barcode": "9334169001198",
+      "bucket": "other"
+    },
+    {
+      "index": 3358,
+      "barcode": "0930052277252",
+      "bucket": "dairy"
+    },
+    {
+      "index": 3383,
+      "barcode": "0310758003759",
+      "bucket": "other"
+    },
+    {
+      "index": 3384,
+      "barcode": "0527509799735",
+      "bucket": "other"
+    },
+    {
+      "index": 3388,
+      "barcode": "9337724004337",
+      "bucket": "noodles and pasta"
+    },
+    {
+      "index": 3398,
+      "barcode": "9311890250095",
+      "bucket": "other"
+    },
+    {
+      "index": 3407,
+      "barcode": "9300662891406",
+      "bucket": "dairy"
+    },
+    {
+      "index": 3413,
+      "barcode": "9337896003466",
+      "bucket": "other"
+    },
+    {
+      "index": 3423,
+      "barcode": "9310072034966",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 3452,
+      "barcode": "9318627000671",
+      "bucket": "condiments"
+    },
+    {
+      "index": 3463,
+      "barcode": "9310371142164",
+      "bucket": "other"
+    },
+    {
+      "index": 3465,
+      "barcode": "0936014615667",
+      "bucket": "spreads"
+    },
+    {
+      "index": 3483,
+      "barcode": "9319765500023",
+      "bucket": "spreads"
+    },
+    {
+      "index": 3545,
+      "barcode": "8600102187771",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 3550,
+      "barcode": "9310012062714",
+      "bucket": "condiments"
+    },
+    {
+      "index": 3562,
+      "barcode": "9300657225759",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 3594,
+      "barcode": "9313171000214",
+      "bucket": "breads"
+    },
+    {
+      "index": 3606,
+      "barcode": "5201083350258",
+      "bucket": "beverages"
+    },
+    {
+      "index": 3621,
+      "barcode": "9311394200589",
+      "bucket": "other"
+    },
+    {
+      "index": 3643,
+      "barcode": "9333278000689",
+      "bucket": "other"
+    },
+    {
+      "index": 3669,
+      "barcode": "9311174005489",
+      "bucket": "dairy"
+    },
+    {
+      "index": 3672,
+      "barcode": "9300637508490",
+      "bucket": "other"
+    },
+    {
+      "index": 3711,
+      "barcode": "9316389195505",
+      "bucket": "dairy"
+    },
+    {
+      "index": 3751,
+      "barcode": "0344643227289",
+      "bucket": "other"
+    },
+    {
+      "index": 3823,
+      "barcode": "9300605152151",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 3840,
+      "barcode": "9350177094021",
+      "bucket": "seafood"
+    },
+    {
+      "index": 3850,
+      "barcode": "4061459735024",
+      "bucket": "other"
+    },
+    {
+      "index": 3859,
+      "barcode": "9300658411229",
+      "bucket": "dairy"
+    },
+    {
+      "index": 3895,
+      "barcode": "7088240156704",
+      "bucket": "dairy"
+    },
+    {
+      "index": 3924,
+      "barcode": "5000396055337",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 3933,
+      "barcode": "9311710802756",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 3974,
+      "barcode": "8024431009991",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 3975,
+      "barcode": "8024431009984",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 3988,
+      "barcode": "9300633308414",
+      "bucket": "other"
+    },
+    {
+      "index": 3997,
+      "barcode": "0680569630490",
+      "bucket": "other"
+    },
+    {
+      "index": 4095,
+      "barcode": "9333278007503",
+      "bucket": "seafood"
+    },
+    {
+      "index": 4116,
+      "barcode": "9349580005687",
+      "bucket": "other"
+    },
+    {
+      "index": 4166,
+      "barcode": "90456541",
+      "bucket": "beverages"
+    },
+    {
+      "index": 4172,
+      "barcode": "0344641075660",
+      "bucket": "other"
+    },
+    {
+      "index": 4184,
+      "barcode": "9300657801199",
+      "bucket": "spreads"
+    },
+    {
+      "index": 4339,
+      "barcode": "9345663002796",
+      "bucket": "other"
+    },
+    {
+      "index": 4350,
+      "barcode": "9329982024936",
+      "bucket": "other"
+    },
+    {
+      "index": 4368,
+      "barcode": "9300650453173",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 4373,
+      "barcode": "9341650001704",
+      "bucket": "other"
+    },
+    {
+      "index": 4393,
+      "barcode": "0810116120437",
+      "bucket": "beverages"
+    },
+    {
+      "index": 4429,
+      "barcode": "4311279000032",
+      "bucket": "spreads"
+    },
+    {
+      "index": 4436,
+      "barcode": "7617067058085",
+      "bucket": "dairy"
+    },
+    {
+      "index": 4440,
+      "barcode": "9421907274195",
+      "bucket": "beverages"
+    },
+    {
+      "index": 4450,
+      "barcode": "9310761718306",
+      "bucket": "other"
+    },
+    {
+      "index": 4458,
+      "barcode": "93716086",
+      "bucket": "condiments"
+    },
+    {
+      "index": 4459,
+      "barcode": "9310371293071",
+      "bucket": "spreads"
+    },
+    {
+      "index": 4463,
+      "barcode": "4082700325269",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 4472,
+      "barcode": "4061459686593",
+      "bucket": "other"
+    },
+    {
+      "index": 4485,
+      "barcode": "9349030003287",
+      "bucket": "dairy"
+    },
+    {
+      "index": 4505,
+      "barcode": "9314807080129",
+      "bucket": "other"
+    },
+    {
+      "index": 4525,
+      "barcode": "93239707",
+      "bucket": "other"
+    },
+    {
+      "index": 4537,
+      "barcode": "4061459795011",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 4538,
+      "barcode": "9343723007224",
+      "bucket": "other"
+    },
+    {
+      "index": 4547,
+      "barcode": "9310347504859",
+      "bucket": "other"
+    },
+    {
+      "index": 4551,
+      "barcode": "5203176015860",
+      "bucket": "dairy"
+    },
+    {
+      "index": 4566,
+      "barcode": "8906033744442",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 4615,
+      "barcode": "9351597000104",
+      "bucket": "spreads"
+    },
+    {
+      "index": 4664,
+      "barcode": "4061462754753",
+      "bucket": "other"
+    },
+    {
+      "index": 4720,
+      "barcode": "4061464242937",
+      "bucket": "other"
+    },
+    {
+      "index": 4830,
+      "barcode": "8076809581073",
+      "bucket": "noodles and pasta"
+    },
+    {
+      "index": 4849,
+      "barcode": "9310022102509",
+      "bucket": "other"
+    },
+    {
+      "index": 4868,
+      "barcode": "9310645315850",
+      "bucket": "condiments"
+    },
+    {
+      "index": 4883,
+      "barcode": "9343249001027",
+      "bucket": "other"
+    },
+    {
+      "index": 4903,
+      "barcode": "9421000602147",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 4940,
+      "barcode": "9300617301554",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 4982,
+      "barcode": "9349644002836",
+      "bucket": "snacks and confectionery"
+    },
+    {
+      "index": 4989,
+      "barcode": "6921211119562",
+      "bucket": "snacks and confectionery"
+    }
+  ]
+}

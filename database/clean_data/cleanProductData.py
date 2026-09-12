@@ -481,6 +481,12 @@ def standardise_category(tags) -> str:
                 if _keyword_matches_tag(tag, keyword):
                     return standard_name
 
+    # DB059: explicit beverage membership is reliable even without a recognised
+    # subtype. Use an EXACT tag fallback after every existing rule so umbrellas
+    # cannot match and established food/dairy/condiment priorities are preserved.
+    if "beverages" in cleaned_tags:
+        return "beverages"
+
     return "other"
 
 
