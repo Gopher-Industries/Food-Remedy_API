@@ -31,7 +31,7 @@ type TabKey = "Nutrients" | "Ingredients" | "For you" | "Compare";
 const FALLBACK_FOOD_ICON = require("../../assets/images/food_icon.png");
 
 export default function ProductTabsScreen() {
-  const { currentProduct, loading, error } = useProduct();
+  const { currentProduct, loading, error, cacheStatus } = useProduct();
   const { openModal } = useModalManager();
   const { highContrast, ttsEnabled } = usePreferences();
   const { sessionType } = useAuth();
@@ -175,6 +175,16 @@ export default function ProductTabsScreen() {
   return (
     <Screen className={`p-safe ${pageBg}`}>
       <Header />
+
+      {cacheStatus !== "none" && (
+        <View className="w-[95%] self-center mb-2">
+          <View className="rounded-lg border border-amber-300 bg-amber-100 px-3 py-2">
+            <Tt className="text-center text-xs font-interSemiBold text-amber-800">
+              {cacheStatus === "offline" ? "Offline — showing saved data" : "Showing cached version"}
+            </Tt>
+          </View>
+        </View>
+      )}
 
       <View className="w-[95%] self-center mb-4">
         <View className="flex-row justify-between items-center">

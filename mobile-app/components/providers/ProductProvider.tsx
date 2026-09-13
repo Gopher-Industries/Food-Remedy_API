@@ -22,6 +22,13 @@ import {
 } from "@/services/sqlDatabase/history.dao";
 import { getProductById } from "@/services";
 import { getHistoryOwnerScope } from "@/services/session/historyOwnerScope";
+import {
+  cacheEntity,
+  cleanupCache,
+  getCachedEntity,
+  isCacheFresh,
+  isConnectivityError,
+} from "@/services/cache/productCache";
 
 interface ProductContextType {
   barcode: string | null;
@@ -42,6 +49,7 @@ interface ProductContextType {
 
   loading: boolean;
   error: string | null;
+  cacheStatus: "none" | "fresh" | "stale" | "offline";
 }
 
 const BUMP_DEBOUNCE_MS = 1500;
@@ -58,6 +66,7 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cacheStatus, setCacheStatus] = useState<"none" | "fresh" | "stale" | "offline">("none");
 
   // Avoid bumping the same product repeatedly on tiny re-renders
   const lastBumpRef = useRef<{ barcode: string; t: number } | null>(null);
@@ -67,6 +76,7 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const clearProduct = () => {
     setBarcode(null);
     setCurrentProduct(null);
+    setCacheStatus("none");
   };
 
   useEffect(() => {
@@ -74,6 +84,7 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
     setCurrentProduct(null);
     setError(null);
     setLoading(false);
+    setCacheStatus("none");
     lastBumpRef.current = null;
     abortRef.current?.abort();
     abortRef.current = null;
@@ -112,8 +123,6 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
       const controller = new AbortController();
       abortRef.current = controller;
 
-
-
       try {
         const data = await getProductById(code);
 
@@ -124,13 +133,34 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
           return null;
         }
 
+        try {
+          await cacheEntity(data);
+          await cleanupCache();
+        } catch (cacheError) {
+          console.warn("[ProductProvider] cache write failed", cacheError);
+        }
 
+        setCacheStatus("fresh");
         return data;
       } catch (err: any) {
         if (err?.code === "ERR_CANCELED") return null;
+
+        const cached = await getCachedEntity(code).catch(() => null);
+        if (cached) {
+          setCurrentProduct(cached.data);
+          setCacheStatus(isCacheFresh(cached) ? "offline" : "stale");
+          addNotification("Offline — showing saved data", "n");
+          return cached.data;
+        }
+
         console.error("[Product][Error]", err);
         setError("error");
-        addNotification("Failed to fetch product. Please try again.", "e");
+        setCacheStatus("none");
+        if (isConnectivityError(err)) {
+          addNotification("No internet connection. No saved version available.", "e");
+        } else {
+          addNotification("Failed to fetch product. Please try again.", "e");
+        }
         return null;
       } finally {
         if (abortRef.current === controller) abortRef.current = null;
@@ -152,19 +182,34 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
       try {
         let showedCache = false;
 
-        // 1) Try cache (history)
-        if (preferCache && db && isDbReady && ownerScope) {
-          const cached = await getHistoryItem(db, ownerScope, code);
-          if (cached?.product) {
-            setCurrentProduct(cached.product);
+        // 1) Try local app cache first if requested and available
+        if (preferCache) {
+          const cached = await getCachedEntity(code).catch(() => null);
+          if (cached?.data) {
+            setCurrentProduct(cached.data);
+            setCacheStatus(isCacheFresh(cached) ? "offline" : "stale");
             showedCache = true;
           }
         }
 
-        // 2) Only fetch if cache missing or force is true
+        // 2) Try SQLite history cache if available for recent browsing state
+        if (!showedCache && db && isDbReady && ownerScope) {
+          const cached = await getHistoryItem(db, ownerScope, code);
+          if (cached?.product) {
+            setCurrentProduct(cached.product);
+            setCacheStatus("offline");
+            showedCache = true;
+          }
+        }
+
+        // 3) Only fetch if cache missing or force is true
         if (!showedCache || force) {
           const fresh = await fetchRemote(code);
-          setCurrentProduct(fresh); // may be null if not found / error
+          if (fresh) {
+            setCurrentProduct(fresh);
+          } else if (!showedCache) {
+            setCurrentProduct(null);
+          }
         }
       } finally {
         setLoading(false);
@@ -201,6 +246,7 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
         clearProduct,
         loading,
         error,
+        cacheStatus,
       }}
     >
       {children}
