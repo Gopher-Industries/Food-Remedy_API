@@ -15,7 +15,7 @@ The pipeline is designed to be **repeatable**, **observable**, and **auditable**
 # Normal run (follows config)
 python -m database.pipeline.run_pipeline --config database/pipeline/pipeline.config.json
 
-# Force re-run all stages (ignore checkpoints)
+# Force re-run enabled stages (ignore checkpoints)
 python -m database.pipeline.run_pipeline --config database/pipeline/pipeline.config.json --force
 
 # Safe testing (recommended)
@@ -48,7 +48,7 @@ event=stage_end ... stage=enrich output_records=5000 failures=0 ... finished=...
 1. Open the latest `pipeline_*.log`
 2. Look for `event=stage_end` with `failures > 0` or `event=stage_error`
 3. Check `pipeline_run_metadata.json` for detailed per-stage information (timestamps, config, modules)
-4. Use `--force` to re-run specific stages when needed (e.g. `--force --clean`)
+4. Use `--force` to ignore completed checkpoints and re-run enabled stages. To run only one stage, disable other stages using their `--no-*` options.
 
 ## Key Features
 

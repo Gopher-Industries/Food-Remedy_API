@@ -11,6 +11,7 @@ import {
   Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useDirtyForm } from "@/hooks/useDirtyForm";
 import Tt from "@/components/ui/UIText";
 import Header from "@/components/layout/Header";
 import { useNotification } from "@/components/providers/NotificationProvider";
@@ -20,6 +21,7 @@ import { color } from "@/app/design/token";
 export default function UpdatePasswordPage() {
   const router = useRouter();
   const { addNotification } = useNotification();
+  const { markDirty, markClean, confirmLeave } = useDirtyForm();
 
   const [newPassword, setNewPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
@@ -93,6 +95,7 @@ export default function UpdatePasswordPage() {
       // Clear form
       setNewPassword("");
       setConfirmPassword("");
+      markClean();
 
       // Navigate back after delay
       setTimeout(() => {
@@ -115,6 +118,7 @@ export default function UpdatePasswordPage() {
     setNewPasswordError(false);
     setErrorMessage("");
     setSuccessMessage("");
+    markDirty();
   };
 
   const handleConfirmPasswordChange = (text: string) => {
@@ -122,6 +126,7 @@ export default function UpdatePasswordPage() {
     setConfirmPasswordError(false);
     setErrorMessage("");
     setSuccessMessage("");
+    markDirty();
   };
 
   return (
@@ -136,7 +141,7 @@ export default function UpdatePasswordPage() {
           {/* Header with back button */}
           <View className="flex-row items-center justify-between mb-6">
             <Pressable
-              onPress={() => router.back()}
+              onPress={() => confirmLeave(() => router.back())}
               className="flex-row justify-center items-center px-2 py-1"
             >
               {({ pressed }) => (

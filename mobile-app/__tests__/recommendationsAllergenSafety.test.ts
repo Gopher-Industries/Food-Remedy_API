@@ -95,6 +95,28 @@ describe("recommendation allergen safety", () => {
     );
   });
 
+  it("treats a precautionary Seafood trace as unsafe for a legacy Fish profile", () => {
+    const fishProfile = {
+      ...profile,
+      allergies: [" Fish "],
+    } as NutritionalProfile;
+    const product = {
+      ...completeProduct,
+      barcode: "fish-trace",
+      traces: "May contain: SEA/FOOD",
+    } as Product;
+
+    expect(getRecommendationSummary(product, fishProfile)).toEqual(
+      expect.objectContaining({
+        safe: false,
+        safetyRating: "red",
+        reasons: expect.arrayContaining([
+          expect.stringMatching(/contains allergen: fish/i),
+        ]),
+      })
+    );
+  });
+
   it.each(incompleteAllergenDataFixtures)(
     "returns caution instead of safe for $name",
     ({ fields }) => {

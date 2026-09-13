@@ -14,12 +14,14 @@ import React, {
 } from "react";
 import { useNotification } from "./NotificationProvider";
 import { useSQLiteDatabase } from "./SQLiteDatabaseProvider";
+import { useAuth } from "./AuthProvider";
 import {
   bumpHistory,
   getHistoryItem,
   pruneHistory,
 } from "@/services/sqlDatabase/history.dao";
 import { getProductById } from "@/services";
+import { getHistoryOwnerScope } from "@/services/session/historyOwnerScope";
 
 interface ProductContextType {
   barcode: string | null;
@@ -49,6 +51,8 @@ const ProductContext = createContext<ProductContextType | undefined>(undefined);
 export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const { addNotification } = useNotification();
   const { db, isDbReady } = useSQLiteDatabase();
+  const { sessionType, user } = useAuth();
+  const ownerScope = getHistoryOwnerScope(sessionType, user?.uid);
 
   const [barcode, setBarcode] = useState<string | null>(null);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
@@ -61,8 +65,19 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const abortRef = useRef<AbortController | null>(null);
 
   const clearProduct = () => {
+    setBarcode(null);
     setCurrentProduct(null);
   };
+
+  useEffect(() => {
+    setBarcode(null);
+    setCurrentProduct(null);
+    setError(null);
+    setLoading(false);
+    lastBumpRef.current = null;
+    abortRef.current?.abort();
+    abortRef.current = null;
+  }, [ownerScope]);
 
   /**
    * Bump If Needed
@@ -70,27 +85,26 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
    */
   const bumpIfNeeded = useCallback(
     async (p: Product) => {
-      if (!db || !isDbReady || !p?.barcode) return;
+      if (!db || !isDbReady || !ownerScope || !p?.barcode) return;
       const now = Date.now();
       const last = lastBumpRef.current;
       if (last && last.barcode === p.barcode && now - last.t < BUMP_DEBOUNCE_MS)
         return;
 
       try {
-        await bumpHistory(db, p);
-        await pruneHistory(db, 500); // optional cap
+        await bumpHistory(db, ownerScope, p);
+        await pruneHistory(db, ownerScope, 500); // optional cap
         lastBumpRef.current = { barcode: p.barcode, t: now };
       } catch (error) {
         console.warn("[ProductProvider] bump failed", error);
       }
     },
-    [db, isDbReady]
+    [db, isDbReady, ownerScope]
   );
 
   useEffect(() => {
     if (currentProduct) bumpIfNeeded(currentProduct);
-    // eslint-disable-line react-hooks/exhaustive-deps
-  }, [currentProduct?.barcode]);
+  }, [currentProduct, bumpIfNeeded]);
 
   const fetchRemote = useCallback(
     async (code: string): Promise<Product | null> => {
@@ -139,8 +153,8 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
         let showedCache = false;
 
         // 1) Try cache (history)
-        if (preferCache && db && isDbReady) {
-          const cached = await getHistoryItem(db, code);
+        if (preferCache && db && isDbReady && ownerScope) {
+          const cached = await getHistoryItem(db, ownerScope, code);
           if (cached?.product) {
             setCurrentProduct(cached.product);
             showedCache = true;
@@ -156,7 +170,7 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
       }
     },
-    [db, isDbReady, fetchRemote]
+    [db, isDbReady, ownerScope, fetchRemote]
   );
 
   useEffect(() => {

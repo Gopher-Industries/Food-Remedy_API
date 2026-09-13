@@ -388,10 +388,24 @@ CATEGORY_RULES_ORDERED: list[tuple[str, tuple[str, ...]]] = [
         "sweetened-beverages", "evaporated-milks", "plant-milks",
         "teas", "waters", "carbonated-drinks", "fruit-juices",
     )),
-    ("snacks and confectionery", (
+        ("snacks and confectionery", (
         "snacks", "sweet-snacks", "confectioneries",
         "chocolates", "chocolate-candies", "bonbons",
     )),
+    # DB031: Dairy — added because "dairies"/"cheeses"/"yogurts" etc. were the single
+    # largest cluster of unmapped-but-unambiguous category tags found in the DB031
+    # investigation (see database/Reports/DB031_Product_Category_Consistency_Investigation.md).
+    # Placed AFTER "beverages" deliberately: drinkable dairy products (milkshakes,
+    # iced coffee) carry both dairy tags and beverages tags, and already classify correctly
+    # as "beverages" today. Putting "dairy" after preserves that existing behaviour and only
+    # catches dairy products (cheese, plain yogurt, etc.) that beverages does not claim.
+    ("dairy", (
+        "dairies", "cheeses", "yogurts",
+        "fermented-milk-products", "fermented-dairy-desserts",
+    )),
+    # DB051: Condiments added as a category
+    # Keep it last so existing category matches are not changed
+    ("condiments", ("condiments",)),
 ]
 
 # OFF slugs that look beverage-like but are umbrella paths for non-drinks — never classify as beverages alone.
@@ -466,6 +480,12 @@ def standardise_category(tags) -> str:
             for keyword in keywords:
                 if _keyword_matches_tag(tag, keyword):
                     return standard_name
+
+    # DB059: explicit beverage membership is reliable even without a recognised
+    # subtype. Use an EXACT tag fallback after every existing rule so umbrellas
+    # cannot match and established food/dairy/condiment priorities are preserved.
+    if "beverages" in cleaned_tags:
+        return "beverages"
 
     return "other"
 
@@ -696,7 +716,12 @@ def save_cleaned_data(df: pd.DataFrame, output_path: str):
 
 TYPO_FIX = {
     "citiric-acid": "citric-acid",
-    # DB002: open to adding new fix(es)
+    "sulpher-dioxide": "sulphur-dioxide",
+    "tumeric": "turmeric",
+    "cococut-oil": "coconut-oil",
+    "choclate": "chocolate",
+    # DB027: added common ingredient typo fixes
+
 }
 
 
@@ -740,7 +765,7 @@ def clean_ingredients_list(tags) -> list | None:
         if tag:
             cleaned.add(tag)
     
-    return list(cleaned) if cleaned else None
+    return sorted(cleaned) if cleaned else None
 
 
 # DB032: Standard retail barcode lengths - EAN-8 (8), UPC-A (12),
