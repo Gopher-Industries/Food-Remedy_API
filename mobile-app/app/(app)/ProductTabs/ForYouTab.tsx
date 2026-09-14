@@ -194,7 +194,7 @@ type Props = {
   product: any;
 };
 
-export default function CompareTab({ product }: Props) {
+function CompareTab({ product }: Props) {
   const { profiles, activeProfile } = useProfile();
   const { darkMode } = usePreferences();
 
@@ -236,3 +236,5 @@ export default function CompareTab({ product }: Props) {
     </View>
   );
 }
+
+export default React.memo(CompareTab);
