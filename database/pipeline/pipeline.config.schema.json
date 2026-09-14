@@ -50,7 +50,9 @@
             "writes_per_second_limit": { "type": "integer" },
             "validate_before_seed": { "type": "boolean" },
             "dry_run": { "type": "boolean" },
-            "subset": { "type": "integer" }
+            "subset": { "type": "integer" },
+            "checkpoint_file": { "type": "string" },
+            "reset_checkpoint": { "type": "boolean" }
           }
         }
       }
