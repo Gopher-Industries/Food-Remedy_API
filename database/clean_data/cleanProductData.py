@@ -739,7 +739,7 @@ def clean_ingredients_text(text) -> str | None:
     return str(text).strip()
 
 
-def clean_ingredients_list(tags) -> list | None: 
+def clean_ingredients_list(tags) -> list: 
     """
     DB002: Full ingredient tag cleaning:
     - Remove lang: prefixes
@@ -858,8 +858,6 @@ def main(input_path: str, output_path: str):
         ingredients_raw = record.get("ingredients") or record.get("ingredients_tags")
         record["ingredients_tags"] = normalize_list(ingredients_raw) or []
 
-        # List fields
-        record["ingredients_tags"] = normalize_list(record.get("ingredients_tags"))
         # OpenFoodFacts category slugs → contract: sorted, deduped (product_v1.categories)
         record["categories_tags"] = normalize_categories(record.get("categories_tags"))
         
