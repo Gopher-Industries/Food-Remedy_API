@@ -203,14 +203,14 @@ export default function NutritionalProfilesScreen() {
           <Pressable
             onPress={() => router.push("/(app)/demographics" as any)}
             hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
-            className={`mt-4 flex-row justify-between items-center py-3 px-4 rounded-lg border active:border-primary ${
+            className={`mt-4 flex-row items-center gap-x-3 py-3 px-4 rounded-lg border active:border-primary ${
               darkMode ? "bg-hsl20 border-hsl30" : "bg-white border-hsl90"
             }`}
           >
             {({ pressed }) => (
               <>
                 <Tt
-                  className={`text-lg font-interSemiBold flex-grow ${
+                  className={`text-lg font-interSemiBold flex-1 ${
                     pressed ? "text-primary" : darkMode ? "text-hsl90" : "text-hsl30"
                   }`}
                 >
@@ -231,14 +231,14 @@ export default function NutritionalProfilesScreen() {
           <Pressable
             onPress={handleAddMember}
             hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
-            className={`mt-4 flex-row justify-between items-center py-3 px-4 rounded-lg border active:border-primary ${
+            className={`mt-4 flex-row items-center gap-x-3 py-3 px-4 rounded-lg border active:border-primary ${
               darkMode ? "bg-hsl20 border-hsl30" : "bg-white border-hsl90"
             }`}
           >
             {({ pressed }) => (
               <>
                 <Tt
-                  className={`text-lg font-interSemiBold flex-grow ${
+                  className={`text-lg font-interSemiBold flex-1 ${
                     pressed ? "text-primary" : darkMode ? "text-hsl90" : "text-hsl30"
                   }`}
                 >

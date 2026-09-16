@@ -454,17 +454,19 @@ export default function MembersEditPage() {
             >
               {({ pressed }) => (
                 <>
-                  <Tt
-                    className={
-                      editableProfile.relationship.trim()
-                        .length!
-                        ? "text-hsl20 font-interSemiBold"
-                        : "text-hsl50 dark:text-hsl70 font-interSemiBold"
-                    }
-                  >
-                    {editableProfile.relationship ||
-                      "Relationship"}
-                  </Tt>
+                  <View className="flex-1 pr-2">
+                    <Tt
+                      className={
+                        editableProfile.relationship.trim()
+                          .length!
+                          ? "text-hsl20 font-interSemiBold"
+                          : "text-hsl50 dark:text-hsl70 font-interSemiBold"
+                      }
+                    >
+                      {editableProfile.relationship ||
+                        "Relationship"}
+                    </Tt>
+                  </View>
 
                   <IconGeneral
                     type="arrow-down"
@@ -524,7 +526,7 @@ export default function MembersEditPage() {
       </ScrollView>
 
       {/* BUTTONS */}
-      <View className="flex-row justify-around items-center my-4">
+      <View className="flex-row items-center gap-4 my-4 px-4">
 
         <Pressable
           onPress={() => {
@@ -539,7 +541,7 @@ export default function MembersEditPage() {
             left: 5,
             right: 5,
           }}
-          className="py-2 px-6 rounded-lg bg-white dark:bg-hsl15 active:border-primary"
+          className="flex-1 py-2 px-4 rounded-lg bg-white dark:bg-hsl15 active:border-primary"
         >
           {({ pressed }) => (
             <Tt
@@ -569,7 +571,7 @@ export default function MembersEditPage() {
             left: 5,
             right: 5,
           }}
-          className="py-2 px-6 rounded-lg border bg-primary border-hsl90 dark:border-hsl20 active:bg-transparent active:border-primary"
+          className="flex-1 py-2 px-4 rounded-lg border bg-primary border-hsl90 dark:border-hsl20 active:bg-transparent active:border-primary"
         >
           {({ pressed }) => (
             <Tt

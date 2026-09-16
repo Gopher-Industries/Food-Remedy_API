@@ -203,16 +203,14 @@ export default function ShoppingCartPage() {
     <Screen className="p-safe">
       <Header />
 
-      {/* Title + Add button */}
-      <View className="mt-4 px-4 flex-row items-center justify-between">
-        <View style={{ flex: 1 }}>
-          <Tt className="text-xl font-interBold text-center">Shopping Lists</Tt>
-        </View>
-        <View className="flex-row items-center">
+      {/* Title + action buttons */}
+      <View className="mt-4 px-4">
+        <Tt className="text-xl font-interBold text-center">Shopping Lists</Tt>
+        <View className="flex-row flex-wrap items-center justify-end gap-2 mt-1">
           {isSelectionMode && (
             <Pressable
               onPress={() => openModal('deleteSelectedLists')}
-              className="ml-2 px-3 py-1 rounded-lg border border-primary bg-white dark:bg-hsl15"
+              className="px-3 py-1 rounded-lg border border-primary bg-white dark:bg-hsl15"
             >
               {({ pressed }) => (
                 <Tt className={`font-interSemiBold ${pressed ? 'text-primary' : 'text-hsl30 dark:text-hsl90'}`}>
@@ -224,7 +222,6 @@ export default function ShoppingCartPage() {
           <Pressable
             onPress={() => openModal('createList')}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            className="ml-2"
           >
             {({ pressed }) => (
               <IconGeneral type="add" fill={pressed ? '#FF3F3F' : 'hsl(0, 0%, 40%)'} size={24} />
@@ -232,7 +229,7 @@ export default function ShoppingCartPage() {
           </Pressable>
           <Pressable
             onPress={async () => { await syncAllToFirestore(); }}
-            className="ml-3 px-3 py-1 rounded-lg border border-hsl90 dark:border-hsl20 bg-white dark:bg-hsl15"
+            className="px-3 py-1 rounded-lg border border-hsl90 dark:border-hsl20 bg-white dark:bg-hsl15"
           >
             {({ pressed }) => (
               <Tt className={`font-interSemiBold ${pressed ? 'text-primary' : 'text-hsl30 dark:text-hsl90'}`}>Sync</Tt>
@@ -323,91 +320,86 @@ export default function ShoppingCartPage() {
 
       {/* EMPTY / LOADING STATES */}
       {lists.length === 0 && (
-          <ScrollView
-              className="flex-1"
-              contentContainerStyle={{ flexGrow: 1 }}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-              }
-          >
-            <View className="flex-1 w-[95%] mx-auto items-center justify-center">
-              {!ready ? (
-                  <Tt className="text-hsl40 dark:text-hsl80">Preparing Shopping List…</Tt>
-              ) : isOffline ? (
-                  <>
-                  <IconGeneral type="warning" fill="hsl(0, 0%, 40%)" size={32} />
-                  <Tt className="text-hsl40 dark:text-hsl80 text-center mt-4">
-                    You&apos;re offline.
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ flexGrow: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: "5%", paddingVertical: 32 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {!ready ? (
+            <Tt className="text-hsl40 dark:text-hsl80">Preparing Shopping List…</Tt>
+          ) : isOffline ? (
+            <>
+              <IconGeneral type="warning" fill="hsl(0, 0%, 40%)" size={32} />
+              <Tt className="text-hsl40 dark:text-hsl80 text-center mt-4">
+                You&apos;re offline.
+              </Tt>
+              <Tt className="text-hsl40 dark:text-hsl80 text-xs mt-1 text-center">
+                We can&apos;t load your shopping lists right now. They&apos;re safe, try again when you&apos;re back online.
+              </Tt>
+              <Pressable
+                onPress={onRefresh}
+                className="mt-8 py-3 px-6 rounded-lg border border-hsl90 dark:border-hsl20 active:border-primary bg-white dark:bg-hsl15"
+              >
+                {({ pressed }) => (
+                  <Tt className={`text-lg font-interSemiBold ${pressed ? "text-primary" : "text-hsl30 dark:text-hsl90"}`}>
+                    Try Again
                   </Tt>
-                  <Tt className="text-hsl40 dark:text-hsl80 text-xs mt-1 text-center">
-                    We can&apos;t load your shopping lists right now. They&apos;re safe, try again when you&apos;re back online.
+                )}
+              </Pressable>
+            </>
+          ) : loadError ? (
+            <>
+              <IconGeneral type="warning" fill="hsl(0, 0%, 40%)" size={32} />
+              <Tt className="text-hsl40 dark:text-hsl80 text-center mt-4">
+                {loadError}
+              </Tt>
+              <Tt className="text-hsl40 dark:text-hsl80 text-xs mt-1 text-center">
+                Check your connection and try again.
+              </Tt>
+              <Pressable
+                onPress={onRefresh}
+                className="mt-8 py-3 px-6 rounded-lg border border-hsl90 dark:border-hsl20 active:border-primary bg-white dark:bg-hsl15"
+              >
+                {({ pressed }) => (
+                  <Tt className={`text-lg font-interSemiBold ${pressed ? "text-primary" : "text-hsl30 dark:text-hsl90"}`}>
+                    Try Again
                   </Tt>
-                    <Pressable
-                        onPress={onRefresh}
-                        className="mt-8 py-3 px-6 rounded-lg border border-hsl90 dark:border-hsl20 active:border-primary bg-white dark:bg-hsl15"
-                    >
-                      {({ pressed }) => (
-                          <Tt className={`text-lg font-interSemiBold ${pressed ? "text-primary" : "text-hsl30 dark:text-hsl90"}`}>
-                            Try Again
-                          </Tt>
-                      )}
-                    </Pressable>
-                </>
-              ) : loadError ? (
+                )}
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <Tt className="text-hsl40 dark:text-hsl80 text-center">
+                No shopping lists yet.
+              </Tt>
+              <Tt className="text-hsl40 dark:text-hsl80 text-xs mt-1 text-center">
+                Start by scanning a product to create your first list.
+              </Tt>
+              <Pressable
+                onPress={() => router.push("/(app)/(tabs)/scan")}
+                className="mt-8 flex-row items-center gap-x-3 py-3 px-4 rounded-lg
+                  border border-hsl90 dark:border-hsl20 active:border-primary bg-white dark:bg-hsl15 self-center"
+              >
+                {({ pressed }) => (
                   <>
-                    <IconGeneral type="warning" fill="hsl(0, 0%, 40%)" size={32} />
-                    <Tt className="text-hsl40 dark:text-hsl80 text-center mt-4">
-                      {loadError}
-                    </Tt>
-                    <Tt className="text-hsl40 dark:text-hsl80 text-xs mt-1 text-center">
-                      Check your connection and try again.
-                    </Tt>
-                    <Pressable
-                        onPress={onRefresh}
-                        className="mt-8 py-3 px-6 rounded-lg border border-hsl90 dark:border-hsl20 active:border-primary bg-white dark:bg-hsl15"
+                    <Tt
+                      className={`text-lg font-interSemiBold ${pressed ? "text-primary" : "text-hsl30 dark:text-hsl90"}`}
                     >
-                      {({ pressed }) => (
-                          <Tt className={`text-lg font-interSemiBold ${pressed ? "text-primary" : "text-hsl30 dark:text-hsl90"}`}>
-                            Try Again
-                          </Tt>
-                      )}
-                    </Pressable>
-                  </>
-              ) : (
-                  <>
-                    <Tt className="text-hsl40 dark:text-hsl80 text-center">
-                      No shopping lists yet.
+                      Scan New Product
                     </Tt>
-                    <Tt className="text-hsl40 dark:text-hsl80 text-xs mt-1 text-center">
-                      Start by scanning a product to create your first list.
-                    </Tt>
-
-                    <Pressable
-                        onPress={() => router.push("/(app)/(tabs)/scan")}
-                        className="mt-8 flex-row justify-between items-center py-3 px-4 rounded-lg
-        border border-hsl90 dark:border-hsl20 active:border-primary bg-white dark:bg-hsl15 self-center"
-                    >
-                      {({ pressed }) => (
-                          <>
-                            <Tt
-                                className={`text-lg font-interSemiBold flex-grow ${
-                                    pressed ? "text-primary" : "text-hsl30 dark:text-hsl90"
-                                }`}
-                            >
-                              Scan New Product
-                            </Tt>
-                            <IconGeneral
-                                type="barcode-scan"
-                                fill={pressed ? "#FF3F3F" : "hsl(0, 0%, 30%)"}
-                                size={30}
-                            />
-                          </>
-                      )}
-                    </Pressable>
+                    <IconGeneral
+                      type="barcode-scan"
+                      fill={pressed ? "#FF3F3F" : "hsl(0, 0%, 30%)"}
+                      size={30}
+                    />
                   </>
-              )}
-            </View>
-          </ScrollView>
+                )}
+              </Pressable>
+            </>
+          )}
+        </ScrollView>
       )}
 
       {/* Create List Modal (visible only when plus is pressed) */}
