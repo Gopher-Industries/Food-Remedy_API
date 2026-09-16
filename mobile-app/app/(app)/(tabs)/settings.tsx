@@ -6,6 +6,7 @@ import { usePreferences } from "@/components/providers/PreferencesProvider";
 import Tt from "@/components/ui/UIText";
 import { useRouter } from "expo-router";
 import { Pressable, ScrollView, View } from "react-native";
+import Constants from "expo-constants";
 import { color, spacing } from "@/app/design/token";
 import Screen from "@/components/layout/Screen";
 
@@ -368,6 +369,42 @@ export default function SettingsPage() {
             </>
           )}
         </Pressable>
+
+        {/* QA DIAGNOSTICS — dev/preview builds only */}
+        {(Constants.expoConfig?.extra?.appVariant ?? "development") !== "production" && (
+          <>
+            <View className={`px-4 py-2 ${hcSection(highContrast)}`}>
+              <Tt className={`${hcText(highContrast)} font-interMedium`}>QA</Tt>
+            </View>
+
+            <Pressable
+              onPress={() => router.push("/(app)/diagnosticsPanel")}
+              className={`flex-row items-center justify-between px-4 py-3 active:bg-hsl98 dark:bg-hsl10 ${hcRow(highContrast)}`}
+            >
+              {({ pressed }) => (
+                <>
+                  <View className="flex-row items-center gap-x-4">
+                    <IconGeneral
+                      type="info"
+                      fill={pressed ? color.primary : highContrast ? "#000000" : color.iconDefault}
+                      size={spacing.xl}
+                    />
+                    <View>
+                      <Tt className="font-interMedium">QA Diagnostics</Tt>
+                      <Tt className="text-sm">Auth, DB, network & build info</Tt>
+                    </View>
+                  </View>
+
+                  <IconGeneral
+                    type="arrow-forward"
+                    fill={pressed ? color.primary : "hsl(0, 0%, 50%)"}
+                    size={spacing.xl}
+                  />
+                </>
+              )}
+            </Pressable>
+          </>
+        )}
 
         {/* Sign out */}
         <Pressable
