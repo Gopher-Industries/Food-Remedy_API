@@ -6,6 +6,11 @@ missing, invalid or unsupported barcode values.
 """
 
 import json
+import os
+import sys
+
+# Ensure project root is in sys.path so script can be run directly from anywhere
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Use the existing barcode validation rules from DB021.
 from database.Validation.db021_validator import DB021Validator
