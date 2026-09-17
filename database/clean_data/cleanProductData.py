@@ -134,7 +134,7 @@ def deduplicate_products(df: pd.DataFrame) -> pd.DataFrame:
         raise KeyError("Missing required 'code' column for deduplication.")
 
     working = df.copy()
-    working['__barcode_key'] = working['code'].astype(str).str.replace(r'\D', '', regex=True).str.strip()
+    working['__barcode_key'] = working['code'].fillna("").astype(str).str.replace(r'\D', '', regex=True).str.strip()
     working['__name_key'] = working.get('product_name', pd.Series(index=working.index, dtype=object)).apply(_normalize_text_key)
     working['__brand_key'] = working.get('brands', pd.Series(index=working.index, dtype=object)).apply(_normalize_text_key)
 
