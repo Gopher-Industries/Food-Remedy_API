@@ -380,7 +380,6 @@ def runPipeline(
             json.dump(checkpoints, cf, indent=2)
         try:
             res = run_enrich_stage(input_path=in_path, output_path=out_path, config=enrich_cfg)
-            _require_successful_stage_result("enrich", res)
             enrich_result_for_seed = res if isinstance(res, dict) else {}
             
             # === DB031 Failure Test (temporary) ===
@@ -401,6 +400,9 @@ def runPipeline(
             with open(checkpoint_path, "w", encoding="utf-8") as cf:
                 json.dump(checkpoints, cf, indent=2)
             
+            if pipeline_cfg.get("fail_on_error", True):
+                _require_successful_stage_result("enrich", res)
+            
             # short summary
             pipeline_logger.log_stage_end(
                 stage_name="enrich",
@@ -415,7 +417,7 @@ def runPipeline(
             completed_count += 1
             
         except Exception as e:
-            stats["stages"]["enrich"] = {"error": str(e)}
+            stats["stages"].setdefault("enrich", {})["error"] = str(e)
 
             # Structured error logging
             pipeline_logger.log_stage_error(
@@ -423,9 +425,11 @@ def runPipeline(
                 error=str(e)
             )
 
-            checkpoints["enrich"] = {"status": "failed", "error": str(e), "finished": datetime.now(timezone.utc).isoformat()}
-            with open(checkpoint_path, "w", encoding="utf-8") as cf:
-                json.dump(checkpoints, cf, indent=2)
+            meta_out = outputs.get("metadata", os.path.join(repo_root, "database", "pipeline_run_metadata.json"))
+            ensure_dir(meta_out)
+            with open(meta_out, "w", encoding="utf-8") as f:
+                json.dump(stats, f, indent=2)
+
             if pipeline_cfg.get("fail_on_error", True):
                 raise
     else:
@@ -481,7 +485,8 @@ def runPipeline(
             json.dump(checkpoints, cf, indent=2)
         try:
             res = run_seed_stage(input_path=in_path, config=seed_cfg)
-            _require_successful_stage_result("seed", res)
+            if pipeline_cfg.get("fail_on_error", True):
+                _require_successful_stage_result("seed", res)
             stage_stats = stats["stages"].setdefault("seed", {})
             stage_stats.update(res if isinstance(res, dict) else {})
             stats["stages"]["seed"]["finished"] = datetime.now(timezone.utc).isoformat()
