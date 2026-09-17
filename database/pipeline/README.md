@@ -50,6 +50,15 @@ event=stage_end ... stage=enrich output_records=5000 failures=0 ... finished=...
 3. Check `pipeline_run_metadata.json` for detailed per-stage information (timestamps, config, modules)
 4. Use `--force` to ignore completed checkpoints and re-run enabled stages. To run only one stage, disable other stages using their `--no-*` options.
 
+## Release integrity
+
+Before seeding a release candidate, run the database release-integrity gate. Its
+structural profile checks Firestore collection agreement, enrichment artifact
+handoff, seed checkpoint recovery, and legacy SQLite migration. The release
+profile also runs DB060 candidate validation and verifies readback from Firestore.
+
+See [`database/Release/DATABASE_RELEASE_INTEGRITY_GATE.md`](../Release/DATABASE_RELEASE_INTEGRITY_GATE.md).
+
 ## Key Features
 
 - Checkpoint recovery (can resume from last successful point)
