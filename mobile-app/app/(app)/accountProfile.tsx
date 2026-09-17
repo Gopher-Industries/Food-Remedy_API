@@ -8,8 +8,8 @@ import Header from "@/components/layout/Header";
 import Screen from "@/components/layout/Screen";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useNotification } from "@/components/providers/NotificationProvider";
-import { deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { deleteUserAccountData } from "@/services/database/user/deleteUserAccount";
+import { EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import { requestAccountDeletion } from "@/services/api/accountDeletion";
 import { useProfile } from "@/components/providers/ProfileProvider";
 
 /**
@@ -116,7 +116,7 @@ export default function AccountProfileScreen() {
   };
 
   const handleDeleteAccount = async (skipReauth = false) => {
-    if (!user?.uid) {
+    if (!user) {
       addNotification("User not authenticated", "e");
       return;
     }
@@ -132,18 +132,10 @@ export default function AccountProfileScreen() {
 
     setDeletingAccount(true);
     try {
-      await deleteUserAccountData(user.uid);
+      await requestAccountDeletion();
       await clear();
-      try {
-        await deleteUser(user);
-      } catch (err: any) {
-        if (err?.code === "auth/requires-recent-login") {
-          addNotification("Please log in again and retry delete.", "e");
-          return;
-        }
-        throw err;
-      }
-      addNotification("Account deleted", "s");
+      await handleSignOut();
+      addNotification("Account deletion request accepted", "s");
       router.replace("/login");
     } catch (error) {
       console.error("Error deleting account:", error);
