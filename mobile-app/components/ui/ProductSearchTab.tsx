@@ -95,8 +95,8 @@ const ProductSearchTab = ({ collapsed }: ProductSearchTabProps) => {
             {!loading && productResults.length > 0 && (
               <>
                 <Tt className="mt-6 -mb-2 font-interSemiBold text-hsl20">Results</Tt>
-                {productResults.slice(0, 3).map((p, idx) => (
-                  <ProductBanner key={p.barcode ?? idx} product={p} />
+                {productResults.slice(0, 3).map((p) => (
+                  <ProductBanner key={p.barcode} product={p} />
                 ))}
 
                 {productResults.length > 3 && (
