@@ -16,6 +16,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { fdb } from "@/config/firebaseConfig";
+import { logSafeError } from "@/services/backend/safeErrors";
 
 type CartRequestBody = {
   userId?: string;
@@ -92,7 +93,7 @@ export async function GET(request: Request): Promise<Response> {
       items,
     });
   } catch (error) {
-    console.error("Shopping cart GET failed:", error);
+    logSafeError("Shopping cart GET failed:", error);
 
     return errorResponse(
       "SERVER_ERROR",
@@ -191,7 +192,7 @@ export async function POST(request: Request): Promise<Response> {
       201
     );
   } catch (error) {
-    console.error("Shopping cart POST failed:", error);
+    logSafeError("Shopping cart POST failed:", error);
 
     return errorResponse(
       "SERVER_ERROR",
@@ -259,7 +260,7 @@ export async function PATCH(request: Request): Promise<Response> {
       quantity,
     });
   } catch (error) {
-    console.error("Shopping cart PATCH failed:", error);
+    logSafeError("Shopping cart PATCH failed:", error);
 
     return errorResponse(
       "SERVER_ERROR",
@@ -319,7 +320,7 @@ export async function DELETE(request: Request): Promise<Response> {
       productId,
     });
   } catch (error) {
-    console.error("Shopping cart DELETE failed:", error);
+    logSafeError("Shopping cart DELETE failed:", error);
 
     return errorResponse(
       "SERVER_ERROR",
