@@ -5,6 +5,7 @@ import {
   assessAllergenSafety,
   INCOMPLETE_ALLERGEN_DATA_REASON,
 } from "@/services/allergenSafety";
+import { logSafeError } from "@/services/backend/safeErrors";
 
 type ClassificationColour = "red" | "green" | "grey";
 
@@ -262,10 +263,7 @@ export async function POST(
       }
     );
   } catch (err: any) {
-    console.error(
-      "Error in /api/products/classify:",
-      err
-    );
+    logSafeError("Error in /api/products/classify:", err);
 
     return new Response(
       JSON.stringify({
