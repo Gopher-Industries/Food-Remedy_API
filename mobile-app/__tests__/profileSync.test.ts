@@ -110,7 +110,7 @@ describe("profile sync", () => {
     await expect(fetchProfilesFromSQLite(userId)).resolves.toEqual([]);
     expect(errorSpy).toHaveBeenCalledWith(
       "SQLite fetch error:",
-      expect.any(Error)
+      "Error"
     );
   });
 

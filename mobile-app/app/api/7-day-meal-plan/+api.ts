@@ -3,6 +3,10 @@
 import { collection, getDocs, limit, query } from "firebase/firestore";
 import { fdb } from "@/config/firebaseConfig";
 import { assessAllergenSafety } from "@/services/allergenSafety";
+import {
+    logSafeError,
+    safePublicMessage,
+} from "@/services/backend/safeErrors";
 
 type DietType = "omnivore" | "vegetarian" | "vegan";
 
@@ -591,12 +595,12 @@ export async function POST(request: Request): Promise<Response> {
 
         return toJsonResponse(plan, 200);
     } catch (err: any) {
-        console.error("Error in /api/7-day-meal-plan:", err);
+        logSafeError("Error in /api/7-day-meal-plan:", err);
 
         return toJsonResponse(
         {
             error: "SERVER_ERROR",
-            message: err?.message ?? "Unexpected error while generating 7-day meal plan.",
+            message: safePublicMessage("Unexpected error while generating 7-day meal plan."),
             
         },
         500);

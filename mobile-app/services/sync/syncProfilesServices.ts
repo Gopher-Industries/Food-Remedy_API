@@ -11,6 +11,7 @@ import {
   upsertProfile,
   listProfilesForUser,
 } from "../sqlDatabase/profiles.dao";
+import { logSafeError } from "@/services/backend/safeErrors";
 
 type Profile = {
   profileId: string;
@@ -59,7 +60,7 @@ export const fetchProfilesFromFirebase = async (
   try {
     return await loadProfilesFromFirebase(userId);
   } catch (error) {
-    console.error("Firebase fetch error:", error);
+    logSafeError("Firebase fetch error:", error);
     return [];
   }
 };
@@ -72,7 +73,7 @@ export const fetchProfilesFromSQLite = async (userId: string) => {
     const db = await initialiseSQLiteDatabase();
     return await listProfilesForUser(db, userId);
   } catch (error) {
-    console.error("SQLite fetch error:", error);
+    logSafeError("SQLite fetch error:", error);
     return [];
   }
 };
@@ -95,12 +96,12 @@ export const saveProfilesToSQLite = async (profiles: any[]) => {
     updated_at: profile.updated_at ?? new Date().toISOString(),
   };
 
-  console.log("Saving profile:", normalizedProfile);
+  console.log("Saving profile");
 
   await upsertProfile(db, normalizedProfile);
 }
   } catch (error) {
-    console.error("SQLite save error:", error);
+    logSafeError("SQLite save error:", error);
   }
 };
 
@@ -123,7 +124,7 @@ export const syncProfilesToCloud = async (userId: string) => {
       );
     }
   } catch (error) {
-    console.error("Firebase push error:", error);
+    logSafeError("Firebase push error:", error);
   }
 };
 
@@ -145,7 +146,7 @@ const resolveConflict = (local: any, cloud: any) => {
 // ==============================
 export const syncProfiles = async (userId: string) => {
   try {
-    console.log(` Starting profile sync for user: ${userId}`);
+    console.log("Starting profile sync");
 
     let cloudProfiles: Profile[] = [];
     let localProfiles: Profile[] = [];
@@ -217,6 +218,6 @@ export const syncProfiles = async (userId: string) => {
 
     console.log(`Profile sync complete. Synced ${finalProfiles.length} profiles`);
   } catch (error) {
-    console.error("Sync error:", error);
+    logSafeError("Sync error:", error);
   }
 };
