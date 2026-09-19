@@ -41,6 +41,8 @@ import {
   upsertShoppingList,
   upsertListItem,
 } from "@/services/sqlDatabase/shoppingList.dao";
+import { queueOutboxOperation } from "@/services/sync/shoppingListOutbox";
+import { drainOutbox } from "@/services/sync/shoppingListSyncService";
 
 export function useShoppingList() {
   const { db, isDbReady } = useSQLiteDatabase();
@@ -83,6 +85,12 @@ export function useShoppingList() {
 
   useEffect(() => {
     if (!db || !isDbReady || !userId) return;
+
+    // Trigger outbox replay on startup/ready
+    drainOutbox(db, userId).catch((e) =>
+      console.warn("Outbox replay on startup failed:", e)
+    );
+
     if (hasSyncedFromCloud) return;
 
     let cancelled = false;
@@ -130,19 +138,24 @@ export function useShoppingList() {
    */
   const createList = useCallback(
     async (listName: string, color?: string, emoji?: string) => {
-      if (!db || !userId) return null;
-      const newList = await createShoppingList(db, userId, listName, color, emoji);
-      // Fire-and-forget sync to Firestore; keep same listId
+      const uid = userId || (await ensureUid());
+      if (!db || !uid) return null;
+      const newList = await createShoppingList(db, uid, listName, color, emoji);
+      
+      // Queue outbox operation and drain outbox
       try {
-        await createShoppingListFirestore(userId, newList);
+        await queueOutboxOperation(db, uid, "CREATE_LIST", newList);
+        drainOutbox(db, uid).catch((e) =>
+          console.warn("Failed to drain outbox after createList:", e)
+        );
       } catch (e) {
-        // Ignore Firestore errors for offline/permissions; local is source of truth
-        console.warn("Failed to sync list to Firestore:", e);
+        console.warn("Failed to queue createList in outbox:", e);
       }
+
       setLists((prev) => [newList, ...prev]);
       return newList;
     },
-    [db, userId]
+    [db, userId, ensureUid]
   );
 
   /**
@@ -152,14 +165,19 @@ export function useShoppingList() {
     async (listId: string, updates: { listName?: string; color?: string; emoji?: string }) => {
       if (!db) return;
       await updateShoppingList(db, listId, updates);
-      // Attempt to sync patch to Firestore
-      try {
-        if (userId) {
-          await updateShoppingListFirestore(userId, listId, updates);
+      
+      const uid = userId || (await ensureUid());
+      if (uid) {
+        try {
+          await queueOutboxOperation(db, uid, "UPDATE_LIST", { listId, updates });
+          drainOutbox(db, uid).catch((e) =>
+            console.warn("Failed to drain outbox after updateList:", e)
+          );
+        } catch (e) {
+          console.warn("Failed to queue updateList in outbox:", e);
         }
-      } catch (e) {
-        console.warn("Failed to sync list update to Firestore:", e);
       }
+
       setLists((prev) =>
         prev.map((list) =>
           list.listId === listId
@@ -171,7 +189,7 @@ export function useShoppingList() {
         setCurrentList((prev) => (prev ? { ...prev, ...updates } : null));
       }
     },
-    [db, currentList, userId]
+    [db, currentList, userId, ensureUid]
   );
 
   /**
@@ -181,20 +199,26 @@ export function useShoppingList() {
     async (listId: string) => {
       if (!db) return;
       await deleteShoppingList(db, listId);
-      try {
-        if (userId) {
-          await deleteShoppingListFirestore(userId, listId);
+      
+      const uid = userId || (await ensureUid());
+      if (uid) {
+        try {
+          await queueOutboxOperation(db, uid, "DELETE_LIST", { listId });
+          drainOutbox(db, uid).catch((e) =>
+            console.warn("Failed to drain outbox after deleteList:", e)
+          );
+        } catch (e) {
+          console.warn("Failed to queue deleteList in outbox:", e);
         }
-      } catch (e) {
-        console.warn("Failed to delete list in Firestore:", e);
       }
+
       setLists((prev) => prev.filter((list) => list.listId !== listId));
       if (currentList?.listId === listId) {
         setCurrentList(null);
         setCurrentItems([]);
       }
     },
-    [db, currentList, userId]
+    [db, currentList, userId, ensureUid]
   );
 
   /**
@@ -236,15 +260,16 @@ export function useShoppingList() {
         throw err;
       }
 
-      // Sync to Firestore (non-blocking)
-      try {
-        const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
-        if (uid) {
-          console.log('[useShoppingList] Syncing to Firestore:', { uid, listId });
-          await addItemToListFirestore(uid, listId, product, quantity, note);
+      const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
+      if (uid) {
+        try {
+          await queueOutboxOperation(db, uid, "ADD_ITEM", { listId, product, quantity, note });
+          drainOutbox(db, uid).catch((e) =>
+            console.warn("Failed to drain outbox after addItem:", e)
+          );
+        } catch (e) {
+          console.warn("Failed to queue addItem in outbox:", e);
         }
-      } catch (e) {
-        console.warn("Failed to sync item add to Firestore:", e);
       }
 
       // If this is the current list, refresh items
@@ -275,14 +300,16 @@ export function useShoppingList() {
         throw err;
       }
 
-      try {
-        const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
-        if (uid) {
-          console.log('[useShoppingList] Syncing quantity to Firestore');
-          await updateItemQuantityFirestore(uid, listId, barcode, quantity);
+      const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
+      if (uid) {
+        try {
+          await queueOutboxOperation(db, uid, "UPDATE_QTY", { listId, barcode, quantity });
+          drainOutbox(db, uid).catch((e) =>
+            console.warn("Failed to drain outbox after updateQuantity:", e)
+          );
+        } catch (e) {
+          console.warn("Failed to queue updateQuantity in outbox:", e);
         }
-      } catch (e) {
-        console.warn("Failed to sync quantity to Firestore:", e);
       }
 
       if (currentList?.listId === listId) {
@@ -304,11 +331,16 @@ export function useShoppingList() {
       if (!db) return;
       await updateItemNote(db, listId, barcode, note ?? null);
 
-      try {
-        const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
-        if (uid) await updateItemNoteFirestore(uid, listId, barcode, note ?? null);
-      } catch (e) {
-        console.warn("Failed to sync note to Firestore:", e);
+      const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
+      if (uid) {
+        try {
+          await queueOutboxOperation(db, uid, "UPDATE_NOTE", { listId, barcode, note: note ?? null });
+          drainOutbox(db, uid).catch((e) =>
+            console.warn("Failed to drain outbox after updateNote:", e)
+          );
+        } catch (e) {
+          console.warn("Failed to queue updateNote in outbox:", e);
+        }
       }
 
       if (currentList?.listId === listId) {
@@ -319,7 +351,7 @@ export function useShoppingList() {
         );
       }
     },
-    [db, currentList]
+    [db, currentList, lists, ensureUid]
   );
 
   /**
@@ -330,11 +362,16 @@ export function useShoppingList() {
       if (!db) return;
       const newState = await toggleItemChecked(db, listId, barcode);
 
-      try {
-        const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
-        if (uid) await toggleItemCheckedFirestore(uid, listId, barcode);
-      } catch (e) {
-        console.warn("Failed to sync check toggle to Firestore:", e);
+      const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
+      if (uid) {
+        try {
+          await queueOutboxOperation(db, uid, "TOGGLE_CHECKED", { listId, barcode });
+          drainOutbox(db, uid).catch((e) =>
+            console.warn("Failed to drain outbox after toggleChecked:", e)
+          );
+        } catch (e) {
+          console.warn("Failed to queue toggleChecked in outbox:", e);
+        }
       }
 
       if (currentList?.listId === listId) {
@@ -357,11 +394,16 @@ export function useShoppingList() {
       if (!db) return;
       await removeItemFromList(db, listId, barcode);
 
-      try {
-        const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
-        if (uid) await removeItemFromListFirestore(uid, listId, barcode);
-      } catch (e) {
-        console.warn("Failed to sync item removal to Firestore:", e);
+      const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
+      if (uid) {
+        try {
+          await queueOutboxOperation(db, uid, "REMOVE_ITEM", { listId, barcode });
+          drainOutbox(db, uid).catch((e) =>
+            console.warn("Failed to drain outbox after removeItem:", e)
+          );
+        } catch (e) {
+          console.warn("Failed to queue removeItem in outbox:", e);
+        }
       }
 
       if (currentList?.listId === listId) {
@@ -370,7 +412,7 @@ export function useShoppingList() {
         );
       }
     },
-    [db, currentList]
+    [db, currentList, lists, ensureUid]
   );
 
   /**
@@ -381,18 +423,23 @@ export function useShoppingList() {
       if (!db) return;
       await clearCheckedItems(db, listId);
 
-      try {
-        const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
-        if (uid) await clearCheckedItemsFirestore(uid, listId);
-      } catch (e) {
-        console.warn("Failed to sync clear checked to Firestore:", e);
+      const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
+      if (uid) {
+        try {
+          await queueOutboxOperation(db, uid, "CLEAR_CHECKED", { listId });
+          drainOutbox(db, uid).catch((e) =>
+            console.warn("Failed to drain outbox after clearChecked:", e)
+          );
+        } catch (e) {
+          console.warn("Failed to queue clearChecked in outbox:", e);
+        }
       }
 
       if (currentList?.listId === listId) {
         setCurrentItems((prev) => prev.filter((item) => !item.isChecked));
       }
     },
-    [db, currentList]
+    [db, currentList, lists, ensureUid]
   );
 
   /**
@@ -403,18 +450,23 @@ export function useShoppingList() {
       if (!db) return;
       await clearAllItems(db, listId);
 
-      try {
-        const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
-        if (uid) await clearAllItemsFirestore(uid, listId);
-      } catch (e) {
-        console.warn("Failed to sync clear all to Firestore:", e);
+      const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
+      if (uid) {
+        try {
+          await queueOutboxOperation(db, uid, "CLEAR_ALL", { listId });
+          drainOutbox(db, uid).catch((e) =>
+            console.warn("Failed to drain outbox after clearAll:", e)
+          );
+        } catch (e) {
+          console.warn("Failed to queue clearAll in outbox:", e);
+        }
       }
 
       if (currentList?.listId === listId) {
         setCurrentItems([]);
       }
     },
-    [db, currentList]
+    [db, currentList, lists, ensureUid]
   );
 
   /**

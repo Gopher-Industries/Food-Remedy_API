@@ -2,6 +2,10 @@ import * as SQLite from 'expo-sqlite';
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
+export function resetDbPromise() {
+  dbPromise = null;
+}
+
 export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (!dbPromise) {
     dbPromise = (async () => {
@@ -85,6 +89,19 @@ export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
             FOREIGN KEY (list_id) REFERENCES shopping_lists(list_id) ON DELETE CASCADE
           );
           CREATE INDEX IF NOT EXISTS idx_items_list_added ON shopping_list_items(list_id, added_at);
+
+          -- SHOPPING LIST OUTBOX (offline changes queue)
+          CREATE TABLE IF NOT EXISTS shopping_list_outbox (
+            outbox_id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            operation_type TEXT NOT NULL,
+            payload_json TEXT NOT NULL,
+            attempts INTEGER NOT NULL DEFAULT 0,
+            state TEXT NOT NULL DEFAULT 'pending' CHECK (state IN ('pending', 'failed', 'completed')),
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+          CREATE INDEX IF NOT EXISTS idx_outbox_user_state ON shopping_list_outbox(user_id, state, created_at);
         `);
 
         // Versioning
@@ -183,7 +200,7 @@ export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
           await db.execAsync(`ALTER TABLE profiles ADD COLUMN guardrail_level TEXT;`);
         }
 
-        await db.execAsync(`PRAGMA user_version = 5;`);
+        await db.execAsync(`PRAGMA user_version = 6;`);
       });
 
       return db;
