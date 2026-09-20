@@ -7,6 +7,9 @@ on:
       - '.github/workflows/mobile-app-checks.yml'
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+
 jobs:
   checks:
     runs-on: ubuntu-latest
@@ -39,3 +42,12 @@ jobs:
         if: always()
         continue-on-error: true
         run: npx expo lint
+
+      - name: Expo doctor (does not fail the build)
+        if: always()
+        continue-on-error: true
+        run: npx --yes expo-doctor
+
+      - name: Build sanity (bundles the app)
+        if: always()
+        run: npx expo export --platform android --output-dir /tmp/expo-export-check
