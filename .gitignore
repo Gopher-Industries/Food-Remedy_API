@@ -279,6 +279,14 @@ data/
 Documents/Guides/Leadership/Credentials/FirebaseCredentials.zip
 Documents/Guides/Leadership/Credentials/FirebaseCredentials.xlsx
 
+# Local security evidence and scanner installation
+security-evidence/
+.security-tools/
+# Credential containers must be stored outside the repository
+Documents/Guides/Leadership/Credentials/
+*.p12
+*.pfx
+
 # Leadership credential artifacts - never commit
 Documents/Guides/Leadership/Credentials/FirebaseCredentials.zip
 Documents/Guides/Leadership/Credentials/FirebaseCredentials.xlsx
