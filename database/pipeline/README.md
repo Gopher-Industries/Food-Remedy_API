@@ -57,6 +57,11 @@ structural profile checks Firestore collection agreement, enrichment artifact
 handoff, seed checkpoint recovery, and legacy SQLite migration. The release
 profile also runs DB060 candidate validation and verifies readback from Firestore.
 
+The current configuration seeds the approved v1.0 artifact, not the raw enriched
+candidate. Before the seed stage starts, `release_artifact.py` verifies that the
+candidate, manifest, pipeline configuration, versioned dataset and configured
+seed input still match their approved SHA-256 values. Any drift stops the run.
+
 See [`database/Release/DATABASE_RELEASE_INTEGRITY_GATE.md`](../Release/DATABASE_RELEASE_INTEGRITY_GATE.md).
 
 ## Key Features

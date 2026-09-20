@@ -30,6 +30,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from database.pipeline.stages.enrich_stage import run_enrich_stage
+from database.pipeline.release_artifact import verify_approved_release_artifact
 from database.seeding.checkpoint_manager import (
     CheckpointCompatibilityError,
     CheckpointManager,
@@ -188,7 +189,20 @@ def check_pipeline_handoff(root: Path = REPO_ROOT) -> CheckResult:
     ]
     problems: list[str] = []
     if enrich.get("output") != seed.get("input"):
-        problems.append("configured seed input differs from configured enrichment output")
+        try:
+            verified = verify_approved_release_artifact(config, root)
+            evidence.extend(
+                [
+                    f"approved release version={verified['version']}",
+                    f"approved release sha256={verified['dataset_sha256']}",
+                    f"release manifest={verified['manifest']}",
+                ]
+            )
+        except Exception as exc:
+            problems.append(
+                "configured seed input differs from enrichment output without a "
+                f"valid approved release binding: {exc}"
+            )
 
     for module in enrich.get("modules", []):
         if not module.get("enabled", True):

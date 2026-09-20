@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 
 import pytest
 
 from database.pipeline import run_pipeline
+from database.pipeline.release_artifact import verify_approved_release_artifact
 from database.pipeline.stages.enrich_stage import run_enrich_stage
 from database.seeding import seed_firestore
 from database.seeding.checkpoint_manager import (
@@ -286,6 +288,113 @@ def test_pipeline_passes_reported_enrichment_output_to_seed(tmp_path, monkeypatc
         "input_path": str(actual_output),
         "config_input": str(actual_output),
     }
+
+
+def test_pipeline_prefers_verified_versioned_release_over_raw_enrichment(
+    tmp_path, monkeypatch
+):
+    actual_output = tmp_path / "candidate.json"
+    approved_output = tmp_path / "release.json"
+    observed = {}
+    monkeypatch.setattr(
+        run_pipeline,
+        "run_enrich_stage",
+        lambda **_kwargs: {
+            "processed": 1,
+            "failures": 0,
+            "output": str(actual_output),
+            "modules_run": [],
+        },
+    )
+    monkeypatch.setattr(
+        run_pipeline,
+        "verify_approved_release_artifact",
+        lambda *_args, **_kwargs: {
+            "seed_input": str(approved_output),
+            "version": "v1.0",
+            "dataset_sha256": "a" * 64,
+        },
+    )
+
+    def fake_seed(input_path, config):
+        observed["input_path"] = input_path
+        observed["config_input"] = config["input"]
+        return {"processed": 1, "failures": 0, "output": str(approved_output)}
+
+    monkeypatch.setattr(run_pipeline, "run_seed_stage", fake_seed)
+    run_pipeline.runPipeline(
+        config={
+            "pipeline": {
+                "fail_on_error": True,
+                "outputs": {
+                    "metadata": str(tmp_path / "metadata.json"),
+                    "checkpoints": str(tmp_path / "checkpoints.json"),
+                },
+                "clean": {"enabled": False},
+                "enrich": {
+                    "enabled": True,
+                    "input": str(tmp_path / "input.json"),
+                    "output": str(actual_output),
+                    "modules": [],
+                },
+                "release": {
+                    "version": "v1.0",
+                    "source": str(actual_output),
+                    "dataset": str(approved_output),
+                    "manifest": str(tmp_path / "manifest.json"),
+                    "sha256": "a" * 64,
+                },
+                "seed": {"enabled": True, "input": str(approved_output)},
+            }
+        },
+        dry_run=True,
+    )
+    assert observed == {
+        "input_path": str(approved_output),
+        "config_input": str(approved_output),
+    }
+
+
+def test_release_binding_detects_artifact_tampering(tmp_path):
+    source = tmp_path / "candidate.json"
+    dataset = tmp_path / "release.json"
+    manifest_path = tmp_path / "manifest.json"
+    config_path = tmp_path / "database/pipeline/pipeline.config.json"
+    config_path.parent.mkdir(parents=True)
+    source.write_text('[{"barcode":"12345678"}]')
+    dataset.write_text('[{"barcode":"12345678"}]')
+    pipeline = {
+        "enrich": {"output": "candidate.json"},
+        "release": {
+            "version": "v1.0",
+            "source": "candidate.json",
+            "dataset": "release.json",
+            "manifest": "manifest.json",
+            "sha256": hashlib.sha256(dataset.read_bytes()).hexdigest(),
+        },
+        "seed": {"input": "release.json"},
+    }
+    config_path.write_text(json.dumps({"pipeline": pipeline}))
+    manifest_path.write_text(json.dumps({
+        "release_status": "APPROVED_DATASET_ARTIFACT",
+        "release_approved": True,
+        "dataset": {
+            "version": "v1.0",
+            "file": "release.json",
+            "sha256": hashlib.sha256(dataset.read_bytes()).hexdigest(),
+        },
+        "source": {
+            "candidate": "candidate.json",
+            "candidate_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+            "pipeline_config_sha256": hashlib.sha256(config_path.read_bytes()).hexdigest(),
+        },
+    }))
+
+    verified = verify_approved_release_artifact(pipeline, tmp_path)
+    assert verified["version"] == "v1.0"
+    dataset.write_text('[{"barcode":"87654321"}]')
+    with pytest.raises(ValueError, match="dataset SHA-256"):
+        verify_approved_release_artifact(pipeline, tmp_path)
 
 
 def test_partial_stage_result_is_rejected_before_completed_checkpoint():

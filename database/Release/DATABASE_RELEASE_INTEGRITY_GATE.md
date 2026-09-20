@@ -43,7 +43,8 @@ credentials. It checks:
 - every active product seeder and DB012 uses the shared Firestore contract;
 - every direct product read discovered under the mobile services and API uses the
   contract collection;
-- pipeline configuration connects enrichment output to seed input;
+- pipeline configuration binds enrichment output to the approved versioned
+  release manifest and seed input;
 - enabled enrichment modules exist;
 - a redirected module output is consumed by the next module;
 - a failed middle seed batch remains the resume point;
@@ -76,6 +77,7 @@ The release profile adds two release-blocking controls:
 ```bash
 python scripts/database_release_gate.py \
   --mode release \
+  --dataset database/Release/v1.0/foodremedy_release_v1.0.json \
   --with-firestore \
   --json-output /tmp/database-release-integrity.json \
   --markdown-output /tmp/database-release-integrity.md
@@ -104,7 +106,7 @@ For an intentionally new, reviewed candidate:
 
 ```bash
 python database/seeding/seed_firestore.py \
-  --input database/seeding/products_enriched.json \
+  --input database/Release/v1.0/foodremedy_release_v1.0.json \
   --validate \
   --reset-checkpoint
 ```
@@ -117,18 +119,20 @@ been deployed.
 
 ## Current release status
 
-The structural gate passes after these controls. The current committed release
-candidate is still **blocked**, as DB060 reports 5,000 total records, 4,731 valid
-records and 269 invalid records. The live Firestore readback has not been run in
-this development environment. This contribution therefore improves release
-decision quality without claiming that the present dataset is approved or that
-production has been seeded.
+The structural gate passes after these controls. DB063/DB064 generated and
+approved the immutable offline artifact
+`database/Release/v1.0/foodremedy_release_v1.0.json`: 4,731 of 4,731 records
+pass DB060, with SHA-256
+`3e13e4be688c5ff2728857385547d2438052e41699221f34cc001a4939da0b72`.
+The 269 unusable identity rows from the enriched 5,000-record candidate are
+traceable in `v1.0/exclusions.json`; no barcode or product name was guessed.
+Alternative mappings were rebuilt after exclusion and all 39,421 references
+resolve within the released catalogue.
 
-Before MVP release, the Database and Research teams need to resolve or formally
-review the DB060 data findings and regenerate the candidate. Deployment needs to
-provide the workflow secret and retain the successful live gate artifacts.
-Backend should review the SQLite ordering change alongside the open BE027 work,
-because both touch the same migration area.
+The release manifest binds the enriched candidate, pipeline configuration,
+versioned artifact and configured seed input by SHA-256. Production has not yet
+been seeded or read back. Deployment must run the live release profile against
+the v1.0 file, provide the workflow secret and retain the successful artifacts.
 
 ## Evidence for review
 
@@ -155,7 +159,7 @@ The before/after demonstrations are measurable:
 | Resume offset after completed batch 0 | offset returned to batch 0 | resume starts at batch 1 |
 | Redirected enrichment output | downstream used the requested path | downstream consumes and verifies the reported path |
 | Legacy history initialisation | `no such column: owner_scope` | row preserved; composite key and owner index verified |
-| Current release candidate | separate report had to be found and interpreted | release gate blocks with the DB060 counts and candidate hash in one artifact |
+| Current release artifact | candidate contained 269 identity-invalid rows and 1,574 links would dangle after a naive exclusion | v1.0 excludes them with a ledger, rebuilds alternatives and passes 4,731/4,731 records |
 
 ## Limits and ownership boundaries
 

@@ -89,6 +89,7 @@ jobs:
         run: >-
           python scripts/database_release_gate.py
           --mode release
+          --dataset database/Release/v1.0/foodremedy_release_v1.0.json
           --with-firestore
           --json-output "${RUNNER_TEMP}/database-release-integrity.json"
           --markdown-output "${RUNNER_TEMP}/database-release-integrity.md"

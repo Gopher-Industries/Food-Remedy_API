@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+from pathlib import Path
 
 # Running as `python database\pipeline\run_pipeline.py` puts `database/pipeline` on
 # sys.path, not the project root — add the repo root so `database` resolves.
@@ -27,6 +28,7 @@ except Exception:
 from database.pipeline.stages.clean_stage import run_clean_stage
 from database.pipeline.stages.enrich_stage import run_enrich_stage
 from database.pipeline.stages.seed_stage import run_seed_stage
+from database.pipeline.release_artifact import verify_approved_release_artifact
 from database.logging_system.pipeline_logger import PipelineStageLogger
 
 
@@ -451,14 +453,30 @@ def runPipeline(
             seed_cfg["dry_run"] = True
         configured_seed_input = seed_cfg.get("input")
         actual_enrich_output = enrich_result_for_seed.get("output")
-        in_path = actual_enrich_output or configured_seed_input
+        release_binding = pipeline_cfg.get("release")
+        if release_binding:
+            verified_release = verify_approved_release_artifact(
+                pipeline_cfg,
+                Path(repo_root),
+                actual_enrich_output=actual_enrich_output,
+            )
+            in_path = verified_release["seed_input"]
+            pipeline_logger.log_info(
+                stage_name="seed",
+                message=(
+                    f"Using approved release {verified_release['version']} "
+                    f"with SHA-256 {verified_release['dataset_sha256']}"
+                ),
+            )
+        else:
+            in_path = actual_enrich_output or configured_seed_input
         if in_path:
             # run_seed_stage passes the stage config to the seed module, whose
             # entry point reads config["input"]. Keep it aligned with the actual
             # upstream artifact selected above.
             seed_cfg["input"] = in_path
 
-        if actual_enrich_output and configured_seed_input:
+        if actual_enrich_output and configured_seed_input and not release_binding:
             def _absolute_pipeline_path(value: str) -> str:
                 return os.path.abspath(
                     value if os.path.isabs(value) else os.path.join(repo_root, value)

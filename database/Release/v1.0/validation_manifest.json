@@ -1,0 +1,112 @@
+{
+  "schema": "food-remedy-release-manifest-v1",
+  "release_status": "APPROVED_DATASET_ARTIFACT",
+  "release_approved": true,
+  "deployment_status": "NOT_SEEDED_OR_READ_BACK",
+  "generated_at_utc": "2026-09-20T14:36:34.898340+00:00",
+  "release_date": "2026-09-21",
+  "dataset": {
+    "version": "v1.0",
+    "file": "foodremedy_release_v1.0.json",
+    "sha256": "3e13e4be688c5ff2728857385547d2438052e41699221f34cc001a4939da0b72",
+    "record_count": 4731
+  },
+  "alternatives_sidecar": {
+    "file": "product_alternatives_v1.0.json",
+    "sha256": "ac19053dac978d4e9cc0ee63d4305a139856a74ea3d244cea5fb770c1c226a67",
+    "record_count": 4731
+  },
+  "source": {
+    "candidate": "database/seeding/products_enriched.json",
+    "candidate_sha256": "7482ec33bd5f0a5392a5e67ee7c9cb44ee411793d4bf13055e77b0b7374011f5",
+    "candidate_record_count": 5000,
+    "configured_enrichment_input": "database/seeding/products_5k_enriched.json",
+    "configured_enrichment_input_sha256": "fd6648f6560a37086b0399e1b7ba3615d4158efe68217bef08056fcecda9d2a7",
+    "pipeline_config": "database/pipeline/pipeline.config.json",
+    "pipeline_config_sha256": "5295ba5275a792166bc71a0b0863ec2d9a13aba64dfd954bb501b9a584ac891a",
+    "generation_base_commit": "9400289f83df8994b208e870cbf25e6840aa7a5a"
+  },
+  "validation": {
+    "validator": "scripts/db060_release_validation.py",
+    "status": "CHECKS_PASSED_PENDING_APPROVAL",
+    "total_records": 4731,
+    "valid_records": 4731,
+    "invalid_records": 0,
+    "dataset_errors": [],
+    "required_reviews": []
+  },
+  "quality": {
+    "required_fields": {
+      "status": "PASS",
+      "invalid_records": 0,
+      "missing_or_unusable_names": 0,
+      "placeholder_names": 0,
+      "non_string_barcodes": 0,
+      "approved_exceptions_applied": []
+    },
+    "barcodes": {
+      "status": "PASS",
+      "missing": 0,
+      "invalid_format": 0,
+      "non_string": 0,
+      "duplicates": 0,
+      "validation_scope": "format and uniqueness; no GTIN check digit"
+    },
+    "ingredients": {
+      "status": "PASS_WITH_DOCUMENTED_SOURCE_LIMITATION",
+      "missing_text_records": 4391
+    },
+    "allergens": {
+      "status": "PASS",
+      "known_evidence_records": 247,
+      "conservative_unknown_records": 4484,
+      "empty_records": 0,
+      "allergens_detected_mismatches": 0
+    },
+    "categories": {
+      "status": "PASS_WITH_DOCUMENTED_SOURCE_LIMITATION",
+      "mapped_records": 233,
+      "missing_category_tags": 4346,
+      "tagged_but_unmapped": 152,
+      "stored_primary_rule_conflicts_for_review": 0
+    },
+    "alternatives": {
+      "status": "PASS",
+      "references_checked": 39421,
+      "dangling_references": 0,
+      "generation_stats": {
+        "products": 4731,
+        "categories": 47,
+        "empty_similar": 30,
+        "empty_healthier": 1494,
+        "healthier_strict_gap": 0,
+        "healthier_any_gain": 0,
+        "healthier_sugar_proxy": 3054,
+        "healthier_fiber_proxy": 183
+      }
+    }
+  },
+  "excluded_records": {
+    "count": 269,
+    "reason_counts": {
+      "barcode_invalid_format": 3,
+      "stored_product_name_missing_or_unusable": 7,
+      "stored_product_name_placeholder": 259
+    },
+    "ledger": "exclusions.json",
+    "decision": "Excluded because the product could not be reliably identified; no barcode or product-name values were guessed."
+  },
+  "known_limitations": [
+    "4391 records lack source ingredient text; no replacement text was inferred.",
+    "4484 records use the conservative Unknown allergen state and must not be presented as allergen-free.",
+    "4346 records lack source category tags and 152 tagged records remain outside the current category rules.",
+    "Barcode validation covers supported digit-only lengths and uniqueness, not GTIN check digits.",
+    "The dataset artifact is approved offline; production seeding and Firestore application-path readback have not yet run."
+  ],
+  "evidence": {
+    "db060_validation": "db060_validation.json",
+    "category_audit": "category_audit.json",
+    "final_quality_report": "DB063-final-data-quality-check.md",
+    "checksums": "SHA256SUMS"
+  }
+}
