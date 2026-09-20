@@ -5,6 +5,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { usePreferences } from "@/components/providers/PreferencesProvider";
 import Tt from "@/components/ui/UIText";
 import { useRouter } from "expo-router";
+import Constants from "expo-constants";
 import { Pressable, ScrollView, View } from "react-native";
 import { color, spacing } from "@/app/design/token";
 import Screen from "@/components/layout/Screen";
@@ -20,6 +21,7 @@ const hcText = (on: boolean) => (on ? "text-black" : "text-hsl30 dark:text-hsl90
 export default function SettingsPage() {
   const router = useRouter();
   const { handleSignOut } = useAuth();
+  const appVersion = Constants.expoConfig?.version ?? "Unknown";
 
   // completed features
   const {
@@ -356,7 +358,7 @@ export default function SettingsPage() {
                 />
                 <View>
                   <Tt className="font-interMedium">About</Tt>
-                  <Tt className="text-sm">Version {"1.0.0"}</Tt>
+                  <Tt className="text-sm">Version {appVersion}</Tt>
                 </View>
               </View>
 
