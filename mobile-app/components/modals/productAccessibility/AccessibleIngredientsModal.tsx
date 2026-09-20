@@ -64,13 +64,12 @@ const AccessibleIngredientsModal = () => {
     if (!currentProduct) closeModal("accessibleIngredients");
   }, [currentProduct, closeModal]);
 
-  if (!currentProduct) return null;
-
   const [fontSize, setFontSize] = useState(16);
   const minSize = 16;
   const maxSize = 36;
 
   const parsedIngredients = useMemo(() => {
+    if (!currentProduct) return [];
     const fromText = parseIngredientsTable(currentProduct.ingredientsText);
     if (fromText.length > 0) return fromText;
     // Fallback: use array order if text missing
@@ -80,7 +79,9 @@ const AccessibleIngredientsModal = () => {
     return arr
       .map((n: string) => ({ name: (n || "").trim(), amount: undefined as string | undefined }))
       .filter((r) => r.name);
-  }, [currentProduct.ingredientsText, currentProduct.ingredients]);
+  }, [currentProduct]);
+
+  if (!currentProduct) return null;
 
   const inc = () => setFontSize((s) => Math.min(maxSize, s + 2));
   const dec = () => setFontSize((s) => Math.max(minSize, s - 2));

@@ -67,9 +67,9 @@ export default function PrivacyPolicyPage() {
 
           <Tt className="font-interSemiBold mb-1">Scan & Allergen Data</Tt>
           <Tt className="text-sm text-justify mb-4">
-            When you scan a product, the app processes the product's ingredient
+            When you scan a product, the app processes the product&apos;s ingredient
             and nutrition data (sourced from Open Food Facts) to check for
-            allergens you've specified. We may store recent scans to improve
+            allergens you&apos;ve specified. We may store recent scans to improve
             your experience. This data is tied to your account (if you have one)
             or stored locally on your device.
           </Tt>
@@ -93,11 +93,11 @@ export default function PrivacyPolicyPage() {
           <Tt className="text-sm text-justify mb-4">
             We keep your data for as long as needed to operate the app and
             provide its core features. You can delete your account and all
-            associated data at any time via the app's settings or by contacting
+            associated data at any time via the app&apos;s settings or by contacting
             us. Deleted data cannot be recovered.
           </Tt>
 
-          <Tt className="font-interSemiBold mb-1">Children's Privacy</Tt>
+          <Tt className="font-interSemiBold mb-1">Children&apos;s Privacy</Tt>
           <Tt className="text-sm text-justify mb-4">
             Food Remedy is not intended for children under 13 years old. We do
             not knowingly collect data from children under 13. If you believe we

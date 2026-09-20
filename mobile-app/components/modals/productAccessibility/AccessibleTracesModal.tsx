@@ -36,14 +36,14 @@ const AccessibleTracesModal = () => {
     if (!currentProduct) closeModal("accessibleTraces");
   }, [currentProduct, closeModal]);
 
-  if (!currentProduct) return null;
-
   const [fontSize, setFontSize] = useState(16);
   const minSize = 16, maxSize = 36;
   const inc = () => setFontSize(s => Math.min(maxSize, s + 2));
   const dec = () => setFontSize(s => Math.max(minSize, s - 2));
 
   const traces = useMemo(() => buildTracesList(currentProduct), [currentProduct]);
+
+  if (!currentProduct) return null;
 
   return (
     <View

@@ -603,7 +603,7 @@ export default function MembersEditPage() {
             </Tt>
 
             <Tt className="text-center text-sm text-hsl30">
-              Are you sure you want to delete this profile? This can't be undone.
+              Are you sure you want to delete this profile? This can&apos;t be undone.
             </Tt>
 
             <View className="flex-row gap-4 w-full mt-6">

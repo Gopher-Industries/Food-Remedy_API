@@ -5,7 +5,9 @@
   "scripts": {
     "start": "expo start",
     "test": "jest --passWithNoTests",
-    "test:storage-rules": "firebase emulators:exec --only storage \"jest --runInBand __tests__/storage.rules.test.ts\"",
+    "test:storage-rules": "firebase emulators:exec --project demo-food-remedy-storage --only storage \"jest --runInBand __tests__/storage.rules.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test:release-config": "node ./scripts/validateReleaseConfig.js",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
