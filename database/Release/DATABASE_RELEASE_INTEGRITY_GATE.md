@@ -1,4 +1,4 @@
-# Database Release Integrity Gate
+# DB068 - Database Release Integrity Gate
 
 ## Purpose
 
@@ -17,6 +17,10 @@ or only by manual inspection:
 The gate produces JSON and Markdown evidence, returns a non-zero exit code when a
 release condition is not met, and runs its credential-free profile on relevant
 pull requests.
+
+The implementation and its generated JSON/Markdown evidence identify this
+release control as ticket `DB068` so the Planner task, CI run, and repository
+history remain traceable to the same work item.
 
 ## Verified baseline risks
 
