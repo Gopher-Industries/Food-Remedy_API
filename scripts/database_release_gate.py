@@ -42,6 +42,9 @@ from database.seeding.data_contract import (
 )
 
 
+GATE_TICKET = "DB068"
+
+
 @dataclass
 class CheckResult:
     check_id: str
@@ -576,6 +579,7 @@ def run_gate(
     except Exception:
         commit = None
     return {
+        "ticket": GATE_TICKET,
         "gate": "food-remedy-database-release-integrity",
         "mode": mode,
         "status": status,
@@ -587,8 +591,9 @@ def run_gate(
 
 def report_markdown(report: dict[str, object]) -> str:
     lines = [
-        "# Database Release Integrity Gate",
+        f"# {report['ticket']} - Database Release Integrity Gate",
         "",
+        f"**Ticket:** `{report['ticket']}`",
         f"**Overall:** {report['status']}",
         f"**Mode:** {report['mode']}",
         f"**Commit:** `{report.get('commit') or 'unavailable'}`",
@@ -646,7 +651,7 @@ def main(argv: list[str] | None = None) -> int:
 
     for check in report["checks"]:
         print(f"[{check['status']}] {check['check_id']}: {check['summary']}")
-    print(f"DATABASE RELEASE GATE: {report['status']}")
+    print(f"{report['ticket']} DATABASE RELEASE GATE: {report['status']}")
     return 0 if report["status"] == "PASS" else 1
 
 

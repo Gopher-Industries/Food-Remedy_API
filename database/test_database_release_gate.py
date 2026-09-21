@@ -26,6 +26,7 @@ def test_structural_gate_passes_current_contracts():
         mode="structural",
         dataset=ROOT / "database/seeding/products_enriched.json",
     )
+    assert report["ticket"] == "DB068"
     assert report["status"] == "PASS"
     assert {item["check_id"] for item in report["checks"]} == {
         "firestore_collection_contract",
@@ -33,6 +34,9 @@ def test_structural_gate_passes_current_contracts():
         "seed_checkpoint_safety",
         "sqlite_legacy_upgrade",
     }
+    markdown = gate.report_markdown(report)
+    assert markdown.startswith("# DB068 - Database Release Integrity Gate")
+    assert "**Ticket:** `DB068`" in markdown
 
 
 def test_collection_scanner_exposes_case_sensitive_regression(tmp_path):

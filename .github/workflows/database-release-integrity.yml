@@ -1,4 +1,4 @@
-name: Database Release Integrity
+name: DB068 - Database Release Integrity
 
 on:
   pull_request:
