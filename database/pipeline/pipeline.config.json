@@ -58,9 +58,16 @@
         }
       ]
     },
+    "release": {
+      "version": "v1.0",
+      "source": "database/seeding/products_enriched.json",
+      "dataset": "database/Release/v1.0/foodremedy_release_v1.0.json",
+      "manifest": "database/seeding/release_validation_manifest.json",
+      "sha256": "b36d25a591a923e69a472a64b402b34e5a4d51d1aaa3904f5b02caa92cf19d82"
+    },
     "seed": {
       "enabled": true,
-      "input": "database/seeding/products_enriched.json",
+      "input": "database/Release/v1.0/foodremedy_release_v1.0.json",
       "output": "database/seeding/seeded_products.json",
       "script_path": "database/seeding/seed_firestore.py",
       "batch_size": 500,
