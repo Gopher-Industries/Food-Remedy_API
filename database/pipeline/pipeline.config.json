@@ -16,12 +16,10 @@
       "output": "database/seeding/products_enriched.json",
       "modules": [
         {
-          "name": "ts_enrich_wrapper",
-          "path": "pipeline/modules/enrich_ts_wrapper.py",
-          "enabled": false,
-          "config": {
-            "ts_path": "mobile-app/services/nutrition/enrichProducts.ts"
-          }
+          "name": "nutrition_enrich",
+          "path": "pipeline/modules/nutrition_enrich.py",
+          "enabled": true,
+          "config": {}
         },
         {
           "name": "allergens",
