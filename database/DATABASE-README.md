@@ -149,6 +149,37 @@ End-to-end flow:
 
 Optional **Investigation** (e.g. `data_investigation/`) validates quality and accuracy outside the main pipeline. Run the configured pipeline stages via `pipeline/run_pipeline.py` and `pipeline/pipeline.config.json`.
 
+### DB069 quality-first candidate
+
+DB069 replaces arbitrary source slicing with a deterministic candidate-selection
+step across all six committed Australian product chunks. It profiles and hashes
+every source, keeps the most complete record for duplicate barcodes, scores
+source-data completeness, limits brand/category concentration, preserves
+unknown allergen states, and records every source row in an inclusion or
+exclusion ledger.
+
+Run the audited build from the repository root:
+
+```bash
+python scripts/db069_build_quality_candidate.py \
+  --config database/Candidates/db069_candidate_config.json \
+  --output-dir /tmp/db069-candidate-review \
+  --verify-reproducibility
+```
+
+The reviewed DB069 artifacts are in `database/Candidates/DB069/`. The exclusion
+ledger is deterministic gzip-compressed JSON Lines; inspect it with
+`gzip -dc database/Candidates/DB069/exclusion_ledger.jsonl.gz`. Verify every
+artifact with:
+
+```bash
+cd database/Candidates/DB069
+sha256sum -c SHA256SUMS
+```
+
+DB069 does not run enrichment, seed Firestore, or alter production deployment.
+The candidate is the reviewed input for the separate DB070 release workflow.
+
 ---
 
 ## Root files in database/
