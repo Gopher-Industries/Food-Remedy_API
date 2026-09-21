@@ -180,6 +180,31 @@ sha256sum -c SHA256SUMS
 DB069 does not run enrichment, seed Firestore, or alter production deployment.
 The candidate is the reviewed input for the separate DB070 release workflow.
 
+### DB070 quality-first release v1.1
+
+DB070 turns the checksum-bound DB069 candidate into the versioned v1.1
+database release. It removes stale derived fields, runs all five configured
+enrichment modules, reruns DB060 and semantic audits, rebuilds alternatives
+against the final catalogue, and records the v1.0-to-v1.1 quality comparison
+and barcode-level delta. Two isolated builds must produce identical hashes.
+
+Run the release build from the repository root with a deliberate timestamp:
+
+```bash
+python scripts/db070_generate_quality_release.py \
+  --output-dir database/Release/v1.1 \
+  --release-date 2026-09-21 \
+  --generated-at 2026-09-21T12:30:00+00:00
+```
+
+The command refuses to overwrite an existing release directory or accept a
+candidate whose SHA-256 differs from the reviewed DB069 artifact. Verify the
+committed package with `sha256sum -c database/Release/v1.1/SHA256SUMS`.
+
+DB070 is database-only. It does not change Backend/API or mobile code,
+Firestore rules, production seeding, deployment configuration, or claim a
+credentialed live readback.
+
 ---
 
 ## Root files in database/
