@@ -11,7 +11,7 @@ interface ModalResponseProps {
   isInput: boolean;
   message: string;
   acceptLabel: string;
-  onAccept: (input: any) => void;
+  onAccept: (input: any) => void | boolean | Promise<void | boolean>;
 }
 
 const ModalResponse: React.FC<ModalResponseProps> = ({ modalKey, isInput, message, acceptLabel, onAccept }) => {
