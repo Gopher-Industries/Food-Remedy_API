@@ -12,7 +12,12 @@ import {
   ScrollView,
   View,
 } from "react-native";
-import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
+import {
+  Camera,
+  CameraType,
+  CameraView,
+  useCameraPermissions,
+} from "expo-camera";
 import * as ImagePicker from "expo-image-picker";
 import { useNotification } from "@/components/providers/NotificationProvider";
 import BarcodeOverlayMask from "@/components/layout/BarcodeOverlayGuide";
