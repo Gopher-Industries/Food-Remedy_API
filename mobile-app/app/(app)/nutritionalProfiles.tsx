@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useMemo } from "react";
 import Tt from "@/components/ui/UIText";
 import IconGeneral from "@/components/icons/IconGeneral";
 import { color, spacing } from "@/app/design/token";
@@ -56,19 +56,19 @@ export default function NutritionalProfilesScreen() {
     }, [user?.uid, refresh])
   );
 
-  const handleAddMember = () => {
+  const handleAddMember = useCallback(() => {
     clearEdit();
     startEditForNew();
     router.push("/(app)/membersEdit");
-  };
+  }, [clearEdit, router, startEditForNew]);
 
-  const handleEditMember = (id: string) => {
+  const handleEditMember = useCallback((id: string) => {
     const existing = profiles.find((p) => p.profileId === id);
     if (!existing) return;
 
     startEdit(existing);
     router.push("/(app)/membersEdit");
-  };
+  }, [profiles, router, startEdit]);
 
   const onRefresh = useCallback(async () => {
     if (!user?.uid) return;
@@ -78,22 +78,23 @@ export default function NutritionalProfilesScreen() {
     setRefreshing(false);
   }, [user?.uid, refresh]);
 
-  const visibleProfiles = profiles
-    .filter((profile) => {
+  const visibleProfiles = useMemo(() => {
+    const profileIds = new Set<string>();
+
+    return profiles.filter((profile) => {
       const profileId = String(profile.profileId || "").toLowerCase().trim();
       const relationship = String(profile.relationship || "").toLowerCase().trim();
       const firstName = String(profile.firstName || "").toLowerCase().trim();
-
-      return (
+      const isVisible =
         profileId !== "demographics" &&
         relationship !== "demographics" &&
-        firstName !== "user (demographics)"
-      );
-    })
-    .filter(
-      (profile, index, self) =>
-        index === self.findIndex((p) => p.profileId === profile.profileId)
-    );
+        firstName !== "user (demographics)";
+
+      if (!isVisible || profileIds.has(profile.profileId)) return false;
+      profileIds.add(profile.profileId);
+      return true;
+    });
+  }, [profiles]);
 
   return (
     <View className={`flex-1 p-safe ${darkMode ? "bg-hsl15" : "bg-white"}`}>
