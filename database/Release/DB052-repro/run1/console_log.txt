@@ -1,0 +1,10 @@
+[SAFE MODE] Seed stage disabled via --no-seed. No Firestore seeding will be performed.
+2026-09-09 10:33:19 | INFO | pipeline.MainPipeline | event=pipeline_start pipeline=MainPipeline input_source=database\pipeline\pipeline.config.json
+2026-09-09 10:33:19 | INFO | pipeline.MainPipeline | event=stage_info pipeline=MainPipeline stage=clean message=disabled_by_config 
+2026-09-09 10:33:19 | INFO | pipeline.MainPipeline | event=stage_start pipeline=MainPipeline stage=enrich input_file=database/seeding/products_5k_enriched.json
+[DB021] Mood tags applied: 5000 processed, 0 failures
+[DB019] alternatives mapped: products=5000 categories=71 no_similar=52 no_healthier=1737 healthier(strict/any/sugar/fiber)=0/0/3081/182
+2026-09-09 10:34:21 | INFO | pipeline.MainPipeline | event=stage_end pipeline=MainPipeline stage=enrich output_records=5000 failures=0 output_file=database/seeding/products_enriched.json started=2026-09-09T00:33:19.940452+00:00 finished=2026-09-09T00:34:21.498232+00:00 config_summary_enabled=True config_summary_dry_run=False modules_summary=[{'name': 'allergens', 'processed': 5000}, {'name': 'db009_personalisation_tags', 'processed': 5000}, {'name': 'db021_mood_tags', 'processed': 5000}, {'name': 'db019_alternative_product_mapping', 'processed': 5000}]
+2026-09-09 10:34:21 | INFO | pipeline.MainPipeline | event=stage_info pipeline=MainPipeline stage=seed message=disabled_by_config 
+2026-09-09 10:34:21 | INFO | pipeline.MainPipeline | event=stage_info pipeline=MainPipeline stage=main message=pipeline_finished metadata=database/pipeline/pipeline_run_metadata.json
+2026-09-09 10:34:21 | INFO | pipeline.MainPipeline | event=pipeline_end pipeline=MainPipeline total_duration_ms=61599.318981170654

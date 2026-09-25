@@ -6,8 +6,8 @@
     "barcode": {
       "type": "string",
       "required": true,
-      "description": "Unique GTIN/barcode (13 digits, no leading zeros)",
-      "constraints": "non-empty, alphanumeric"
+      "description": "Unique GTIN/barcode (8, 12, 13, or 14 digits)",
+      "constraints": "non-empty, numeric"
     },
     "productName": {
       "type": "string",

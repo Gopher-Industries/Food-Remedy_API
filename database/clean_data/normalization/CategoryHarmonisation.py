@@ -165,7 +165,12 @@ CATEGORY_PRIORITY: Dict[str, int] = {
     "Soft Drinks": 54,
     "Snacks": 42,
     "Sweet Snacks": 44,
-    "Chocolates & Confectionery": 34,
+    # DB021: was 34 — lower than its own broader parents "Snacks" (42) and
+    # "Sweet Snacks" (44), which contradicted the specificity-wins design
+    # this table follows everywhere else (e.g. Canned Tuna > Seafood >
+    # Canned Foods). Raised to sit just above "Sweet Snacks" so a product
+    # tagged with both resolves to the more specific/informative label.
+    "Chocolates & Confectionery": 46,
     "Spreads": 28,
     "Nut & Seed Spreads": 30,
     "Chocolate & Sweet Spreads": 30,
