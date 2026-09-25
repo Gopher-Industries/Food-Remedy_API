@@ -85,6 +85,10 @@ Logs for your project will appear below. Press Ctrl+C to exit.
 You can create a new account for the app using your own email and password.  
 This is handled securly by Google Firebase Authentication, and as such, no one in the project has access to your password. Only your email. Regardless, you need to manage your own security.  
 
+### Guest access
+
+Guest sessions are explicitly stored and are limited to scanning barcodes, searching and browsing products, and viewing basic product and nutrition information. History, shopping lists, checkout, saved items, profiles, settings, and all other account features require registration or login. Protected routes are denied by default and return a newly authenticated user to the requested route.
+
 
 <br />
 
@@ -95,6 +99,8 @@ Expo reads public environment variables from `.env`:
 - `EXPO_PUBLIC_API_BASE_URL` — Backend base URL (e.g. `http://127.0.0.1:8000`)
 - `EXPO_PUBLIC_API_SOURCE` — `backend` (default via auto) or `firestore` to force Firestore-only data access.
 - `EXPO_PUBLIC_RECOMMENDATION_SOURCE` — `backend` (default) or `firestore` to switch recommendation logic.
+- `EXPO_PUBLIC_FEATURE_RECOMMENDATIONS_TAB` — Shows the Compare tab on the product screen. Off by default from the feature flags.
+- `EXPO_PUBLIC_CAPTCHA_ENABLED` — hCaptcha on login. On in release builds, off in development from the feature flags.
 
 Example `.env`:
 
@@ -117,4 +123,4 @@ Backend mode remains available by default. The app will use server-provided alte
 ## Finished
 Begin contributing to the project.  
 Now read:
- - [🧑‍💻 How To Contribute Here](../Documents/Guides/General/how-to-contribute.md)  
+ - [🧑‍💻 How To Contribute Here](../Documents/Guides/General/how-to-contribute.md)

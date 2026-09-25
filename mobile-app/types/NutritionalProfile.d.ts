@@ -18,4 +18,8 @@ export interface NutritionalProfile {
   ageBand?: string;
   sex?: string;
   guardrailLevel?: string;
+  healthGoal?:
+  | "weight_loss"
+  | "muscle_gain"
+  | "maintenance";
 }

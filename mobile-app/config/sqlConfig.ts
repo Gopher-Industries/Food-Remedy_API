@@ -48,15 +48,15 @@ export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
 
           -- HISTORY
           CREATE TABLE IF NOT EXISTS product_history (
-            barcode TEXT PRIMARY KEY CHECK (length(barcode) > 0),
+            owner_scope TEXT NOT NULL CHECK (length(owner_scope) > 0),
+            barcode TEXT NOT NULL CHECK (length(barcode) > 0),
             product_name TEXT NOT NULL,
             brand TEXT,
             product_json TEXT NOT NULL,
             created_at TEXT NOT NULL,
-            last_seen_at TEXT NOT NULL
+            last_seen_at TEXT NOT NULL,
+            PRIMARY KEY (owner_scope, barcode)
           );
-          CREATE INDEX IF NOT EXISTS idx_hist_last_seen ON product_history(last_seen_at);
-
           -- SHOPPING LISTS (aligned with DAO)
           CREATE TABLE IF NOT EXISTS shopping_lists (
             list_id TEXT PRIMARY KEY,
@@ -168,7 +168,89 @@ export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
           await db.execAsync(`ALTER TABLE shopping_list_items ADD COLUMN note TEXT;`);
         }
 
-        await db.execAsync(`PRAGMA user_version = 4;`);
+        // Migration: add demographic columns to profiles
+        const profileCols = await db.getAllAsync<{ name: string }>(`PRAGMA table_info('profiles');`);
+        const hasAgeBandCol = profileCols.some(c => c.name === 'age_band');
+        const hasSexCol = profileCols.some(c => c.name === 'sex');
+        const hasGuardrailLevelCol = profileCols.some(c => c.name === 'guardrail_level');
+        if (!hasAgeBandCol) {
+          await db.execAsync(`ALTER TABLE profiles ADD COLUMN age_band TEXT;`);
+        }
+        if (!hasSexCol) {
+          await db.execAsync(`ALTER TABLE profiles ADD COLUMN sex TEXT;`);
+        }
+        if (!hasGuardrailLevelCol) {
+          await db.execAsync(`ALTER TABLE profiles ADD COLUMN guardrail_level TEXT;`);
+        }
+
+        // BE028: product history/cache snapshots must be isolated per account/guest scope.
+        // Legacy rows had no reliable owner, so keep them under an unowned scope that normal
+        // account/guest reads never use.
+        const historyCols = await db.getAllAsync<{ name: string }>(`PRAGMA table_info('product_history');`);
+        const hasHistoryOwnerScopeCol = historyCols.some(c => c.name === 'owner_scope');
+        const historyPkCols = historyCols
+          .filter(c => (c as any).pk > 0)
+          .sort((a, b) => ((a as any).pk ?? 0) - ((b as any).pk ?? 0))
+          .map(c => c.name);
+        const hasScopedHistoryPrimaryKey =
+          historyPkCols.length === 2 &&
+          historyPkCols[0] === 'owner_scope' &&
+          historyPkCols[1] === 'barcode';
+
+        if (!hasHistoryOwnerScopeCol || !hasScopedHistoryPrimaryKey) {
+          await db.execAsync(`
+            CREATE TABLE IF NOT EXISTS product_history_new (
+              owner_scope TEXT NOT NULL CHECK (length(owner_scope) > 0),
+              barcode TEXT NOT NULL CHECK (length(barcode) > 0),
+              product_name TEXT NOT NULL,
+              brand TEXT,
+              product_json TEXT NOT NULL,
+              created_at TEXT NOT NULL,
+              last_seen_at TEXT NOT NULL,
+              PRIMARY KEY (owner_scope, barcode)
+            );
+          `);
+
+          if (historyCols.length > 0 && hasHistoryOwnerScopeCol) {
+            await db.execAsync(`
+              INSERT OR REPLACE INTO product_history_new (
+                owner_scope, barcode, product_name, brand, product_json, created_at, last_seen_at
+              )
+              SELECT
+                COALESCE(NULLIF(owner_scope, ''), 'legacy:unowned') AS owner_scope,
+                barcode,
+                product_name,
+                brand,
+                product_json,
+                created_at,
+                last_seen_at
+              FROM product_history;
+            `);
+          } else if (historyCols.length > 0) {
+            await db.execAsync(`
+              INSERT OR REPLACE INTO product_history_new (
+                owner_scope, barcode, product_name, brand, product_json, created_at, last_seen_at
+              )
+              SELECT
+                'legacy:unowned' AS owner_scope,
+                barcode,
+                product_name,
+                brand,
+                product_json,
+                created_at,
+                last_seen_at
+              FROM product_history;
+            `);
+          }
+
+          await db.execAsync(`DROP TABLE product_history;`);
+          await db.execAsync(`ALTER TABLE product_history_new RENAME TO product_history;`);
+        }
+
+        await db.execAsync(`CREATE INDEX IF NOT EXISTS idx_hist_owner_last_seen ON product_history(owner_scope, last_seen_at);`);
+        await db.execAsync(`DROP INDEX IF EXISTS idx_hist_last_seen;`);
+
+        await db.execAsync(`PRAGMA user_version = 6;`);
       });
 
       return db;

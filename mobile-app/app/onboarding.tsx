@@ -17,6 +17,7 @@ import {
 } from "@/components/onboarding";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useTheme } from "@/theme";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const ANIMATION_DURATION = 350;
 
@@ -24,6 +25,7 @@ export default function InitialOnboarding() {
   const router = useRouter();
   const { completeOnboarding } = useOnboarding();
   const theme = useTheme();
+  const { enterGuestMode } = useAuth();
   const { width: screenWidth } = useWindowDimensions();
   
   const [currentScreen, setCurrentScreen] = useState<1 | 2 | 3>(1);
@@ -55,7 +57,8 @@ export default function InitialOnboarding() {
 
   const handleContinueAsGuest = async () => {
     await completeOnboarding();
-    router.replace("/(app)/(tabs)");
+    await enterGuestMode();
+    router.replace("/(app)/(tabs)/scan");
   };
 
   // Screen 2 handlers

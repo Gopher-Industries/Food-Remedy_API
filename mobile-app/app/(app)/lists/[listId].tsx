@@ -46,29 +46,23 @@ export default function ShoppingListDetailPage() {
   const [refreshing, setRefreshing] = useState(false);
 
   type LocalState = Record<string, { plannedPurchaseDate: string | null }>;
+
   const [localState, setLocalState] = useState<LocalState>({});
   const [editingItem, setEditingItem] = useState<{
     barcode: string;
     productName: string;
   } | null>(null);
+
   const [noteEditingItem, setNoteEditingItem] = useState<{
     barcode: string;
     productName: string;
     note: string | null | undefined;
   } | null>(null);
+
   const [noteInput, setNoteInput] = useState("");
   const [selectedBarcodes, setSelectedBarcodes] = useState<string[]>([]);
   const [showBulkActionsDropdown, setShowBulkActionsDropdown] = useState(false);
   const [bulkActionsTop, setBulkActionsTop] = useState(0);
-
-  const RNDateTimePicker = useMemo(() => {
-    if (Platform.OS === "ios" || Platform.OS === "android") {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const mod = require("@react-native-community/datetimepicker");
-      return mod.default ?? mod;
-    }
-    return null;
-  }, []);
 
   const startOfDay = (d: Date) => {
     const nd = new Date(d);
@@ -101,14 +95,17 @@ export default function ShoppingListDetailPage() {
     today: Date
   ): GroupKey => {
     if (!plannedPurchaseDate) return "noDate";
+
     const planned = new Date(plannedPurchaseDate);
     if (Number.isNaN(planned.getTime())) return "noDate";
 
     const diff = dateDiffInDays(planned, today);
+
     if (diff < 0) return "overdue";
     if (diff === 0) return "today";
     if (diff === 1) return "tomorrow";
     if (diff <= 7) return "thisWeek";
+
     return "later";
   };
 
@@ -124,17 +121,24 @@ export default function ShoppingListDetailPage() {
   useFocusEffect(
     useCallback(() => {
       if (!ready || !listId) return;
-      (async () => {
+
+      const reloadList = async () => {
         await refreshLists();
         await loadList(String(listId));
-      })();
+      };
+
+      reloadList();
     }, [ready, listId, refreshLists, loadList])
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await refreshLists();
-    if (listId) await loadList(String(listId));
+
+    if (listId) {
+      await loadList(String(listId));
+    }
+
     setRefreshing(false);
   }, [refreshLists, loadList, listId]);
 
@@ -148,8 +152,9 @@ export default function ShoppingListDetailPage() {
         }
       }
 
-      Object.keys(next).forEach((bc) => {
-        if (!currentItems.find((it) => it.barcode === bc)) delete next[bc];
+      Object.keys(next).forEach((barcode) => {
+        const stillExists = currentItems.some((it) => it.barcode === barcode);
+        if (!stillExists) delete next[barcode];
       });
 
       return next;
@@ -162,6 +167,7 @@ export default function ShoppingListDetailPage() {
         currentItems.some((it) => it.barcode === barcode)
       )
     );
+
     setShowBulkActionsDropdown(false);
   }, [currentItems]);
 
@@ -175,13 +181,14 @@ export default function ShoppingListDetailPage() {
   };
 
   const handleEditItem = (barcode: string) => {
-    const it = currentItems.find((i) => i.barcode === barcode);
-    if (!it) return;
+    const item = currentItems.find((i) => i.barcode === barcode);
+    if (!item) return;
 
     setEditingItem({
-      barcode: it.barcode,
-      productName: it.productName,
+      barcode: item.barcode,
+      productName: item.productName,
     });
+
     openModal("editPlannedDate");
   };
 
@@ -208,6 +215,7 @@ export default function ShoppingListDetailPage() {
       setShowBulkActionsDropdown(false);
       return;
     }
+
     setSelectedBarcodes(currentItems.map((it) => it.barcode));
   };
 
@@ -253,7 +261,11 @@ export default function ShoppingListDetailPage() {
     const withoutDate: typeof viewItems = [];
 
     for (const it of viewItems) {
-      (it.plannedPurchaseDate ? withDate : withoutDate).push(it);
+      if (it.plannedPurchaseDate) {
+        withDate.push(it);
+      } else {
+        withoutDate.push(it);
+      }
     }
 
     withDate.sort(
@@ -269,6 +281,7 @@ export default function ShoppingListDetailPage() {
 
   const grouped = useMemo(() => {
     const groups: Partial<Record<GroupKey, typeof sortedItems>> = {};
+
     for (const it of sortedItems) {
       const key = getGroupKey(it.plannedPurchaseDate, today);
       (groups[key] ||= []).push(it);
@@ -284,17 +297,21 @@ export default function ShoppingListDetailPage() {
     ];
 
     return order
-      .filter((k) => groups[k]?.length)
-      .map((k) => ({ key: k, title: groupTitles[k], items: groups[k]! }));
+      .filter((key) => groups[key]?.length)
+      .map((key) => ({
+        key,
+        title: groupTitles[key],
+        items: groups[key]!,
+      }));
   }, [sortedItems, today]);
 
   const currentList = lists.find((l) => l.listId === listId);
 
   const selectProduct = (barcode: string) => {
-    if (barcode) {
-      setBarcode(barcode);
-      router.push("/product");
-    }
+    if (!barcode) return;
+
+    setBarcode(barcode);
+    router.push("/product");
   };
 
   return (
@@ -309,9 +326,11 @@ export default function ShoppingListDetailPage() {
             size={20}
           />
         </Pressable>
+
         <Tt className="text-xl font-interBold flex-1 text-center">
           {currentList?.listName ?? "Shopping List"}
         </Tt>
+
         <View style={{ width: 44 }} />
       </View>
 
@@ -486,7 +505,6 @@ export default function ShoppingListDetailPage() {
               <Pressable
                 onPress={() => {
                   setShowBulkActionsDropdown(false);
-                  //This line navigates to the shopping-cart page and passes listId as a URL parameter.
                   router.push({
                     pathname: "/(app)/lists/shopping-cart",
                     params: { listId },
@@ -559,6 +577,7 @@ export default function ShoppingListDetailPage() {
           >
             <View className="bg-white dark:bg-hsl15 rounded-2xl p-4 w-full">
               <Tt className="font-interSemiBold text-lg mb-2">Edit note</Tt>
+
               <Tt className="text-sm text-hsl40 dark:text-hsl80 mb-4">
                 {noteEditingItem.productName}
               </Tt>
@@ -577,8 +596,10 @@ export default function ShoppingListDetailPage() {
                       noteInput.trim() || null
                     );
                   }
+
                   setNoteEditingItem(null);
                   setNoteInput("");
+                  closeModal("editNote");
                 }}
               />
 
@@ -595,8 +616,10 @@ export default function ShoppingListDetailPage() {
                       null
                     );
                   }
+
                   setNoteEditingItem(null);
                   setNoteInput("");
+                  closeModal("editNote");
                 }}
               />
 
@@ -606,6 +629,7 @@ export default function ShoppingListDetailPage() {
                 onPress={() => {
                   setNoteEditingItem(null);
                   setNoteInput("");
+                  closeModal("editNote");
                 }}
                 className="mt-1 items-center"
               >

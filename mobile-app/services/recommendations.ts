@@ -6,6 +6,11 @@
 
 import type { Product } from "@/types/Product";
 import type { NutritionalProfile } from "@/types/NutritionalProfile";
+import {
+  assessAllergenSafety,
+  INCOMPLETE_ALLERGEN_DATA_REASON,
+} from "@/services/allergenSafety";
+import { getProfileRestrictions } from "@/services/profileProductSuitability";
 
 export interface RecommendationScore {
   product: Product;
@@ -40,34 +45,18 @@ function classifyProductSafety(product: Product): "green" | "grey" | "red" {
   return "grey";
 }
 
-/**
- * Check if product is safe for the given profile
- * Returns true if product contains no allergens/forbidden additives
- */
-function isSafeForProfile(product: Product, profile: NutritionalProfile): boolean {
-  // Check allergens
-  const productAllergens = (product.allergens || []).map((a) => a.toLowerCase());
-  const profileAllergies = (profile.allergies || []).map((a) => a.toLowerCase());
-  const hasAllergen = profileAllergies.some((allergy) =>
-    productAllergens.some((allergen) => allergen.includes(allergy) || allergy.includes(allergen))
-  );
-  if (hasAllergen) return false;
-
-  // Check traces (if critical)
-  const productTraces = (product.traces || "").toLowerCase();
-  if (productTraces && profileAllergies.some((allergy) => productTraces.includes(allergy))) {
-    return false;
-  }
-
-  // Check forbidden additives
+function findForbiddenAdditive(
+  product: Product,
+  profile: NutritionalProfile
+): string | undefined {
   const productAdditives = (product.additives || []).map((a) => a.toLowerCase());
   const forbiddenAdditives = (profile.additives || []).map((a) => a.toLowerCase());
-  const hasForbiddenAdditive = forbiddenAdditives.some((additive) =>
-    productAdditives.some((p) => p.includes(additive) || additive.includes(p))
-  );
-  if (hasForbiddenAdditive) return false;
 
-  return true;
+  return forbiddenAdditives.find((additive) =>
+    productAdditives.some(
+      (value) => value.includes(additive) || additive.includes(value)
+    )
+  );
 }
 
 /**
@@ -91,7 +80,7 @@ function meetsdietary(product: Product, profile: NutritionalProfile): boolean {
     }
     // Gluten-free
     if (diet === "gluten-free") {
-      const hasGlutenFree = labels.some((l) => l.includes("gluten"));
+      const hasGlutenFree = labels.some((l) => l.includes("gluten-free"));
       if (!hasGlutenFree) return false;
     }
   }
@@ -136,13 +125,16 @@ function scoreAlternative(
   const categoryScore = categorySimilarity * 25;
   score += categoryScore;
 
+  if (categorySimilarity > 0.7) {
+    reasons.push("✓ Similar product category");
+  }
   // Safety score: classify and boost green products (40 points max)
-  const altSafety = classifyProductSafety(alternative);
+  const nutritionalSafety = classifyProductSafety(alternative);
   const origSafety = classifyProductSafety(original);
-  if (altSafety === "green") {
+  if (nutritionalSafety === "green") {
     score += 40;
     reasons.push("✓ Healthier option (Green rating)");
-  } else if (altSafety === "grey") {
+  } else if (nutritionalSafety === "grey") {
     score += 20;
     reasons.push("⚪ Acceptable nutritional profile (Grey rating)");
   } else {
@@ -151,12 +143,19 @@ function scoreAlternative(
   }
 
   // Allergen safety (20 points if safe)
-  if (isSafeForProfile(alternative, profile)) {
+  const allergenSafety = assessAllergenSafety(
+    alternative,
+    getProfileRestrictions(profile)
+  );
+  const forbiddenAdditive = findForbiddenAdditive(alternative, profile);
+  if (allergenSafety.status === "safe" && !forbiddenAdditive) {
     score += 20;
     reasons.push("✓ Safe for your allergies");
-  } else {
+  } else if (allergenSafety.status === "unsafe" || forbiddenAdditive) {
     score -= 30; // penalize unsafe products heavily
     reasons.push("✗ Contains allergen/additive concern");
+  } else {
+    reasons.push(INCOMPLETE_ALLERGEN_DATA_REASON);
   }
 
   // Dietary alignment (15 points if aligned)
@@ -165,11 +164,55 @@ function scoreAlternative(
     reasons.push(`✓ Aligns with ${(profile.dietaryForm || [])[0] || "your diet"}`);
   }
 
+  // Goal-based recommendation scoring
+  const nutriments = alternative.nutriments || {};
+
+  const calories =
+    Number(nutriments["energy-kcal_100g"]) || 0;
+
+  const protein =
+    Number(nutriments.proteins_100g) || 0;
+
+  const sugar =
+    Number(nutriments.sugars_100g) || 0;
+
+  // Weight loss users
+  if (
+    profile.healthGoal?.toLowerCase() ===
+    "weight_loss"
+  ) {
+    if (calories < 150) {
+      score += 15;
+      reasons.push("✓ Lower calorie option");
+    }
+
+    if (sugar < 5) {
+      score += 10;
+      reasons.push("✓ Lower sugar option");
+    }
+  }
+
+  // Muscle gain users
+  if (
+    profile.healthGoal?.toLowerCase() ===
+    "muscle_gain"
+  ) {
+    if (protein > 10) {
+      score += 20;
+      reasons.push("✓ Higher protein option");
+    }
+  }
+
   return {
     product: alternative,
     score: Math.max(0, score), // clamp to 0 minimum
     reasons,
-    safetyRating: altSafety,
+    safetyRating:
+      allergenSafety.status === "unsafe"
+        ? "red"
+        : nutritionalSafety === "red" || allergenSafety.status !== "unknown"
+          ? nutritionalSafety
+          : "grey",
   };
 }
 
@@ -187,10 +230,13 @@ export function getAlternatives(
   profile: NutritionalProfile,
   limit = 5
 ): RecommendationScore[] {
+  if (!original || !candidates?.length) {
+  return [];
+}
   // Filter: exclude red products, prioritize green > grey
   const scored = candidates
     .map((cand) => scoreAlternative(original, cand, profile))
-    .filter((rec) => rec.score > 0) // exclude zero-score products
+    .filter((rec) => rec.score > 0 && rec.safetyRating !== "red") // exclude zero-score products and Unsafe Products
     .sort((a, b) => {
       // Primary: safety rating (green > grey > red)
       const safetyOrder = { green: 3, grey: 2, red: 1 };
@@ -211,22 +257,22 @@ export function isUnsuitableForProfile(
   product: Product,
   profile: NutritionalProfile
 ): { unsuitable: boolean; reason: string } {
-  // Check allergens
-  const productAllergens = (product.allergens || []).map((a) => a.toLowerCase());
-  const profileAllergies = (profile.allergies || []).map((a) => a.toLowerCase());
-  const allergenMatch = profileAllergies.find((allergy) =>
-    productAllergens.some((allergen) => allergen.includes(allergy) || allergy.includes(allergen))
+  const allergenSafety = assessAllergenSafety(
+    product,
+    getProfileRestrictions(profile)
   );
-  if (allergenMatch) {
-    return { unsuitable: true, reason: `Contains allergen: ${allergenMatch}` };
+  if (allergenSafety.status === "unsafe") {
+    return {
+      unsuitable: true,
+      reason: `Contains allergen: ${allergenSafety.matchedAllergen}`,
+    };
+  }
+  if (allergenSafety.status === "unknown") {
+    return { unsuitable: true, reason: INCOMPLETE_ALLERGEN_DATA_REASON };
   }
 
   // Check forbidden additives
-  const productAdditives = (product.additives || []).map((a) => a.toLowerCase());
-  const forbiddenAdditives = (profile.additives || []).map((a) => a.toLowerCase());
-  const additiveMatch = forbiddenAdditives.find((additive) =>
-    productAdditives.some((p) => p.includes(additive) || additive.includes(p))
-  );
+  const additiveMatch = findForbiddenAdditive(product, profile);
   if (additiveMatch) {
     return { unsuitable: true, reason: `Contains forbidden additive: ${additiveMatch}` };
   }
@@ -252,7 +298,17 @@ export function getRecommendationSummary(
   reasons: string[];
 } {
   const unsafe = isUnsuitableForProfile(product, profile);
-  const safety = classifyProductSafety(product);
+  const nutritionalSafety = classifyProductSafety(product);
+  const allergenSafety = assessAllergenSafety(
+    product,
+    getProfileRestrictions(profile)
+  );
+  const safety =
+    allergenSafety.status === "unsafe"
+      ? "red"
+      : nutritionalSafety === "red" || allergenSafety.status !== "unknown"
+        ? nutritionalSafety
+        : "grey";
   const reasons: string[] = [];
 
   if (unsafe.unsuitable) {

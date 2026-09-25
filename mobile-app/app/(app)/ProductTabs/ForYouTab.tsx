@@ -1,12 +1,16 @@
 import React, { useMemo } from "react";
 import { View } from "react-native";
-
 import Tt from "@/components/ui/UIText";
 import ProductCompareSection, {
   ProductData,
   UserDemographics,
 } from "@/components/product/ProductCompareSection";
 import { useProfile } from "@/components/providers/ProfileProvider";
+import { usePreferences } from "@/components/providers/PreferencesProvider";
+import {
+  assessProductForProfile,
+  getProfileRestrictions,
+} from "@/services/profileProductSuitability";
 
 function normalizeArray(value: any): string[] {
   if (!value) return [];
@@ -15,9 +19,11 @@ function normalizeArray(value: any): string[] {
     return value
       .map((item) => {
         if (typeof item === "string") return item;
+
         if (item && typeof item === "object") {
           return String(item.name ?? item.label ?? item.value ?? "");
         }
+
         return "";
       })
       .map((item) => item.trim())
@@ -34,9 +40,25 @@ function normalizeArray(value: any): string[] {
   return [];
 }
 
-function buildUserProfile(activeProfile: any, profiles: any[]): UserDemographics {
+function buildUserProfile(
+  activeProfile: any,
+  profiles: any[]
+): UserDemographics {
+  const visibleProfiles = profiles.filter((profile) => {
+    const profileId = String(profile.profileId || "").toLowerCase().trim();
+    const relationship = String(profile.relationship || "").toLowerCase().trim();
+    return profileId !== "demographics" && relationship !== "demographics";
+  });
+
+  const demographicsProfile = profiles?.find(
+    (p: any) => p.profileId === "demographics"
+  );
+
   const selectedProfile =
-    activeProfile || (profiles && profiles.length > 0 ? profiles[0] : null);
+    activeProfile ||
+    (visibleProfiles.length > 0 ? visibleProfiles[0] : null) ||
+    demographicsProfile ||
+    null;
 
   if (!selectedProfile) {
     return {
@@ -48,32 +70,36 @@ function buildUserProfile(activeProfile: any, profiles: any[]): UserDemographics
     };
   }
 
-  const age =
-    Number(selectedProfile.age) ||
-    Number(selectedProfile.ageYears) ||
-    Number(selectedProfile.userAge) ||
-    0;
-
-  let ageGroup = "Not available";
-  if (age > 0 && age <= 18) ageGroup = "0–18";
-  else if (age <= 35) ageGroup = "19–35";
-  else if (age <= 50) ageGroup = "36–50";
-  else if (age > 50) ageGroup = "50+";
-
   const gender =
     String(
       selectedProfile.gender ??
         selectedProfile.sex ??
         selectedProfile.userGender ??
-        "Not available",
+        "Not available"
     ).trim() || "Not available";
+
+  let ageGroup = "Not available";
+  if (selectedProfile.ageBand) {
+    ageGroup = selectedProfile.ageBand;
+  } else {
+    const age =
+      Number(selectedProfile.age) ||
+      Number(selectedProfile.ageYears) ||
+      Number(selectedProfile.userAge) ||
+      0;
+    if (age > 0 && age <= 18) ageGroup = "0–18";
+    else if (age <= 35) ageGroup = "19–35";
+    else if (age <= 50) ageGroup = "36–50";
+    else if (age > 50) ageGroup = "50+";
+  }
 
   const activityLevel =
     String(
       selectedProfile.activityLevel ??
         selectedProfile.activity ??
         selectedProfile.exerciseLevel ??
-        "Not available",
+        selectedProfile.guardrailLevel ??
+        "Not available"
     ).trim() || "Not available";
 
   const rawGoals = [
@@ -84,6 +110,7 @@ function buildUserProfile(activeProfile: any, profiles: any[]): UserDemographics
   ];
 
   const mappedGoals: UserDemographics["goals"] = [];
+
   rawGoals.forEach((goal) => {
     const lower = goal.toLowerCase();
 
@@ -100,20 +127,10 @@ function buildUserProfile(activeProfile: any, profiles: any[]): UserDemographics
     ...normalizeArray(selectedProfile.preferences?.avoidAllergens),
   ];
 
-  const mappedAllergens: UserDemographics["allergens"] = [];
-  rawAllergens.forEach((item) => {
-    const lower = item.toLowerCase();
-
-    if (lower.includes("peanut")) mappedAllergens.push("Peanuts");
-    else if (lower.includes("milk") || lower.includes("dairy")) {
-      mappedAllergens.push("Milk");
-    } else if (lower.includes("soy")) mappedAllergens.push("Soy");
-    else if (lower.includes("gluten") || lower.includes("wheat")) {
-      mappedAllergens.push("Gluten");
-    } else if (lower.includes("tree nut") || lower.includes("almond")) {
-      mappedAllergens.push("Tree nuts");
-    }
-  });
+  const mappedAllergens = getProfileRestrictions({
+    allergies: rawAllergens,
+    intolerances: [],
+  } as any);
 
   return {
     gender,
@@ -124,7 +141,10 @@ function buildUserProfile(activeProfile: any, profiles: any[]): UserDemographics
   };
 }
 
-function buildProductData(currentProduct: any): ProductData {
+function buildProductData(
+  currentProduct: any,
+  selectedRestrictions: string[]
+): ProductData {
   const nutriments = currentProduct?.nutriments ?? {};
 
   const sugar =
@@ -132,7 +152,7 @@ function buildProductData(currentProduct: any): ProductData {
       nutriments["sugars_100g"] ??
         nutriments["sugars_serving"] ??
         nutriments["sugars"] ??
-        0,
+        0
     ) || 0;
 
   const sodium =
@@ -140,7 +160,7 @@ function buildProductData(currentProduct: any): ProductData {
       nutriments["sodium_100g"] ??
         nutriments["sodium_serving"] ??
         nutriments["sodium"] ??
-        0,
+        0
     ) || 0;
 
   const protein =
@@ -148,20 +168,18 @@ function buildProductData(currentProduct: any): ProductData {
       nutriments["proteins_100g"] ??
         nutriments["proteins_serving"] ??
         nutriments["proteins"] ??
-        0,
+        0
     ) || 0;
-
-  const allergens = [
-    ...normalizeArray(currentProduct?.allergens),
-    ...normalizeArray(currentProduct?.traces),
-  ];
 
   return {
     name: currentProduct?.productName ?? "Unknown product",
     sugar,
     sodium,
     protein,
-    allergens,
+    allergenSafety: assessProductForProfile(currentProduct, {
+      allergies: selectedRestrictions,
+      intolerances: [],
+    } as any),
   };
 }
 
@@ -169,34 +187,47 @@ type Props = {
   product: any;
 };
 
-export default function CompareTab({ product }: Props) {
+function CompareTab({ product }: Props) {
   const { profiles, activeProfile } = useProfile();
+  const { darkMode } = usePreferences();
 
   const userProfile = useMemo(() => {
     return buildUserProfile(activeProfile, profiles || []);
   }, [activeProfile, profiles]);
 
   const productData = useMemo(() => {
-    return buildProductData(product);
-  }, [product]);
+    return buildProductData(product, userProfile.allergens);
+  }, [product, userProfile.allergens]);
 
   if (!product) return null;
 
   return (
-    <View className="mt-6 mb-8">
-      <View className="mb-4 rounded-xl border border-gray-200 bg-white p-4">
-        <Tt className="font-interBold text-lg text-black">
+    <View className={`mt-6 mb-8 ${darkMode ? "bg-hsl15" : "bg-white"}`}>
+      <View
+        className={`mb-4 rounded-xl border p-4 ${
+          darkMode ? "border-hsl30 bg-hsl20" : "border-gray-200 bg-white"
+        }`}
+      >
+        <Tt
+          className={`font-interBold text-lg ${
+            darkMode ? "text-white" : "text-black"
+          }`}
+        >
           {product?.productName ?? "Unknown product"}
         </Tt>
-        <Tt className="mt-1 text-sm text-gray-600">
+
+        <Tt
+          className={`mt-1 text-sm ${
+            darkMode ? "text-hsl70" : "text-gray-600"
+          }`}
+        >
           {product?.brand ?? "Unknown brand"}
         </Tt>
       </View>
 
-      <ProductCompareSection
-        userProfile={userProfile}
-        product={productData}
-      />
+      <ProductCompareSection userProfile={userProfile} product={productData} />
     </View>
   );
 }
+
+export default React.memo(CompareTab);

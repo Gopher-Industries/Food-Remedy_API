@@ -133,6 +133,7 @@ Adjust the path for other test modules as needed.
 | Firebase access (restricted) | `Documents/Guides/Leadership/Credentials/firebase-access.md` |
 | Common setup issues template | `Documents/Guides/troubleshoot-setup.md` |
 | Contribution and Planner workflow | `Documents/Guides/General/how-to-contribute.md` |
+| T1 2026 frontend changes (FE005) | `Documents/Frontend/2026 Trimester 1/FE005-T1-2026-Frontend-Changes.md` |
 
 ---
 

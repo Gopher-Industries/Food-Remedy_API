@@ -1,7 +1,8 @@
 # 🧠 Food Remedy Database Documentation
-> **DB015 Documentation:** For full schema, data flow, cart/recommendation dependencies and deployment checklist, see [`Documents/Database/2026 Trimester 1/DB015-Schema-DataFlow-Documentation.md`](Documents/Database/2026 Trimester 1/DB015-Schema-DataFlow-Documentation.md)
+> **DB015 Documentation (2026 T1):** For the earlier schema, data flow, cart/recommendation dependencies and deployment checklist, see [`Documents/Database/2026 Trimester 1/DB015-Schema-DataFlow-Documentation.md`](../Documents/Database/2026%20Trimester%201/DB015-Schema-DataFlow-Documentation.md). For the current pipeline and seeding process, use this README and `pipeline/README.md`.
+> **DB038 Documentation:** For known source-data gaps and how they affect tags/scores in demos and QA, see [`Documents/Database/2026 Trimester 1/DB038-Source-Data-Gaps-And-Limitations.md`](../Documents/Database/2026%20Trimester%201/DB038-Source-Data-Gaps-And-Limitations.md)
 
-This document is the **single place** for how the **database/** folder is organised, how data is processed (scrape → clean → enrich → seed), and where to find scripts and docs. No functionality is changed here—only documentation.
+This document is the **single place** for how the **database/** folder is organised, how data is processed (scrape → clean → enrich → seed), and where to find scripts and docs. No functionality is changed here-only documentation.
 
 📄 **Future docs:** Save new database documentation in `Documents/Database/[Year-Trimester]`.
 
@@ -50,7 +51,8 @@ scraping/  clean_data/  pipeline/  seeding/
 - **Enrich:** Add nutrition scores, tags, categories (done in pipeline).
 - **Seed:** Upload the final data to Firestore.
 
-The **pipeline/** folder runs clean → enrich → seed in one go using `pipeline.config.json`. Optional **Investigation** (e.g. `data_investigation/`) is for exploring and validating data outside the main pipeline.
+The **pipeline/** folder manages the clean → enrich → seed workflow using `pipeline.config.json`. 
+Each stage can be enabled or disabled in the config, so only the currently enabled stages will run. Optional **Investigation** (e.g. `data_investigation/`) is used to explore, test, and check data separately from the main Clean → Enrich → Seed pipeline.
 
 ---
 
@@ -60,8 +62,8 @@ The **pipeline/** folder runs clean → enrich → seed in one go using `pipelin
 |--------|--------------|-----------|
 | **scraping/** | Gets raw Australian products from Open Food Facts. | `OpenFoodFacts-DataScrape.py` |
 | **clean_data/** | Cleans and normalises product data (one canonical cleaning folder). | `cleanProductData.py`, `constants.py`, `normalization/`, `IOExamples/` |
-| **pipeline/** | Runs clean → enrich → seed from config. | `run_pipeline.py`, `pipeline.config.json`, `stages/`, `modules/` |
-| **seeding/** | Uploads product JSON to Firestore in batches. | `seed_firestore.py`, `seed_engine.py`, `seed_products.py`, `schema_definition.json`, product chunk files |
+| **pipeline/** | Controls the clean, enrich, and seed stages using the config. | `run_pipeline.py`, `pipeline.config.json`, `stages/`, `modules/` |
+| **seeding/** | Uploads product JSON to Firestore in batches. | `seed_firestore.py`, `seed_products.py`, `schema_definition.json`, product chunk files |
 | **Allergens/** | Allergen reference data and detection. | `allergens_config.json`, `load_allergens.py`, `seed_allergens_to_db.py`, `test_allergens.py` |
 | **QA/** | Quality assurance for cleaned data. | `DB006_QA_cleaning.py`, `summary_report.txt`, `errors.json` |
 | **Validation/** | Validates product schema/rules before use and DB012 pre-seed checks. | `db021_validator.py`, `db012_validator.py`, `DB012-Validation-Integration-Testing.md` |
@@ -69,6 +71,8 @@ The **pipeline/** folder runs clean → enrich → seed in one go using `pipelin
 | **data_investigation/** | Exploratory analysis and samples (not production pipeline). | `exampleProductRaw.json`, `exampleProductCleaned.json`, `data_investigation.py` |
 | **logging_system/** | Shared logging for pipeline/scripts. | `logger.py`, `pipeline_logger_demo.py` |
 | **local_backend/** | Local scan/persistence helpers (Node/JS). | `scanPipeline.js`, `persistenceLayer.js`, `testScan.js`, `testPersistence.js` |
+| **integration_tests/** | Tests that different database and app functions work together correctly, including saving data, scanning products, offline behaviour, and updating saved data. | `README.md`, `run_db030_tests.js`, `test_db030_integration.js` |
+| **sqlite_investigation/** | Investigates and tests the local SQLite product database, including performance, database updates, and version handling. | `sqlite_product_catalog.py`, `benchmark_db033.py`, `benchmark_db035.py`, `local_db_update_strategy.py` |
 | **output/** | Output chunks from pipeline runs. | `chunk_0_raw.json`, `chunk_0_clean.json`, `chunk_0_enriched.json` |
 
 ---
@@ -91,14 +95,14 @@ The **pipeline/** folder runs clean → enrich → seed in one go using `pipelin
 
 Prepares scraped data for ingestion: standardises, deduplicates, renames, and structures.
 
-1. **Load & deduplicate** — Remove duplicate product entries by barcode.
-2. **Text & field normalisation** — Clean names, brands, valid barcodes.
-3. **Numeric standardisation** — Consistent units (e.g. grams).
-4. **Nutrient filtering** — Keep energy, fats, carbs, protein, salt/sodium, etc.
-5. **Tag cleaning** — Remove language prefixes (e.g. `en:`) from tags.
-6. **Image handling** — Generate image URLs from barcodes.
-7. **Schema refinement** — Drop unwanted columns, rename `code` → `barcode`, `brands` → `brand`, camelCase.
-8. **Save** — Export cleaned JSON for Firestore/pipeline.
+1. **Load & deduplicate** - Remove duplicate product entries by barcode.
+2. **Text & field normalisation** - Clean names, brands, valid barcodes.
+3. **Numeric standardisation** - Consistent units (e.g. grams).
+4. **Nutrient filtering** - Keep energy, fats, carbs, protein, salt/sodium, etc.
+5. **Tag cleaning** - Remove language prefixes (e.g. `en:`) from tags.
+6. **Image handling** - Generate image URLs from barcodes.
+7. **Schema refinement** - Drop unwanted columns, rename `code` → `barcode`, `brands` → `brand`, camelCase.
+8. **Save** - Export cleaned JSON for Firestore/pipeline.
 
 **Note:** `clean_data/` is the **only** cleaning folder. All cleaning scripts and examples live there.
 
@@ -114,12 +118,14 @@ Used for exploratory analysis and validation: test cleaning, compare raw vs clea
 
 ## 🌱 Seeding
 
-**File:** `database/seeding/seed_firestore.py` (and `seed_engine.py`, `seed_products.py`)
+**Main seeding file:** `database/seeding/seed_firestore.py`
 
-1. **Initialise Firebase** — Use `serviceAccountKey.json`.
-2. **Load cleaned data** — e.g. `products_XXk_XXk.json` (chunk range in filename).
-3. **Batch upload** — Writes in chunks of 500, with retries and timestamps (`dateAdded`, `lastUpdated`).
-4. **Store** — Products in Firestore `products` collection (default), keyed by barcode.
+The current pipeline uses `seed_firestore.py` to upload products to Firestore. `seed_products.py` is a small wrapper that also sends the seeding work to `seed_firestore.py`.
+
+1. **Initialise Firebase** - Use `serviceAccountKey.json`.
+2. **Load cleaned data** - e.g. `products_XXk_XXk.json` (chunk range in filename).
+3. **Batch upload** - Writes in chunks of 500, with retries and timestamps (`dateAdded`, `lastUpdated`).
+4. **Store** - Products in Firestore `products` collection (default), keyed by barcode.
 
 DB012 workflow:
 
@@ -136,12 +142,68 @@ End-to-end flow:
 
 **Scraping → Cleaning → Enrichment → Seeding**
 
-1. **Scrape** — Collect Australian food product data.
-2. **Clean** — Process and standardise (consistent schema).
-3. **Enrich** — Add tags, scores, categories (pipeline modules).
-4. **Seed** — Upload to Firestore.
+1. **Scrape** - Collect Australian food product data.
+2. **Clean** - Process and standardise (consistent schema).
+3. **Enrich** - Add tags, scores, categories (pipeline modules).
+4. **Seed** - Upload to Firestore.
 
-Optional **Investigation** (e.g. `data_investigation/`) validates quality and accuracy outside the main pipeline. Run the full flow via `pipeline/run_pipeline.py` and `pipeline/pipeline.config.json`.
+Optional **Investigation** (e.g. `data_investigation/`) validates quality and accuracy outside the main pipeline. Run the configured pipeline stages via `pipeline/run_pipeline.py` and `pipeline/pipeline.config.json`.
+
+### DB069 quality-first candidate
+
+DB069 replaces arbitrary source slicing with a deterministic candidate-selection
+step across all six committed Australian product chunks. It profiles and hashes
+every source, keeps the most complete record for duplicate barcodes, scores
+source-data completeness, limits brand/category concentration, preserves
+unknown allergen states, and records every source row in an inclusion or
+exclusion ledger.
+
+Run the audited build from the repository root:
+
+```bash
+python scripts/db069_build_quality_candidate.py \
+  --config database/Candidates/db069_candidate_config.json \
+  --output-dir /tmp/db069-candidate-review \
+  --verify-reproducibility
+```
+
+The reviewed DB069 artifacts are in `database/Candidates/DB069/`. The exclusion
+ledger is deterministic gzip-compressed JSON Lines; inspect it with
+`gzip -dc database/Candidates/DB069/exclusion_ledger.jsonl.gz`. Verify every
+artifact with:
+
+```bash
+cd database/Candidates/DB069
+sha256sum -c SHA256SUMS
+```
+
+DB069 does not run enrichment, seed Firestore, or alter production deployment.
+The candidate is the reviewed input for the separate DB070 release workflow.
+
+### DB070 quality-first release v1.1
+
+DB070 turns the checksum-bound DB069 candidate into the versioned v1.1
+database release. It removes stale derived fields, runs all five configured
+enrichment modules, reruns DB060 and semantic audits, rebuilds alternatives
+against the final catalogue, and records the v1.0-to-v1.1 quality comparison
+and barcode-level delta. Two isolated builds must produce identical hashes.
+
+Run the release build from the repository root with a deliberate timestamp:
+
+```bash
+python scripts/db070_generate_quality_release.py \
+  --output-dir database/Release/v1.1 \
+  --release-date 2026-09-21 \
+  --generated-at 2026-09-21T12:30:00+00:00
+```
+
+The command refuses to overwrite an existing release directory or accept a
+candidate whose SHA-256 differs from the reviewed DB069 artifact. Verify the
+committed package with `sha256sum -c database/Release/v1.1/SHA256SUMS`.
+
+DB070 is database-only. It does not change Backend/API or mobile code,
+Firestore rules, production seeding, deployment configuration, or claim a
+credentialed live readback.
 
 ---
 
@@ -149,7 +211,7 @@ Optional **Investigation** (e.g. `data_investigation/`) validates quality and ac
 
 | File | Purpose |
 |------|--------|
-| `DATABASE-README.md` | This file — structure, process, and quick reference. |
+| `DATABASE-README.md` | This file - structure, process, and quick reference. |
 | `DB006_sample1.py` | Sample script for DB006 (QA). |
 | `DB007-missing-values.md` | Notes on missing values (DB007). |
 | `pipeline_checkpoints.json`, `pipeline_run_metadata.json` | Pipeline state and metadata (used by `run_pipeline.py`). |
@@ -163,8 +225,8 @@ Optional **Investigation** (e.g. `data_investigation/`) validates quality and ac
 |------------|--------|
 | Get raw Australian products | `scraping/OpenFoodFacts-DataScrape.py` |
 | Clean raw data | `clean_data/cleanProductData.py` and `clean_data/normalization/` |
-| Run full flow (clean → enrich → seed) | `pipeline/run_pipeline.py` and `pipeline/pipeline.config.json` |
-| Upload products to Firestore | `seeding/` (e.g. `seed_firestore.py`, `seed_engine.py`) |
+| Run configured pipeline stages | `pipeline/run_pipeline.py` and `pipeline/pipeline.config.json` |
+| Upload products to Firestore | `seeding/seed_firestore.py` |
 | Work on allergens | `Allergens/` |
 | Run or improve cleaning QA | `QA/DB006_QA_cleaning.py` |
 | Validate schema/product shape | `Validation/`, `seeding/schema_definition.json`, `Validation/DB012-Validation-Integration-Testing.md` |
@@ -175,4 +237,4 @@ Optional **Investigation** (e.g. `data_investigation/`) validates quality and ac
 
 **Summary:** One cleaning folder (`clean_data/`). One doc (this file). Flow: Scraping → Clean → Enrich → Seed. New team members can use this README to find scraping scripts, cleaning scripts, enrichment (pipeline), seeding scripts, and QA/Reports.
 
-**Trimester 2026 T1 — full local workflow (mobile app, captcha, env vars):** [`Documents/Guides/General/t1-2026-workflow-and-local-development.md`](../Documents/Guides/General/t1-2026-workflow-and-local-development.md)
+**Trimester 2026 T1 - full local workflow (mobile app, captcha, env vars):** [`Documents/Guides/General/t1-2026-workflow-and-local-development.md`](../Documents/Guides/General/t1-2026-workflow-and-local-development.md)

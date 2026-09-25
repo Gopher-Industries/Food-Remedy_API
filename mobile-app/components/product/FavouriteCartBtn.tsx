@@ -6,11 +6,14 @@ import { useEffect, useState } from "react";
 import { Pressable } from "react-native";
 import IconGeneral from "../icons/IconGeneral";
 import { color, spacing } from "../../app/design/token";
+import { useAuth } from "../providers/AuthProvider";
+import { router } from "expo-router";
 
 const FavouriteCartBtn = () => {
   const { currentProduct } = useProduct();
   const { toggle, check } = useFavourites();
   const [isFav, setIsFav] = useState(false);
+  const { sessionType } = useAuth();
 
   useEffect(() => {
     (async () => {
@@ -23,6 +26,10 @@ const FavouriteCartBtn = () => {
 
   const handleToggleFavourite = async () => {
     if (!currentProduct) return;
+    if (sessionType === "guest") {
+      router.push("/(app)/(tabs)/cart");
+      return;
+    }
     const newState = await toggle(currentProduct);
     setIsFav(newState);
   };

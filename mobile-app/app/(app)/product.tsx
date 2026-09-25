@@ -10,6 +10,7 @@ import Tt from "@/components/ui/UIText";
 import { useProduct } from "@/components/providers/ProductProvider";
 import { useModalManager } from "@/components/providers/ModalManagerProvider";
 import { usePreferences } from "@/components/providers/PreferencesProvider";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 import SkeletonLoading from "../errorHandling/skeletonLoading";
 import ErrorState from "../errorHandling/errorState";
@@ -24,6 +25,7 @@ import NutrientsTab from "./ProductTabs/NutrientsTab";
 import IngredientsTab from "./ProductTabs/IngredientsTab";
 import ForYouTab from "./ProductTabs/ForYouTab";
 import RecommendationsTab from "./ProductTabs/RecommendationsTab";
+import {useFeatureFlag} from "@/hooks/useFeatureFlag";
 
 type TabKey = "Nutrients" | "Ingredients" | "For you" | "Compare";
 
@@ -33,16 +35,51 @@ export default function ProductTabsScreen() {
   const { currentProduct, loading, error } = useProduct();
   const { openModal } = useModalManager();
   const { highContrast, ttsEnabled } = usePreferences();
+  const { sessionType } = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabKey>("Nutrients");
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
 
-  const tabs: TabKey[] = ["Nutrients", "Ingredients", "For you", "Compare"];
+  // Compare tab is unfinished since RecommendationsTab is not done.
+  // RecommendationsTab will stay behind a flag and is off by default
+  const showRecommendationsTab = useFeatureFlag("recommendationsTab");
+
+  const tabs: TabKey[] = showRecommendationsTab
+      ? ["Nutrients", "Ingredients", "For you", "Compare"]
+      : ["Nutrients", "Ingredients", "For you"];
 
   useScanVoiceSummary({
     product: currentProduct ?? null,
     enabled: ttsEnabled && !loading && !error && !!currentProduct,
   });
+
+  const handleBack = () => {
+    if (sessionType === "guest") {
+      router.replace("/(app)/(tabs)/scan");
+      return;
+    }
+    if (router.canGoBack()) {
+      router.replace("/(app)/(tabs)");
+    } else {
+      router.replace("/(app)/(tabs)"); 
+    }
+  };
+
+  const requestShoppingList = () => {
+    if (sessionType === "guest") {
+      router.push("/(app)/(tabs)/cart");
+      return;
+    }
+    openModal("addToList");
+  };
+
+  const selectTab = (tab: TabKey) => {
+    if (sessionType === "guest" && tab === "For you") {
+      router.push("/(app)/(tabs)/profiles");
+      return;
+    }
+    setActiveTab(tab);
+  };
 
   const productImageUri = useMemo(() => {
     if (!currentProduct) return null;
@@ -70,6 +107,7 @@ export default function ProductTabsScreen() {
             clean(item.imageUrl) ||
             clean(item.front) ||
             clean(item.primary);
+
           if (found) return found;
         }
       }
@@ -101,14 +139,21 @@ export default function ProductTabsScreen() {
   const shouldShowRemoteImage = !!productImageUri && !imageLoadFailed;
 
   const iconDefault = highContrast ? "#000000" : "hsl(0, 0%, 30%)";
+
   const pageBg = highContrast
     ? "bg-white dark:bg-hsl15"
     : "bg-hsl95 dark:bg-hsl10";
+
   const titleText = highContrast ? "text-black" : "text-hsl20";
-  const bodyText = highContrast ? "text-black" : "text-hsl30 dark:text-hsl90";
+
+  const bodyText = highContrast
+    ? "text-black"
+    : "text-hsl30 dark:text-hsl90";
+
   const primaryBtn = highContrast
     ? "bg-black border border-black"
     : "bg-primary";
+
   const primaryBtnText = "text-white";
 
   const renderTabContent = () => {
@@ -122,8 +167,10 @@ export default function ProductTabsScreen() {
       case "For you":
         return <ForYouTab product={currentProduct} />;
 
-      case "Compare":
-        return <RecommendationsTab product={currentProduct} />;
+       case "Compare":
+         return showRecommendationsTab ? (
+             <RecommendationsTab product={currentProduct} />
+         ) : null;
 
       default:
         return null;
@@ -141,7 +188,7 @@ export default function ProductTabsScreen() {
       <View className="w-[95%] self-center mb-4">
         <View className="flex-row justify-between items-center">
           <Pressable
-            onPress={() => router.back()}
+            onPress={handleBack}
             className="flex-row justify-center items-center px-2 py-1"
           >
             {({ pressed }) => (
@@ -155,7 +202,7 @@ export default function ProductTabsScreen() {
 
           <View className="flex-row items-center gap-x-2">
             <Pressable
-              onPress={() => openModal("addToList")}
+              onPress={requestShoppingList}
               className={`flex-row justify-center items-center px-3 py-2 rounded-lg ${primaryBtn}`}
             >
               {() => (
@@ -235,7 +282,7 @@ export default function ProductTabsScreen() {
               return (
                 <Pressable
                   key={tab}
-                  onPress={() => setActiveTab(tab)}
+                  onPress={() => selectTab(tab)}
                   className="flex-1 items-center py-3"
                 >
                   <Tt
@@ -260,7 +307,7 @@ export default function ProductTabsScreen() {
 
           {activeTab !== "Compare" && (
             <Pressable
-              onPress={() => openModal("addToList")}
+              onPress={requestShoppingList}
               className="bg-primary rounded-lg py-4 px-6 mt-8 mb-4 flex-row justify-center items-center active:bg-primary/80"
             >
               {() => (

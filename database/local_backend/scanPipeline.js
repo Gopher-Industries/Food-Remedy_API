@@ -2,10 +2,13 @@ const config = require("./config");
 const { addToQueue } = require("./syncQueue");
 const { processQueue, resolveConflict } = require("./syncService");
 
+
+
 const {
   getProductByBarcode,
   searchByName
 } = require("../pipeline/barcode_mapper");
+
 
 const PIPELINE_VERSION = config.pipeline.version;
 
@@ -468,4 +471,4 @@ if (require.main === module) {
     .catch((error) => {
       console.error("Reconnect sync failed:", error.message);
     });
-}
+

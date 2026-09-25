@@ -1,5 +1,7 @@
 import json
 
+from utils.missing_value_utils import UNKNOWN_ALLERGEN
+
 
 TAG_CONTRACT = {
     "dietTags": ["vegan", "vegetarian", "pescatarian", "gluten_free"],
@@ -20,6 +22,29 @@ def safe_list(value):
     if isinstance(value, list):
         return value
     return [value]
+
+
+def _allergen_values(record):
+    detected = safe_list(record.get("allergensDetected"))
+    return detected or safe_list(record.get("allergens"))
+
+
+def _known_allergens(record):
+    return [
+        value
+        for value in _allergen_values(record)
+        if isinstance(value, str)
+        and value.strip().lower() != UNKNOWN_ALLERGEN.lower()
+    ]
+
+
+def _allergen_information_unknown(record):
+    values = _allergen_values(record)
+    return bool(values) and not _known_allergens(record) and any(
+        isinstance(value, str)
+        and value.strip().lower() == UNKNOWN_ALLERGEN.lower()
+        for value in values
+    )
 
 
 def safe_float(value, default=0.0):
@@ -49,7 +74,7 @@ def normalise_tags(tags):
 
 def get_text_blob(record):
     ingredients = safe_list(record.get("ingredients", []))
-    allergens = safe_list(record.get("allergensDetected", [])) or safe_list(record.get("allergens", []))
+    allergens = _known_allergens(record)
     categories = safe_list(record.get("categories", []))
 
     combined = []
@@ -61,6 +86,9 @@ def get_text_blob(record):
 
 def get_diet_tags(record):
     tags = []
+    if _allergen_information_unknown(record):
+        return tags
+
     text = get_text_blob(record)
 
     non_vegan = [
@@ -125,7 +153,7 @@ def get_risk_tags(record):
     tags = []
 
     additives = safe_list(record.get("additives", [])) or safe_list(record.get("additives_tags", []))
-    allergens_detected = safe_list(record.get("allergensDetected", []))
+    allergens_detected = _known_allergens(record)
     nutrient_levels = record.get("nutrientLevels", {}) or record.get("nutrient_levels", {}) or {}
     nutriments = record.get("nutriments", {}) or {}
 

@@ -14,7 +14,8 @@ export async function GET(
   context: { params?: { barcode?: string } }
 ): Promise<Response> {
   try {
-    const barcode = context.params?.barcode?.trim();
+    const rawBarcode = context.params?.barcode;
+    const barcode = typeof rawBarcode === "string" ? rawBarcode.trim() : "";
 
     if (!barcode) {
       return toJsonResponse(
@@ -57,4 +58,3 @@ export async function GET(
     );
   }
 }
-

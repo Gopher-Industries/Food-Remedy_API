@@ -1,0 +1,105 @@
+name: DB068 - Database Release Integrity
+
+on:
+  pull_request:
+    paths:
+      - "database/**"
+      - "mobile-app/config/sqlConfig.ts"
+      - "mobile-app/services/database/products/**"
+      - "mobile-app/app/api/**"
+      - "scripts/database_release_gate.py"
+      - ".github/workflows/database-release-integrity.yml"
+  workflow_dispatch:
+    inputs:
+      run_live_release_gate:
+        description: "Validate the candidate and perform Firestore readback"
+        required: true
+        default: false
+        type: boolean
+
+jobs:
+  structural-integrity:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install test dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Run database contract and failure-injection tests
+        run: >-
+          python -m pytest
+          database/test_database_release_gate.py
+          database/test_db065_release_manifest.py
+          database/seeding/test_enhanced_seeding.py
+          database/test_db057_allergen_safety.py
+          database/test_db060_release_validation.py
+          -q
+
+      - name: Generate structural integrity evidence
+        run: >-
+          python scripts/database_release_gate.py
+          --mode structural
+          --json-output "${RUNNER_TEMP}/database-release-integrity.json"
+          --markdown-output "${RUNNER_TEMP}/database-release-integrity.md"
+
+      - name: Upload structural integrity evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-release-integrity-structural
+          path: |
+            ${{ runner.temp }}/database-release-integrity.json
+            ${{ runner.temp }}/database-release-integrity.md
+
+  live-release-readback:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_live_release_gate }}
+    needs: structural-integrity
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install release dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Prepare Firebase service account
+        env:
+          FIREBASE_SERVICE_ACCOUNT_B64: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_B64 }}
+        run: |
+          test -n "$FIREBASE_SERVICE_ACCOUNT_B64"
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_B64" | base64 --decode > "${RUNNER_TEMP}/firebase-service-account.json"
+          chmod 600 "${RUNNER_TEMP}/firebase-service-account.json"
+
+      - name: Validate candidate and verify Firestore readback
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-service-account.json
+        run: >-
+          python scripts/database_release_gate.py
+          --mode release
+          --dataset database/Release/v1.0/foodremedy_release_v1.0.json
+          --with-firestore
+          --json-output "${RUNNER_TEMP}/database-release-integrity.json"
+          --markdown-output "${RUNNER_TEMP}/database-release-integrity.md"
+
+      - name: Upload release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-release-integrity-live
+          path: |
+            ${{ runner.temp }}/database-release-integrity.json
+            ${{ runner.temp }}/database-release-integrity.md

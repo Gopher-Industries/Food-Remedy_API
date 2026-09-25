@@ -8,7 +8,7 @@ type Props = {
   product: any;
 };
 
-export default function NutrientsTab({ product }: Props) {
+function NutrientsTab({ product }: Props) {
   if (!product) return null;
 
   const hasNutriments =
@@ -32,8 +32,10 @@ export default function NutrientsTab({ product }: Props) {
       {hasNutriments ? (
         <NutrimentsTable nutriments={product.nutriments} />
       ) : (
-        <Tt>No nutrient data available</Tt>
+        <Tt className="dark:text-hsl90">No nutrient data available</Tt>
       )}
     </View>
   );
 }
+
+export default React.memo(NutrientsTab);

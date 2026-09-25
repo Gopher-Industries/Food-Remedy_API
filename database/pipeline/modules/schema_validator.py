@@ -1,6 +1,5 @@
 import json
 import os
-import time
 from typing import Any, Dict, List
 
 
@@ -12,11 +11,26 @@ def _validate_record(record: Dict[str, Any]) -> List[str]:
     else:
         if not isinstance(record["barcode"], str) or not record["barcode"].strip():
             errors.append("invalid_barcode")
-
+    # productName is required
+    if "productName" not in record:
+        errors.append("missing_productName")
+    else:
+        if not isinstance(record["productName"], str) or not record["productName"].strip():
+            errors.append("invalid_productName")
     # Nutriments should be a dict (can be empty)
     if "nutriments" in record and not isinstance(record["nutriments"], dict):
         errors.append("invalid_nutriments_type")
-
+    # allergens should be a list if present
+    if "allergens" in record and not isinstance(record["allergens"], list):
+        errors.append("invalid_allergens_type")
+    # categories should be a list if present
+    if "categories" in record and not isinstance(record["categories"], list):
+        errors.append("invalid_categories_type")
+    # completeness should be between 0 and 1 if present
+    if "completeness" in record:
+        c = record["completeness"]
+        if not isinstance(c, (int, float)) or not (0 <= c <= 1):
+            errors.append("invalid_completeness_value")
     return errors
 
 
@@ -37,6 +51,7 @@ def run(input_path: str, output_path: str, config: dict):
     total = 0
     valid = 0
     invalid = 0
+    error_summary: Dict[str, int] = {}
     examples = []
 
     if isinstance(data, list):
@@ -52,6 +67,8 @@ def run(input_path: str, output_path: str, config: dict):
         errs = _validate_record(rec)
         if errs:
             invalid += 1
+            for err in errs:
+                error_summary[err] = error_summary.get(err, 0) + 1
             if len(examples) < 10:
                 examples.append({"barcode": rec.get("barcode"), "errors": errs})
         else:
@@ -61,6 +78,7 @@ def run(input_path: str, output_path: str, config: dict):
         "total": total,
         "valid": valid,
         "invalid": invalid,
+        "error_summary": error_summary,
         "invalid_examples": examples,
     }
 
@@ -77,9 +95,10 @@ def run(input_path: str, output_path: str, config: dict):
         repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
         report_dir = os.path.join(repo_root, "pipeline", "test_reports")
         os.makedirs(report_dir, exist_ok=True)
-        ts = int(time.time())
+        from datetime import datetime
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_path = os.path.join(report_dir, f"schema_report_{ts}.json")
-
+        
     if dry:
         print("DRY-RUN: schema validation report (not written):")
         print(json.dumps(report, indent=2, ensure_ascii=False))
