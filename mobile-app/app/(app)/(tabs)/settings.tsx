@@ -7,7 +7,6 @@ import Tt from "@/components/ui/UIText";
 import { useRouter } from "expo-router";
 import Constants from "expo-constants";
 import { Pressable, ScrollView, View } from "react-native";
-import Constants from "expo-constants";
 import { color, spacing } from "@/app/design/token";
 import Screen from "@/components/layout/Screen";
 
@@ -382,7 +381,7 @@ export default function SettingsPage() {
             </View>
 
             <Pressable
-              onPress={() => router.push("/(app)/diagnosticsPanel")}
+              onPress={() => router.push("/(app)/diagnosticsPanel" as never)}
               className={`flex-row items-center justify-between px-4 py-3 active:bg-hsl98 dark:bg-hsl10 ${hcRow(highContrast)}`}
             >
               {({ pressed }) => (

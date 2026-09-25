@@ -189,10 +189,8 @@ export default function LoginPage() {
                   onPress={() =>
                     setShowPassword((previous) => {
                       const next = !previous;
-                      // Announce and speak a clear status for the NEW state
                       const msg = next ? "Password hidden" : "Password visible";
                       AccessibilityInfo.announceForAccessibility(msg);
-                      // Fallback: speak the message in case screen reader announcements are not audible
                       try {
                         Speech.speak(msg);
                       } catch (e) {
@@ -206,7 +204,7 @@ export default function LoginPage() {
                   accessibilityLabel={showPassword ? "Show password" : "Hide password"}
                   accessibilityState={{ checked: !showPassword }}
                   accessibilityLiveRegion="polite"
-                  className="absolute right-12 top-1/2 -translate-y-1/2"
+                  className="absolute right-4 top-1/2 -translate-y-1/2"
                   style={({ pressed }) => [
                     { borderColor: pressed ? "#FF3EB5" : "hsl(0 0% 13%)" },
                   ]}
