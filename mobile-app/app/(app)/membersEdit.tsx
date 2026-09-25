@@ -307,31 +307,8 @@ export default function MembersEditPage() {
         <View className="w-[90%] self-center">
 
           <View className="flex-row items-center justify-between mb-4">
-<<<<<<< HEAD
             <BackButton />
             <Tt className="font-interBold text-xl">Nutritional Profile</Tt>
-=======
-            <Pressable
-              onPress={() => router.back()}
-              className="flex-row justify-center items-center self-end px-2 py-1"
-            >
-              {({ pressed }) => (
-                <IconGeneral
-                  type="arrow-backward-ios"
-                  fill={
-                    pressed
-                      ? "#FF3F3F"
-                      : "hsl(0 0%, 30%)"
-                  }
-                />
-              )}
-            </Pressable>
-
-            <Tt className="font-interBold text-xl">
-              Nutritional Profile
-            </Tt>
-
->>>>>>> main
             <View style={{ width: 24, height: 24 }} />
           </View>
 
