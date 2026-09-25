@@ -52,8 +52,8 @@ function CrashFallback({ onRetry }: { onRetry: () => void }) {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: color.background },
   content: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: spacing.lg },
-  title: { ...typography.h2, color: color.textDefault, textAlign: "center" },
-  message: { ...typography.body, color: color.textMuted, lineHeight: spacing.lg, marginTop: spacing.sm, textAlign: "center" },
+  title: { ...typography.h2, fontWeight: "600", color: color.textDefault, textAlign: "center" },
+  message: { ...typography.body, fontWeight: "400", color: color.textMuted, lineHeight: spacing.lg, marginTop: spacing.sm, textAlign: "center" },
   button: { backgroundColor: color.primary, borderRadius: spacing.sm, marginTop: spacing.xl, minWidth: 144, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
   buttonPressed: { opacity: 0.8 },
   buttonText: { ...typography.body, color: color.background, fontWeight: "600", textAlign: "center" },
