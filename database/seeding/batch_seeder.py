@@ -18,8 +18,7 @@ if _REPO not in sys.path:
     sys.path.insert(0, _REPO)
 
 from database.seeding.batch_limits import resolve_max_writes_per_run
-
-PRODUCTS_COLLECTION = "products"
+from database.seeding.data_contract import PRODUCTS_COLLECTION
 
 
 @retry.Retry(predicate=retry.if_exception_type(Exception), initial=1, maximum=16, multiplier=2, deadline=60)

@@ -7,6 +7,10 @@ import ProductCompareSection, {
 } from "@/components/product/ProductCompareSection";
 import { useProfile } from "@/components/providers/ProfileProvider";
 import { usePreferences } from "@/components/providers/PreferencesProvider";
+import {
+  assessProductForProfile,
+  getProfileRestrictions,
+} from "@/services/profileProductSuitability";
 
 function normalizeArray(value: any): string[] {
   if (!value) return [];
@@ -97,10 +101,15 @@ const isSelf = memberProfile.relationship === "Self";
   const goals = Array.from(new Set(normalizeArray(memberProfile.dietaryForm)));
 
   const allergens = Array.from(
-    new Set([
-      ...normalizeArray(memberProfile.allergies),
-      ...normalizeArray(memberProfile.intolerances),
-    ])
+    new Set(
+      getProfileRestrictions({
+        allergies: [
+          ...normalizeArray(memberProfile.allergies),
+          ...normalizeArray(memberProfile.intolerances),
+        ],
+        intolerances: [],
+      } as any)
+    )
   );
 
   return {
@@ -112,7 +121,10 @@ const isSelf = memberProfile.relationship === "Self";
   };
 }
 
-function buildProductData(currentProduct: any): ProductData {
+function buildProductData(
+  currentProduct: any,
+  selectedRestrictions: string[]
+): ProductData {
   const nutriments = currentProduct?.nutriments ?? {};
 
   const sugar =
@@ -139,17 +151,15 @@ function buildProductData(currentProduct: any): ProductData {
         0
     ) || 0;
 
-  const allergens = [
-    ...normalizeArray(currentProduct?.allergens),
-    ...normalizeArray(currentProduct?.traces),
-  ];
-
   return {
     name: currentProduct?.productName ?? "Unknown product",
     sugar,
     sodium,
     protein,
-    allergens,
+    allergenSafety: assessProductForProfile(currentProduct, {
+      allergies: selectedRestrictions,
+      intolerances: [],
+    } as any),
   };
 }
 
@@ -157,7 +167,7 @@ type Props = {
   product: any;
 };
 
-export default function CompareTab({ product }: Props) {
+function CompareTab({ product }: Props) {
   const { profiles, activeProfile } = useProfile();
   const { darkMode } = usePreferences();
 
@@ -166,8 +176,8 @@ export default function CompareTab({ product }: Props) {
   }, [activeProfile, profiles]);
 
   const productData = useMemo(() => {
-    return buildProductData(product);
-  }, [product]);
+    return buildProductData(product, userProfile.allergens);
+  }, [product, userProfile.allergens]);
 
   if (!product) return null;
 
@@ -199,3 +209,5 @@ export default function CompareTab({ product }: Props) {
     </View>
   );
 }
+
+export default React.memo(CompareTab);

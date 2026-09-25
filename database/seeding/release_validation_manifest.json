@@ -1,0 +1,95 @@
+{
+  "schema": "food-remedy-release-validation-manifest-v1",
+  "ticket": "DB065",
+  "release_status": "APPROVED_DATASET_ARTIFACT",
+  "release_approved": true,
+  "deployment_status": "NOT_SEEDED_OR_READ_BACK",
+  "handover_status": "READY_FOR_DEPLOYMENT_CONTROLS",
+  "generated_at_utc": "2026-09-21T09:34:17.390166+00:00",
+  "validated_at_utc": "2026-09-21T09:45:34+00:00",
+  "release_date": "2026-09-21",
+  "dataset": {
+    "name": "foodremedy_release_v1.0.json",
+    "file": "foodremedy_release_v1.0.json",
+    "path": "database/Release/v1.0/foodremedy_release_v1.0.json",
+    "version": "v1.0",
+    "sha256": "b36d25a591a923e69a472a64b402b34e5a4d51d1aaa3904f5b02caa92cf19d82",
+    "record_count": 4731
+  },
+  "source": {
+    "candidate": "database/seeding/products_enriched.json",
+    "candidate_sha256": "90170dac3f974f674cef13b37b08a44e34d516dc49a6cb1ef869bdf6e8352870",
+    "candidate_record_count": 5000,
+    "pipeline_config": "database/pipeline/pipeline.config.json",
+    "pipeline_config_sha256": "a363f2dc6c6c95bc4694fe7e8a952a732aba21b97a1db5a2651343c4cc38ac07",
+    "generation_record": "database/Release/v1.0/generation_record.json",
+    "generation_record_sha256": "ca14246e3664c6dc3757b2094b95ae4dd73b4a13de78e9f44eafebb710e17540"
+  },
+  "validation": {
+    "status": "PASS",
+    "total_records": 4731,
+    "valid_records": 4731,
+    "invalid_records": 0,
+    "schema_validation": "PASS",
+    "dataset_errors": [],
+    "required_reviews": []
+  },
+  "barcode_status": {
+    "status": "PASS",
+    "records_with_barcode": 4731,
+    "missing_or_empty": 0,
+    "invalid_format": 0,
+    "non_string": 0,
+    "duplicates": 0,
+    "validation_scope": "supported digit-only lengths and uniqueness; GTIN check digit is not evaluated"
+  },
+  "ingredient_status": {
+    "status": "PASS_WITH_DOCUMENTED_SOURCE_LIMITATION",
+    "records_with_data": 340,
+    "missing_text_records": 4391
+  },
+  "allergen_status": {
+    "status": "PASS",
+    "known_evidence_records": 247,
+    "conservative_unknown_records": 4484,
+    "empty_records": 0,
+    "allergens_detected_mismatches": 0
+  },
+  "category_status": {
+    "status": "PASS_WITH_DOCUMENTED_SOURCE_LIMITATION",
+    "mapped_records": 233,
+    "missing_category_tags": 4346,
+    "tagged_but_unmapped": 152,
+    "stored_primary_rule_conflicts_for_review": 0
+  },
+  "alternative_status": {
+    "status": "PASS",
+    "references_checked": 41529,
+    "dangling_references": 0
+  },
+  "excluded_records": {
+    "count": 269,
+    "reason_counts": {
+      "barcode_invalid_format": 3,
+      "stored_product_name_missing_or_unusable": 7,
+      "stored_product_name_placeholder": 259
+    },
+    "ledger": "database/Release/v1.0/exclusions.json",
+    "decision": "Excluded because the products could not be reliably identified; no barcode or product-name values were guessed."
+  },
+  "known_limitations": [
+    "4391 records lack source ingredient text; no replacement text was inferred.",
+    "4484 records use the conservative Unknown allergen state and must not be presented as allergen-free.",
+    "4346 records lack source category tags and 152 tagged records remain outside the current category rules.",
+    "Barcode validation covers supported digit-only lengths and uniqueness, not GTIN check digits.",
+    "The artifact is approved offline; production seeding and Firestore application-path readback have not yet run."
+  ],
+  "evidence": {
+    "generation_record": "database/Release/v1.0/generation_record.json",
+    "db060_validation": "database/Release/v1.0/db060_validation.json",
+    "category_audit": "database/Release/v1.0/category_audit.json",
+    "exclusions": "database/Release/v1.0/exclusions.json",
+    "checksums": "database/Release/v1.0/SHA256SUMS",
+    "db064_report": "database/Release/v1.0/DB064-versioned-release.md"
+  }
+}

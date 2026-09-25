@@ -41,7 +41,7 @@ class BatchValidator:
                 logger.info("In-memory dataset passed all critical checks.")
             return ok
         except Exception as e:
-            logger.error(f"Validation error: {str(e)}")
+            logger.error(f"Validation error: {str(e)}", exc_info=True)
             return False
 
     def validate(self, file_path='database/seeding/products_enriched.json'):
@@ -54,7 +54,7 @@ class BatchValidator:
             with open(file_path, "r", encoding="utf-8") as file:
                 products = json.load(file)
         except Exception as e:
-            logger.error(f"Failed to read {file_path}: {str(e)}")
+            logger.error(f"Failed to read {file_path}: {str(e)}", exc_info=True)
             return False
 
         return self.validate_data(products)
