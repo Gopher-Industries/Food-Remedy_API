@@ -37,14 +37,14 @@ export default function PrivacyPolicyPage() {
         contentContainerStyle={{ paddingBottom: 10 }}
       >
         <View className="w-[95%] mx-auto">
-          <Tt className="text-hsl30 dark:text-hsl90 text-sm">Last Updated 14 August 2025</Tt>
+          <Tt className="text-hsl30 dark:text-hsl90 text-sm">Last Updated 30 August 2026</Tt>
 
           {/* OUR PROMISE */}
           <Tt className="text-lg font-interBold mt-4 mb-2">Our Promise</Tt>
           <Tt className="text-sm text-justify mb-4">
             This Privacy Policy applies to your use of the Food Remedy app
             (“App”, “Service”), developed and maintained by Deakin University
-            students in collaboration with Gohper Industries (“we”, “us”,
+            students in collaboration with Gopher Industries (“we”, “us”,
             “our”). We value your privacy and are committed to protecting your
             personal information. This policy explains how we collect, store,
             and use your data when you use our app. By continuing to use the
@@ -58,20 +58,21 @@ export default function PrivacyPolicyPage() {
           <Tt className="font-interSemiBold mb-1">Personal Data and Account</Tt>
           <Tt className="text-sm text-justify mb-4">
             If you create an account, we may collect basic details such as your
-            name, email address, and allergen preferences. These are required
-            for core app functionality — specifically, to detect allergens and
-            provide safe product suggestions. We do not sell your data to third
-            parties and take reasonable measures to protect it from unauthorized
-            access.
+            name, email address, allergen preferences, dietary preferences,
+            intolerances, additives, age range, relationship, and demographic
+            information. We may also store profile photos. This information is
+            used for core app functionality, including allergen detection and
+            product suggestions. We do not sell your data to third parties and
+            take reasonable measures to protect it from unauthorized access.
           </Tt>
 
           <Tt className="font-interSemiBold mb-1">Scan & Allergen Data</Tt>
           <Tt className="text-sm text-justify mb-4">
             When you scan a product, the app processes the product's ingredient
             and nutrition data (sourced from Open Food Facts) to check for
-            allergens you've specified. We may store recent scans to improve
-            your experience. This data is tied to your account (if you have one)
-            or stored locally on your device.
+            allergens you've specified. Recent scans are stored locally on your
+            device to provide scan history and are not currently tied to your
+            account. Scan history is limited by the app's local storage.
           </Tt>
 
           <Tt className="font-interSemiBold mb-1">
@@ -85,16 +86,20 @@ export default function PrivacyPolicyPage() {
           <Tt className="font-interSemiBold mb-1">Customer Support</Tt>
           <Tt className="text-sm text-justify mb-4">
             If you reach out for support, you may provide personally
-            identifiable information (such as your email address). We use this
-            only for customer service and do not share it externally.
+            identifiable information (such as your email address). Support
+            submissions may also include your message, account identifier,
+            platform, app version, and submission time. We use this information
+            for customer service and do not use it for marketing.
           </Tt>
 
           <Tt className="font-interSemiBold mb-1">Data Retention</Tt>
           <Tt className="text-sm text-justify mb-4">
             We keep your data for as long as needed to operate the app and
-            provide its core features. You can delete your account and all
-            associated data at any time via the app's settings or by contacting
-            us. Deleted data cannot be recovered.
+            provide its core features. You can request deletion of your account
+            through the app's settings. Account deletion removes the account
+            profile data stored by the app, but locally stored scan history and
+            other device data may remain. Deleted account data cannot be
+            recovered.
           </Tt>
 
           <Tt className="font-interSemiBold mb-1">Children's Privacy</Tt>
@@ -112,9 +117,20 @@ export default function PrivacyPolicyPage() {
           <Tt className="text-sm text-justify mb-4">
             We use Open Food Facts, a global open food database, for product
             data. This data is covered by the Open Database License (ODbL) and
-            may not always be complete or accurate. We do not share your
-            personal data with Open Food Facts or any other third-party service
-            for marketing purposes.
+            may not always be complete or accurate. We also use Firebase for
+            authentication, database storage, and profile-photo storage. Support
+            submissions are stored in Firebase. The app may use hCaptcha to
+            protect account-related web flows. We do not share your personal
+            data with Open Food Facts or any third-party service for marketing
+            purposes.
+          </Tt>
+
+          {/* DEVICE ACCESS */}
+          <Tt className="text-lg font-interBold mt-4 mb-1">Device Access</Tt>
+          <Tt className="text-sm text-justify mb-4">
+            The app requests access to your camera to scan barcodes and to your
+            photo library when you choose a barcode image or profile photo. You
+            can manage these permissions in your device settings.
           </Tt>
 
           {/* MEDICAL DISCLAIMER */}
