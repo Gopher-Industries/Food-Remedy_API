@@ -35,6 +35,7 @@ def run_enrich_stage(input_path: str, output_path: str, config=None) -> dict:
     A module error does not stop later modules from running, but is included in
     the returned failure count so callers can report it accurately.
     """
+    config = config or {}
     modules = config.get("modules", [])
 
     if not input_path:
@@ -73,8 +74,21 @@ def run_enrich_stage(input_path: str, output_path: str, config=None) -> dict:
                 entry = {"module": m.get("name"), "status": "ok", "path": mod_path}
                 if isinstance(result, dict):
                     entry["result"] = result
-                # only advance input if module succeeded
-                current_input = target_output
+
+                # A module may normalise or redirect its output path. The next
+                # module must consume the file the previous module says it wrote.
+                reported_output = (
+                    result.get("output") if isinstance(result, dict) else None
+                )
+                actual_output = reported_output or target_output
+                actual_output = os.path.abspath(actual_output)
+                if not os.path.isfile(actual_output):
+                    raise FileNotFoundError(
+                        f"Module {m.get('name')!r} reported success but its "
+                        f"output does not exist: {actual_output}"
+                    )
+                entry["resolved_output"] = actual_output
+                current_input = actual_output
             except Exception as e:
                 tb = traceback.format_exc()
                 entry = {"module": m.get("name"), "status": "failed", "path": mod_path, "error": str(e), "traceback": tb}
@@ -129,7 +143,7 @@ def run_enrich_stage(input_path: str, output_path: str, config=None) -> dict:
                     pass
 
     failed_module_count = sum(
-        1 for entry in run_list if entry.get("status") == "failed"
+        1 for entry in run_list if entry.get("status") != "ok"
     )
     if failed_module_count:
         total_failures += failed_module_count

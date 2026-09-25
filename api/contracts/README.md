@@ -1,6 +1,7 @@
 # Product Detail API contract
 
-**Version:** 1.0.0 (DB037)  
+**Version:** 1.0.1 (DB037/DB023)
+
 **Canonical schema:** [`contracts/product_detail_v1.schema.json`](../../contracts/product_detail_v1.schema.json)  
 **Alias in this folder:** `product_v1.json` (must stay identical to the canonical file)
 
@@ -38,3 +39,11 @@ python scripts/validate_db037_contract.py
 ```
 
 See [`Documents/Database/2026 Trimester 1/DB037-API-LOCK.md`](../../Documents/Database/2026%20Trimester%201/DB037-API-LOCK.md) for the cross-team sign-off checklist.
+
+## Missing allergen information
+
+`allergens` remains a `string[]`. Known values are returned unchanged; missing,
+null, placeholder, or empty input is returned as `["Unknown"]`. The sentinel is
+never mixed with known allergen names. See the
+[DB023 implementation note](../../Documents/Database/2026%20Trimester%202/DB023-Unknown-Allergen-Handling.md)
+for the pipeline and compatibility decisions.

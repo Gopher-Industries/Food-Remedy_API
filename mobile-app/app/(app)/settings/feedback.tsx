@@ -15,12 +15,19 @@ import submitFeedback from "@/services/database/feedback/submitFeedback";
 import { auth } from "@/config/firebaseConfig";
 import { useAuthUserId } from "@/hooks/useAuthUserId";
 import { usePreferences } from "@/components/providers/PreferencesProvider";
+import { useDirtyForm } from "@/hooks/useDirtyForm";
 
 export default function FeedbackPage() {
   const router = useRouter();
   const { addNotification } = useNotification();
   const [feedback, setFeedback] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { markDirty, markClean, allowLeave } = useDirtyForm();
+  const hasChanges = feedback.trim() !== "";
+  useEffect(() => {
+    if (hasChanges) markDirty();
+    else markClean();
+  }, [hasChanges, markDirty, markClean]);
   const uid = useAuthUserId();
   const navigateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { darkMode } = usePreferences();
@@ -89,6 +96,7 @@ export default function FeedbackPage() {
 
     addNotification("Thanks for your feedback!", "s");
     setFeedback("");
+    allowLeave();
     navigateTimerRef.current = setTimeout(() => {
       router.back();
     }, 800);

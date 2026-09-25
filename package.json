@@ -2,11 +2,16 @@
   "scripts": {
     "test:db012:cart": "node database/db012_cart_integration.js",
     "test:db030": "node database/integration_tests/run_db030_tests.js",
-    "test:db030:full": "npm run test:db030 && npm --prefix mobile-app test -- db030_api_ui_flow.test.ts"
+    "test:db030:full": "npm run test:db030 && npm --prefix mobile-app test -- db030_api_ui_flow.test.ts",
+    "test:firestore-rules": "node --test test/test_firestore_rules_regression.js"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "sqlite3": "^6.0.1"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
+    "firebase-tools": "^15.26.0"
   }
 }

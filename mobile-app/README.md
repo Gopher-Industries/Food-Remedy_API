@@ -99,6 +99,8 @@ Expo reads public environment variables from `.env`:
 - `EXPO_PUBLIC_API_BASE_URL` — Backend base URL (e.g. `http://127.0.0.1:8000`)
 - `EXPO_PUBLIC_API_SOURCE` — `backend` (default via auto) or `firestore` to force Firestore-only data access.
 - `EXPO_PUBLIC_RECOMMENDATION_SOURCE` — `backend` (default) or `firestore` to switch recommendation logic.
+- `EXPO_PUBLIC_FEATURE_RECOMMENDATIONS_TAB` — Shows the Compare tab on the product screen. Off by default from the feature flags.
+- `EXPO_PUBLIC_CAPTCHA_ENABLED` — hCaptcha on login. On in release builds, off in development from the feature flags.
 
 Example `.env`:
 
