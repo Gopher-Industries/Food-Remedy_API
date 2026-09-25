@@ -5,7 +5,7 @@
     "strict": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "types": ["jest"],
+    "types": ["jest","node"],
     "paths": {
       "@firebase/auth": [
         "./node_modules/@firebase/auth/dist/index.rn.d.ts"

@@ -57,8 +57,6 @@ export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
             last_seen_at TEXT NOT NULL,
             PRIMARY KEY (owner_scope, barcode)
           );
-          CREATE INDEX IF NOT EXISTS idx_hist_owner_last_seen ON product_history(owner_scope, last_seen_at);
-
           -- SHOPPING LISTS (aligned with DAO)
           CREATE TABLE IF NOT EXISTS shopping_lists (
             list_id TEXT PRIMARY KEY,
