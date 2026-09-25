@@ -379,7 +379,7 @@ export default function SettingsPage() {
             </View>
 
             <Pressable
-              onPress={() => router.push("/(app)/diagnosticsPanel")}
+              onPress={() => router.push("/(app)/diagnosticsPanel" as never)}
               className={`flex-row items-center justify-between px-4 py-3 active:bg-hsl98 dark:bg-hsl10 ${hcRow(highContrast)}`}
             >
               {({ pressed }) => (

@@ -1,5 +1,5 @@
 import React from "react";
-import { ScrollView, Pressable } from "react-native";
+import { ScrollView, Pressable, type RefreshControlProps } from "react-native";
 import Tt from "@/components/ui/UIText";
 import IconGeneral from "@/components/icons/IconGeneral";
 import { color } from "@/app/design/token";
@@ -57,7 +57,7 @@ interface EmptyStateProps {
   retryLabel?: string;                  // Retry button label for error/offline states
   onRetry?: () => void;                 // Retry handler — button only renders when provided with retryLabel
   accessibilityLabel?: string;          // Screen-reader label for the container
-  refreshControl?: React.ReactElement;  // Pull-to-refresh control passed to the ScrollView
+  refreshControl?: React.ReactElement<RefreshControlProps>;  // Pull-to-refresh control passed to the ScrollView
 }
 
 export default function EmptyState({
