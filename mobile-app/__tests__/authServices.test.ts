@@ -1,5 +1,6 @@
 import signInWithEmail from '@/services/authentication/signInWithEmail';
 import registerWithEmail from '@/services/authentication/registerWithEmail';
+import { forgotPasswordReducer, createInitialForgotPasswordState } from '@/app/forgotPasswordState';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
@@ -19,6 +20,28 @@ jest.mock('@/config/firebaseConfig', () => ({
   auth: { currentUser: null },
   fdb: {},
 }));
+
+describe('Forgot password reducer lifecycle', () => {
+  it('preserves email while transitioning through submit, success, and error states', () => {
+    const initial = createInitialForgotPasswordState('test@example.com');
+
+    const started = forgotPasswordReducer(initial, { type: 'SUBMIT_STARTED' });
+    expect(started.email).toBe('test@example.com');
+    expect(started.status).toBe('submitting');
+
+    const success = forgotPasswordReducer(started, { type: 'SUBMIT_SUCCESS' });
+    expect(success.status).toBe('success');
+    expect(success.successMessage).toBe('Reset link sent. Check your inbox.');
+
+    const failure = forgotPasswordReducer(success, {
+      type: 'SUBMIT_FAILURE',
+      message: 'That account could not be reached.',
+    });
+    expect(failure.status).toBe('error');
+    expect(failure.email).toBe('test@example.com');
+    expect(failure.errorMessage).toBe('That account could not be reached.');
+  });
+});
 
 describe('Authentication Services Mappings', () => {
   beforeEach(() => {
