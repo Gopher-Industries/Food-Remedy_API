@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+from pathlib import Path
 
 # Running as `python database\pipeline\run_pipeline.py` puts `database/pipeline` on
 # sys.path, not the project root — add the repo root so `database` resolves.
@@ -27,7 +28,24 @@ except Exception:
 from database.pipeline.stages.clean_stage import run_clean_stage
 from database.pipeline.stages.enrich_stage import run_enrich_stage
 from database.pipeline.stages.seed_stage import run_seed_stage
+from database.pipeline.release_artifact import verify_approved_release_artifact
 from database.logging_system.pipeline_logger import PipelineStageLogger
+
+
+def _require_successful_stage_result(stage_name: str, result: dict) -> None:
+    """Prevent a partial stage result from being checkpointed as completed."""
+    failures = result.get("failures") if isinstance(result, dict) else None
+    try:
+        failure_count = int(failures or 0)
+    except (TypeError, ValueError) as exc:
+        raise RuntimeError(
+            f"{stage_name} stage returned an invalid failure count: {failures!r}"
+        ) from exc
+    if failure_count:
+        raise RuntimeError(
+            f"{stage_name} stage reported {failure_count} failure(s); "
+            "release processing cannot continue from a partial result"
+        )
 
 def _run_db018_quality_report(repo_root: str, seeded_input_path: Optional[str] = None) -> dict:
     """
@@ -333,6 +351,7 @@ def runPipeline(
         pipeline_logger.log_info(stage_name="clean", message="disabled_by_config")
 
     # Enrich stage
+    enrich_result_for_seed: dict = {}
     if run_enrich is None and checkpoints.get("enrich", {}).get("status") == "completed" and not force:
         pipeline_logger.log_info(stage_name="enrich", message="skipped_by_checkpoint")
         stats["stages"]["enrich"] = checkpoints.get("enrich", {})
@@ -340,6 +359,8 @@ def runPipeline(
         ck = stats["stages"].get("enrich", {})
         # Both branches of the previous ternary returned ck.get('result').
         res = ck.get('result')
+        if isinstance(res, dict):
+            enrich_result_for_seed = res
 
     elif pipeline_cfg.get("enrich", {}).get("enabled", True):
         enrich_cfg = pipeline_cfg.get("enrich", {})
@@ -361,6 +382,7 @@ def runPipeline(
             json.dump(checkpoints, cf, indent=2)
         try:
             res = run_enrich_stage(input_path=in_path, output_path=out_path, config=enrich_cfg)
+            enrich_result_for_seed = res if isinstance(res, dict) else {}
             
             # === DB031 Failure Test (temporary) ===
             #raise Exception("DB031 test: simulated failure in enrich stage")
@@ -380,6 +402,9 @@ def runPipeline(
             with open(checkpoint_path, "w", encoding="utf-8") as cf:
                 json.dump(checkpoints, cf, indent=2)
             
+            if pipeline_cfg.get("fail_on_error", True):
+                _require_successful_stage_result("enrich", res)
+            
             # short summary
             pipeline_logger.log_stage_end(
                 stage_name="enrich",
@@ -394,7 +419,7 @@ def runPipeline(
             completed_count += 1
             
         except Exception as e:
-            stats["stages"]["enrich"] = {"error": str(e)}
+            stats["stages"].setdefault("enrich", {})["error"] = str(e)
 
             # Structured error logging
             pipeline_logger.log_stage_error(
@@ -402,9 +427,11 @@ def runPipeline(
                 error=str(e)
             )
 
-            checkpoints["enrich"] = {"status": "failed", "error": str(e), "finished": datetime.now(timezone.utc).isoformat()}
-            with open(checkpoint_path, "w", encoding="utf-8") as cf:
-                json.dump(checkpoints, cf, indent=2)
+            meta_out = outputs.get("metadata", os.path.join(repo_root, "database", "pipeline_run_metadata.json"))
+            ensure_dir(meta_out)
+            with open(meta_out, "w", encoding="utf-8") as f:
+                json.dump(stats, f, indent=2)
+
             if pipeline_cfg.get("fail_on_error", True):
                 raise
     else:
@@ -424,7 +451,45 @@ def runPipeline(
 
         if dry_run:
             seed_cfg["dry_run"] = True
-        in_path = seed_cfg.get("input", stats["stages"].get("enrich", {}).get("output", None))
+        configured_seed_input = seed_cfg.get("input")
+        actual_enrich_output = enrich_result_for_seed.get("output")
+        release_binding = pipeline_cfg.get("release")
+        if release_binding:
+            verified_release = verify_approved_release_artifact(
+                pipeline_cfg,
+                Path(repo_root),
+                actual_enrich_output=actual_enrich_output,
+            )
+            in_path = verified_release["seed_input"]
+            pipeline_logger.log_info(
+                stage_name="seed",
+                message=(
+                    f"Using approved release {verified_release['version']} "
+                    f"with SHA-256 {verified_release['dataset_sha256']}"
+                ),
+            )
+        else:
+            in_path = actual_enrich_output or configured_seed_input
+        if in_path:
+            # run_seed_stage passes the stage config to the seed module, whose
+            # entry point reads config["input"]. Keep it aligned with the actual
+            # upstream artifact selected above.
+            seed_cfg["input"] = in_path
+
+        if actual_enrich_output and configured_seed_input and not release_binding:
+            def _absolute_pipeline_path(value: str) -> str:
+                return os.path.abspath(
+                    value if os.path.isabs(value) else os.path.join(repo_root, value)
+                )
+
+            if _absolute_pipeline_path(actual_enrich_output) != _absolute_pipeline_path(configured_seed_input):
+                pipeline_logger.log_info(
+                    stage_name="seed",
+                    message=(
+                        "Using the enrichment stage's reported output instead of "
+                        f"configured seed input: {actual_enrich_output}"
+                    ),
+                )
 
         pipeline_logger.log_stage_start(stage_name="seed", input_file=in_path)
         stats["stages"].setdefault("seed", {})["started"] = datetime.now(timezone.utc).isoformat()
@@ -438,6 +503,8 @@ def runPipeline(
             json.dump(checkpoints, cf, indent=2)
         try:
             res = run_seed_stage(input_path=in_path, config=seed_cfg)
+            if pipeline_cfg.get("fail_on_error", True):
+                _require_successful_stage_result("seed", res)
             stage_stats = stats["stages"].setdefault("seed", {})
             stage_stats.update(res if isinstance(res, dict) else {})
             stats["stages"]["seed"]["finished"] = datetime.now(timezone.utc).isoformat()
