@@ -14,6 +14,7 @@ if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 from database.seeding.batch_limits import resolve_max_writes_per_run
+from database.seeding.data_contract import PRODUCTS_COLLECTION
 CHECKPOINT_FILE = os.path.join(BASE_DIR, "checkpoint.json")
 
 cred = credentials.Certificate("serviceAccountKey.json")
@@ -93,7 +94,7 @@ def seed_batch(
                 writes_this_second = 0
                 last_second = time.time()
             
-            doc_ref = db.collection("PRODUCTS").document(barcode)
+            doc_ref = db.collection(PRODUCTS_COLLECTION).document(barcode)
             batch.set(doc_ref, product)
             writes_this_second += 1
 
