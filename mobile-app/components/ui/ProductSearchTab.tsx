@@ -17,7 +17,7 @@ interface ProductSearchTabProps {
 
 const ProductSearchTab = ({ collapsed }: ProductSearchTabProps) => {
   const {
-    query, setQuery, lastQuery, hasSearched, queryInvalid, loading,
+    query, setQuery, lastQuery, setLastQuery, hasSearched, queryInvalid, loading,
     productResults, recentQueries, clearRecentQueries, handleSearchProducts
   } = useSearchProduct();
 
