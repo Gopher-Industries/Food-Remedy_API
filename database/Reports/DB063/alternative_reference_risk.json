@@ -1,0 +1,7 @@
+{
+  "excluded_record_count": 269,
+  "alternative_references_to_excluded_barcodes": 1510,
+  "references_from_retained_records": 1265,
+  "unique_excluded_targets_referenced": 34,
+  "required_action": "Rebuild alternatives after exclusion; do not filter rows without recomputing links."
+}

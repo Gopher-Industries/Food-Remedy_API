@@ -50,6 +50,21 @@ def test_validate_product_reports_missing_images_root():
     assert any("images.root" in err for err in errors)
 
 
+def test_validate_product_accepts_unknown_allergen_sentinel():
+    mapped = map_enriched_to_product_detail(_sample_enriched())
+    mapped["allergens"] = ["Unknown"]
+    assert validate_product(mapped) == []
+
+
+def test_validate_product_rejects_empty_or_mixed_unknown_allergens():
+    mapped = map_enriched_to_product_detail(_sample_enriched())
+    mapped["allergens"] = []
+    assert any("allergens" in error for error in validate_product(mapped))
+
+    mapped["allergens"] = ["Unknown", "Milk"]
+    assert any("cannot mix" in error for error in validate_product(mapped))
+
+
 def test_validate_dataset_counts_valid_and_invalid(tmp_path):
     valid = _sample_enriched()
     invalid = _sample_enriched()
@@ -64,4 +79,3 @@ def test_validate_dataset_counts_valid_and_invalid(tmp_path):
     assert result["valid"] == 1
     assert result["invalid"] == 1
     assert len(result["errors"]) == 1
-

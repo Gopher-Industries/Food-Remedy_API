@@ -85,6 +85,10 @@ Logs for your project will appear below. Press Ctrl+C to exit.
 You can create a new account for the app using your own email and password.  
 This is handled securly by Google Firebase Authentication, and as such, no one in the project has access to your password. Only your email. Regardless, you need to manage your own security.  
 
+### Guest access
+
+Guest sessions are explicitly stored and are limited to scanning barcodes, searching and browsing products, and viewing basic product and nutrition information. History, shopping lists, checkout, saved items, profiles, settings, and all other account features require registration or login. Protected routes are denied by default and return a newly authenticated user to the requested route.
+
 
 <br />
 
@@ -117,4 +121,4 @@ Backend mode remains available by default. The app will use server-provided alte
 ## Finished
 Begin contributing to the project.  
 Now read:
- - [🧑‍💻 How To Contribute Here](../Documents/Guides/General/how-to-contribute.md)  
+ - [🧑‍💻 How To Contribute Here](../Documents/Guides/General/how-to-contribute.md)

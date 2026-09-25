@@ -1,4 +1,3 @@
-# Nutrient Unit Normalisation
 
 from __future__ import annotations
 
@@ -153,6 +152,13 @@ def get_preferred_value(nutriments: Dict[str, Any], base: str) -> Tuple[Optional
 
 
 def normalize_nutriments_dict(nutriments: Dict[str, Any], targets: Optional[Dict[str, str]] = None) -> Dict[str, Optional[float]]: # Normalize a nutriments dict from OpenFoodFacts
+    """
+    Normalises raw OpenFoodFacts nutrient data into consistent units.
+
+    Mass nutrients are standardised into grams (or milligrams for sodium),
+    while energy values are converted into both kJ and kcal formats.
+    Invalid or unsupported units return None to avoid incorrect calculations.
+    """
     if targets is None:
         targets = DEFAULT_TARGETS
 

@@ -112,14 +112,14 @@ export default function OnboardingScreen1({ onGetStarted, onContinueAsGuest }: O
           </Tt>
         </Pressable>
 
-        {/* <Pressable
+        <Pressable
           onPress={onContinueAsGuest}
           className="bg-transparent border-2 border-primary rounded-xl py-4 active:bg-pink-50"
         >
           <Tt className="text-primary text-lg font-interSemiBold text-center">
             Continue as guest
           </Tt>
-        </Pressable> */}
+        </Pressable>
       </Animated.View>
     </View>
   );
