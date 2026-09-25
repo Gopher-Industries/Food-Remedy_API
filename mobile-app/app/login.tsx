@@ -27,6 +27,7 @@ import { color } from "@/app/design/token";
 import CaptchaModal from "@/components/security/CaptchaModal";
 import { CAPTCHA_ENABLED, HCAPTCHA_SITE_KEY } from "@/config/captchaConfig";
 import { useTheme } from "@/theme";
+import { handleLoginFieldChange } from "@/app/loginErrorState";
 
 
 export default function LoginPage() {
@@ -164,7 +165,9 @@ export default function LoginPage() {
                 className="py-3 mt-8 "
                 placeholder="Email or Username"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(nextEmail) =>
+                  handleLoginFieldChange("email", nextEmail, setEmail, setErrorMessage)
+                }
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="off"
@@ -176,7 +179,9 @@ export default function LoginPage() {
                 <Input
                   className="py-3"
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(nextPassword) =>
+                    handleLoginFieldChange("password", nextPassword, setPassword, setErrorMessage)
+                  }
                   placeholder="Password"
                   secureTextEntry={showPassword}
                   autoCapitalize="none"
