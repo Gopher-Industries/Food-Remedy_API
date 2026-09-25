@@ -204,16 +204,14 @@ export default function ShoppingCartPage() {
     <Screen className="p-safe">
       <Header />
 
-      {/* Title + Add button */}
-      <View className="mt-4 px-4 flex-row items-center justify-between">
-        <View style={{ flex: 1 }}>
-          <Tt className="text-xl font-interBold text-center">Shopping Lists</Tt>
-        </View>
-        <View className="flex-row items-center">
+      {/* Title + action buttons */}
+      <View className="mt-4 px-4">
+        <Tt className="text-xl font-interBold text-center">Shopping Lists</Tt>
+        <View className="flex-row flex-wrap items-center justify-end gap-2 mt-1">
           {isSelectionMode && (
             <Pressable
               onPress={() => openModal('deleteSelectedLists')}
-              className="ml-2 px-3 py-1 rounded-lg border border-primary bg-white dark:bg-hsl15"
+              className="px-3 py-1 rounded-lg border border-primary bg-white dark:bg-hsl15"
             >
               {({ pressed }) => (
                 <Tt className={`font-interSemiBold ${pressed ? 'text-primary' : 'text-hsl30 dark:text-hsl90'}`}>
@@ -225,7 +223,6 @@ export default function ShoppingCartPage() {
           <Pressable
             onPress={() => openModal('createList')}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            className="ml-2"
           >
             {({ pressed }) => (
               <IconGeneral type="add" fill={pressed ? '#FF3F3F' : 'hsl(0, 0%, 40%)'} size={24} />
@@ -233,7 +230,7 @@ export default function ShoppingCartPage() {
           </Pressable>
           <Pressable
             onPress={async () => { await syncAllToFirestore(); }}
-            className="ml-3 px-3 py-1 rounded-lg border border-hsl90 dark:border-hsl20 bg-white dark:bg-hsl15"
+            className="px-3 py-1 rounded-lg border border-hsl90 dark:border-hsl20 bg-white dark:bg-hsl15"
           >
             {({ pressed }) => (
               <Tt className={`font-interSemiBold ${pressed ? 'text-primary' : 'text-hsl30 dark:text-hsl90'}`}>Sync</Tt>

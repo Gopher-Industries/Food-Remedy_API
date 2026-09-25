@@ -111,7 +111,7 @@ export default function HistoryPage() {
           >
             <View className="w-[95%] self-center">
               <View className="flex-row items-center justify-between mt-8">
-                <Tt className="font-interSemiBold text-hsl30 dark:text-hsl90">
+                <Tt className="font-interSemiBold text-hsl30 dark:text-hsl90 flex-1 pr-2">
                   Previously Scanned
                 </Tt>
                 <Pressable

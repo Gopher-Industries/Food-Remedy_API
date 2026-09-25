@@ -55,13 +55,13 @@ export default function SettingsPage() {
         >
           {({ pressed }) => (
             <>
-              <View className="flex-row items-center gap-x-4">
+              <View className="flex-row items-center gap-x-4 flex-1 pr-3">
                 <IconGeneral
                   type="notification-settings"
                   fill={pressed ? color.primary : highContrast ? "#000000" : color.iconDefault}
                   size={spacing.xl}
                 />
-                <View>
+                <View className="flex-1">
                   <Tt className="font-interMedium">Notification</Tt>
                   <Tt className="text-sm">Edit Notification Settings</Tt>
                 </View>
@@ -84,13 +84,13 @@ export default function SettingsPage() {
         >
           {({ pressed }) => (
             <>
-              <View className="flex-row items-center gap-x-4">
+              <View className="flex-row items-center gap-x-4 flex-1 pr-3">
                 <IconGeneral
                   type="dark-mode"
                   fill={pressed ? color.primary : highContrast ? "#000000" : color.iconDefault}
                   size={spacing.xl}
                 />
-                <View>
+                <View className="flex-1">
                   <Tt className="font-interMedium">Dark Mode</Tt>
                   <Tt className="text-sm">Toggle Dark Mode</Tt>
                 </View>
@@ -100,6 +100,7 @@ export default function SettingsPage() {
                 className={`px-2 rounded ${
                   highContrast ? "bg-white dark:bg-hsl15 border border-black" : "bg-white dark:bg-hsl15 border border-hsl90 dark:border-hsl20"
                 }`}
+                style={{ flexShrink: 0 }}
               >
                 <Tt>{darkMode ? "On" : "Off"}</Tt>
               </View>
@@ -192,13 +193,13 @@ export default function SettingsPage() {
         >
           {({ pressed }) => (
             <>
-              <View className="flex-row items-center gap-x-4">
+              <View className="flex-row items-center gap-x-4 flex-1 pr-3">
                 <IconGeneral
                   type="info"
                   fill={pressed ? color.primary : highContrast ? "#000000" : color.iconDefault}
                   size={spacing.xl}
                 />
-                <View>
+                <View className="flex-1">
                   <Tt className="font-interMedium">High Contrast</Tt>
                   <Tt className="text-sm">Improve readability</Tt>
                 </View>
@@ -208,6 +209,7 @@ export default function SettingsPage() {
                 className={`px-2 rounded ${
                   highContrast ? "bg-white dark:bg-hsl15 border border-black" : "bg-white dark:bg-hsl15 border border-hsl90 dark:border-hsl20"
                 }`}
+                style={{ flexShrink: 0 }}
               >
                 <Tt>{highContrast ? "On" : "Off"}</Tt>
               </View>
@@ -263,13 +265,13 @@ export default function SettingsPage() {
         >
           {({ pressed }) => (
             <>
-              <View className="flex-row items-center gap-x-4">
+              <View className="flex-row items-center gap-x-4 flex-1 pr-3">
                 <IconGeneral
                   type="report"
                   fill={pressed ? color.primary : highContrast ? "#000000" : color.iconDefault}
                   size={spacing.xl}
                 />
-                <View>
+                <View className="flex-1">
                   <Tt className="font-interMedium">Report Issue / Feedback</Tt>
                   <Tt className="text-sm">Let us know your thoughts</Tt>
                 </View>
@@ -292,13 +294,13 @@ export default function SettingsPage() {
         >
           {({ pressed }) => (
             <>
-              <View className="flex-row items-center gap-x-4">
+              <View className="flex-row items-center gap-x-4 flex-1 pr-3">
                 <IconGeneral
                   type="doc"
                   fill={pressed ? color.primary : highContrast ? "#000000" : color.iconDefault}
                   size={spacing.xl}
                 />
-                <View>
+                <View className="flex-1">
                   <Tt className="font-interMedium">Privacy Policy</Tt>
                   <Tt className="text-sm">Privacy & Legal Information</Tt>
                 </View>
@@ -321,13 +323,13 @@ export default function SettingsPage() {
         >
           {({ pressed }) => (
             <>
-              <View className="flex-row items-center gap-x-4">
+              <View className="flex-row items-center gap-x-4 flex-1 pr-3">
                 <IconGeneral
                   type="legal"
                   fill={pressed ? color.primary : highContrast ? "#000000" : color.iconDefault}
                   size={spacing.xl}
                 />
-                <View>
+                <View className="flex-1">
                   <Tt className="font-interMedium">Terms of Service</Tt>
                   <Tt className="text-sm">View Your Agreements</Tt>
                 </View>
@@ -350,13 +352,13 @@ export default function SettingsPage() {
         >
           {({ pressed }) => (
             <>
-              <View className="flex-row items-center gap-x-4">
+              <View className="flex-row items-center gap-x-4 flex-1 pr-3">
                 <IconGeneral
                   type="info"
                   fill={pressed ? color.primary : highContrast ? "#000000" : color.iconDefault}
                   size={spacing.xl}
                 />
-                <View>
+                <View className="flex-1">
                   <Tt className="font-interMedium">About</Tt>
                   <Tt className="text-sm">Version {appVersion}</Tt>
                 </View>
