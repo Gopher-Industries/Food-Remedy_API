@@ -31,6 +31,7 @@ import PdBlk from "@/components/ui/UIPaddingBlock";
 import ModalWrapper from "@/components/modals/ModalAWrapper";
 import ModalResponse from "@/components/modals/ModalResponse";
 import getUserProfileName from "@/services/database/user/getUserProfileName";
+import { useDirtyForm } from "@/hooks/useDirtyForm";
 
 export default function MembersEditPage() {
   const router = useRouter();
@@ -62,6 +63,25 @@ export default function MembersEditPage() {
   const [deletingAvatar, setDeletingAvatar] = useState(false);
 
   const didMountRef = useRef(false);
+
+  const { markDirty, markClean, allowLeave } = useDirtyForm();
+  const baselineRef = useRef<{ id: string; json: string; ageText: string } | null>(null);
+  if (editableProfile && baselineRef.current?.id !== editableProfile.profileId) {
+    baselineRef.current = {
+      id: editableProfile.profileId,
+      json: JSON.stringify(editableProfile),
+      ageText: editableProfile.age == null || editableProfile.age === 0 ? "" : String(editableProfile.age),
+    };
+  }
+  const hasChanges =
+    !!editableProfile &&
+    !!baselineRef.current &&
+    (JSON.stringify(editableProfile) !== baselineRef.current.json ||
+      ageText !== baselineRef.current.ageText);
+  useEffect(() => {
+    if (hasChanges) markDirty();
+    else markClean();
+  }, [hasChanges, markDirty, markClean]);
 
   const targetProfile = profiles.find(
     (p) => p.profileId === editableProfile?.profileId
@@ -164,6 +184,7 @@ export default function MembersEditPage() {
 
     try {
       setSaving(true);
+      allowLeave();
 
       let uploadedUrl: string | null = null;
 
@@ -202,6 +223,7 @@ export default function MembersEditPage() {
 
       addNotification("Profile saved", "s");
     } catch (error) {
+      allowLeave(false);
       console.log("Error Saving Profile", error);
       addNotification("Error Saving Profile", "e");
     } finally {
@@ -220,6 +242,7 @@ export default function MembersEditPage() {
 
     setShowDeleteDialog(false);
     setDeleting(true);
+    allowLeave();
 
     try {
       // Delete the selected member profile.
@@ -229,6 +252,7 @@ export default function MembersEditPage() {
       addNotification("Profile deleted successfully.", "s");
       openModal("deleteProfileSuccess");
     } catch (err) {
+      allowLeave(false);
       console.error("Delete profile failed:", err);
       addNotification("Profile deletion failed.", "e");
     } finally {
