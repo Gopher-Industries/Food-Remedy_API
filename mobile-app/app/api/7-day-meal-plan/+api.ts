@@ -2,6 +2,7 @@
 
 import { collection, getDocs, limit, query } from "firebase/firestore";
 import { fdb } from "@/config/firebaseConfig";
+import { authenticateRequest } from "@/services/authMiddleware";
 
 type DietType = "omnivore" | "vegetarian" | "vegan";
 
@@ -566,7 +567,16 @@ function generate7DayMealPlan(profile: Profile, mealProducts: MealProduct[]): Me
 // HTTP handler for /api/7-day meal plan
 export async function POST(request: Request): Promise<Response> {
     try {
-        const body = (await request.json()) as MealPlanRequest;
+        const body = (await request.json()) as MealPlanRequest & { userId?: string };
+        const targetUserId = body.userId || body.profileId;
+        const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
+
+        if (targetUserId || authHeader) {
+            const auth = authenticateRequest(request, targetUserId || undefined);
+            if (!auth.success) {
+                return toJsonResponse({ error: auth.error, message: auth.message }, auth.status);
+            }
+        }
 
         // Resolve profile from request
         const profile = resolveProfile(body);

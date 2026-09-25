@@ -2,7 +2,9 @@
   "scripts": {
     "test:db012:cart": "node database/db012_cart_integration.js",
     "test:db030": "node database/integration_tests/run_db030_tests.js",
-    "test:db030:full": "npm run test:db030 && npm --prefix mobile-app test -- db030_api_ui_flow.test.ts"
+    "test:db030:full": "npm run test:db030 && npm --prefix mobile-app test -- db030_api_ui_flow.test.ts",
+    "test:rules": "node test/test_firestore_rules_regression.js",
+    "test:security": "npm run test:rules && npm --prefix mobile-app run test:security"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

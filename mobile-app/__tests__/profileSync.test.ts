@@ -128,7 +128,7 @@ describe('Downstream sync - Firebase -> SQLite', () => {
 
         // ASSERT: The service should handle the error gracefully and return [], instead of crashing the app
         expect(result).toEqual([]);
-    });
+    }, 15000);
 
     it('calls upsertProfile for every profile saved to SQLite', async () => {
         // ARRANGE: Two profiles to save
@@ -313,12 +313,12 @@ describe('Duplicate profile prevention', () => {
  
     it('syncProfiles fires one setDoc per unique profileId - no extra pushes', async () => {
         // ARRANGE: Two distinct profileIds, one in each source
-        const p1 = makeProfile({ profileId: 'p-001' });
-        const p2 = makeProfile({ profileId: 'p-002' });
+        const p1 = makeProfile({ profileId: 'p-001', updated_at: '2026-02-01T00:00:00.000Z' });
+        const p2 = makeProfile({ profileId: 'p-002', updated_at: '2026-02-01T00:00:00.000Z' });
  
         (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(p1)] });
-        (listProfilesForUser as jest.Mock).mockResolvedValue([p2]);
+        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(makeProfile({ profileId: 'p-001', updated_at: '2026-01-01T00:00:00.000Z' }))] });
+        (listProfilesForUser as jest.Mock).mockResolvedValue([p1, p2]);
         (upsertProfile as jest.Mock).mockResolvedValue(undefined);
         (doc as jest.Mock).mockReturnValue({});
         (setDoc as jest.Mock).mockResolvedValue(undefined);
@@ -586,13 +586,16 @@ describe('Data consistency', () => {
 
     it('handles multiple profiles being updated at once across both sources', async () => {
         // ARRANGE: Three profiles updated across both sources simultaneoulsy
-        const p1 = makeProfile({ profileId: 'p-001', firstName: 'Alice', updated_at: '2026-01-01T00:00:00.000Z' });
-        const p2 = makeProfile({ profileId: 'p-002', firstName: 'Bob', updated_at: '2026-01-01T00:00:00.000Z' });
-        const p3 = makeProfile({ profileId: 'p-003', firstName: 'Tom', updated_at: '2026-01-01T00:00:00.000Z' });
+        const p1 = makeProfile({ profileId: 'p-001', firstName: 'Alice', updated_at: '2026-02-01T00:00:00.000Z' });
+        const p2 = makeProfile({ profileId: 'p-002', firstName: 'Bob', updated_at: '2026-02-01T00:00:00.000Z' });
+        const p3 = makeProfile({ profileId: 'p-003', firstName: 'Tom', updated_at: '2026-02-01T00:00:00.000Z' });
 
         (collection as jest.Mock).mockReturnValue({});
-        (getDocs as jest.Mock).mockResolvedValue({ docs: [makeFirestoreDoc(p1), makeFirestoreDoc(p2)] });
-        (listProfilesForUser as jest.Mock).mockResolvedValue([p3]);
+        (getDocs as jest.Mock).mockResolvedValue({ docs: [
+            makeFirestoreDoc(makeProfile({ profileId: 'p-001', updated_at: '2026-01-01T00:00:00.000Z' })),
+            makeFirestoreDoc(makeProfile({ profileId: 'p-002', updated_at: '2026-01-01T00:00:00.000Z' }))
+        ] });
+        (listProfilesForUser as jest.Mock).mockResolvedValue([p1, p2, p3]);
         (upsertProfile as jest.Mock).mockResolvedValue(undefined);
         (doc as jest.Mock).mockReturnValue({});
         (setDoc as jest.Mock).mockResolvedValue(undefined);

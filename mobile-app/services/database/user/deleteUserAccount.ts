@@ -5,7 +5,14 @@ import { deleteUserProfilesStorage } from '@/services/storage/uploadProfileAvata
 const profilesCol = (uid: string) => collection(fdb, `USERS/${uid}/PROFILES`);
 const userDoc = (uid: string) => doc(fdb, `USERS/${uid}`);
 
-export async function deleteUserAccountData(uid: string): Promise<void> {
+export async function deleteUserAccountData(uid: string, callerUid?: string | null): Promise<void> {
+  if (callerUid && callerUid !== uid) {
+    const error: any = new Error("Access denied.");
+    error.status = 403;
+    error.code = "FORBIDDEN";
+    throw error;
+  }
+
   // Storage cleanup first while auth is still valid.
   await deleteUserProfilesStorage(uid);
 
