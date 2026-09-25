@@ -13,6 +13,7 @@ import updateUserValue from "@/services/database/user/updateUserValue";
 import { listUserProfiles } from "@/services/database/user/profiles";
 import getUserValue from "@/services/database/user/getUserValue";
 import { getProfileAvatarDownloadUrl } from "@/services/storage/uploadProfileAvatar";
+import { useDirtyForm } from "@/hooks/useDirtyForm";
 import ProfilePhotoEditModal from "../../components/modals/profilePhotoEditModal";
 
 export default function UpdateUserSettingsScreen() {
@@ -40,6 +41,19 @@ export default function UpdateUserSettingsScreen() {
     dietaryPreference: "",
     linkedAccounts: { facebook: "", instagram: "", x: "" }
   });
+
+  const { markDirty, markClean } = useDirtyForm();
+  const hasChanges =
+    isEditing &&
+    (name !== originalData.name ||
+      dietaryPreference !== originalData.dietaryPreference ||
+      linkedAccounts.facebook !== originalData.linkedAccounts.facebook ||
+      linkedAccounts.instagram !== originalData.linkedAccounts.instagram ||
+      linkedAccounts.x !== originalData.linkedAccounts.x);
+  useEffect(() => {
+    if (hasChanges) markDirty();
+    else markClean();
+  }, [hasChanges, markDirty, markClean]);
 
   // Fetch user data from Firebase
   useEffect(() => {
