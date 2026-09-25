@@ -6,7 +6,7 @@ class IngredientStandardisation:
     for downstream processing.
 
     It applies:
-    - Text normalisation (case, punctuation, spacing)
+    - Text normalisation (case, punctuation, spacing, separators)
     - Rule-based mapping of ingredient variants to standard names
     - Safe fallback for unknown ingredients
 
@@ -88,7 +88,7 @@ class IngredientStandardisation:
         """
         reverse_list = {}
 
-        for standard, variants in self.ingredient_rules.items():
+        for standard, variants in input_list.items():        
             # map the standard to itself
             reverse_list[standard] = standard
             
@@ -104,26 +104,50 @@ class IngredientStandardisation:
         Normalises raw ingredient text into a consistent format.
 
         Steps:
-        - Convert to lowercase
-        - Remove punctuation (keep alphanumeric + spaces)
-        - Replace spaces with hyphens
+        - Convert to lowercase and strip surrounding whitespace
+        - Treat hyphens, underscores and slashes as word separators,
+          the same as spaces, so differently formatted variants of
+          the same ingredient normalise to the same value
+          (e.g. "egg-whites", "egg_whites" and "egg whites" all
+          become "egg-whites")
+        - Remove remaining punctuation (keep alphanumeric + separators)
+        - Collapse repeated/irregular whitespace (double spaces, tabs,
+          leading/trailing spaces) into a single hyphen between words
 
         Example:
-            "Raw Sugar!" -> "raw-sugar"
+            "Raw   Sugar!"  -> "raw-sugar"
+            "egg_whites"    -> "egg-whites"
+            "  Sesame-Oil " -> "sesame-oil"
 
         Args:
             input_ingredient (str): Raw ingredient string
 
         Returns:
-            str: Normalised ingredient string
+            str: Normalised ingredient string. Returns an empty string
+                 for falsy/empty input (e.g. None or "").
         """
-        input_ingredient = input_ingredient.lower().strip()
-        
-        res = ''.join([c for c in input_ingredient if c.isalnum() or c==' '])
-        res = res.replace(' ', '-')
-        
-        return res    
-        
+        if not input_ingredient:
+            return ''
+
+        input_ingredient = str(input_ingredient).lower().strip()
+
+        # Treat common word separators the same way as spaces so that
+        # differently formatted variants of the same ingredient
+        # (hyphenated, underscored, or slash-separated) normalise
+        # consistently.
+        for separator in ('-', '_', '/'):
+            input_ingredient = input_ingredient.replace(separator, ' ')
+
+        # Keep only alphanumeric characters and spaces.
+        res = ''.join(c for c in input_ingredient if c.isalnum() or c == ' ')
+
+        # Collapse any run of whitespace into a single hyphen between
+        # words (also removes leading/trailing separators left over
+        # from punctuation-only tokens).
+        res = '-'.join(res.split())
+
+        return res
+
 
     def get_standard_name(self, input_ingredient):
         """
@@ -178,7 +202,7 @@ class IngredientStandardisation:
         Returns:
             dict: Updated product with 'standardisedIngredients'
         """
-        ingredients_list = product.get("ingredients", [])
+        ingredients_list = product.get("ingredients") or []
 
         standardised = self.standardise(ingredients_list)
 
@@ -199,12 +223,78 @@ def _test_standardisation():
     expected = ["sugar", "pepper", "salt", "potato"]
     expected = sorted(expected)
 
-    standarisation = IngredientStandardisation()
+    standardisation = IngredientStandardisation()
 
-    result = standarisation.standardise(input_data)
+    result = standardisation.standardise(input_data)
 
     assert result == expected, f"Expected {expected}, but got {result}"
+
+    # Regression test for the DB004 reverse-mapping improvement.
+    custom_rules = {
+        "sweetener": ["syrup"],
+    }
+
+    custom_mapping = standardisation.reverse_mapping(custom_rules)
+
+    expected_custom_mapping = {
+        "sweetener": "sweetener",
+        "syrup": "sweetener",
+    }
+
+    assert custom_mapping == expected_custom_mapping, (
+        f"Expected {expected_custom_mapping}, "
+        f"but got {custom_mapping}"
+    )
+
     print("Test passed.")
+
+
+def _test_normalise_ingredient_formatting():
+    """
+    DB011 - Improve Ingredient Standardisation.
+
+    Ensures normalise_ingredient() produces a consistent result
+    regardless of formatting differences (extra whitespace, hyphens,
+    underscores, slashes) in the raw input, and that this improvement
+    does not break existing rule-based mapping.
+    """
+    standardisation = IngredientStandardisation()
+
+    # Whitespace cleanup: repeated/irregular spacing collapses to a
+    # single hyphen instead of producing "raw---sugar".
+    assert standardisation.normalise_ingredient("Raw   Sugar!") == "raw-sugar"
+    assert standardisation.normalise_ingredient("  Sesame-Oil  ") == "sesame-oil"
+
+    # Formatting/special-character consistency: hyphens, underscores
+    # and slashes are all treated as the same separator as a space, so
+    # differently formatted variants normalise identically.
+    assert standardisation.normalise_ingredient("egg-whites") == "egg-whites"
+    assert standardisation.normalise_ingredient("egg_whites") == "egg-whites"
+    assert standardisation.normalise_ingredient("egg whites") == "egg-whites"
+    assert standardisation.normalise_ingredient("egg/whites") == "egg-whites"
+
+    # Empty/falsy input is handled safely.
+    assert standardisation.normalise_ingredient("") == ""
+    assert standardisation.normalise_ingredient(None) == ""
+
+    # These previously-inconsistent formats now correctly map through
+    # to their canonical ingredient via get_standard_name().
+    assert standardisation.get_standard_name("egg-whites") == "eggs"
+    assert standardisation.get_standard_name("egg_whites") == "eggs"
+    assert standardisation.get_standard_name("Raw   Sugar!") == "sugar"
+    assert standardisation.get_standard_name("cane_sugar") == "sugar"
+
+    # standardise() still removes duplicates once formatting is
+    # consistent, even when the same ingredient arrives in different
+    # raw formats.
+    result = standardisation.standardise(
+        ["egg-whites", "egg_whites", "egg whites", "Egg-Whites"]
+    )
+    assert result == ["eggs"], f"Expected ['eggs'], but got {result}"
+
+    print("Formatting consistency test passed.")
+
 
 if __name__ == '__main__':
     _test_standardisation()
+    _test_normalise_ingredient_formatting()

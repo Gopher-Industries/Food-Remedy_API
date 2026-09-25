@@ -1,4 +1,5 @@
 import type { Product } from "@/types/Product";
+import { normaliseAllergens } from "@/services/utils/allergens";
 
 const nullIfEmpty = (v: unknown) =>
   typeof v === "string" ? (v.trim() === "" ? null : v) : v ?? null;
@@ -46,7 +47,7 @@ export function normaliseFirestoreProduct(raw: any): Product {
     ingredientsText: nullIfEmpty(raw.ingredientsText) as string | null,
     ingredientsAnalysis: raw.ingredientsAnalysis ?? [],
     additives: safeArray(raw.additives),
-    allergens: safeArray(raw.allergens),
+    allergens: normaliseAllergens(raw.allergens, raw.allergensDetected),
     categories: safeArray(raw.categories),
     labels: safeArray(raw.labels),
     ingredients: safeArray(raw.ingredients),
