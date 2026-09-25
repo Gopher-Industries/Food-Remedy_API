@@ -95,7 +95,12 @@ const AccessibleIngredientsModal = () => {
         {/* Header */}
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center justify-between gap-x-2">
-            <Pressable onPress={dec} className="flex-row items-center px-3 py-1 rounded bg-hsl98 dark:bg-hsl10  active:bg-primary border border-primary">
+            <Pressable
+              onPress={dec}
+              accessibilityRole="button"
+              accessibilityLabel="Decrease text size"
+              className="flex-row items-center px-3 py-1 rounded bg-hsl98 dark:bg-hsl10  active:bg-primary border border-primary"
+            >
               {({ pressed }) => (
                 <>
                   <Tt className={`text-xl font-interSemiBold ${pressed ? "text-white" : "text-primary"}`}>A</Tt>
@@ -103,7 +108,12 @@ const AccessibleIngredientsModal = () => {
                 </>
               )}
             </Pressable>
-            <Pressable onPress={inc} className="flex-row items-center px-3 py-1 rounded bg-hsl98 dark:bg-hsl10  active:bg-primary border border-primary">
+            <Pressable
+              onPress={inc}
+              accessibilityRole="button"
+              accessibilityLabel="Increase text size"
+              className="flex-row items-center px-3 py-1 rounded bg-hsl98 dark:bg-hsl10  active:bg-primary border border-primary"
+            >
               {({ pressed }) => (
                 <>
                   <Tt className={`text-xl font-interSemiBold ${pressed ? "text-white" : "text-primary"}`}>A</Tt>
@@ -113,7 +123,7 @@ const AccessibleIngredientsModal = () => {
             </Pressable>
           </View>
 
-          <Pressable onPress={() => closeModal("accessibleIngredients")} className="p-2 rounded-lg" >
+          <Pressable onPress={() => closeModal("accessibleIngredients")} accessibilityRole="button" accessibilityLabel="Close ingredients" className="p-2 rounded-lg" >
             {({ pressed }) => (
               <IconGeneral type="close" size={30} fill={pressed ? "#FF3F3F" : "hsl(0, 0%, 20%)"} />
             )}

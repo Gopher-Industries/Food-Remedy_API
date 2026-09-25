@@ -112,6 +112,43 @@ describe("canonical allergen safety", () => {
     ).toEqual(["seafood"]);
   });
 
+  it.each([
+    ["Fish", { traces: "  MAY-CONTAIN: SEAFOOD!  " }],
+    ["Seafood", { allergens: ["SEA/FOOD"] }],
+    ["Seafood", { traces: ["Produced on equipment that also processes SHRIMP"] }],
+    ["Crustacea", { tracesFromIngredients: "allergy advice: may contain prawns" }],
+  ])("treats precautionary and punctuated seafood evidence as unsafe for %s", (restriction, evidence) => {
+    expect(
+      assessAllergenSafety(
+        { ...completeDeclaration, ...evidence },
+        [restriction]
+      )
+    ).toEqual(
+      expect.objectContaining({
+        status: "unsafe",
+        matchedAllergen: restriction,
+      })
+    );
+  });
+
+  it("treats a generic Seafood declaration as unsafe for legacy Fish profiles", () => {
+    expect(
+      findRestrictionMatches(
+        { allergens: ["en:seafood"], traces: "none declared" },
+        [" fish "]
+      )
+    ).toEqual(["fish"]);
+  });
+
+  it("does not treat an Unknown sentinel as a complete safety declaration", () => {
+    expect(
+      assessAllergenSafety(
+        { allergens: ["Unknown"], traces: "none declared" },
+        ["Seafood"]
+      ).status
+    ).toBe("unknown");
+  });
+
   it("uses the canonical matcher in the legacy restriction normalizer", () => {
     expect(
       normaliseRetrictionsForProfileCheck({

@@ -78,5 +78,5 @@ class PipelineLogger:
     def warning(self, msg: str):
         self.logger.warning(msg)
 
-    def error(self, msg: str):
-        self.logger.error(msg)
+    def error(self, msg: str, exc_info: bool = False):
+        self.logger.error(msg, exc_info=exc_info)
