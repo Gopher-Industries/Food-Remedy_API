@@ -1,7 +1,8 @@
 // Forgot Password Page tsx
 
 import { useState } from "react";
-import { Link } from "expo-router";
+import { router } from "expo-router";
+import { useDirtyForm } from "@/hooks/useDirtyForm";
 import { View, Image, ScrollView, Pressable, KeyboardAvoidingView, Platform } from "react-native";
 import Input from "@/components/ui/UIInput";
 import Tt from "@/components/ui/UIText";
@@ -12,6 +13,7 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const theme = useTheme();
+  const { markDirty, confirmLeave } = useDirtyForm();
 
 
   // TODO: Update handle reset link to use backend
@@ -75,7 +77,7 @@ export default function ForgotPasswordPage() {
             className="py-3 mt-8 "
             placeholder="Email"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => { setEmail(text); markDirty(); }}
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="off"
@@ -95,9 +97,12 @@ export default function ForgotPasswordPage() {
             )}
           </Pressable>
 
-          <Tt className="font-interMedium mt-12 text-center">Go Back to <Link href='/login'
-            className="text-primary font-interSemiBold active:underline">Login</Link>
-          </Tt>
+          <View className="flex-row justify-center items-center mt-12">
+            <Tt className="font-interMedium">Go Back to </Tt>
+            <Pressable onPress={() => confirmLeave(() => router.replace("/login"))}>
+              <Tt className="text-primary font-interSemiBold">Login</Tt>
+            </Pressable>
+          </View>
 
         </View>
       </ScrollView>
