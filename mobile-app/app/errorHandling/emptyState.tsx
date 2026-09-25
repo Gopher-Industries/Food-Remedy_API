@@ -3,7 +3,8 @@
   EmptyState component that displays a user-friendly “Product Not Found” message  
   and allows the user to return to the scanner or enter the barcode manually.*/
 }
-import { View, Pressable } from "react-native";
+import { useEffect, useRef } from "react";
+import { AccessibilityInfo, View, Pressable } from "react-native";
 import IconGeneral from "@/components/icons/IconGeneral";
 import Tt from "@/components/ui/UIText";
 import { router } from "expo-router";
@@ -11,6 +12,20 @@ import { color, spacing } from "../design/token";
 import Screen from "@/components/layout/Screen";
 
 const EmptyState = () => {
+  const announcedRef = useRef(false);
+
+  useEffect(() => {
+    if (announcedRef.current) return;
+
+    const announcementTimer = setTimeout(() => {
+      if (announcedRef.current) return;
+      announcedRef.current = true;
+      AccessibilityInfo.announceForAccessibility("Not found");
+    }, 500);
+
+    return () => clearTimeout(announcementTimer);
+  }, []);
+
   return (
     <Screen className="p-safe mt-10">
       <View className="flex-1 items-center justify-center px-6">
