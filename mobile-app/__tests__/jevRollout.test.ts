@@ -3,7 +3,7 @@ import type { NutritionalProfile } from '@/types/NutritionalProfile';
 import { MockSemanticFitClient } from '@/server/semanticFitClient';
 import { createProductSubstitutionHandler } from '@/server/productSubstitutionHandler';
 import { FirestoreJevRollout, type JevConfigStore } from '@/server/jevRollout';
-import { ConsoleSubstitutionMetrics, type SubstitutionMetricEvent } from '@/server/substitutionObservability';
+import { ConsoleSubstitutionMetrics, EnabledSubstitutionRollout, type SubstitutionMetricEvent } from '@/server/substitutionObservability';
 
 const BARCODE = '036000291452';
 const CONFIG = { schemaVersion: 1, mode: 'shadow', canaryPercent: 0, modelVersion: 'jev-1.13.0',
@@ -43,6 +43,7 @@ function setup(store: JevConfigStore, events: SubstitutionMetricEvent[], client:
       getExplicitPreferences: async () => null, getSavedIntent: async () => null,
       getRecentEvents: async () => [], getProductSemantics: async () => null },
     semanticClient: client, jevRollout: new FirestoreJevRollout(store, ENV),
+    rollout: new EnabledSubstitutionRollout(),
     metrics: { record: event => events.push(event) },
   });
 }
