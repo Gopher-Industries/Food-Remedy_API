@@ -25,6 +25,9 @@ export default function OnboardingScreen3({
         <Pressable
           onPress={onSkip}
           className="py-1 px-3 mr-[10px] bg-gray-300 rounded-lg"
+          accessibilityRole="button"
+          accessibilityLabel="Skip introduction"
+          accessibilityHint="Goes straight to the login screen"
         >
           <Tt className="text-black text-base font-interMedium">Skip</Tt>
         </Pressable>
@@ -100,7 +103,10 @@ export default function OnboardingScreen3({
         </View>
 
         {/* Title */}
-        <Tt className="text-3xl font-interBold text-hsl20 text-center mb-4">
+        <Tt
+          className="text-3xl font-interBold text-hsl20 text-center mb-4"
+          accessibilityRole="header"
+        >
           Personalize{"\n"}Your Experience
         </Tt>
 
@@ -121,6 +127,8 @@ export default function OnboardingScreen3({
         <Pressable
           onPress={onLogInOrSignUp}
           className="bg-primary rounded-xl py-4 active:opacity-80 mb-3"
+          accessibilityRole="button"
+          accessibilityLabel="Log in or sign up"
         >
           <Tt className="text-white text-lg font-interSemiBold text-center">
             Log In / Sign Up
@@ -131,6 +139,9 @@ export default function OnboardingScreen3({
         <Pressable
           onPress={onSkipForNow}
           className="bg-pink-100 border-2 border-primary rounded-xl py-4 active:bg-pink-50"
+          accessibilityRole="button"
+          accessibilityLabel="Skip for now"
+          accessibilityHint="Continues without creating an account"
         >
           <Tt className="text-primary text-lg font-interSemiBold text-center">
             Skip for Now

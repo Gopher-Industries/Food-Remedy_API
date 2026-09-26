@@ -8,6 +8,16 @@ interface IconGeneralProps {
   fill: string;     // Fill color of the SVG icon
   size?: number;    // Icon size (width & height). Defaults to 24
   rotate?: number;  // Optional rotation (in degrees) around the X axis
+  /**
+   * Accessibility label (FE031).
+   *
+   * Pass a label ONLY when the icon carries meaning that is not already
+   * available as adjacent text (e.g. an icon-only button that has no
+   * accessibilityLabel of its own). When omitted the icon is treated as
+   * decorative and is hidden from screen readers, so VoiceOver / TalkBack
+   * do not stop on an unlabelled graphic.
+   */
+  label?: string;
 }
 
 /**
@@ -32,7 +42,7 @@ interface IconGeneralProps {
  */
 
 
-const IconGeneral: React.FC<IconGeneralProps> = ({ type, fill = "hsl(0 0% 30%)", size = 24, rotate = 0 }) => {
+const IconGeneral: React.FC<IconGeneralProps> = ({ type, fill = "hsl(0 0% 30%)", size = 24, rotate = 0, label }) => {
 
   const getSvgContent = () => {
     switch (type) {
@@ -167,6 +177,12 @@ const IconGeneral: React.FC<IconGeneralProps> = ({ type, fill = "hsl(0 0% 30%)",
       fill={fill}
       style={{ transform: [{ rotateX: rotate + 'deg' }] }}
       className="flex-shrink-0"
+      // FE031: labelled icons are exposed as images, unlabelled ones are decorative
+      accessible={label ? true : false}
+      accessibilityRole={label ? "image" : undefined}
+      accessibilityLabel={label}
+      accessibilityElementsHidden={!label}
+      importantForAccessibility={label ? "yes" : "no-hide-descendants"}
     >
       <Path d={svgContent} />
     </Svg>

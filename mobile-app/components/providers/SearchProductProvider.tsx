@@ -3,8 +3,6 @@
 import { Product } from '@/types/Product';
 import React, { createContext, useState, useContext, ReactNode, Dispatch, SetStateAction, useEffect } from 'react';
 import { useNotification } from './NotificationProvider';
-import { normaliseProduct } from '@/services/utils/normaliseProduct';
-import { ProductBackend } from '@/types/ProductBackend';
 import { searchProducts } from '@/services';
 
 
@@ -20,6 +18,7 @@ interface SearchProductContextType {
   setQueryInvalid: Dispatch<SetStateAction<boolean>>;
 
   loading: boolean;
+  searchAttempt: number;
 
   productResults: Product[];
   setProductResults: Dispatch<SetStateAction<Product[]>>;
@@ -39,6 +38,7 @@ export const SearchProductProvider = ({ children }: { children: ReactNode }) => 
   const [loading, setLoading] = useState<boolean>(false);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [queryInvalid, setQueryInvalid] = useState<boolean>(false);
+  const [searchAttempt, setSearchAttempt] = useState(0);
   // Results
   const [productResults, setProductResults] = useState<Product[]>([]);
 
@@ -55,15 +55,12 @@ export const SearchProductProvider = ({ children }: { children: ReactNode }) => 
    * Search Products
    */
   const handleSearchProducts = async () => {
+    setSearchAttempt((attempt) => attempt + 1);
     const q = query.trim();
     setHasSearched(true);
     setLastQuery(q);
 
-    /**
-     * TODO: If ngrok keeps timing out, add:
-     * if (!q || q.length < 2) {
-     */
-    if (!q) {
+    if (q.length < 2) {
       setQueryInvalid(true);
       setProductResults([]);
       setLoading(false);
@@ -95,7 +92,7 @@ export const SearchProductProvider = ({ children }: { children: ReactNode }) => 
       lastQuery, setLastQuery,
       hasSearched, setHasSearched,
       queryInvalid, setQueryInvalid,
-      loading,
+      loading, searchAttempt,
       productResults, setProductResults,
       handleSearchProducts,
     }}>

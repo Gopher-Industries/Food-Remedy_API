@@ -248,6 +248,12 @@ export default function ScanPage() {
         <Pressable
           onPress={closeBottomSheet}
           className="relative flex-1"
+          // FE031: the wrapper only dismisses the sheet - it is not a control a
+          // screen reader user needs to land on, but the camera itself is
+          // described so the flow is understandable without sight.
+          accessible={false}
+          accessibilityRole="none"
+          importantForAccessibility="no"
         >
           {/* Only mount CameraView when focused */}
           {isFocused && (
@@ -256,6 +262,10 @@ export default function ScanPage() {
               key={facing}
               style={{ flex: 1 }}
               facing={facing}
+              accessible
+              accessibilityRole="image"
+              accessibilityLabel="Barcode scanner camera"
+              accessibilityHint="Point the camera at a product barcode. The product opens automatically when a barcode is recognised."
               onBarcodeScanned={
                 !scanned ? handleBarCodeScanned : undefined
               }
@@ -270,6 +280,12 @@ export default function ScanPage() {
               onPress={toggleCameraFacing}
               accessibilityRole="button"
               accessibilityLabel="Switch camera"
+              accessibilityHint={
+                facing === "back"
+                  ? "Switches to the front camera"
+                  : "Switches to the back camera"
+              }
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               className="flex flex-col items-center gap-y-1"
             >
               {({ pressed }) => (
@@ -293,6 +309,10 @@ export default function ScanPage() {
                 toggleAllergenHighlight();
               }}
               className="bg-primary rounded-lg py-3 px-4 flex-row justify-center items-center shadow-lg"
+              accessibilityRole="switch"
+              accessibilityLabel="Allergen information"
+              accessibilityHint="Shows or hides allergen badges on scanned products"
+              accessibilityState={{ checked: showContainsBadges }}
             >
               {({ pressed }) => (
                 <>
@@ -321,6 +341,9 @@ export default function ScanPage() {
             <Pressable
               onPress={handleChooseBarcodeImage}
               className="bg-primary rounded-lg px-6 py-3"
+              accessibilityRole="button"
+              accessibilityLabel="Choose barcode image"
+              accessibilityHint="Picks a photo from your library and reads the barcode in it"
             >
               <Tt className="text-white font-interSemiBold">
                 Choose Barcode Image

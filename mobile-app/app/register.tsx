@@ -19,6 +19,7 @@ import { registerWithEmail } from "@/services";
 import { color } from "@/app/design/token";
 import { useTheme } from "@/theme";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { useAccessibilityAnnouncement } from "@/hooks/useAccessibilityAnnouncement";
 
 export default function RegisterPage() {
   const { addNotification } = useNotification();
@@ -33,6 +34,12 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState<boolean>(true);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [submissionAttempt, setSubmissionAttempt] = useState(0);
+
+  useAccessibilityAnnouncement(
+    errorMessage ? `Registration error. ${errorMessage}` : null,
+    { announceOnAndroid: true, eventKey: submissionAttempt }
+  );
   const [loading, setLoading] = useState<boolean>(false);
 
   /**
@@ -40,6 +47,7 @@ export default function RegisterPage() {
    * @returns
    */
   const handleRegister = async () => {
+    setSubmissionAttempt((attempt) => attempt + 1);
     setErrorMessage("");
     const validFirstName = firstName.trim();
     const validLastName = lastName.trim();
@@ -118,23 +126,33 @@ export default function RegisterPage() {
               source={require("../assets/images/FoodRemedyLogo.png")}
               className="w-[50%] aspect-[3/1] max-w-[300px] h-auto"
               resizeMode="contain"
+              accessible
+              accessibilityRole="image"
+              accessibilityLabel="Food Remedy"
             />
           </View>
 
           {!loading && (
             <>
-              {errorMessage && (
-                <View className="bg-[#FCCACA] border border-primary rounded-md px-4 py-2 mt-8">
+              {errorMessage ? (
+                <View
+                  className="bg-[#FCCACA] border border-primary rounded-md px-4 py-2 mt-8"
+                  accessible
+                  accessibilityRole="alert"
+                  accessibilityLabel={`Registration error. ${errorMessage}`}
+                >
                   <Tt className="text-center text-primary font-interSemiBold">
                     {errorMessage}
                   </Tt>
                 </View>
-              )}
+              ) : null}
 
               {/* First Name Input */}
               <Input
                 className="py-3 mt-8"
                 placeholder="First Name"
+                accessibilityLabel="First name"
+                textContentType="givenName"
                 value={firstName}
                 onChangeText={(text) => { setFirstName(text); markDirty(); }}
                 keyboardType="default"
@@ -147,6 +165,8 @@ export default function RegisterPage() {
               <Input
                 className="py-3 mt-4"
                 placeholder="Last Name"
+                accessibilityLabel="Last name"
+                textContentType="familyName"
                 value={lastName}
                 onChangeText={(text) => { setLastName(text); markDirty(); }}
                 keyboardType="default"
@@ -159,6 +179,8 @@ export default function RegisterPage() {
               <Input
                 className="py-3 mt-4"
                 placeholder="Email"
+                accessibilityLabel="Email address"
+                textContentType="emailAddress"
                 value={email}
                 onChangeText={(text) => { setEmail(text); markDirty(); }}
                 keyboardType="default"
@@ -251,6 +273,9 @@ export default function RegisterPage() {
               <Pressable
                 onPress={handleRegister}
                 className="bg-primary rounded-lg py-3 mt-8 border border-primary active:bg-transparent"
+                accessibilityRole="button"
+                accessibilityLabel="Register"
+                accessibilityState={{ busy: loading, disabled: loading }}
               >
                 {({ pressed }) => (
                   <Tt
@@ -265,7 +290,12 @@ export default function RegisterPage() {
               {/* Navigating to login */}
               <View className="flex-row justify-center items-center mt-12">
                 <Tt className="text-sm">Already have an account? </Tt>
-                <Pressable onPress={() => confirmLeave(() => router.replace("/login"))}>
+                <Pressable
+                  onPress={() => confirmLeave(() => router.replace("/login"))}
+                  accessibilityRole="link"
+                  accessibilityLabel="Log in"
+                  accessibilityHint="Goes to the login screen"
+                >
                   <Tt className="text-sm text-primary font-interSemiBold">Log in</Tt>
                 </Pressable>
               </View>
