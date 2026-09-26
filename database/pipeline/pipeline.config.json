@@ -40,12 +40,6 @@
           "config": {}
         },
         {
-          "name": "search_normalization_enrich",
-          "path": "pipeline/modules/search_normalization_enrich.py",
-          "enabled": true,
-          "config": {}
-        },
-        {
           "name": "db019_alternative_product_mapping",
           "path": "pipeline/modules/db019_alternative_product_mapping.py",
           "enabled": true,
