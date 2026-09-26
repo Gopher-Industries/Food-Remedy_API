@@ -104,11 +104,14 @@ export interface ProductSubstitutionResponse {
   targetProduct: ReturnType<typeof compactTarget>;
   substitutions: ReturnType<typeof compactSubstitution>[];
   emptyStateReason: SubstitutionEmptyStateReason | null;
+  /** Server-issued only when outcome evidence can be accepted. */
+  recommendationSessionId?: string;
 }
 
 export interface ProductSubstitutionExecution {
   response: ProductSubstitutionResponse;
   metrics: SubstitutionRankingMetrics;
+  profileId: string;
 }
 
 /** Runs bounded catalogue retrieval and ranking against the verified user's profile. */
@@ -132,6 +135,7 @@ export async function executeProductSubstitution(
       emptyStateReason: ranked.emptyStateReason,
     },
     metrics: ranked.metrics,
+    profileId: profile.profileId,
   };
 }
 

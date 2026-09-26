@@ -105,6 +105,11 @@
             "PRODUCT_NOT_FOUND"
           ],
           "description": "Explicit empty state taxonomy when substitutions array is empty"
+        },
+        "recommendationSessionId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,128}$",
+          "description": "Optional server-issued session for idempotent recommendation feedback"
         }
       },
       "additionalProperties": false

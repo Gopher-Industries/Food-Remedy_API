@@ -17,5 +17,18 @@
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "RECOMMENDATION_EVENTS",
+      "fieldPath": "ttlAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "RECOMMENDATION_SESSIONS",
+      "fieldPath": "ttlAt",
+      "ttl": true,
+      "indexes": []
+    }
+  ]
 }

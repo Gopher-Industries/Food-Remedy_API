@@ -1,5 +1,5 @@
 import { auth, fdb } from '@/config/firebaseConfig';
-import { collection, deleteDoc, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, setDoc, writeBatch } from 'firebase/firestore';
 import type { FoodPreferenceProfile, SavedShoppingIntent } from '@/types/Personalization';
 import { parseFoodPreferenceProfile, parseSavedShoppingIntent, canonicalSavedShoppingIntent, validPersonalizationId } from '@/services/personalizationValidation';
 
@@ -85,7 +85,13 @@ export async function tombstoneCloudSavedShoppingIntent(
 /** Delete child documents before deleting the parent profile; Firestore does not cascade. */
 export async function deleteCloudProfilePersonalization(uid: string, profileId: string): Promise<void> {
   requireOwner(uid, profileId);
-  const intents = await getDocs(intentsCol(uid, profileId));
-  for (const item of intents.docs) await deleteDoc(item.ref);
+  for (const name of ['RECOMMENDATION_EVENTS', 'RECOMMENDATION_SESSIONS', 'SAVED_INTENTS']) {
+    const children = await getDocs(collection(fdb, `${profilePath(uid, profileId)}/${name}`));
+    for (let index = 0; index < children.docs.length; index += 400) {
+      const batch = writeBatch(fdb);
+      for (const item of children.docs.slice(index, index + 400)) batch.delete(item.ref);
+      await batch.commit();
+    }
+  }
   await deleteDoc(preferenceDoc(uid, profileId));
 }

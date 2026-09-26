@@ -3,13 +3,16 @@ import { FirestoreProductSubstitutionRepository } from "@/server/firestoreProduc
 import { createProductSubstitutionHandler } from "@/server/productSubstitutionHandler";
 import { SUBSTITUTION_CONTRACT_VERSION } from "@/server/productSubstitutionService";
 import { ConsoleSubstitutionMetrics, EnvironmentSubstitutionRollout } from "@/server/substitutionObservability";
+import { FirestoreRecommendationEvidenceRepository } from '@/server/recommendationEvidenceRepository';
 
 /** POST /api/recommendations/substitutions — authenticated substitutions v1. */
 export async function POST(request: Request): Promise<Response> {
   try {
+    const firestore = getAdminFirestore();
     return await createProductSubstitutionHandler({
       tokenVerifier: getAdminAuth(),
-      repository: new FirestoreProductSubstitutionRepository(getAdminFirestore()),
+      repository: new FirestoreProductSubstitutionRepository(firestore),
+      sessionStore: new FirestoreRecommendationEvidenceRepository(firestore),
       rollout: new EnvironmentSubstitutionRollout(),
       metrics: new ConsoleSubstitutionMetrics(),
     })(request);

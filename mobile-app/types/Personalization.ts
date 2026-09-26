@@ -95,6 +95,8 @@ export interface RecommendationEvent {
   receivedAt: string;
 }
 
+export type RecommendationEventInput = Omit<RecommendationEvent, 'receivedAt'>;
+
 export type SemanticSource = 'catalogue' | 'manual' | 'deterministic' | 'model_inferred';
 export interface SemanticAttribute<T extends string> {
   /** Absence means unknown; not_applicable is a documented, evidenced value. */

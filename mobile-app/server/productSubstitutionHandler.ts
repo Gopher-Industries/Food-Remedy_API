@@ -23,6 +23,7 @@ import {
   type SubstitutionMetrics,
   type SubstitutionRollout,
 } from "@/server/substitutionObservability";
+import type { RecommendationSessionStore } from '@/server/recommendationEvidenceRepository';
 
 const DEFAULT_TIMEOUT_MS = 4_000;
 
@@ -32,6 +33,7 @@ export interface ProductSubstitutionHandlerDependencies {
   timeoutMs?: number;
   rollout?: SubstitutionRollout;
   metrics?: SubstitutionMetrics;
+  sessionStore?: RecommendationSessionStore;
 }
 
 function response(body: unknown, status: number): Response {
@@ -153,6 +155,23 @@ export function createProductSubstitutionHandler(dependencies: ProductSubstituti
       emptyStateReason = execution.response.emptyStateReason;
       ranking = execution.metrics;
       outcome = resultCount ? "success" : "empty";
+      if (resultCount && dependencies.sessionStore) {
+        try {
+          const remainingMs = timeoutMs - (Date.now() - startedAt);
+          if (remainingMs > 0) {
+            const sessionId = await withDeadline(dependencies.sessionStore.create(identity.uid, {
+              profileId: execution.profileId,
+              originalBarcode: input.barcode,
+              candidates: execution.response.substitutions.map(item => ({
+                barcode: item.barcode, deterministicScore: item.confidenceScore,
+              })),
+            }), request.signal, remainingMs);
+            return response({ ...execution.response, recommendationSessionId: sessionId }, 200);
+          }
+        } catch {
+          // Evidence capture is optional; deterministic recommendations stay available.
+        }
+      }
       return response(execution.response, 200);
     } catch (error) {
       if (error instanceof AuthenticationError) {

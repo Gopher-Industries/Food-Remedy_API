@@ -26,6 +26,8 @@ async function main() {
       await setDoc(doc(context.firestore(), 'USERS/other/PROFILES/self'), { status: true, relationship: 'Self' });
       await setDoc(doc(context.firestore(), 'USERS/owner/PROFILES/self/PERSONALIZATION/preferences'), preference('self'));
       await setDoc(doc(context.firestore(), 'USERS/owner/PROFILES/child/PERSONALIZATION/preferences'), preference('child'));
+      await setDoc(doc(context.firestore(), 'USERS/owner/PROFILES/child/RECOMMENDATION_SESSIONS/session_1'), { sessionId: 'session_1' });
+      await setDoc(doc(context.firestore(), 'USERS/owner/PROFILES/child/RECOMMENDATION_EVENTS/event_1'), { event: { eventId: 'event_1' } });
     });
     const owner = env.authenticatedContext('owner').firestore();
     const attacker = env.authenticatedContext('other').firestore();
@@ -33,6 +35,8 @@ async function main() {
     const self = 'USERS/owner/PROFILES/self/PERSONALIZATION/preferences';
     const child = 'USERS/owner/PROFILES/child/PERSONALIZATION/preferences';
     const saved = 'USERS/owner/PROFILES/child/SAVED_INTENTS/intent_1';
+    const session = 'USERS/owner/PROFILES/child/RECOMMENDATION_SESSIONS/session_1';
+    const evidence = 'USERS/owner/PROFILES/child/RECOMMENDATION_EVENTS/event_1';
 
     await assertSucceeds(setDoc(doc(owner, saved), intent('child')));
     assert.deepEqual((await getDoc(doc(owner, self))).data(), preference('self'));
@@ -50,6 +54,12 @@ async function main() {
     await assertFails(setDoc(doc(owner, saved), { ...intent('child'), text: 'x'.repeat(241) }));
     await assertFails(setDoc(doc(owner, saved), { ...intent('child'), deletedAt: now }));
     await assertFails(setDoc(doc(owner, 'PRODUCTS/12345678'), { productName: 'Untrusted' }));
+    await assertSucceeds(getDoc(doc(owner, session)));
+    await assertSucceeds(getDoc(doc(owner, evidence)));
+    await assertFails(getDoc(doc(attacker, evidence)));
+    await assertFails(getDoc(doc(guest, session)));
+    await assertFails(setDoc(doc(owner, session), { sessionId: 'forged' }));
+    await assertFails(setDoc(doc(owner, evidence), { event: { eventId: 'forged' } }));
 
     await env.withSecurityRulesDisabled(context => updateDoc(doc(context.firestore(), 'USERS/owner/PROFILES/child'), { status: false }));
     await assertSucceeds(getDoc(doc(owner, child)));
@@ -57,7 +67,9 @@ async function main() {
     await env.withSecurityRulesDisabled(context => deleteDoc(doc(context.firestore(), 'USERS/owner/PROFILES/child')));
     await assertFails(getDoc(doc(owner, child)));
     await assertFails(getDoc(doc(owner, saved)));
-    console.log('BE059 Firestore rules: owner/attacker/guest, server-only preference writes, saved-intent shape, inactive and orphan assertions passed');
+    await assertFails(getDoc(doc(owner, session)));
+    await assertFails(getDoc(doc(owner, evidence)));
+    console.log('BE059-BE060 Firestore rules: owner/attacker/guest, server-only writes, saved-intent shape, inactive and orphan assertions passed');
   } finally {
     await env.cleanup();
   }

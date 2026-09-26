@@ -83,6 +83,22 @@ function validBody(overrides: Record<string, unknown> = {}) {
 }
 
 describe("POST /api/recommendations/substitutions", () => {
+  it('issues a server session for feedback without changing deterministic candidates', async () => {
+    const deps = dependencies();
+    deps.sessionStore = { create: jest.fn().mockResolvedValue('server_session_1') };
+    const response = await createProductSubstitutionHandler(deps)(request(validBody()));
+    const body = await response.json();
+    expect(body.recommendationSessionId).toBe('server_session_1');
+    expect(deps.sessionStore.create).toHaveBeenCalledWith('verified-user', {
+      profileId: 'self-profile', originalBarcode: BARCODE,
+      candidates: [expect.objectContaining({ barcode: '036000291469' })],
+    });
+    deps.sessionStore = { create: jest.fn().mockRejectedValue(new Error('unavailable')) };
+    const fallback = await createProductSubstitutionHandler(deps)(request(validBody()));
+    expect(fallback.status).toBe(200);
+    expect((await fallback.json()).recommendationSessionId).toBeUndefined();
+  });
+
   it("requires verified authentication before reading profile or products", async () => {
     const deps = dependencies();
     const response = await createProductSubstitutionHandler(deps)(new Request("http://localhost/api/recommendations/substitutions", { method: "POST", body: JSON.stringify(validBody()) }));
