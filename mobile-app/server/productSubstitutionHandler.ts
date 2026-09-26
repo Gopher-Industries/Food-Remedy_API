@@ -8,6 +8,7 @@ import {
   SubstitutionTimeoutError,
   SubstitutionValidationError,
   type ProductSubstitutionRepository,
+  type ProductSubstitutionExecution,
   validateSubstitutionRequest,
 } from "@/server/productSubstitutionService";
 import {
@@ -24,6 +25,9 @@ import {
   type SubstitutionRollout,
 } from "@/server/substitutionObservability";
 import type { RecommendationSessionStore } from '@/server/recommendationEvidenceRepository';
+import { PersonalizationContextUnavailableError, type PersonalizationContextRepository } from './personalizationContext';
+import { executeProductSubstitutionV2, SUBSTITUTION_CONTRACT_VERSION_V2, validateSubstitutionRequestV2,
+  type ProductSubstitutionV2Execution } from './productSubstitutionV2';
 
 const DEFAULT_TIMEOUT_MS = 4_000;
 
@@ -34,6 +38,7 @@ export interface ProductSubstitutionHandlerDependencies {
   rollout?: SubstitutionRollout;
   metrics?: SubstitutionMetrics;
   sessionStore?: RecommendationSessionStore;
+  contextRepository?: PersonalizationContextRepository;
 }
 
 function response(body: unknown, status: number): Response {
@@ -43,8 +48,8 @@ function response(body: unknown, status: number): Response {
   });
 }
 
-function errorResponse(code: string, message: string, status: number): Response {
-  return response({ version: SUBSTITUTION_CONTRACT_VERSION, error: { code, message } }, status);
+function errorResponse(code: string, message: string, status: number, version: string): Response {
+  return response({ version, error: { code, message } }, status);
 }
 
 async function readBoundedJson(request: Request, timeoutMs: number): Promise<unknown> {
@@ -141,16 +146,20 @@ export function createProductSubstitutionHandler(dependencies: ProductSubstituti
     let resultCount = 0;
     let emptyStateReason: Parameters<SubstitutionMetrics["record"]>[0]["emptyStateReason"];
     let ranking: Parameters<SubstitutionMetrics["record"]>[0]["ranking"];
+    let responseVersion: string = SUBSTITUTION_CONTRACT_VERSION;
     try {
       const identity = await withDeadline(requireVerifiedIdentity(request, dependencies.tokenVerifier), request.signal, remainingMs(deadline));
       if (!rollout.isEnabledFor(identity.uid)) throw new FeatureDisabledError("Substitutions are disabled.");
       const payload = await readBoundedJson(request, remainingMs(deadline));
-      const input = validateSubstitutionRequest(payload);
-      const execution = await withDeadline(
-        executeProductSubstitution(dependencies.repository, identity.uid, input),
-        request.signal,
-        remainingMs(deadline)
-      );
+      const isV2 = !!payload && typeof payload === 'object' && !Array.isArray(payload) &&
+        (payload as { version?: unknown }).version === SUBSTITUTION_CONTRACT_VERSION_V2;
+      responseVersion = isV2 ? SUBSTITUTION_CONTRACT_VERSION_V2 : SUBSTITUTION_CONTRACT_VERSION;
+      const input = isV2 ? validateSubstitutionRequestV2(payload) : validateSubstitutionRequest(payload);
+      if (isV2 && !dependencies.contextRepository) throw new ProfileUnavailableError('Profile unavailable.');
+      const execution = await withDeadline<ProductSubstitutionExecution | ProductSubstitutionV2Execution>(isV2
+        ? executeProductSubstitutionV2(dependencies.repository, dependencies.contextRepository!, identity.uid, input as ReturnType<typeof validateSubstitutionRequestV2>)
+        : executeProductSubstitution(dependencies.repository, identity.uid, input as ReturnType<typeof validateSubstitutionRequest>),
+      request.signal, remainingMs(deadline));
       resultCount = execution.response.substitutions.length;
       emptyStateReason = execution.response.emptyStateReason;
       ranking = execution.metrics;
@@ -163,7 +172,7 @@ export function createProductSubstitutionHandler(dependencies: ProductSubstituti
               profileId: execution.profileId,
               originalBarcode: input.barcode,
               candidates: execution.response.substitutions.map(item => ({
-                barcode: item.barcode, deterministicScore: item.confidenceScore,
+                barcode: item.barcode, deterministicScore: 'deterministicScore' in item ? Number(item.deterministicScore) : item.confidenceScore,
               })),
             }), request.signal, remainingMs);
             return response({ ...execution.response, recommendationSessionId: sessionId }, 200);
@@ -176,27 +185,27 @@ export function createProductSubstitutionHandler(dependencies: ProductSubstituti
     } catch (error) {
       if (error instanceof AuthenticationError) {
         outcome = "unauthenticated";
-        return errorResponse("UNAUTHENTICATED", "Authentication is required.", 401);
+        return errorResponse("UNAUTHENTICATED", "Authentication is required.", 401, responseVersion);
       }
       if (error instanceof SubstitutionValidationError) {
         outcome = "validation_error";
-        return errorResponse(error.code, error.message, error.code === "REQUEST_TOO_LARGE" ? 413 : 400);
+        return errorResponse(error.code, error.message, error.code === "REQUEST_TOO_LARGE" ? 413 : 400, responseVersion);
       }
       if (error instanceof FeatureDisabledError) {
         outcome = "feature_disabled";
-        return errorResponse("SUBSTITUTIONS_UNAVAILABLE", "Substitutions are temporarily unavailable. Please try again.", 503);
+        return errorResponse("SUBSTITUTIONS_UNAVAILABLE", "Substitutions are temporarily unavailable. Please try again.", 503, responseVersion);
       }
       if (error instanceof ProductNotFoundError) {
         outcome = "product_not_found";
-        return errorResponse("PRODUCT_NOT_FOUND", "The requested product was not found.", 404);
+        return errorResponse("PRODUCT_NOT_FOUND", "The requested product was not found.", 404, responseVersion);
       }
-      if (error instanceof ProfileUnavailableError) {
+      if (error instanceof ProfileUnavailableError || error instanceof PersonalizationContextUnavailableError) {
         outcome = "profile_unavailable";
-        return errorResponse("PROFILE_UNAVAILABLE", "An active profile is required for substitutions.", 409);
+        return errorResponse("PROFILE_UNAVAILABLE", "An active profile is required for substitutions.", 409, responseVersion);
       }
       // No error object is logged: upstream failures can contain profile or
       // product payloads that should never be exposed to callers or logs.
-      return errorResponse("SUBSTITUTIONS_UNAVAILABLE", "Substitutions are temporarily unavailable. Please try again.", 503);
+      return errorResponse("SUBSTITUTIONS_UNAVAILABLE", "Substitutions are temporarily unavailable. Please try again.", 503, responseVersion);
     } finally {
       try {
         metrics.record({

@@ -2,6 +2,7 @@ import { deleteApp, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { FirestoreProductSubstitutionRepository } from "@/server/firestoreProductSubstitutionRepository";
 import { createProductSubstitutionResponse } from "@/server/productSubstitutionService";
+import { executeProductSubstitutionV2 } from '@/server/productSubstitutionV2';
 import { FirestorePersonalizationContextRepository } from '@/server/firestorePersonalizationContextRepository';
 import { resolvePersonalizationContext, PersonalizationContextUnavailableError } from '@/server/personalizationContext';
 
@@ -111,5 +112,19 @@ describeWithEmulator("FirestoreProductSubstitutionRepository", () => {
     expect(JSON.stringify(child)).not.toContain('Milk');
     await expect(resolvePersonalizationContext(contextRepository, 'other-user', 'child', undefined, clock))
       .rejects.toBeInstanceOf(PersonalizationContextUnavailableError);
+  });
+
+  it('uses the selected child safety profile for v2 while preserving hard exclusions', async () => {
+    const contexts = new FirestorePersonalizationContextRepository(firestore);
+    const child = await executeProductSubstitutionV2(repository, contexts, 'owner', {
+      barcode: originalBarcode, profileId: 'child', limit: 20, intention: 'Lunchbox snack',
+    });
+    expect(child.response.version).toBe('2.0.0');
+    expect(child.response.substitutions.map(item => item.barcode)).toContain(safeBarcode);
+    expect(child.response.substitutions.map(item => item.barcode)).not.toContain(milkBarcode);
+    expect(child.context.intention?.source).toBe('one_off');
+    await expect(executeProductSubstitutionV2(repository, contexts, 'other-user', {
+      barcode: originalBarcode, profileId: 'child', limit: 20,
+    })).rejects.toThrow('Profile unavailable.');
   });
 });

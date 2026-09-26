@@ -22,6 +22,8 @@ export interface ValidatedSubstitutionRequest {
 export interface ProductSubstitutionRepository {
   getProduct(barcode: string): Promise<Product | null>;
   getAuthoritativeProfile(uid: string): Promise<NutritionalProfile | null>;
+  /** Required by v2. The implementation must read beneath the verified UID. */
+  getOwnedProfile?(uid: string, profileId: string): Promise<NutritionalProfile | null>;
   getCandidates(original: Product, maximum: number): Promise<Product[]>;
 }
 
@@ -83,12 +85,12 @@ function compactProduct(product: Product) {
   };
 }
 
-function compactTarget(product: Product) {
+export function compactTarget(product: Product) {
   const category = compactText(product.category ?? product.categories?.[0], 100);
   return { ...compactProduct(product), category };
 }
 
-function compactSubstitution(candidate: RankedSubstitution) {
+export function compactSubstitution(candidate: RankedSubstitution) {
   return {
     ...compactProduct(candidate.product),
     safetyRating: candidate.safetyRating,

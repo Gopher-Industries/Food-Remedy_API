@@ -1,0 +1,301 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://food-remedy.dev/schemas/recommendation-substitutions/v2",
+  "title": "RecommendationSubstitutionsV2",
+  "description": "Authenticated intent-aware substitutions contract 2.0.0; deterministic-only until semantic rollout.",
+  "definitions": {
+    "SubstitutionRequest": {
+      "type": "object",
+      "required": [
+        "version",
+        "barcode",
+        "profileId"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "const": "2.0.0",
+          "description": "Substitution contract version"
+        },
+        "barcode": {
+          "type": "string",
+          "pattern": "^[0-9]{8,14}$",
+          "description": "Scanned product GTIN / barcode (8 to 14 digits)"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "default": 5,
+          "description": "Maximum number of substitute recommendations to return"
+        },
+        "profileId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,128}$"
+        },
+        "intention": {
+          "type": "string",
+          "maxLength": 240,
+          "description": "One-off context only; UTF-8 max 512 bytes and control characters rejected by API"
+        },
+        "savedIntentId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,128}$"
+        }
+      },
+      "additionalProperties": false,
+      "not": {
+        "required": [
+          "intention",
+          "savedIntentId"
+        ]
+      }
+    },
+    "SubstitutionItem": {
+      "type": "object",
+      "required": [
+        "barcode",
+        "productName",
+        "safetyRating",
+        "deterministicScore",
+        "semanticScore",
+        "semanticConfidence",
+        "rankingMode",
+        "reasonCodes"
+      ],
+      "properties": {
+        "barcode": {
+          "type": "string",
+          "description": "Candidate product barcode"
+        },
+        "productName": {
+          "type": "string",
+          "description": "Candidate product display name"
+        },
+        "brand": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Candidate brand name"
+        },
+        "nutriscoreGrade": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "unknown",
+            null
+          ],
+          "description": "Nutri-Score grade"
+        },
+        "safetyRating": {
+          "type": "string",
+          "enum": [
+            "green",
+            "grey"
+          ],
+          "description": "Evaluated safety rating. Unsafe ('red') candidates are hard-excluded."
+        },
+        "reasonCodes": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "MATCH_CATEGORY_EXACT",
+              "MATCH_CATEGORY_SUBSTRING",
+              "SAFE_ALLERGEN_FREE",
+              "ALLERGEN_EVIDENCE_INCOMPLETE",
+              "DIET_ALIGNED_VEGAN",
+              "DIET_ALIGNED_VEGETARIAN",
+              "DIET_ALIGNED_GLUTEN_FREE",
+              "BETTER_NUTRI_SCORE",
+              "LOWER_SUGAR",
+              "LOWER_SODIUM",
+              "LOWER_SATURATED_FAT",
+              "HIGHER_FIBER",
+              "HIGHER_PROTEIN",
+              "HEALTH_GOAL_WEIGHT_LOSS_ALIGNED",
+              "HEALTH_GOAL_MUSCLE_GAIN_ALIGNED"
+            ]
+          },
+          "description": "Machine-readable reason codes from standardized catalogue"
+        },
+        "deterministicScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "semanticScore": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "semanticConfidence": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "rankingMode": {
+          "enum": [
+            "deterministic",
+            "semantic"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "SubstitutionResponse": {
+      "type": "object",
+      "required": [
+        "version",
+        "status",
+        "targetProduct",
+        "substitutions",
+        "emptyStateReason",
+        "rankingMode"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "const": "2.0.0",
+          "description": "Contract schema version"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "success",
+            "no_eligible_candidates",
+            "insufficient_data"
+          ],
+          "description": "High-level execution status"
+        },
+        "targetProduct": {
+          "type": "object",
+          "required": [
+            "barcode",
+            "productName"
+          ],
+          "properties": {
+            "barcode": {
+              "type": "string"
+            },
+            "productName": {
+              "type": "string"
+            },
+            "brand": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "category": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "nutriscoreGrade": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "substitutions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SubstitutionItem"
+          }
+        },
+        "emptyStateReason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            null,
+            "INSUFFICIENT_PRODUCT_DATA",
+            "NO_SAFE_ALTERNATIVES_IN_CATEGORY",
+            "STRICT_ALLERGEN_EXCLUSION_ALL_CANDIDATES",
+            "PRODUCT_NOT_FOUND"
+          ],
+          "description": "Explicit empty state taxonomy when substitutions array is empty"
+        },
+        "recommendationSessionId": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{1,128}$",
+          "description": "Optional server-issued session for idempotent recommendation feedback"
+        },
+        "rankingMode": {
+          "enum": [
+            "deterministic",
+            "semantic"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "ErrorEnvelope": {
+      "type": "object",
+      "required": [
+        "version",
+        "error"
+      ],
+      "properties": {
+        "version": {
+          "type": "string",
+          "const": "2.0.0"
+        },
+        "error": {
+          "type": "object",
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "enum": [
+                "UNAUTHENTICATED",
+                "INVALID_REQUEST",
+                "INVALID_BARCODE",
+                "INVALID_LIMIT",
+                "UNSUPPORTED_FIELD",
+                "REQUEST_TOO_LARGE",
+                "PRODUCT_NOT_FOUND",
+                "PROFILE_UNAVAILABLE",
+                "SUBSTITUTIONS_UNAVAILABLE"
+              ]
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": [
+                "object",
+                "array",
+                "null"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
