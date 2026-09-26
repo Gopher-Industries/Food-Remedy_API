@@ -5,6 +5,7 @@ import {
   assessAllergenSafety,
   INCOMPLETE_ALLERGEN_DATA_REASON,
 } from "@/services/allergenSafety";
+import { errorEnvelope, getRequestId, jsonResponse, safeLog } from "@/services/backend/safeErrors";
 
 type ClassificationColour = "red" | "green" | "grey";
 
@@ -170,6 +171,7 @@ function classifyProduct(
 export async function POST(
   request: Request
 ): Promise<Response> {
+  const requestId = getRequestId(request);
   try {
     let body: any;
 
@@ -177,17 +179,10 @@ export async function POST(
     try {
       body = await request.json();
     } catch {
-      return new Response(
-        JSON.stringify({
-          error: "INVALID_REQUEST",
-          message: "Request body must contain valid JSON.",
-        }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+      return jsonResponse(
+        errorEnvelope("INVALID_REQUEST", "Request body must contain valid JSON.", requestId),
+        400,
+        requestId
       );
     }
 
@@ -203,18 +198,10 @@ export async function POST(
       typeof barcode !== "string" ||
       !barcode.trim()
     ) {
-      return new Response(
-        JSON.stringify({
-          error: "INVALID_REQUEST",
-          message:
-            "Missing or invalid 'barcode' in request body.",
-        }),
-        {
-          status: 400,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+      return jsonResponse(
+        errorEnvelope("INVALID_REQUEST", "Missing or invalid 'barcode' in request body.", requestId),
+        400,
+        requestId
       );
     }
 
@@ -229,17 +216,10 @@ export async function POST(
     const productSnap = await getDoc(productRef);
 
     if (!productSnap.exists()) {
-      return new Response(
-        JSON.stringify({
-          error: "PRODUCT_NOT_FOUND",
-          message: `No product found for barcode ${trimmedBarcode}.`,
-        }),
-        {
-          status: 404,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+      return jsonResponse(
+        errorEnvelope("PRODUCT_NOT_FOUND", "Product not found.", requestId),
+        404,
+        requestId
       );
     }
 
@@ -252,33 +232,13 @@ export async function POST(
       trimmedBarcode
     );
 
-    return new Response(
-      JSON.stringify(result),
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
-  } catch (err: any) {
-    console.error(
-      "Error in /api/products/classify:",
-      err
-    );
-
-    return new Response(
-      JSON.stringify({
-        error: "SERVER_ERROR",
-        message:
-          "Unexpected error while classifying product.",
-      }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
+    return jsonResponse(result, 200, requestId);
+  } catch (err) {
+    safeLog("error", "product_classification.failed", { requestId, error: err });
+    return jsonResponse(
+      errorEnvelope("CLASSIFICATION_FAILED", "Unable to classify product.", requestId),
+      500,
+      requestId
     );
   }
 }

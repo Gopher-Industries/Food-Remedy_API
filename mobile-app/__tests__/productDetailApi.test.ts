@@ -1,3 +1,4 @@
+/* eslint-disable import/first -- Firebase must be mocked before importing the route */
 jest.mock("@/config/firebaseConfig", () => ({ fdb: {} }));
 
 jest.mock("firebase/firestore", () => ({
@@ -35,6 +36,7 @@ describe("GET /api/products/[barcode]", () => {
       expect(body).toEqual({
         error: "INVALID_REQUEST",
         message: "Missing or invalid product barcode.",
+        requestId: expect.any(String),
       });
       expect(doc).not.toHaveBeenCalled();
       expect(getDoc).not.toHaveBeenCalled();
@@ -85,28 +87,28 @@ describe("GET /api/products/[barcode]", () => {
     const body = await response.json();
 
     expect(response.status).toBe(404);
-    expect(body.error).toBe("PRODUCT_NOT_FOUND");
+    expect(body).toMatchObject({
+      error: "PRODUCT_NOT_FOUND",
+      message: "Product not found.",
+      requestId: expect.any(String),
+    });
   });
 
   it("returns 500 with a stable error when Firestore fails", async () => {
-    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
     (getDoc as jest.Mock).mockRejectedValue(new Error("Firestore unavailable"));
 
-    try {
-      const response = await GET(
-        new Request("http://localhost/api/products/1234567890123"),
-        { params: { barcode: "1234567890123" } }
-      );
-      const body = await response.json();
+    const response = await GET(
+      new Request("http://localhost/api/products/1234567890123"),
+      { params: { barcode: "1234567890123" } }
+    );
+    const body = await response.json();
 
-      expect(response.status).toBe(500);
-      expect(body).toEqual({
-        error: "SERVER_ERROR",
-        message: "Unexpected error while loading product detail.",
-      });
-    } finally {
-      consoleError.mockRestore();
-    }
+    expect(response.status).toBe(500);
+    expect(body).toEqual({
+      error: "PRODUCT_DETAIL_FAILED",
+      message: "Unable to load product detail.",
+      requestId: expect.any(String),
+    });
   });
 
   it("returns stable defaults for a sparse product record", async () => {
