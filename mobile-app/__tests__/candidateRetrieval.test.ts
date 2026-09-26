@@ -297,4 +297,18 @@ describe("BE035 candidate retrieval", () => {
       expect(candidate.categories).not.toContain("chocolates");
     }
   });
+
+  test("filters an unrelated document returned by the query", async () => {
+    const original = product("100", ["en:breakfast-cereals", "en:granolas"]);
+    mockSnapshot([
+      product("101", ["chocolate"]),
+      product("102", ["granolas"]),
+    ]);
+
+    const result = await retrieveCandidatePool(original);
+
+    expect(result.candidates.map((candidate) => candidate.barcode)).toEqual(["102"]);
+    expect(result.metadata.documentsRead).toBe(2);
+    expect(result.metadata.excludedIrrelevant).toBe(1);
+  });
 });

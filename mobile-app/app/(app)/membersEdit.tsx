@@ -9,6 +9,7 @@ import Screen from "@/components/layout/Screen";
 import Tt from "@/components/ui/UIText";
 import Input from "@/components/ui/UIInput";
 import IconGeneral from "@/components/icons/IconGeneral";
+import { BackButton } from "@/components/shared";
 import ProfileAvatar from "@/components/ui/ProfileAvatar";
 import { useModalManager } from "@/components/providers/ModalManagerProvider";
 import { useProfile } from "@/components/providers/ProfileProvider";
@@ -31,6 +32,7 @@ import PdBlk from "@/components/ui/UIPaddingBlock";
 import ModalWrapper from "@/components/modals/ModalAWrapper";
 import ModalResponse from "@/components/modals/ModalResponse";
 import getUserProfileName from "@/services/database/user/getUserProfileName";
+import { useDirtyForm } from "@/hooks/useDirtyForm";
 
 export default function MembersEditPage() {
   const router = useRouter();
@@ -62,6 +64,25 @@ export default function MembersEditPage() {
   const [deletingAvatar, setDeletingAvatar] = useState(false);
 
   const didMountRef = useRef(false);
+
+  const { markDirty, markClean, allowLeave } = useDirtyForm();
+  const baselineRef = useRef<{ id: string; json: string; ageText: string } | null>(null);
+  if (editableProfile && baselineRef.current?.id !== editableProfile.profileId) {
+    baselineRef.current = {
+      id: editableProfile.profileId,
+      json: JSON.stringify(editableProfile),
+      ageText: editableProfile.age == null || editableProfile.age === 0 ? "" : String(editableProfile.age),
+    };
+  }
+  const hasChanges =
+    !!editableProfile &&
+    !!baselineRef.current &&
+    (JSON.stringify(editableProfile) !== baselineRef.current.json ||
+      ageText !== baselineRef.current.ageText);
+  useEffect(() => {
+    if (hasChanges) markDirty();
+    else markClean();
+  }, [hasChanges, markDirty, markClean]);
 
   const targetProfile = profiles.find(
     (p) => p.profileId === editableProfile?.profileId
@@ -164,6 +185,7 @@ export default function MembersEditPage() {
 
     try {
       setSaving(true);
+      allowLeave();
 
       let uploadedUrl: string | null = null;
 
@@ -202,6 +224,7 @@ export default function MembersEditPage() {
 
       addNotification("Profile saved", "s");
     } catch (error) {
+      allowLeave(false);
       console.log("Error Saving Profile", error);
       addNotification("Error Saving Profile", "e");
     } finally {
@@ -220,6 +243,7 @@ export default function MembersEditPage() {
 
     setShowDeleteDialog(false);
     setDeleting(true);
+    allowLeave();
 
     try {
       // Delete the selected member profile.
@@ -229,6 +253,7 @@ export default function MembersEditPage() {
       addNotification("Profile deleted successfully.", "s");
       openModal("deleteProfileSuccess");
     } catch (err) {
+      allowLeave(false);
       console.error("Delete profile failed:", err);
       addNotification("Profile deletion failed.", "e");
     } finally {
@@ -282,26 +307,8 @@ export default function MembersEditPage() {
         <View className="w-[90%] self-center">
 
           <View className="flex-row items-center justify-between mb-4">
-            <Pressable
-              onPress={() => router.back()}
-              className="flex-row justify-center items-center self-end px-2 py-1"
-            >
-              {({ pressed }) => (
-                <IconGeneral
-                  type="arrow-backward-ios"
-                  fill={
-                    pressed
-                      ? "#FF3F3F"
-                      : "hsl(0 0%, 30%)"
-                  }
-                />
-              )}
-            </Pressable>
-
-            <Tt className="font-interBold text-xl">
-              Nutritional Profile
-            </Tt>
-
+            <BackButton />
+            <Tt className="font-interBold text-xl">Nutritional Profile</Tt>
             <View style={{ width: 24, height: 24 }} />
           </View>
 
@@ -454,17 +461,19 @@ export default function MembersEditPage() {
             >
               {({ pressed }) => (
                 <>
-                  <Tt
-                    className={
-                      editableProfile.relationship.trim()
-                        .length!
-                        ? "text-hsl20 font-interSemiBold"
-                        : "text-hsl50 dark:text-hsl70 font-interSemiBold"
-                    }
-                  >
-                    {editableProfile.relationship ||
-                      "Relationship"}
-                  </Tt>
+                  <View className="flex-1 pr-2">
+                    <Tt
+                      className={
+                        editableProfile.relationship.trim()
+                          .length!
+                          ? "text-hsl20 font-interSemiBold"
+                          : "text-hsl50 dark:text-hsl70 font-interSemiBold"
+                      }
+                    >
+                      {editableProfile.relationship ||
+                        "Relationship"}
+                    </Tt>
+                  </View>
 
                   <IconGeneral
                     type="arrow-down"
@@ -524,7 +533,7 @@ export default function MembersEditPage() {
       </ScrollView>
 
       {/* BUTTONS */}
-      <View className="flex-row justify-around items-center my-4">
+      <View className="flex-row items-center gap-4 my-4 px-4">
 
         <Pressable
           onPress={() => {
@@ -539,7 +548,7 @@ export default function MembersEditPage() {
             left: 5,
             right: 5,
           }}
-          className="py-2 px-6 rounded-lg bg-white dark:bg-hsl15 active:border-primary"
+          className="flex-1 py-2 px-4 rounded-lg bg-white dark:bg-hsl15 active:border-primary"
         >
           {({ pressed }) => (
             <Tt
@@ -569,7 +578,7 @@ export default function MembersEditPage() {
             left: 5,
             right: 5,
           }}
-          className="py-2 px-6 rounded-lg border bg-primary border-hsl90 dark:border-hsl20 active:bg-transparent active:border-primary"
+          className="flex-1 py-2 px-4 rounded-lg border bg-primary border-hsl90 dark:border-hsl20 active:bg-transparent active:border-primary"
         >
           {({ pressed }) => (
             <Tt

@@ -27,6 +27,7 @@ import { color } from "@/app/design/token";
 import CaptchaModal from "@/components/security/CaptchaModal";
 import { CAPTCHA_ENABLED, HCAPTCHA_SITE_KEY } from "@/config/captchaConfig";
 import { useTheme } from "@/theme";
+import { handleLoginFieldChange } from "@/app/loginErrorState";
 
 
 export default function LoginPage() {
@@ -164,7 +165,9 @@ export default function LoginPage() {
                 className="py-3 mt-8 "
                 placeholder="Email or Username"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(nextEmail) =>
+                  handleLoginFieldChange("email", nextEmail, setEmail, setErrorMessage)
+                }
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="off"
@@ -176,7 +179,9 @@ export default function LoginPage() {
                 <Input
                   className="py-3"
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(nextPassword) =>
+                    handleLoginFieldChange("password", nextPassword, setPassword, setErrorMessage)
+                  }
                   placeholder="Password"
                   secureTextEntry={showPassword}
                   autoCapitalize="none"
@@ -189,10 +194,8 @@ export default function LoginPage() {
                   onPress={() =>
                     setShowPassword((previous) => {
                       const next = !previous;
-                      // Announce and speak a clear status for the NEW state
                       const msg = next ? "Password hidden" : "Password visible";
                       AccessibilityInfo.announceForAccessibility(msg);
-                      // Fallback: speak the message in case screen reader announcements are not audible
                       try {
                         Speech.speak(msg);
                       } catch (e) {
@@ -206,7 +209,7 @@ export default function LoginPage() {
                   accessibilityLabel={showPassword ? "Show password" : "Hide password"}
                   accessibilityState={{ checked: !showPassword }}
                   accessibilityLiveRegion="polite"
-                  className="absolute right-12 top-1/2 -translate-y-1/2"
+                  className="absolute right-4 top-1/2 -translate-y-1/2"
                   style={({ pressed }) => [
                     { borderColor: pressed ? "#FF3EB5" : "hsl(0 0% 13%)" },
                   ]}

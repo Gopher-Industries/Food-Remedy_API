@@ -132,27 +132,29 @@ def test_punctuation_variant_duplicates_are_not_caught_by_final_value():
     )
 
 
-def test_none_barcode_is_silently_dropped_during_dedup():
+def test_none_barcode_falls_back_to_name_brand_dedup():
     """
-    Characterisation test for a KNOWN ISSUE flagged in the DB032 writeup,
-    NOT fixed on this ticket (recommended as a follow-up). A None barcode
-    produces a NaN dedup key rather than an empty string, so the row is
-    excluded from BOTH the barcode-group path and the no-barcode name/brand
-    fallback path, and disappears with no warning or log line. An empty
-    string barcode does NOT have this problem -- it is correctly routed to
-    the fallback path and survives.
+    DB050 update: DB032 flagged this as a None-barcode row being silently
+    dropped during dedup. Root cause turned out to be pandas-version-
+    dependent: pre-3.0 pandas (object dtype) already stringifies a null
+    'code' to 'None'/'nan', which strips to "" and correctly routes into
+    the no-barcode name/brand fallback path. pandas >=3.0's new default
+    string dtype preserves NA through .astype(str) instead, which WOULD
+    drop the row -- closed by adding .fillna("") before the digit-strip
+    in deduplicate_products(), making this deterministic across pandas
+    versions rather than accidentally correct on some.
     """
     df = pd.DataFrame([
-        {"code": None, "product_name": "Should survive but currently vanishes", "brands": "X", "completeness": 0.5},
+        {"code": None, "product_name": "Should survive and now always does", "brands": "X", "completeness": 0.5},
     ])
     result = cpd.deduplicate_products(df.copy())
-    assert len(result) == 0  # documents current (buggy) behaviour
+    assert len(result) == 1  # fixed: fillna("") makes this deterministic
 
     df2 = pd.DataFrame([
         {"code": "", "product_name": "Empty string survives", "brands": "X", "completeness": 0.5},
     ])
     result2 = cpd.deduplicate_products(df2.copy())
-    assert len(result2) == 1  # contrast case: this path works correctly
+    assert len(result2) == 1  # contrast case: this path already worked correctly
 
 
 if __name__ == "__main__":

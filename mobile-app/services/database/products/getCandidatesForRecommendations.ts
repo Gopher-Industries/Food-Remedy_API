@@ -7,6 +7,7 @@ import {
 } from "firebase/firestore";
 import { fdb } from "@/config/firebaseConfig";
 import type { Product } from "@/types/Product";
+import { normaliseFirestoreProduct } from "@/services/utils/normaliseFirestoreProduct";
 
 /**
  * BE035 - Category-aware substitution candidate retrieval.
@@ -22,7 +23,7 @@ import type { Product } from "@/types/Product";
 
 const DEFAULT_MAX_POOL = 200;
 const MAX_POOL_SIZE = 300;
-const MAX_QUERY_CATEGORIES = 10;
+const MAX_QUERY_CATEGORIES = 2;
 
 /**
  * Categories that are too broad to prove that two products are plausible
@@ -78,7 +79,8 @@ export interface CandidateRetrievalResult {
  *   " Breakfast Cereals " -> "breakfast-cereals"
  */
 export function normalizeCategory(value: unknown): string {
-  return String(value ?? "")
+  if (typeof value !== "string") return "";
+  return value
     .trim()
     .toLowerCase()
     .replace(/^en:/, "")
@@ -124,14 +126,12 @@ export function getQueryCategories(product: Product): string[] {
 }
 
 function getBarcode(product: Product, fallback = ""): string {
-  return String(product?.barcode || fallback).trim();
+  const stored = typeof product?.barcode === "string" ? product.barcode.trim() : "";
+  return stored || fallback.trim();
 }
 
 function isValidProduct(product: Product, fallbackBarcode = ""): boolean {
-  const barcode = getBarcode(product, fallbackBarcode);
-  const productName = String(product?.productName ?? "").trim();
-
-  return Boolean(barcode && productName);
+  return Boolean(getBarcode(product, fallbackBarcode));
 }
 
 function categoriesOverlap(
@@ -216,13 +216,19 @@ export async function retrieveCandidatePool(
   const seenBarcodes = new Set<string>();
   const candidates: Product[] = [];
 
-  metadata.documentsRead = snapshot.size;
-
   snapshot.forEach((document) => {
-    const product = document.data() as Product;
-    const barcode = getBarcode(product, document.id);
+    metadata.documentsRead += 1;
+    const raw = document.data();
+    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+      metadata.excludedInvalid += 1;
+      return;
+    }
 
-    if (!isValidProduct(product, document.id)) {
+    const documentBarcode = typeof document.id === "string" ? document.id.trim() : "";
+    const product = raw as Product;
+    const barcode = getBarcode(product, documentBarcode);
+
+    if (!isValidProduct(product, documentBarcode)) {
       metadata.excludedInvalid += 1;
       return;
     }
@@ -242,17 +248,18 @@ export async function retrieveCandidatePool(
      * overlap locally as well. This keeps the public candidate contract strict
      * even if catalogue records contain unexpected category values.
      */
-    if (!categoriesOverlap(product, normalizedCategories)) {
+    if (!categoriesOverlap(product, queryCategories)) {
       metadata.excludedIrrelevant += 1;
       return;
     }
 
     seenBarcodes.add(barcode);
 
-    candidates.push({
-      ...product,
+    candidates.push(normaliseFirestoreProduct({
+      ...raw,
+      id: documentBarcode || barcode,
       barcode,
-    });
+    }));
   });
 
   /**

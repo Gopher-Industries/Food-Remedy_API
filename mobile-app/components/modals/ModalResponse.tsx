@@ -11,7 +11,7 @@ interface ModalResponseProps {
   isInput: boolean;
   message: string;
   acceptLabel: string;
-  onAccept: (input: any) => void;
+  onAccept: (input: any) => void | boolean | Promise<void | boolean>;
 }
 
 const ModalResponse: React.FC<ModalResponseProps> = ({ modalKey, isInput, message, acceptLabel, onAccept }) => {
@@ -32,12 +32,20 @@ const ModalResponse: React.FC<ModalResponseProps> = ({ modalKey, isInput, messag
   };
 
   const handleOnAccept = async () => {
+    if (loading) {
+      return;
+    }
+
     setErrorMessage("");
     setLoading(true);
+
     try {
-      await onAccept(input);
-      setInput("");
-      closeModal(modalKey);
+      const result = await onAccept(input);
+
+      if (result !== false) {
+        setInput("");
+        closeModal(modalKey);
+      }
     } catch (error) {
       console.log("Modal error caught:", error);
       // Error was already handled, just keep modal open
@@ -47,10 +55,20 @@ const ModalResponse: React.FC<ModalResponseProps> = ({ modalKey, isInput, messag
   }
 
   return (
-    <Pressable onPress={confirmClose} className="flex-1 bg-black/50 justify-center items-center">
-      <View className="w-[80%] bg-hsl95 dark:bg-hsl10 py-6 px-6 rounded-lg" onStartShouldSetResponder={() => true}>
+    <View className="flex-1 justify-center items-center">
+      <Pressable
+        onPress={confirmClose}
+        className="absolute inset-0 bg-black/50"
+      />
 
+      <View className="w-[80%] bg-hsl95 dark:bg-hsl10 py-6 px-6 rounded-lg" onStartShouldSetResponder={() => true}>
         <Tt className="text-center text-lg mb-8">{message}</Tt>
+
+        {errorMessage && (
+          <View className="mb-4 px-3 py-2 rounded border border-red-300 bg-red-50">
+            <Tt className="text-center text-primary font-interSemiBold">{errorMessage}</Tt>
+          </View>
+        )}
 
         {isInput && (
           <>
@@ -77,9 +95,8 @@ const ModalResponse: React.FC<ModalResponseProps> = ({ modalKey, isInput, messag
             )}
           </Pressable>
         </View>
-
       </View>
-    </Pressable>
+    </View>
   );
 };
 

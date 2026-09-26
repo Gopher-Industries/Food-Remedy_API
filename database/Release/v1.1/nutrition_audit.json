@@ -1,0 +1,26 @@
+{
+  "insufficient_data_records_with_scores_withheld": 0,
+  "known_core_field_distribution": {
+    "5": 6,
+    "6": 112,
+    "7": 695,
+    "8": 2235,
+    "9": 1952
+  },
+  "missing_field_counts": {
+    "carbohydrates": 3,
+    "energy_kcal": 1023,
+    "fat": 1,
+    "fibre": 2542,
+    "protein": 29,
+    "salt": 146,
+    "saturated_fat": 52,
+    "sodium": 146,
+    "sugars": 43
+  },
+  "negative_or_nonfinite_values": 0,
+  "null_semantics": "Candidate nutrient objects are byte-for-value preserved through enrichment; missing/null evidence is not converted to numeric zero.",
+  "nutriment_objects_preserved": 5000,
+  "nutriment_preservation_failures": 0,
+  "status": "PASS"
+}
