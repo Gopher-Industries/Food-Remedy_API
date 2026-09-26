@@ -1,0 +1,29 @@
+name: Backend personalization regression
+
+on:
+  pull_request:
+    paths:
+      - 'mobile-app/**'
+      - 'contracts/**'
+      - '.github/workflows/jev-evaluation.yml'
+  workflow_dispatch: {}
+
+jobs:
+  network-free-evaluation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile-app/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+        working-directory: mobile-app
+      - name: Jev release fixtures
+        run: npm run test:jev-evaluation
+        working-directory: mobile-app
+      - name: Mobile backend regressions
+        run: npm test -- --runInBand --silent
+        working-directory: mobile-app

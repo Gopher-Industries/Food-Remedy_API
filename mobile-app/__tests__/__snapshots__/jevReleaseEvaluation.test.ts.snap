@@ -1,0 +1,51 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`BE069 network-free Jev release evaluation pins the model question wording and composite policy as reviewed release artifacts 1`] = `
+{
+  "convenience_fit": {
+    "criteria": [
+      "Candidate requires preparation, storage or handling incompatible with the stated need.",
+      "Candidate needs substantial extra preparation, equipment or cleanup.",
+      "Candidate needs some manageable preparation or handling.",
+      "Candidate can be used with the requested level of preparation and handling.",
+    ],
+    "instructions": "How well does candidate meet the preparation, portability and handling needs stated in the intention? Ignore health restrictions.",
+  },
+  "functional_fit": {
+    "criteria": [
+      "Candidate cannot serve the original food role for this intention.",
+      "Candidate serves only a small part of the original role and needs a different food to complete it.",
+      "Candidate serves the main role, but the shopper must change how it is used or served.",
+      "Candidate serves the same practical food role with little change to use or serving.",
+    ],
+    "instructions": "How well can candidate replace original for the shopping intention as a food role? Judge function, not allergy, diet or nutrition safety.",
+  },
+  "occasion_fit": {
+    "criteria": [
+      "Candidate is impractical for the occasion or cannot be used in that setting.",
+      "Candidate could be used only with major changes to the setting or meal plan.",
+      "Candidate fits the occasion with a modest compromise in serving or timing.",
+      "Candidate fits the occasion naturally in its usual serving form.",
+    ],
+    "instructions": "How well does candidate suit the stated occasion, if any? Judge the situation and serving context, not medical or nutrition safety.",
+  },
+}
+`;
+
+exports[`BE069 network-free Jev release evaluation pins the model question wording and composite policy as reviewed release artifacts 2`] = `
+{
+  "deterministicWeight": 0.55,
+  "dimensions": {
+    "convenience_fit": 0.2,
+    "familiarity_fit": 0.05,
+    "functional_fit": 0.4,
+    "occasion_fit": 0.25,
+    "preference_fit": 0.1,
+  },
+  "highConfidence": 0.85,
+  "mediumConfidence": 0.65,
+  "mediumSignalFactor": 0.5,
+  "semanticWeight": 0.45,
+  "version": "food-composite-v1",
+}
+`;
