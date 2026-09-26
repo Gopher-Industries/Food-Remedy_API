@@ -77,6 +77,8 @@ export interface SavedShoppingIntent {
   provenance: 'explicit';
   createdAt: string;
   updatedAt: string;
+  /** Sync tombstone; records with this value are hidden from active intent lists. */
+  deletedAt?: string;
 }
 
 export interface RecommendationEvent {

@@ -790,6 +790,11 @@
           "type": "string",
           "format": "date-time",
           "maxLength": 35
+        },
+        "deletedAt": {
+          "type": "string",
+          "format": "date-time",
+          "maxLength": 35
         }
       },
       "required": [

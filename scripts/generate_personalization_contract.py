@@ -80,6 +80,7 @@ definitions = {
         "provenance": {"const": "explicit"},
         "createdAt": DATE,
         "updatedAt": DATE,
+        "deletedAt": DATE,
     }, ["schemaVersion", "intentId", "profileId", "text", "provenance", "createdAt", "updatedAt"]),
     "RecommendationEvent": obj({
         "schemaVersion": VERSION_FIELD,

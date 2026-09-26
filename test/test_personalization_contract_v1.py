@@ -61,6 +61,7 @@ def test_bad_values_lengths_and_unsaved_intent_are_rejected():
     assert not valid("FoodPreferenceProfile", record)
     intent = {"schemaVersion": "1.0.0", "intentId": "intent_1", "profileId": "child_1", "text": "Lunchbox snack", "provenance": "explicit", "createdAt": NOW, "updatedAt": NOW}
     assert valid("SavedShoppingIntent", intent)
+    assert valid("SavedShoppingIntent", {**intent, "deletedAt": NOW})
     assert not valid("SavedShoppingIntent", {**intent, "text": "x" * 241})
     assert not valid("SavedShoppingIntent", {**intent, "text": "line\nbreak"})
     assert not valid("SavedShoppingIntent", {**intent, "provenance": "observed"})
