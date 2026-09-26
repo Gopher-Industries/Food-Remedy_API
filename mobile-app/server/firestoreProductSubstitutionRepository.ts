@@ -108,7 +108,8 @@ export class FirestoreProductSubstitutionRepository implements ProductSubstituti
     const occasion = intendedOccasion(context);
     const role = original.semanticAttributes?.foodRole;
     const prefix = namePrefix(original);
-    const label = original.labels.find(value => typeof value === 'string' && value.trim().length > 2);
+    const label = (Array.isArray(original.labels) ? original.labels : [])
+      .find(value => typeof value === 'string' && value.trim().length > 2);
     const branches = [
       categories.length ? { name: 'category' as const, budget: 60,
         query: collection.where('categories', 'array-contains-any', categories).limit(Math.min(60, max)) } : null,

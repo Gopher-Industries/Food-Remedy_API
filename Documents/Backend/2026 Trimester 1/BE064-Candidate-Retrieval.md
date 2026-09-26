@@ -34,6 +34,9 @@ The emulator test asserts at most 180 returned documents and less than 4 s
 retrieval latency, consistent with the endpoint deadline. This small fixture
 is a regression check, not a production recall estimate; BE069 expands the
 approved evaluation set. Required indexes are committed but not deployed.
+On 2026-09-26, the full mobile Jest suite passed 368 tests with 12 skipped,
+TypeScript passed, and the Firestore emulator passed six substitution repository
+tests. No production index deployment or live read-cost measurement was made.
 
 ```sh
 npm --prefix mobile-app test -- --runInBand --silent hybridCandidateRetrieval.test.ts
