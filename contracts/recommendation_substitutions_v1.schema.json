@@ -136,7 +136,7 @@
               "enum": ["INVALID_BARCODE", "INVALID_LIMIT", "MALFORMED_REQUEST_BODY", "INTERNAL_SERVER_ERROR"]
             },
             "message": { "type": "string" },
-            "details": { "type": ["object", "array", "null"] }
+            "details": { "type": "null" }
           },
           "additionalProperties": false
         }

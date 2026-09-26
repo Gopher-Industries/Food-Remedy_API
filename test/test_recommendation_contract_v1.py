@@ -79,6 +79,9 @@ class TestRecommendationContractV1(unittest.TestCase):
             }
         }
         self.assertFalse(errors("ErrorEnvelope", envelope))
+        envelope["error"]["details"] = {"stack": "internal trace"}
+        self.assertTrue(errors("ErrorEnvelope", envelope))
+        envelope["error"]["details"] = None
         envelope["error"]["stack"] = "internal trace"
         self.assertTrue(errors("ErrorEnvelope", envelope))
 
