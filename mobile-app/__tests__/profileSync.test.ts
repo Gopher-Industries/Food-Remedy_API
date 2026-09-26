@@ -18,6 +18,9 @@ jest.mock("firebase/firestore", () => ({
 jest.mock("../config/sqlConfig", () => ({
   initialiseSQLiteDatabase: jest.fn().mockResolvedValue({}),
 }));
+jest.mock("../services/sync/syncPersonalization", () => ({
+  syncPersonalizationForUser: jest.fn().mockResolvedValue(undefined),
+}));
 
 jest.mock("../services/sqlDatabase/profiles.dao", () => ({
   upsertProfile: jest.fn().mockResolvedValue(undefined),

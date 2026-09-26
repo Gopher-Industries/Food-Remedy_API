@@ -11,6 +11,7 @@ import {
   upsertProfile,
   listProfilesForUser,
 } from "../sqlDatabase/profiles.dao";
+import { syncPersonalizationForUser } from './syncPersonalization';
 
 type Profile = {
   profileId: string;
@@ -94,8 +95,6 @@ export const saveProfilesToSQLite = async (profiles: any[]) => {
 
     updated_at: profile.updated_at ?? new Date().toISOString(),
   };
-
-  console.log("Saving profile:", normalizedProfile);
 
   await upsertProfile(db, normalizedProfile);
 }
@@ -216,6 +215,12 @@ export const syncProfiles = async (userId: string) => {
     }
 
     console.log(`Profile sync complete. Synced ${finalProfiles.length} profiles`);
+    try {
+      await syncPersonalizationForUser(userId);
+    } catch {
+      // A connectivity or validation failure leaves local records intact for retry.
+      console.warn('Personalization sync unavailable; will retry on next profile sync.');
+    }
   } catch (error) {
     console.error("Sync error:", error);
   }
