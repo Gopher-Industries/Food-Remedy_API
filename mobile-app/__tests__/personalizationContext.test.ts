@@ -79,4 +79,13 @@ describe('authoritative personalization context', () => {
     expect(context.explicit).toHaveLength(1);
     expect(context.observed).toEqual([]);
   });
+
+  it('treats a client-reported purchase as weak evidence without a receipt', async () => {
+    const source = repository();
+    source.getExplicitPreferences = async () => null;
+    source.getRecentEvents = async () => [{ action: 'purchased', candidateBarcode: 'one',
+      occurredAt: generatedAt, receivedAt: generatedAt }];
+    const context = await resolvePersonalizationContext(source, 'owner', 'child', undefined, Date.parse(generatedAt));
+    expect(context.observed).toEqual([expect.objectContaining({ strength: 1, eventCount: 1 })]);
+  });
 });

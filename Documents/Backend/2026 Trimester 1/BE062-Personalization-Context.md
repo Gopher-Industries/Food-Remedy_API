@@ -24,7 +24,7 @@ by BE059's schema and included only when its owned ID is requested.
 | added_to_list | positive | 1 |
 | thumbs_up | positive explicit outcome | 3 |
 | thumbs_down | negative explicit outcome | 3 |
-| purchased | positive confirmed outcome | 4 |
+| purchased | positive user-reported outcome, not receipt-verified | 1 |
 
 The repository reads at most 40 events, uses only the last 30 days, and reads
 semantic evidence for at most 20 distinct products. Freshness decreases
@@ -41,6 +41,11 @@ freshness, impression neutrality, preference precedence, and redaction. The
 Firestore emulator suite creates two accounts and independent Self/child
 records, then verifies the resolved contexts and foreign denial. No real
 household data or external model call is used.
+
+On 2026-09-26, the full mobile Jest suite passed 353 tests with 10 skipped,
+TypeScript passed, and the Firestore emulator passed four repository/context
+tests. Context resolution remains an internal server module and has no public
+route or Jev call in this ticket.
 
 ```sh
 npm --prefix mobile-app test -- --runInBand --silent personalizationContext.test.ts

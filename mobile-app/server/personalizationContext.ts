@@ -52,7 +52,9 @@ export interface PersonalizationContext {
 }
 
 const EVENT_WEIGHT: Partial<Record<RecommendationAction, number>> = {
-  opened: 0.25, added_to_list: 1, thumbs_up: 3, thumbs_down: -3, purchased: 4,
+  opened: 0.25, added_to_list: 1, thumbs_up: 3, thumbs_down: -3,
+  // Purchase is client-reported by BE060 and has no verified receipt.
+  purchased: 1,
 };
 const DIMENSIONS: PreferenceDimension[] = ['texture', 'flavourFamily', 'flavourIntensity', 'convenience', 'occasion'];
 const ATTRIBUTE: Partial<Record<PreferenceDimension, keyof ProductSemanticAttributes>> = {
