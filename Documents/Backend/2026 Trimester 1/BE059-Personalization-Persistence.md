@@ -53,14 +53,19 @@ npx firebase emulators:exec --only firestore --project demo-food-remedy-personal
 ```
 
 On 2026-09-26: 2 SQLite migration/cascade tests passed for both v5 and v6;
-46 targeted Jest tests passed across 5 suites (the full Jest run passed 75 with
-2 existing skips); the emulator passed two-account,
+22 targeted Jest tests passed across the new persistence, API, deletion, and
+profile-sync suites. The full mobile Jest run passed 334 tests with 9 skipped.
+The emulator passed two-account,
 unauthenticated, server-only preference write, saved-intent shape, inactive
-profile and missing-parent assertions. The full TypeScript check still reports
-pre-existing errors in `membersEdit.tsx`, `theme.ts` and six absent product-data
-JSON imports; it reports none in BE059 files. Safety-profile rows were byte-for-
-byte identical before and after the migration fixture, and deterministic
-substitution API/eligibility tests passed.
+profile and missing-parent assertions. The existing Firestore rules regression
+suite also passed all 16 checks. The full TypeScript check passed. Safety-profile
+rows were byte-for-byte identical before and after the migration fixture, and
+deterministic substitution API/eligibility tests passed.
+
+The current Expo configuration uses static web export, which skips API routes.
+Preference writes remain queued locally until the Expo API routes are hosted
+and `EXPO_PUBLIC_PERSONALIZATION_API_BASE_URL` points to that server. The
+Firestore rules intentionally deny direct preference writes from clients.
 
 The Firestore emulator does not enforce production indexes or every production
 limit. The rules and index configuration should be deployed together after

@@ -38,6 +38,16 @@ jest.mock('../services/storage/uploadProfileAvatar', () => ({
   deleteUserProfilesStorage: jest.fn(),
 }));
 
+jest.mock('../services/database/user/personalization', () => ({
+  deleteCloudProfilePersonalization: jest.fn().mockResolvedValue(undefined),
+}));
+jest.mock('../config/sqlConfig', () => ({
+  initialiseSQLiteDatabase: jest.fn().mockResolvedValue({}),
+}));
+jest.mock('../services/sqlDatabase/profiles.dao', () => ({
+  clearProfilesForUser: jest.fn().mockResolvedValue(undefined),
+}));
+
 describe('deleteUserAccountData', () => {
   const uid = 'user-123';
 
