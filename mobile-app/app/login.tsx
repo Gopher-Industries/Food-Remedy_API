@@ -27,6 +27,7 @@ import { color } from "@/app/design/token";
 import CaptchaModal from "@/components/security/CaptchaModal";
 import { CAPTCHA_ENABLED, HCAPTCHA_SITE_KEY } from "@/config/captchaConfig";
 import { useTheme } from "@/theme";
+import { useAccessibilityAnnouncement } from "@/hooks/useAccessibilityAnnouncement";
 import { handleLoginFieldChange } from "@/app/loginErrorState";
 
 
@@ -40,8 +41,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState<string>("");
   const [loadingLogin, setLoadingLogin] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [submissionAttempt, setSubmissionAttempt] = useState(0);
   const [captchaVisible, setCaptchaVisible] = useState<boolean>(false);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+
+  useAccessibilityAnnouncement(
+    errorMessage ? `Login error. ${errorMessage}` : null,
+    { announceOnAndroid: true, eventKey: submissionAttempt }
+  );
 
   /**
    * Handle Log In
@@ -68,6 +75,7 @@ export default function LoginPage() {
   };
 
   const handleLogin = async () => {
+    setSubmissionAttempt((attempt) => attempt + 1);
     // Only show captcha on user-initiated login
     setErrorMessage("");
     if (CAPTCHA_ENABLED && !captchaToken) {
@@ -143,27 +151,41 @@ export default function LoginPage() {
               source={require("../assets/images/FoodRemedyLogo.png")}
               className="w-[50%] aspect-[3/1] max-w-[300px] h-auto"
               resizeMode="contain"
+              accessible
+              accessibilityRole="image"
+              accessibilityLabel="Food Remedy"
             />
           </View>
 
           {loading || loadingLogin ? (
             <View className="mt-40">
-              <ActivityIndicator size="large" color="#FF3F3F" />
+              <ActivityIndicator
+                size="large"
+                color="#FF3F3F"
+                accessibilityLabel="Signing in"
+              />
             </View>
           ) : (
             <>
-              {errorMessage && (
-                <View className="bg-[#FCCACA] border border-primary rounded-md px-4 py-2 mt-8">
+              {errorMessage ? (
+                <View
+                  className="bg-[#FCCACA] border border-primary rounded-md px-4 py-2 mt-8"
+                  accessible
+                  accessibilityRole="alert"
+                  accessibilityLabel={`Login error. ${errorMessage}`}
+                >
                   <Tt className="text-center text-primary font-interSemiBold">
                     {errorMessage}
                   </Tt>
                 </View>
-              )}
+              ) : null}
 
               {/* Email Input */}
               <Input
                 className="py-3 mt-8 "
                 placeholder="Email or Username"
+                accessibilityLabel="Email or username"
+                textContentType="username"
                 value={email}
                 onChangeText={(nextEmail) =>
                   handleLoginFieldChange("email", nextEmail, setEmail, setErrorMessage)
@@ -183,6 +205,8 @@ export default function LoginPage() {
                     handleLoginFieldChange("password", nextPassword, setPassword, setErrorMessage)
                   }
                   placeholder="Password"
+                  accessibilityLabel="Password"
+                  textContentType="password"
                   secureTextEntry={showPassword}
                   autoCapitalize="none"
                   autoComplete="off"
@@ -234,6 +258,9 @@ export default function LoginPage() {
               <Pressable
                 onPress={handleLogin}
                 className="bg-primary rounded-lg py-3 mt-4 border border-primary active:bg-transparent"
+                accessibilityRole="button"
+                accessibilityLabel="Login"
+                accessibilityState={{ busy: loadingLogin, disabled: loadingLogin }}
               >
                 {({ pressed }) => (
                   <Tt
@@ -245,10 +272,12 @@ export default function LoginPage() {
               </Pressable>
 
               <Tt className="text-sm mt-12 text-center">
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "}
                 <Link
                   href="/register"
                   className="text-primary font-interSemiBold active:underline"
+                  accessibilityRole="link"
+                  accessibilityLabel="Create account"
                 >
                   Create Account
                 </Link>
@@ -257,18 +286,22 @@ export default function LoginPage() {
               <Pressable
                 onPress={() => openModal("resetEmail")}
                 style={{ marginTop: 30 }}
+                accessibilityRole="button"
+                accessibilityLabel="Forgot password?"
+                accessibilityHint="Opens a dialog to email you a password reset link"
               >
-                <Tt className="text-sm text-center">
-                  
-                  <Tt>Forgot Password?</Tt>
-                </Tt>
+                <Tt className="text-sm text-center">Forgot Password?</Tt>
               </Pressable>
             </>
           )}
 
           {loading && (
             <View className="mt-40">
-              <ActivityIndicator size="large" color={color.primary} />
+              <ActivityIndicator
+                size="large"
+                color={color.primary}
+                accessibilityLabel="Loading"
+              />
             </View>
           )}
         </View>

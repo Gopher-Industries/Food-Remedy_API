@@ -7,6 +7,7 @@ import {
   Image,
 } from "react-native";
 import { router } from "expo-router";
+import { useIsFocused } from "@react-navigation/native";
 
 import Header from "@/components/layout/Header";
 import Screen from "@/components/layout/Screen";
@@ -43,17 +44,22 @@ export default function ProductTabsScreen() {
   const { openModal } = useModalManager();
   const { highContrast, ttsEnabled } = usePreferences();
   const { sessionType } = useAuth();
+  const isFocused = useIsFocused();
 
   const [activeTab, setActiveTab] = useState<TabKey>("Nutrients");
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
-  const [screenReaderEnabled, setScreenReaderEnabled] = useState(false);
+  const [screenReaderEnabled, setScreenReaderEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
-    AccessibilityInfo.isScreenReaderEnabled().then((enabled) => {
-      if (mounted) setScreenReaderEnabled(enabled);
-    });
+    AccessibilityInfo.isScreenReaderEnabled()
+      .then((enabled) => {
+        if (mounted) setScreenReaderEnabled(enabled);
+      })
+      .catch(() => {
+        // Keep automatic speech off until the screen-reader state is known.
+      });
 
     const subscription = AccessibilityInfo.addEventListener(
       "screenReaderChanged",
@@ -77,15 +83,16 @@ export default function ProductTabsScreen() {
   useScanVoiceSummary({
     product: currentProduct ?? null,
     enabled:
+      isFocused &&
       ttsEnabled &&
-      !screenReaderEnabled &&
+      screenReaderEnabled === false &&
       !loading &&
       !error &&
       !!currentProduct,
   });
 
   useScanAnnouncements({
-    barcode,
+    barcode: isFocused ? barcode : null,
     loading,
     error,
     product: currentProduct,
@@ -228,6 +235,10 @@ export default function ProductTabsScreen() {
           <Pressable
             onPress={handleBack}
             className="flex-row justify-center items-center px-2 py-1"
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            accessibilityHint="Returns to your scan history"
           >
             {({ pressed }) => (
               <IconGeneral
@@ -242,6 +253,9 @@ export default function ProductTabsScreen() {
             <Pressable
               onPress={requestShoppingList}
               className={`flex-row justify-center items-center px-3 py-2 rounded-lg ${primaryBtn}`}
+              accessibilityRole="button"
+              accessibilityLabel="Add to lists"
+              accessibilityHint="Adds this product to one of your shopping lists"
             >
               {() => (
                 <>
@@ -265,6 +279,11 @@ export default function ProductTabsScreen() {
                   <Image
                     source={{ uri: productImageUri! }}
                     resizeMode="contain"
+                    accessible
+                    accessibilityRole="image"
+                    accessibilityLabel={`Photo of ${
+                      currentProduct.productName || "this product"
+                    }`}
                     onError={() => setImageLoadFailed(true)}
                     style={{
                       width: 110,
@@ -276,6 +295,9 @@ export default function ProductTabsScreen() {
                   <Image
                     source={FALLBACK_FOOD_ICON}
                     resizeMode="contain"
+                    // FE031: placeholder art carries no information
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
                     style={{
                       width: 204,
                       height: 204,
@@ -287,6 +309,10 @@ export default function ProductTabsScreen() {
               <Pressable
                 onPress={() => speakProductSummary(currentProduct)}
                 className="absolute -right-12 top-2 px-3 py-2 rounded-full bg-primary"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Play voice summary"
+                accessibilityHint="Reads this product's summary out loud"
               >
                 {({ pressed }) => (
                   <IconGeneral
@@ -300,6 +326,10 @@ export default function ProductTabsScreen() {
 
             <Tt
               className={`font-interBold text-3xl leading-tight text-center ${titleText}`}
+              accessibilityRole="header"
+              // FE031: the upper-case styling is visual only - screen readers get
+              // the product name as written so it is not spelled out letter by letter.
+              accessibilityLabel={currentProduct.productName || "Unknown Product"}
             >
               {String(
                 currentProduct.productName || "Unknown Product",
@@ -313,6 +343,8 @@ export default function ProductTabsScreen() {
             ) : null}
           </View>
 
+          {/* FE031: no wrapper role - see the settings font-size group; the tabs
+              carry their own tab role and selected state. */}
           <View className="flex-row border-b border-[#E5E7EB] mt-2">
             {tabs.map((tab) => {
               const isActive = activeTab === tab;
@@ -322,6 +354,12 @@ export default function ProductTabsScreen() {
                   key={tab}
                   onPress={() => selectTab(tab)}
                   className="flex-1 items-center py-3"
+                  accessibilityRole="tab"
+                  accessibilityLabel={tab}
+                  accessibilityState={{ selected: isActive }}
+                  accessibilityHint={
+                    isActive ? undefined : `Shows the ${tab} information for this product`
+                  }
                 >
                   <Tt
                     className={`font-interSemiBold text-[15px] ${
@@ -347,6 +385,9 @@ export default function ProductTabsScreen() {
             <Pressable
               onPress={requestShoppingList}
               className="bg-primary rounded-lg py-4 px-6 mt-8 mb-4 flex-row justify-center items-center active:bg-primary/80"
+              accessibilityRole="button"
+              accessibilityLabel="Add to shopping list"
+              accessibilityHint="Adds this product to one of your shopping lists"
             >
               {() => (
                 <>
