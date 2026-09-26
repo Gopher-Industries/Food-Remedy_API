@@ -51,5 +51,9 @@ export function useDirtyForm() {
     [isDirty]
   );
 
-  return { isDirty, markDirty, markClean, confirmLeave };
+  const allowLeave = useCallback((allow = true) => {
+    confirmedRef.current = allow;
+  }, []);
+
+  return { isDirty, markDirty, markClean, confirmLeave, allowLeave };
 }

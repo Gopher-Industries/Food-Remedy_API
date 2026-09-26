@@ -1,49 +1,89 @@
 // Forgot Password Page tsx
 
-import { useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { router } from "expo-router";
 import { useDirtyForm } from "@/hooks/useDirtyForm";
-import { View, Image, ScrollView, Pressable, KeyboardAvoidingView, Platform } from "react-native";
+import {
+  View,
+  Image,
+  ScrollView,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+} from "react-native";
 import Input from "@/components/ui/UIInput";
 import Tt from "@/components/ui/UIText";
 import { useTheme } from "@/theme";
 import { useAccessibilityAnnouncement } from "@/hooks/useAccessibilityAnnouncement";
-
+import { sendPasswordReset } from "@/services";
+import {
+  createInitialForgotPasswordState,
+  forgotPasswordMemoryState,
+  forgotPasswordReducer,
+  syncForgotPasswordMemory,
+} from "@/app/forgotPasswordState";
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState<string>("");
-  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [state, dispatch] = useReducer(
+    forgotPasswordReducer,
+    forgotPasswordMemoryState || createInitialForgotPasswordState()
+  );
   const [submissionAttempt, setSubmissionAttempt] = useState(0);
   const theme = useTheme();
+  const { markDirty, markClean, confirmLeave } = useDirtyForm();
 
-  useAccessibilityAnnouncement(
-    errorMessage ? `Error. ${errorMessage}` : null,
-    { announceOnAndroid: true, eventKey: submissionAttempt }
-  );
-  const { markDirty, confirmLeave } = useDirtyForm();
+  const statusAnnouncement = state.status === "error" && state.errorMessage
+    ? `Error. ${state.errorMessage}`
+    : state.status === "success"
+      ? state.successMessage
+      : null;
 
+  useAccessibilityAnnouncement(statusAnnouncement, {
+    announceOnAndroid: true,
+    eventKey: submissionAttempt,
+  });
 
-  // TODO: Update handle reset link to use backend
+  useEffect(() => {
+    syncForgotPasswordMemory(state);
+  }, [state]);
 
-  /**
-   * Handle Reset Link
-   * @returns 
-   */
-  const handleResetLink = () => {
-    setSubmissionAttempt((attempt) => attempt + 1);
-    setErrorMessage("");
-
-    const emailRegex = /\S+@\S+\.\S+/;
-
-    if (!emailRegex.test(email)) {
-      setErrorMessage("Invalid Email. Please try again");
+  const handleResetLink = async () => {
+    if (state.status === "submitting") {
       return;
     }
 
-    setErrorMessage("");
-    console.log("Send reset link to:", email);
+    setSubmissionAttempt((attempt) => attempt + 1);
+    const email = state.email.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      dispatch({
+        type: "SUBMIT_FAILURE",
+        message: "Invalid Email. Please try again",
+      });
+      return;
+    }
+
+    dispatch({ type: "SUBMIT_STARTED" });
+
+    try {
+      await sendPasswordReset(email);
+      markClean();
+      dispatch({
+        type: "SUBMIT_SUCCESS",
+        message: "Reset link sent. Check your inbox.",
+      });
+    } catch (error) {
+      console.error("[Forgot Password] Reset request failed:", error);
+      dispatch({
+        type: "SUBMIT_FAILURE",
+        message: "We couldn't send a reset link. Please try again.",
+      });
+    }
   };
 
+  const isSubmitting = state.status === "submitting";
 
   return (
     <KeyboardAvoidingView
@@ -53,11 +93,10 @@ export default function ForgotPasswordPage() {
       <ScrollView
         className="flex-1 p-safe"
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
         style={{ backgroundColor: theme.colors.background }}
       >
         <View className="justify-center flex-1 w-[90%] self-center">
-
           {/* Brand Image */}
           <View className="items-center">
             <Image
@@ -78,20 +117,35 @@ export default function ForgotPasswordPage() {
           </Tt>
 
           <Tt className="text-center mb-4 italic text-balance text-sm">
-            Enter your email address and we&apos;ll send you a link to reset your password.
+            Enter your email address and we&apos;ll send you a link to reset your
+            password.
           </Tt>
 
+          {state.status === "success" && state.successMessage && (
+            <View
+              className="bg-green-50 border border-emerald-500 rounded-md px-4 py-2 mt-8"
+              accessible
+              accessibilityRole="text"
+              accessibilityLabel={state.successMessage}
+            >
+              <Tt className="text-center text-emerald-700 font-interSemiBold">
+                {state.successMessage}
+              </Tt>
+            </View>
+          )}
 
-          {errorMessage ? (
+          {state.status === "error" && state.errorMessage && (
             <View
               className="bg-[#FCCACA] border border-primary rounded-md px-4 py-2 mt-8"
               accessible
               accessibilityRole="alert"
-              accessibilityLabel={`Error. ${errorMessage}`}
+              accessibilityLabel={`Error. ${state.errorMessage}`}
             >
-              <Tt className="text-center text-primary font-interSemiBold">{errorMessage}</Tt>
+              <Tt className="text-center text-primary font-interSemiBold">
+                {state.errorMessage}
+              </Tt>
             </View>
-          ) : null}
+          )}
 
           {/* Email Input */}
           <Input
@@ -99,27 +153,45 @@ export default function ForgotPasswordPage() {
             placeholder="Email"
             accessibilityLabel="Email address"
             textContentType="emailAddress"
-            value={email}
-            onChangeText={(text) => { setEmail(text); markDirty(); }}
+            value={state.email}
+            onChangeText={(nextEmail) => {
+              dispatch({ type: "SET_EMAIL", email: nextEmail });
+              markDirty();
+            }}
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="off"
             autoCorrect={false}
           />
 
-
-
           {/* Reset Button */}
           <Pressable
             onPress={handleResetLink}
-            className="bg-primary rounded-lg py-3 mt-4 border border-primary active:bg-transparent"
             accessibilityRole="button"
             accessibilityLabel="Send reset link"
             accessibilityHint="Emails you a link to reset your password"
+            accessibilityState={{ disabled: isSubmitting, busy: isSubmitting }}
+            disabled={isSubmitting}
+            className="bg-primary rounded-lg py-3 mt-4 border border-primary active:bg-transparent disabled:opacity-60"
           >
             {({ pressed }) => (
-              <Tt className={`text-center text-2xl font-interSemiBold 
-              ${pressed ? 'text-primary' : 'text-white'}`}>Send Reset Link</Tt>
+              <View className="flex-row items-center justify-center">
+                {isSubmitting && (
+                  <ActivityIndicator
+                    size="small"
+                    color={pressed ? "#FF3F3F" : "#FFFFFF"}
+                    style={{ marginRight: 8 }}
+                  />
+                )}
+
+                <Tt
+                  className={`text-center text-2xl font-interSemiBold ${
+                    pressed && !isSubmitting ? "text-primary" : "text-white"
+                  }`}
+                >
+                  {isSubmitting ? "Sending..." : "Send Reset Link"}
+                </Tt>
+              </View>
             )}
           </Pressable>
 
@@ -134,7 +206,6 @@ export default function ForgotPasswordPage() {
               <Tt className="text-primary font-interSemiBold">Login</Tt>
             </Pressable>
           </View>
-
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

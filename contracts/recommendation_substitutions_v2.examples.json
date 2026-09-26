@@ -1,0 +1,40 @@
+{
+  "request": {
+    "version": "2.0.0",
+    "barcode": "036000291452",
+    "profileId": "child-profile",
+    "limit": 5,
+    "intention": "A snack for a lunchbox"
+  },
+  "response": {
+    "version": "2.0.0",
+    "status": "success",
+    "targetProduct": {
+      "barcode": "036000291452",
+      "productName": "Original snack",
+      "brand": "Brand",
+      "category": "snacks",
+      "nutriscoreGrade": "c"
+    },
+    "substitutions": [
+      {
+        "barcode": "036000291469",
+        "productName": "Alternative snack",
+        "brand": "Brand",
+        "nutriscoreGrade": "b",
+        "safetyRating": "green",
+        "deterministicScore": 0.78,
+        "semanticScore": null,
+        "semanticConfidence": null,
+        "rankingMode": "deterministic",
+        "reasonCodes": [
+          "MATCH_CATEGORY_EXACT",
+          "SAFE_ALLERGEN_FREE"
+        ]
+      }
+    ],
+    "rankingMode": "deterministic",
+    "emptyStateReason": null,
+    "rankingReasonCode": "DETERMINISTIC_BASELINE"
+  }
+}

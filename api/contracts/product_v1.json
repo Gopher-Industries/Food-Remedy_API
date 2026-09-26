@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://food-remedy.dev/schemas/product-detail/v1",
   "title": "ProductDetailV1",
-  "description": "Frozen Product Detail JSON contract v1.0.1 (DB037/DB023). DB maps enriched records via mapping/map_enriched_to_product_detail.py; BE/FE consume this shape on GET /api/products/{barcode}.",
+  "description": "Product Detail JSON contract v1.1.0 (DB037/DB023/BE061). DB maps enriched records via mapping/map_enriched_to_product_detail.py; BE/FE consume this shape on GET /api/products/{barcode}.",
   "type": "object",
   "required": ["barcode", "productName"],
   "properties": {
@@ -77,6 +77,533 @@
       }
     },
     "metadata": { "type": "object", "additionalProperties": true },
+    "semanticAttributes": {
+      "type": "object",
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0.0"
+        },
+        "evidenceCompleteness": {
+          "enum": [
+            "complete",
+            "partial"
+          ]
+        },
+        "texture": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "enum": [
+                "crunchy",
+                "crispy",
+                "soft",
+                "chewy",
+                "creamy",
+                "smooth",
+                "liquid",
+                "not_applicable"
+              ]
+            },
+            "source": {
+              "enum": [
+                "catalogue",
+                "manual",
+                "deterministic",
+                "model_inferred"
+              ]
+            },
+            "sourceVersion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[A-Za-z0-9._-]+$"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "generatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 35
+            }
+          },
+          "required": [
+            "value",
+            "source",
+            "sourceVersion",
+            "confidence",
+            "generatedAt"
+          ],
+          "additionalProperties": false
+        },
+        "flavourFamily": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "enum": [
+                "sweet",
+                "savoury",
+                "salty",
+                "sour",
+                "bitter",
+                "spicy",
+                "neutral",
+                "not_applicable"
+              ]
+            },
+            "source": {
+              "enum": [
+                "catalogue",
+                "manual",
+                "deterministic",
+                "model_inferred"
+              ]
+            },
+            "sourceVersion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[A-Za-z0-9._-]+$"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "generatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 35
+            }
+          },
+          "required": [
+            "value",
+            "source",
+            "sourceVersion",
+            "confidence",
+            "generatedAt"
+          ],
+          "additionalProperties": false
+        },
+        "flavourIntensity": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "enum": [
+                "mild",
+                "medium",
+                "strong",
+                "not_applicable"
+              ]
+            },
+            "source": {
+              "enum": [
+                "catalogue",
+                "manual",
+                "deterministic",
+                "model_inferred"
+              ]
+            },
+            "sourceVersion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[A-Za-z0-9._-]+$"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "generatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 35
+            }
+          },
+          "required": [
+            "value",
+            "source",
+            "sourceVersion",
+            "confidence",
+            "generatedAt"
+          ],
+          "additionalProperties": false
+        },
+        "foodRole": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "enum": [
+                "main",
+                "side",
+                "treat",
+                "ingredient",
+                "drink",
+                "not_applicable"
+              ]
+            },
+            "source": {
+              "enum": [
+                "catalogue",
+                "manual",
+                "deterministic",
+                "model_inferred"
+              ]
+            },
+            "sourceVersion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[A-Za-z0-9._-]+$"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "generatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 35
+            }
+          },
+          "required": [
+            "value",
+            "source",
+            "sourceVersion",
+            "confidence",
+            "generatedAt"
+          ],
+          "additionalProperties": false
+        },
+        "occasion": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "enum": [
+                "breakfast",
+                "lunchbox",
+                "commute",
+                "snack",
+                "shared",
+                "recipe",
+                "other",
+                "not_applicable"
+              ]
+            },
+            "source": {
+              "enum": [
+                "catalogue",
+                "manual",
+                "deterministic",
+                "model_inferred"
+              ]
+            },
+            "sourceVersion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[A-Za-z0-9._-]+$"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "generatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 35
+            }
+          },
+          "required": [
+            "value",
+            "source",
+            "sourceVersion",
+            "confidence",
+            "generatedAt"
+          ],
+          "additionalProperties": false
+        },
+        "portability": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "enum": [
+                "portable",
+                "requires_container",
+                "not_portable",
+                "not_applicable"
+              ]
+            },
+            "source": {
+              "enum": [
+                "catalogue",
+                "manual",
+                "deterministic",
+                "model_inferred"
+              ]
+            },
+            "sourceVersion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[A-Za-z0-9._-]+$"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "generatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 35
+            }
+          },
+          "required": [
+            "value",
+            "source",
+            "sourceVersion",
+            "confidence",
+            "generatedAt"
+          ],
+          "additionalProperties": false
+        },
+        "shareability": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "enum": [
+                "single_serve",
+                "shareable",
+                "not_applicable"
+              ]
+            },
+            "source": {
+              "enum": [
+                "catalogue",
+                "manual",
+                "deterministic",
+                "model_inferred"
+              ]
+            },
+            "sourceVersion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[A-Za-z0-9._-]+$"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "generatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 35
+            }
+          },
+          "required": [
+            "value",
+            "source",
+            "sourceVersion",
+            "confidence",
+            "generatedAt"
+          ],
+          "additionalProperties": false
+        },
+        "preparation": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "enum": [
+                "ready_to_eat",
+                "minimal_prep",
+                "requires_prep",
+                "not_applicable"
+              ]
+            },
+            "source": {
+              "enum": [
+                "catalogue",
+                "manual",
+                "deterministic",
+                "model_inferred"
+              ]
+            },
+            "sourceVersion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[A-Za-z0-9._-]+$"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "generatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 35
+            }
+          },
+          "required": [
+            "value",
+            "source",
+            "sourceVersion",
+            "confidence",
+            "generatedAt"
+          ],
+          "additionalProperties": false
+        },
+        "messRisk": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "not_applicable"
+              ]
+            },
+            "source": {
+              "enum": [
+                "catalogue",
+                "manual",
+                "deterministic",
+                "model_inferred"
+              ]
+            },
+            "sourceVersion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[A-Za-z0-9._-]+$"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "generatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 35
+            }
+          },
+          "required": [
+            "value",
+            "source",
+            "sourceVersion",
+            "confidence",
+            "generatedAt"
+          ],
+          "additionalProperties": false
+        },
+        "meltRisk": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "enum": [
+                "low",
+                "medium",
+                "high",
+                "not_applicable"
+              ]
+            },
+            "source": {
+              "enum": [
+                "catalogue",
+                "manual",
+                "deterministic",
+                "model_inferred"
+              ]
+            },
+            "sourceVersion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[A-Za-z0-9._-]+$"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "generatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 35
+            }
+          },
+          "required": [
+            "value",
+            "source",
+            "sourceVersion",
+            "confidence",
+            "generatedAt"
+          ],
+          "additionalProperties": false
+        },
+        "servingFormat": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "enum": [
+                "single",
+                "multi_pack",
+                "bulk",
+                "not_applicable"
+              ]
+            },
+            "source": {
+              "enum": [
+                "catalogue",
+                "manual",
+                "deterministic",
+                "model_inferred"
+              ]
+            },
+            "sourceVersion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "pattern": "^[A-Za-z0-9._-]+$"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "generatedAt": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 35
+            }
+          },
+          "required": [
+            "value",
+            "source",
+            "sourceVersion",
+            "confidence",
+            "generatedAt"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "evidenceCompleteness"
+      ],
+      "additionalProperties": false
+    },
     "enrichmentMetadata": {
       "type": "object",
       "description": "Recommendation scoring/metadata (optional on responses)",

@@ -1,15 +1,13 @@
 // Notification Settings
 
-import { Pressable, View, Switch } from "react-native";
+import { View, Switch } from "react-native";
 import { useState } from "react";
-import { router } from "expo-router";
 
 import Header from "@/components/layout/Header";
 import Screen from "@/components/layout/Screen";
-import IconGeneral from "@/components/icons/IconGeneral";
 import Tt from "@/components/ui/UIText";
-
 import { color } from "@/app/design/token";
+import { BackButton } from "@/components/shared";
 import { usePreferences } from "@/components/providers/PreferencesProvider";
 
 export default function NotificationSettingsPage() {
@@ -31,17 +29,7 @@ export default function NotificationSettingsPage() {
       <View className="w-[95%] mx-auto">
         {/* Header */}
         <View className="flex-row items-center justify-between mb-4">
-          <Pressable
-            onPress={() => router.back()}
-            className="flex-row justify-center items-center self-end px-2 py-1"
-          >
-            {({ pressed }) => (
-              <IconGeneral
-                type="arrow-backward-ios"
-                fill={pressed ? color.primary : color.primary}
-              />
-            )}
-          </Pressable>
+          <BackButton />
 
           <Tt
             className={`font-interBold text-xl ${

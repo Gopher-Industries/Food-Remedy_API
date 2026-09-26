@@ -5,12 +5,13 @@ import React, { createContext, useState, useContext, ReactNode, Dispatch, SetSta
 import { useNotification } from './NotificationProvider';
 import { searchProducts } from '@/services';
 
-
 interface SearchProductContextType {
   query: string;
   setQuery: Dispatch<SetStateAction<string>>;
   lastQuery: string;
   setLastQuery: Dispatch<SetStateAction<string>>;
+  recentQueries: string[];
+  clearRecentQueries: () => void;
 
   hasSearched: boolean;
   setHasSearched: Dispatch<SetStateAction<boolean>>;
@@ -39,8 +40,11 @@ export const SearchProductProvider = ({ children }: { children: ReactNode }) => 
   const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [queryInvalid, setQueryInvalid] = useState<boolean>(false);
   const [searchAttempt, setSearchAttempt] = useState(0);
+  const [recentQueries, setRecentQueries] = useState<string[]>([]);
   // Results
   const [productResults, setProductResults] = useState<Product[]>([]);
+
+  const clearRecentQueries = () => setRecentQueries([]);
 
   useEffect(() => {
     if (query.trim().length === 0) {
@@ -76,6 +80,9 @@ export const SearchProductProvider = ({ children }: { children: ReactNode }) => 
       console.log("RAN: ", products);
 
       setProductResults(products);
+      if (q && !recentQueries.includes(q)) {
+        setRecentQueries((previous) => [q, ...previous].slice(0, 5));
+      }
     } catch (error) {
       setProductResults([]);
       addNotification("Error Finding Products", "e");
@@ -90,6 +97,8 @@ export const SearchProductProvider = ({ children }: { children: ReactNode }) => 
     <SearchProductContext.Provider value={{
       query, setQuery,
       lastQuery, setLastQuery,
+      recentQueries,
+      clearRecentQueries,
       hasSearched, setHasSearched,
       queryInvalid, setQueryInvalid,
       loading, searchAttempt,

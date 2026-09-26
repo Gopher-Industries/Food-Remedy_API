@@ -8,6 +8,7 @@ import ProductBanner from "../product/ProductBanner";
 import Tt from "./UIText";
 import Input from "./UIInput";
 import { useSearchProduct } from "../providers/SearchProductProvider";
+import { getEmptySearchSuggestions } from "@/services/search/emptySearchSuggestions";
 import { router } from "expo-router";
 import { useIsFocused } from "@react-navigation/native";
 import { useAccessibilityAnnouncement } from "@/hooks/useAccessibilityAnnouncement";
@@ -19,8 +20,11 @@ interface ProductSearchTabProps {
 const ProductSearchTab = ({ collapsed }: ProductSearchTabProps) => {
   const {
     query, setQuery, lastQuery, hasSearched, queryInvalid, loading,
-    productResults, handleSearchProducts, searchAttempt
+    productResults, recentQueries, clearRecentQueries, handleSearchProducts, searchAttempt
   } = useSearchProduct();
+
+  const emptySearchSuggestions = getEmptySearchSuggestions(lastQuery);
+
 
   const isFocused = useIsFocused();
   const searchDisabled = query.trim().length < 2;
@@ -107,19 +111,77 @@ const ProductSearchTab = ({ collapsed }: ProductSearchTabProps) => {
 
           {/* Results */}
           <View className="flex-1 gap-y-2">
-            <View>
-              {loading && <Tt className="mt-4 text-hsl30 dark:text-hsl90">Searching…</Tt>}
+            {loading && <Tt className="mt-4 text-hsl30 dark:text-hsl90">Searching…</Tt>}
 
-              {queryInvalid && (
-                <Tt className="mt-4 text-hsl30 dark:text-hsl90">Type at least 2 characters to search</Tt>
-              )}
+            {queryInvalid && (
+              <Tt className="mt-4 text-hsl30 dark:text-hsl90">Type at least 2 characters to search</Tt>
+            )}
 
-              {!loading && !queryInvalid && hasSearched && productResults.length === 0 && (
-                <Tt className="mt-4 text-hsl30 dark:text-hsl90">
+            {!loading && !queryInvalid && hasSearched && productResults.length === 0 && (
+              <View className="mt-4 gap-y-3">
+                <Tt className="text-hsl30 dark:text-hsl90">
                   No results{lastQuery ? ` for “${lastQuery}”` : ""}.
                 </Tt>
-              )}
-            </View>
+
+                <View className="rounded-xl border border-hsl80 bg-hsl95 p-3">
+                  <Tt className="mb-2 font-interSemiBold text-hsl20">Try one of these:</Tt>
+
+                  {emptySearchSuggestions.map((suggestion) => (
+                    <Pressable
+                      key={suggestion.action}
+                      accessibilityRole="button"
+                      accessibilityLabel={suggestion.label}
+                      onPress={() => {
+                        if (suggestion.action === "scan") {
+                          router.push("/(app)/(tabs)/scan");
+                          return;
+                        }
+
+                        if (suggestion.action === "clear") {
+                          setQuery("");
+                          return;
+                        }
+
+                        if (suggestion.action === "spelling") {
+                          const nextQuery = lastQuery.trim();
+                          setQuery(nextQuery ? nextQuery : "");
+                        }
+                      }}
+                      className="mt-2 rounded-lg border border-hsl80 bg-white px-3 py-2"
+                    >
+                      <Tt className="text-hsl20">{suggestion.label}</Tt>
+                    </Pressable>
+                  ))}
+                </View>
+
+                {recentQueries.length > 0 && (
+                  <View className="rounded-xl border border-hsl80 bg-white p-3">
+                    <Tt className="mb-2 font-interSemiBold text-hsl20">Recent queries</Tt>
+                    {recentQueries.map((item) => (
+                      <Pressable
+                        key={item}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Use recent query: ${item}`}
+                        accessibilityHint="Fills the search field with this query"
+                        onPress={() => {
+                          setQuery(item);
+                        }}
+                        className="mt-2 rounded-lg bg-hsl95 px-3 py-2"
+                      >
+                        <Tt className="text-hsl20">{item}</Tt>
+                      </Pressable>
+                    ))}
+
+                    <Pressable onPress={clearRecentQueries} className="mt-3"
+                      accessibilityRole="button"
+                      accessibilityLabel="Clear recent queries"
+                    >
+                      <Tt className="text-primary">Clear recent queries</Tt>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+            )}
 
             {!loading && productResults.length > 0 && (
               <>
@@ -133,8 +195,8 @@ const ProductSearchTab = ({ collapsed }: ProductSearchTabProps) => {
                 >
                   Results
                 </Tt>
-                {productResults.slice(0, 3).map((p, idx) => (
-                  <ProductBanner key={p.barcode ?? idx} product={p} />
+                {productResults.slice(0, 3).map((p) => (
+                  <ProductBanner key={p.barcode} product={p} />
                 ))}
 
                 {productResults.length > 3 && (

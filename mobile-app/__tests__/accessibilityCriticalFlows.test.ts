@@ -28,7 +28,9 @@ const CRITICAL_FLOW_FILES = [
   // search
   "app/(app)/search.tsx",
   "components/ui/ProductSearchTab.tsx",
+  "components/product/ProductSearchResults.tsx",
   "components/product/ProductBanner.tsx",
+  "components/shared/BackButton.tsx",
   // scan
   "app/(app)/(tabs)/scan.tsx",
   "components/ui/CameraPermission.tsx",

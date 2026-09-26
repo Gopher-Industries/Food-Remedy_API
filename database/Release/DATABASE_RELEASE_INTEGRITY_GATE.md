@@ -1,4 +1,4 @@
-# Database Release Integrity Gate
+# DB068 - Database Release Integrity Gate
 
 ## Purpose
 
@@ -17,6 +17,10 @@ or only by manual inspection:
 The gate produces JSON and Markdown evidence, returns a non-zero exit code when a
 release condition is not met, and runs its credential-free profile on relevant
 pull requests.
+
+The implementation and its generated JSON/Markdown evidence identify this
+release control as ticket `DB068` so the Planner task, CI run, and repository
+history remain traceable to the same work item.
 
 ## Verified baseline risks
 
@@ -43,7 +47,8 @@ credentials. It checks:
 - every active product seeder and DB012 uses the shared Firestore contract;
 - every direct product read discovered under the mobile services and API uses the
   contract collection;
-- pipeline configuration connects enrichment output to seed input;
+- pipeline configuration binds enrichment output to the approved versioned
+  release manifest and seed input;
 - enabled enrichment modules exist;
 - a redirected module output is consumed by the next module;
 - a failed middle seed batch remains the resume point;
@@ -76,6 +81,7 @@ The release profile adds two release-blocking controls:
 ```bash
 python scripts/database_release_gate.py \
   --mode release \
+  --dataset database/Release/v1.0/foodremedy_release_v1.0.json \
   --with-firestore \
   --json-output /tmp/database-release-integrity.json \
   --markdown-output /tmp/database-release-integrity.md
@@ -104,7 +110,7 @@ For an intentionally new, reviewed candidate:
 
 ```bash
 python database/seeding/seed_firestore.py \
-  --input database/seeding/products_enriched.json \
+  --input database/Release/v1.0/foodremedy_release_v1.0.json \
   --validate \
   --reset-checkpoint
 ```
@@ -117,18 +123,22 @@ been deployed.
 
 ## Current release status
 
-The structural gate passes after these controls. The current committed release
-candidate is still **blocked**, as DB060 reports 5,000 total records, 4,731 valid
-records and 269 invalid records. The live Firestore readback has not been run in
-this development environment. This contribution therefore improves release
-decision quality without claiming that the present dataset is approved or that
-production has been seeded.
+The structural gate passes after these controls. DB064 generated the immutable
+offline artifact `database/Release/v1.0/foodremedy_release_v1.0.json`, and DB065
+records its final approval in
+`database/seeding/release_validation_manifest.json`. All 4,731 artifact records
+pass DB060. The dataset SHA-256 is
+`b36d25a591a923e69a472a64b402b34e5a4d51d1aaa3904f5b02caa92cf19d82`.
+The 269 unusable identity rows from the enriched 5,000-record candidate remain
+traceable in `v1.0/exclusions.json`; no barcode or product name was guessed.
+Alternative mappings were rebuilt after exclusion and all 41,529 references
+resolve within the released catalogue.
 
-Before MVP release, the Database and Research teams need to resolve or formally
-review the DB060 data findings and regenerate the candidate. Deployment needs to
-provide the workflow secret and retain the successful live gate artifacts.
-Backend should review the SQLite ordering change alongside the open BE027 work,
-because both touch the same migration area.
+The DB065 manifest binds the enriched candidate, DB064 generation record,
+pipeline configuration, versioned artifact and configured seed input by
+SHA-256. Production has not yet been seeded or read back. Deployment must run
+the live release profile against the v1.0 file, provide the workflow secret and
+retain the successful evidence artifacts.
 
 ## Evidence for review
 
@@ -155,7 +165,7 @@ The before/after demonstrations are measurable:
 | Resume offset after completed batch 0 | offset returned to batch 0 | resume starts at batch 1 |
 | Redirected enrichment output | downstream used the requested path | downstream consumes and verifies the reported path |
 | Legacy history initialisation | `no such column: owner_scope` | row preserved; composite key and owner index verified |
-| Current release candidate | separate report had to be found and interpreted | release gate blocks with the DB060 counts and candidate hash in one artifact |
+| Current release artifact | candidate contained 269 identity-invalid rows and a naive exclusion left dangling alternatives | v1.0 excludes them with a ledger, rebuilds alternatives, and passes 4,731/4,731 records |
 
 ## Limits and ownership boundaries
 

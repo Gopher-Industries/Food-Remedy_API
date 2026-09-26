@@ -18,6 +18,12 @@ jest.mock("firebase/firestore", () => ({
 jest.mock("../config/sqlConfig", () => ({
   initialiseSQLiteDatabase: jest.fn().mockResolvedValue({}),
 }));
+jest.mock("../services/sync/syncPersonalization", () => ({
+  syncPersonalizationForUser: jest.fn().mockResolvedValue(undefined),
+}));
+jest.mock('../services/sync/syncRecommendationEvents', () => ({
+    drainRecommendationEvents: jest.fn().mockResolvedValue({ delivered: 0, rejected: 0, deferred: 0 }),
+}));
 
 jest.mock("../services/sqlDatabase/profiles.dao", () => ({
   upsertProfile: jest.fn().mockResolvedValue(undefined),
@@ -101,17 +107,16 @@ describe("profile sync", () => {
 
     expect(result).toEqual([]);
     expect(getDocs).toHaveBeenCalledTimes(4);
-    expect(warnSpy).toHaveBeenCalledTimes(3);
+    expect(warnSpy).toHaveBeenCalledTimes(4);
+    expect(warnSpy).toHaveBeenCalledWith('Firebase profile fetch unavailable.');
   });
 
   it("returns an empty list when SQLite cannot be initialised", async () => {
     (initialiseSQLiteDatabase as jest.Mock).mockRejectedValue(new Error("database unavailable"));
 
     await expect(fetchProfilesFromSQLite(userId)).resolves.toEqual([]);
-    expect(errorSpy).toHaveBeenCalledWith(
-      "SQLite fetch error:",
-      expect.any(Error)
-    );
+    expect(warnSpy).toHaveBeenCalledWith('Local profile fetch unavailable.');
+    expect(errorSpy).not.toHaveBeenCalled();
   });
 
   it("normalises profile names before saving every profile to SQLite", async () => {
