@@ -173,6 +173,25 @@ describe("POST /api/recommendations/substitutions", () => {
     expect(deps.repository.getProduct).not.toHaveBeenCalled();
   });
 
+  it("times out a stalled request body before accessing Firestore", async () => {
+    const deps = dependencies();
+    let cancelled = false;
+    const stream = new ReadableStream<Uint8Array>({
+      cancel() { cancelled = true; },
+    });
+    const stalledRequest = new Request("http://localhost/api/recommendations/substitutions", {
+      method: "POST",
+      headers: { Authorization: "Bearer verified-token" },
+      body: stream,
+      duplex: "half",
+    } as RequestInit & { duplex: "half" });
+
+    const result = await createProductSubstitutionHandler({ ...deps, timeoutMs: 20 })(stalledRequest);
+    expect(result.status).toBe(503);
+    expect(cancelled).toBe(true);
+    expect(deps.repository.getProduct).not.toHaveBeenCalled();
+  });
+
   it("returns explicit product and profile empty/error states without leaking internals", async () => {
     const missingProduct = dependencies();
     missingProduct.repository.getProduct.mockResolvedValue(null);

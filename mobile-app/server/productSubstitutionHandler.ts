@@ -35,20 +35,31 @@ function errorResponse(code: string, message: string, status: number): Response 
   return response({ version: SUBSTITUTION_CONTRACT_VERSION, error: { code, message } }, status);
 }
 
-async function readBoundedJson(request: Request): Promise<unknown> {
+async function readBoundedJson(request: Request, timeoutMs: number): Promise<unknown> {
   const contentLengthHeader = request.headers.get("content-length");
   const contentLength = contentLengthHeader === null ? null : Number(contentLengthHeader);
   if (contentLength !== null && Number.isFinite(contentLength) && contentLength > MAX_SUBSTITUTION_BODY_BYTES) {
     throw new SubstitutionValidationError("REQUEST_TOO_LARGE", "Request body is too large.");
   }
+  if (request.signal.aborted) throw new RequestCancelledError("Request was cancelled.");
   const reader = request.body?.getReader();
   if (!reader) throw new SubstitutionValidationError("INVALID_REQUEST", "Request body must contain valid JSON.");
+  let rejectInterrupted: (error: Error) => void = () => {};
+  const interrupted = new Promise<never>((_, reject) => { rejectInterrupted = reject; });
+  const interrupt = (error: Error) => {
+    rejectInterrupted(error);
+    void reader.cancel().catch(() => {});
+  };
+  const onAbort = () => interrupt(new RequestCancelledError("Request was cancelled."));
+  const timer = setTimeout(() => interrupt(new SubstitutionTimeoutError("Request timed out.")), timeoutMs);
+  request.signal.addEventListener("abort", onAbort, { once: true });
+  if (request.signal.aborted) onAbort();
   let body = "";
   let bytes = 0;
   const decoder = new TextDecoder();
   try {
     while (true) {
-      const { done, value } = await reader.read();
+      const { done, value } = await Promise.race([reader.read(), interrupted]);
       if (done) break;
       bytes += value.byteLength;
       if (bytes > MAX_SUBSTITUTION_BODY_BYTES) {
@@ -59,16 +70,24 @@ async function readBoundedJson(request: Request): Promise<unknown> {
     }
     body += decoder.decode();
   } catch (error) {
-    if (error instanceof SubstitutionValidationError) throw error;
+    if (error instanceof SubstitutionValidationError || error instanceof SubstitutionTimeoutError || error instanceof RequestCancelledError) throw error;
     throw new SubstitutionValidationError("INVALID_REQUEST", "Request body could not be read.");
   } finally {
-    reader.releaseLock();
+    clearTimeout(timer);
+    request.signal.removeEventListener("abort", onAbort);
+    try { reader.releaseLock(); } catch { /* Cancellation can leave a read pending briefly. */ }
   }
   try {
     return JSON.parse(body);
   } catch {
     throw new SubstitutionValidationError("INVALID_REQUEST", "Request body must contain valid JSON.");
   }
+}
+
+function remainingMs(deadline: number): number {
+  const remaining = deadline - Date.now();
+  if (remaining <= 0) throw new SubstitutionTimeoutError("Request timed out.");
+  return remaining;
 }
 
 function withDeadline<T>(operation: Promise<T>, signal: AbortSignal, timeoutMs: number): Promise<T> {
@@ -102,14 +121,15 @@ function withDeadline<T>(operation: Promise<T>, signal: AbortSignal, timeoutMs: 
 export function createProductSubstitutionHandler(dependencies: ProductSubstitutionHandlerDependencies) {
   const timeoutMs = dependencies.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   return async function postProductSubstitutions(request: Request): Promise<Response> {
+    const deadline = Date.now() + timeoutMs;
     try {
-      const identity = await withDeadline(requireVerifiedIdentity(request, dependencies.tokenVerifier), request.signal, timeoutMs);
-      const payload = await readBoundedJson(request);
+      const identity = await withDeadline(requireVerifiedIdentity(request, dependencies.tokenVerifier), request.signal, remainingMs(deadline));
+      const payload = await readBoundedJson(request, remainingMs(deadline));
       const input = validateSubstitutionRequest(payload);
       const result = await withDeadline(
         createProductSubstitutionResponse(dependencies.repository, identity.uid, input),
         request.signal,
-        timeoutMs
+        remainingMs(deadline)
       );
       return response(result, 200);
     } catch (error) {
