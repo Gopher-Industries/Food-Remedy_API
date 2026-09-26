@@ -28,6 +28,7 @@ import type { RecommendationSessionStore } from '@/server/recommendationEvidence
 import { PersonalizationContextUnavailableError, type PersonalizationContextRepository } from './personalizationContext';
 import { executeProductSubstitutionV2, SUBSTITUTION_CONTRACT_VERSION_V2, validateSubstitutionRequestV2,
   type ProductSubstitutionV2Execution } from './productSubstitutionV2';
+import type { SemanticFitClient } from './semanticFitClient';
 
 const DEFAULT_TIMEOUT_MS = 4_000;
 
@@ -39,6 +40,8 @@ export interface ProductSubstitutionHandlerDependencies {
   metrics?: SubstitutionMetrics;
   sessionStore?: RecommendationSessionStore;
   contextRepository?: PersonalizationContextRepository;
+  /** Wired for BE066/BE067; BE065 does not evaluate or alter ordering. */
+  semanticClient?: SemanticFitClient;
 }
 
 function response(body: unknown, status: number): Response {

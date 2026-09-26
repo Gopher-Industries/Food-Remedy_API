@@ -5,6 +5,10 @@ import { SUBSTITUTION_CONTRACT_VERSION } from "@/server/productSubstitutionServi
 import { ConsoleSubstitutionMetrics, EnvironmentSubstitutionRollout } from "@/server/substitutionObservability";
 import { FirestoreRecommendationEvidenceRepository } from '@/server/recommendationEvidenceRepository';
 import { FirestorePersonalizationContextRepository } from '@/server/firestorePersonalizationContextRepository';
+import { createSemanticFitClientFromEnvironment } from '@/server/typesafeSemanticFitClient';
+
+// Share the adapter across requests so its concurrency cap applies per server process.
+let semanticClient: ReturnType<typeof createSemanticFitClientFromEnvironment> | undefined;
 
 /** POST /api/recommendations/substitutions — authenticated substitutions v1. */
 export async function POST(request: Request): Promise<Response> {
@@ -15,6 +19,7 @@ export async function POST(request: Request): Promise<Response> {
       repository: new FirestoreProductSubstitutionRepository(firestore),
       sessionStore: new FirestoreRecommendationEvidenceRepository(firestore),
       contextRepository: new FirestorePersonalizationContextRepository(firestore),
+      semanticClient: semanticClient ??= createSemanticFitClientFromEnvironment(),
       rollout: new EnvironmentSubstitutionRollout(),
       metrics: new ConsoleSubstitutionMetrics(),
     })(request);
