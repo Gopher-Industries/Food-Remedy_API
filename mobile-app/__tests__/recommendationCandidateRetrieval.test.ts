@@ -86,11 +86,11 @@ describe("getCandidatesForRecommendations", () => {
 
   it("excludes the original product, removes duplicate barcodes, and gives document-id candidates a barcode", async () => {
     mockedGetDocs.mockResolvedValue(snapshot(
-      candidateDoc("original-document", { barcode: "original-barcode", productName: "Original" }),
-      candidateDoc("candidate-document", { barcode: "candidate-barcode", productName: "Candidate" }),
-      candidateDoc("duplicate-document", { barcode: "candidate-barcode", productName: "Duplicate" }),
-      candidateDoc("fallback-document", { productName: "Fallback candidate" }),
-      candidateDoc("", { productName: "Invalid candidate" })
+      candidateDoc("original-document", { barcode: "original-barcode", productName: "Original", categories: ["snacks"] }),
+      candidateDoc("candidate-document", { barcode: "candidate-barcode", productName: "Candidate", categories: ["snacks"] }),
+      candidateDoc("duplicate-document", { barcode: "candidate-barcode", productName: "Duplicate", categories: ["snacks"] }),
+      candidateDoc("fallback-document", { productName: "Fallback candidate", categories: ["snacks"] }),
+      candidateDoc("", { productName: "Invalid candidate", categories: ["snacks"] })
     ));
 
     const candidates = await getCandidatesForRecommendations(originalProduct(["snacks"]));
