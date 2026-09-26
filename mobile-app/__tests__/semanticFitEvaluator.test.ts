@@ -79,6 +79,13 @@ describe('versioned Jev semantic-fit evaluation', () => {
     expect(JSON.stringify(state)).not.toContain('peanuts');
   });
 
+  it.each(['A gluten-free lunchbox treat', 'Breakfast for my diabetic child', 'A low-sodium snack'])
+  ('withholds medical or restriction language from a free-text intention: %s', text => {
+    const scenario = semanticFitScenarios[0];
+    const state = buildSemanticFitState(scenario.original, scenario.candidate, semanticContext(text));
+    expect(state.intention.text).toBeNull();
+  });
+
   it('evaluates a bounded shortlist with at most two concurrent calls', async () => {
     const scenario = semanticFitScenarios[0];
     let active = 0;

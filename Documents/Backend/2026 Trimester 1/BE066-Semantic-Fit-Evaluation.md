@@ -5,7 +5,8 @@ names, meaningful categories, validated semantic attribute values, a bounded
 shopping intention, and explicit/observed preference summaries. It omits
 barcodes, UID/profile identifiers, labels, ingredients, allergens, traces,
 additives, nutrients, dietary restrictions and raw event history. Intentions
-that appear to state medical or dietary restrictions are withheld from the
+ that appear to state medical or dietary restrictions, including common
+ "-free", diabetes and low-sodium phrases, are withheld from the
 model state; the deterministic safety profile remains the only safety source.
 
 The `food-fit-score-v1` question set uses four concrete levels (0–3) for each

@@ -73,7 +73,9 @@ function compactText(value: unknown, maximum: number): string | null {
 
 function safeIntention(context: PersonalizationContext): string | null {
   const text = compactText(context.intention?.text, 240);
-  if (!text || /\b(allerg\w*|intoleran\w*|medical|disease|free[ -]from|cannot eat|can't eat|must avoid|(?:without|no|avoid)\s+(?:(?:any|all|the|a)\s+)?(?:milk|dairy|egg|peanuts?|nuts?|soy|wheat|gluten|shellfish|fish|sesame|sulphites?|additives?|vegan|vegetarian))\b/i.test(text)) return null;
+  // A saved intention is free text. Withhold the whole value when it may carry
+  // a health restriction; the structured occasion/convenience remain available.
+  if (!text || /\b(allerg\w*|anaphylax\w*|intoleran\w*|medical|disease|diabet\w*|coeliac|celiac|lactose|renal|kidney|pregnan\w*|medication|blood\s+sugar|low[ -]sodium|free[ -]from|cannot eat|can't eat|must avoid|(?:without|no|avoid)\s+(?:(?:any|all|the|a)\s+)?(?:milk|dairy|egg|peanuts?|nuts?|soy|wheat|gluten|shellfish|fish|sesame|sulphites?|additives?|vegan|vegetarian)|(?:milk|dairy|egg|peanuts?|nuts?|soy|wheat|gluten|shellfish|fish|sesame|sulphites?|additives?)[ -]free)\b/i.test(text)) return null;
   return text;
 }
 
