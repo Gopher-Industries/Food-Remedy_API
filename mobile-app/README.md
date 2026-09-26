@@ -100,6 +100,7 @@ Expo reads public environment variables from `.env`:
 - `EXPO_PUBLIC_API_SOURCE` — `auto` (default), `api`, or `firestore`. For recommendations,
   `auto` prefers the HTTP API when a base URL is configured and falls back to Firestore
   when it is missing or the request fails. `api` is strict and requires a base URL.
+- `EXPO_PUBLIC_PERSONALIZATION_API_BASE_URL` — Base URL of the deployed Expo API routes. BE059 preference sync sends authenticated writes to `/api/personalization/preferences` there; this may differ from the legacy Python API URL. Missing configuration keeps local preference data queued for the next sync.
 - `EXPO_PUBLIC_RECOMMENDATION_SOURCE` — `backend` (default) or `firestore` to switch recommendation logic.
 - `EXPO_PUBLIC_FEATURE_RECOMMENDATIONS_TAB` — Shows the Compare tab on the product screen. Off by default from the feature flags.
 - `EXPO_PUBLIC_CAPTCHA_ENABLED` — hCaptcha on login. On in release builds, off in development from the feature flags.
