@@ -7,6 +7,10 @@ import ProductCompareSection, {
 } from "@/components/product/ProductCompareSection";
 import { useProfile } from "@/components/providers/ProfileProvider";
 import { usePreferences } from "@/components/providers/PreferencesProvider";
+import {
+  assessProductForProfile,
+  getProfileRestrictions,
+} from "@/services/profileProductSuitability";
 
 function normalizeArray(value: any): string[] {
   if (!value) return [];
@@ -40,116 +44,87 @@ function buildUserProfile(
   activeProfile: any,
   profiles: any[]
 ): UserDemographics {
-  const visibleProfiles = profiles.filter((profile) => {
-    const profileId = String(profile.profileId || "").toLowerCase().trim();
-    const relationship = String(profile.relationship || "").toLowerCase().trim();
-    return profileId !== "demographics" && relationship !== "demographics";
-  });
-
   const demographicsProfile = profiles?.find(
     (p: any) => p.profileId === "demographics"
   );
 
-  const selectedProfile =
-    activeProfile ||
-    (visibleProfiles.length > 0 ? visibleProfiles[0] : null) ||
-    demographicsProfile ||
-    null;
+  const memberProfile =
+  activeProfile ||
+  profiles?.find((p: any) => p.relationship === "Self") ||
+  profiles?.[0] ||
+  null;
 
-  if (!selectedProfile) {
-    return {
-      gender: "Not available",
-      ageGroup: "Not available",
-      activityLevel: "Not available",
-      goals: [],
-      allergens: [],
-    };
-  }
+if (!memberProfile) {
+  return {
+    gender: "Not available",
+    ageGroup: "Not available",
+    activityLevel: "Not available",
+    goals: [],
+    allergens: [],
+  };
+}
 
-  const gender =
-    String(
-      selectedProfile.gender ??
-        selectedProfile.sex ??
-        selectedProfile.userGender ??
-        "Not available"
-    ).trim() || "Not available";
+const isSelf = memberProfile.relationship === "Self";
+
+  const rawSex = isSelf
+    ? demographicsProfile?.sex ?? memberProfile.sex
+    : memberProfile.sex;
+
+  const formatLabel = (value: string) =>
+    value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, " ");
+
+  const gender = rawSex ? formatLabel(String(rawSex)) : "Not available";
+
+  const rawAgeBand = isSelf
+    ? demographicsProfile?.ageBand ?? memberProfile.ageBand
+    : memberProfile.ageBand;
 
   let ageGroup = "Not available";
-  if (selectedProfile.ageBand) {
-    ageGroup = selectedProfile.ageBand;
+  if (rawAgeBand) {
+    ageGroup = String(rawAgeBand);
   } else {
-    const age =
-      Number(selectedProfile.age) ||
-      Number(selectedProfile.ageYears) ||
-      Number(selectedProfile.userAge) ||
-      0;
+    const age = Number(memberProfile.age) || 0;
     if (age > 0 && age <= 18) ageGroup = "0–18";
     else if (age <= 35) ageGroup = "19–35";
     else if (age <= 50) ageGroup = "36–50";
     else if (age > 50) ageGroup = "50+";
   }
 
-  const activityLevel =
-    String(
-      selectedProfile.activityLevel ??
-        selectedProfile.activity ??
-        selectedProfile.exerciseLevel ??
-        selectedProfile.guardrailLevel ??
-        "Not available"
-    ).trim() || "Not available";
+  const rawGuardrailLevel = isSelf
+    ? demographicsProfile?.guardrailLevel ?? memberProfile.guardrailLevel
+    : memberProfile.guardrailLevel;
 
-  const rawGoals = [
-    ...normalizeArray(selectedProfile.goals),
-    ...normalizeArray(selectedProfile.healthGoals),
-    ...normalizeArray(selectedProfile.preferences?.goals),
-    ...normalizeArray(selectedProfile.dietaryGoals),
-  ];
+  const activityLevel = rawGuardrailLevel
+    ? formatLabel(String(rawGuardrailLevel))
+    : "Not available";
 
-  const mappedGoals: UserDemographics["goals"] = [];
+  const goals = Array.from(new Set(normalizeArray(memberProfile.dietaryForm)));
 
-  rawGoals.forEach((goal) => {
-    const lower = goal.toLowerCase();
-
-    if (lower.includes("sodium")) mappedGoals.push("Lower sodium");
-    else if (lower.includes("heart")) mappedGoals.push("Heart health");
-    else if (lower.includes("sugar")) mappedGoals.push("Lower sugar");
-    else if (lower.includes("protein")) mappedGoals.push("High protein");
-  });
-
-  const rawAllergens = [
-    ...normalizeArray(selectedProfile.allergies),
-    ...normalizeArray(selectedProfile.intolerances),
-    ...normalizeArray(selectedProfile.avoidAllergens),
-    ...normalizeArray(selectedProfile.preferences?.avoidAllergens),
-  ];
-
-  const mappedAllergens: UserDemographics["allergens"] = [];
-
-  rawAllergens.forEach((item) => {
-    const lower = item.toLowerCase();
-
-    if (lower.includes("peanut")) mappedAllergens.push("Peanuts");
-    else if (lower.includes("milk") || lower.includes("dairy")) {
-      mappedAllergens.push("Milk");
-    } else if (lower.includes("soy")) {
-      mappedAllergens.push("Soy");
-    } else if (lower.includes("gluten") || lower.includes("wheat")) {
-      mappedAllergens.push("Gluten");
-    } else if (lower.includes("tree nut") || lower.includes("almond")) {
-      mappedAllergens.push("Tree nuts");
-    }
-  });
+  const allergens = Array.from(
+    new Set(
+      getProfileRestrictions({
+        allergies: [
+          ...normalizeArray(memberProfile.allergies),
+          ...normalizeArray(memberProfile.intolerances),
+        ],
+        intolerances: [],
+      } as any)
+    )
+  );
 
   return {
     gender,
     ageGroup,
     activityLevel,
-    goals: Array.from(new Set(mappedGoals)),
-    allergens: Array.from(new Set(mappedAllergens)),
+    goals,
+    allergens,
   };
 }
 
-function buildProductData(currentProduct: any): ProductData {
+function buildProductData(
+  currentProduct: any,
+  selectedRestrictions: string[]
+): ProductData {
   const nutriments = currentProduct?.nutriments ?? {};
 
   const sugar =
@@ -176,17 +151,15 @@ function buildProductData(currentProduct: any): ProductData {
         0
     ) || 0;
 
-  const allergens = [
-    ...normalizeArray(currentProduct?.allergens),
-    ...normalizeArray(currentProduct?.traces),
-  ];
-
   return {
     name: currentProduct?.productName ?? "Unknown product",
     sugar,
     sodium,
     protein,
-    allergens,
+    allergenSafety: assessProductForProfile(currentProduct, {
+      allergies: selectedRestrictions,
+      intolerances: [],
+    } as any),
   };
 }
 
@@ -194,7 +167,7 @@ type Props = {
   product: any;
 };
 
-export default function CompareTab({ product }: Props) {
+function CompareTab({ product }: Props) {
   const { profiles, activeProfile } = useProfile();
   const { darkMode } = usePreferences();
 
@@ -203,8 +176,8 @@ export default function CompareTab({ product }: Props) {
   }, [activeProfile, profiles]);
 
   const productData = useMemo(() => {
-    return buildProductData(product);
-  }, [product]);
+    return buildProductData(product, userProfile.allergens);
+  }, [product, userProfile.allergens]);
 
   if (!product) return null;
 
@@ -236,3 +209,5 @@ export default function CompareTab({ product }: Props) {
     </View>
   );
 }
+
+export default React.memo(CompareTab);

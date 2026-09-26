@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from jsonschema import Draft7Validator
+
 from mapping.contract_paths import (
     CANONICAL_CONTRACT_PATH,
     CONTRACT_EXAMPLES_DIR,
@@ -30,6 +32,16 @@ def test_canonical_and_legacy_schemas_are_identical():
 def test_contract_version_documented_in_changelog():
     changelog = (REPO_ROOT / "api" / "contracts" / "CHANGELOG.md").read_text(encoding="utf-8")
     assert CONTRACT_VERSION in changelog
+
+
+def test_allergen_schema_distinguishes_unknown_from_known_information():
+    schema = _load_json(CANONICAL_CONTRACT_PATH)["properties"]["allergens"]
+    validator = Draft7Validator(schema)
+
+    assert validator.is_valid(["Unknown"])
+    assert validator.is_valid(["Milk", "Egg"])
+    assert not validator.is_valid([])
+    assert not validator.is_valid(["Unknown", "Milk"])
 
 
 def test_all_committed_examples_pass_validator():

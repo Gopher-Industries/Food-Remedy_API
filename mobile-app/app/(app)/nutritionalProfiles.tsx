@@ -1,9 +1,10 @@
 import { useFocusEffect, useRouter } from "expo-router";
 import { Pressable, RefreshControl, ScrollView, View } from "react-native";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useMemo } from "react";
 import Tt from "@/components/ui/UIText";
 import IconGeneral from "@/components/icons/IconGeneral";
 import { color, spacing } from "@/app/design/token";
+import { BackButton } from "@/components/shared";
 import Header from "@/components/layout/Header";
 import { useProfile } from "@/components/providers/ProfileProvider";
 import ProfileAvatar from "@/components/ui/ProfileAvatar";
@@ -56,19 +57,19 @@ export default function NutritionalProfilesScreen() {
     }, [user?.uid, refresh])
   );
 
-  const handleAddMember = () => {
+  const handleAddMember = useCallback(() => {
     clearEdit();
     startEditForNew();
     router.push("/(app)/membersEdit");
-  };
+  }, [clearEdit, router, startEditForNew]);
 
-  const handleEditMember = (id: string) => {
+  const handleEditMember = useCallback((id: string) => {
     const existing = profiles.find((p) => p.profileId === id);
     if (!existing) return;
 
     startEdit(existing);
     router.push("/(app)/membersEdit");
-  };
+  }, [profiles, router, startEdit]);
 
   const onRefresh = useCallback(async () => {
     if (!user?.uid) return;
@@ -78,22 +79,23 @@ export default function NutritionalProfilesScreen() {
     setRefreshing(false);
   }, [user?.uid, refresh]);
 
-  const visibleProfiles = profiles
-    .filter((profile) => {
+  const visibleProfiles = useMemo(() => {
+    const profileIds = new Set<string>();
+
+    return profiles.filter((profile) => {
       const profileId = String(profile.profileId || "").toLowerCase().trim();
       const relationship = String(profile.relationship || "").toLowerCase().trim();
       const firstName = String(profile.firstName || "").toLowerCase().trim();
-
-      return (
+      const isVisible =
         profileId !== "demographics" &&
         relationship !== "demographics" &&
-        firstName !== "user (demographics)"
-      );
-    })
-    .filter(
-      (profile, index, self) =>
-        index === self.findIndex((p) => p.profileId === profile.profileId)
-    );
+        firstName !== "user (demographics)";
+
+      if (!isVisible || profileIds.has(profile.profileId)) return false;
+      profileIds.add(profile.profileId);
+      return true;
+    });
+  }, [profiles]);
 
   return (
     <View className={`flex-1 p-safe ${darkMode ? "bg-hsl15" : "bg-white"}`}>
@@ -106,18 +108,7 @@ export default function NutritionalProfilesScreen() {
         }
       >
         <View className="w-[95%] mx-auto mt-4 mb-6 flex-row items-center justify-between">
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            className="px-2 py-1"
-          >
-            {({ pressed }) => (
-              <IconGeneral
-                type="arrow-backward-ios"
-                fill={pressed ? "#FF3F3F" : darkMode ? "#FFFFFF" : "hsl(0 0%, 30%)"}
-              />
-            )}
-          </Pressable>
+          <BackButton />
 
           <Tt className={`text-xl font-interBold ${darkMode ? "text-white" : "text-hsl20"}`}>
             Nutritional Profiles
@@ -203,14 +194,14 @@ export default function NutritionalProfilesScreen() {
           <Pressable
             onPress={() => router.push("/(app)/demographics" as any)}
             hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
-            className={`mt-4 flex-row justify-between items-center py-3 px-4 rounded-lg border active:border-primary ${
+            className={`mt-4 flex-row items-center gap-x-3 py-3 px-4 rounded-lg border active:border-primary ${
               darkMode ? "bg-hsl20 border-hsl30" : "bg-white border-hsl90"
             }`}
           >
             {({ pressed }) => (
               <>
                 <Tt
-                  className={`text-lg font-interSemiBold flex-grow ${
+                  className={`text-lg font-interSemiBold flex-1 ${
                     pressed ? "text-primary" : darkMode ? "text-hsl90" : "text-hsl30"
                   }`}
                 >
@@ -231,14 +222,14 @@ export default function NutritionalProfilesScreen() {
           <Pressable
             onPress={handleAddMember}
             hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
-            className={`mt-4 flex-row justify-between items-center py-3 px-4 rounded-lg border active:border-primary ${
+            className={`mt-4 flex-row items-center gap-x-3 py-3 px-4 rounded-lg border active:border-primary ${
               darkMode ? "bg-hsl20 border-hsl30" : "bg-white border-hsl90"
             }`}
           >
             {({ pressed }) => (
               <>
                 <Tt
-                  className={`text-lg font-interSemiBold flex-grow ${
+                  className={`text-lg font-interSemiBold flex-1 ${
                     pressed ? "text-primary" : darkMode ? "text-hsl90" : "text-hsl30"
                   }`}
                 >

@@ -159,9 +159,9 @@ def generate_markdown_report(result: Dict[str, Any]) -> str:
     stats = result["after_stats"]
     report = f"""# Catalogue Search Fields Backfill & Coverage Report
 
-**File Processed:** `{result['file']}`  
-**Records Modified:** {result['records_modified']}  
-**Destination:** `{result['saved_to'] or 'Dry Run (None)'}`  
+- **File Processed:** `{result['file']}`
+- **Records Modified:** {result['records_modified']}
+- **Destination:** `{result['saved_to'] or 'Dry Run (None)'}`
 
 ## Data Coverage Summary
 

@@ -101,6 +101,22 @@ Or:
 node database/db012_cart_integration.js
 ```
 
+## Barcode format validation (added)
+
+`validate_barcodes()` now rejects barcodes that are non-numeric or outside
+standard retail lengths (8, 12, 13, 14 digits — EAN-8/UPC-A/EAN-13/GTIN-14).
+Previously this check existed only as an unused counter (`invalid_type`) and
+never actually flagged anything.
+
+**Known schema inconsistency:** `schema_definition.json` describes barcode
+as "13 digits, no leading zeros" but real data
+(`database/seeding/products_5k_test.json`, 5000 records) shows 111 valid
+8-digit barcodes, 4 valid 14-digit barcodes, and 579 (~11.6%) with a
+legitimate leading zero. This implementation follows real data over the
+schema description. Recommend reconciling `schema_definition.json` in a
+follow-up ticket.
+
+
 ## Expected result
 
 DB012 is considered successful when:

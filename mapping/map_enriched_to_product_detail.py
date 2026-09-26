@@ -6,6 +6,7 @@ from utils.category_normalizer import normalize_category_fields
 from database.clean_data.normalization.BarcodeNormalisation import BarcodeNormalisation
 
 from utils.conflict_resolver import resolve_conflicts
+from utils.missing_value_utils import UNKNOWN_ALLERGEN, normalize_allergens
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,14 @@ def _safe_list(val):
     if isinstance(val, list):
         return val
     return [val]
+
+
+def _product_allergens(product: Dict[str, Any]) -> List[str]:
+    """Prefer known contract allergens, then legacy detected values."""
+    allergens = normalize_allergens(product.get("allergens"))
+    if allergens != [UNKNOWN_ALLERGEN]:
+        return allergens
+    return normalize_allergens(product.get("allergensDetected"))
 
 
 def _normalize_tag_name_list(items: Any) -> List[str]:
@@ -75,7 +84,7 @@ def map_enriched_to_product_detail(product: Dict[str, Any]) -> Dict[str, Any]:
     out["brand"] = product.get("brand") if product.get("brand") is not None else None
     out["genericName"] = product.get("genericName") if product.get("genericName") is not None else None
     out["additives"] = _safe_list(product.get("additives"))
-    out["allergens"] = _safe_list(product.get("allergens"))
+    out["allergens"] = _product_allergens(product)
     out["ingredients"] = _safe_list(product.get("ingredients"))
     out["ingredientsText"] = product.get("ingredientsText") if product.get("ingredientsText") is not None else None
 
