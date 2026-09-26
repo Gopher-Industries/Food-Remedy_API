@@ -3,6 +3,12 @@
 Canonical schema: `contracts/product_detail_v1.schema.json`  
 Legacy alias (same content): `api/contracts/product_v1.json`
 
+## 1.1.0 — 2026-09-26 (BE061)
+
+- Add optional `semanticAttributes` with per-attribute provenance and confidence for contextual ranking.
+- Keep existing allergen, nutrition and dietary fields unchanged. Older documents without the block remain valid.
+- Catalogue evidence requires owner review before production backfill; this version does not assert coverage of the full catalogue.
+
 ## 1.0.1 — 2026-08-10 (DB023)
 
 - Represent missing or empty allergen information as `["Unknown"]` instead of `[]`.

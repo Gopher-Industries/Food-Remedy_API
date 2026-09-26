@@ -1,6 +1,6 @@
 """DB034 / DB037 - Product Detail contract validation.
 
-Validates that enriched product documents, once mapped, match ProductDetail v1.0.1.
+Validates that enriched product documents, once mapped, match ProductDetail v1.1.0.
 Canonical schema: contracts/product_detail_v1.schema.json (see DB037-API-LOCK.md).
 """
 

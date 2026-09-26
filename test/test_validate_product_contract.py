@@ -43,6 +43,21 @@ def test_validate_product_passes_for_valid_mapped_record():
     assert errors == []
 
 
+def test_semantic_evidence_round_trips_without_changing_safety_fields():
+    product = _sample_enriched()
+    baseline = map_enriched_to_product_detail(product)
+    product["semanticAttributes"] = {
+        "schemaVersion": "1.0.0", "evidenceCompleteness": "partial",
+        "texture": {"value": "crunchy", "source": "manual", "sourceVersion": "catalogue-1",
+                    "confidence": 0.9, "generatedAt": "2026-09-26T00:00:00Z"},
+    }
+    mapped = map_enriched_to_product_detail(product)
+    assert validate_product(mapped) == []
+    assert mapped["semanticAttributes"] == product["semanticAttributes"]
+    for field in ("allergens", "additives", "traces", "nutriments", "nutriments_normalized"):
+        assert mapped[field] == baseline[field]
+
+
 def test_validate_product_reports_missing_images_root():
     mapped = map_enriched_to_product_detail(_sample_enriched())
     mapped["images"]["root"] = ""

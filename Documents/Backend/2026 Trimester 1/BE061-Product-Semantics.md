@@ -11,6 +11,12 @@ nutrients or safety decisions. `complete` requires all 11 attributes; missing
 fields under `partial` are unknown, while `not_applicable` is an evidenced
 value. These attributes are ranking evidence only.
 
+Product Detail advances to v1.1.0 because this is an optional field. The
+canonical and legacy JSON schemas stay identical, and the Python mapper carries
+an existing semantic block through to validation. The DB037 v1.0.1 lock remains
+the historical baseline. FE/BE contract review is still needed before a
+production catalogue upload.
+
 ## Repeatable backfill and coverage
 
 The offline backfill reads a curated manifest. It does not infer from product
