@@ -48,6 +48,21 @@ function requireAsset(filePath, label) {
   }
 }
 
+function requireFirebaseConfig() {
+  const source = fs.readFileSync(path.resolve(__dirname, "..", "config/firebaseConfig.ts"), "utf8");
+  const required = {
+    projectId: "foodremedy-deakin",
+    storageBucket: "foodremedy-deakin.firebasestorage.app",
+  };
+  for (const [field, expected] of Object.entries(required)) {
+    const match = source.match(new RegExp(`\\b${field}\\s*:\\s*["']([^"']+)["']`));
+    if (!match || match[1] !== expected) {
+      throw new Error(`Firebase ${field} must match the production configuration.`);
+    }
+  }
+  return required;
+}
+
 function requireProductionUrl(value, label) {
   requireNonEmptyString(value, label);
 
@@ -63,6 +78,10 @@ function requireProductionUrl(value, label) {
     throw new Error(`${label} must use HTTPS.`);
   }
 
+  if (parsedUrl.username || parsedUrl.password || parsedUrl.search || parsedUrl.hash) {
+    throw new Error(`${label} must be a plain API base URL without credentials or query data.`);
+  }
+
   const hostname = parsedUrl.hostname.toLowerCase();
 
   const localHosts = [
@@ -70,12 +89,17 @@ function requireProductionUrl(value, label) {
     "127.0.0.1",
     "0.0.0.0",
     "::1",
+    "[::1]",
     "10.0.2.2",
   ];
 
+  const privateIpv4 = /^(?:10\.|127\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)/.test(hostname);
+  const privateIpv6 = /^\[(?:fc|fd|fe80)/.test(hostname);
+
   if (
     localHosts.includes(hostname) ||
-    hostname.endsWith(".local")
+    hostname.endsWith(".local") ||
+    privateIpv4 || privateIpv6
   ) {
     throw new Error(
       `${label} must not use localhost or a local development address.`
@@ -102,7 +126,6 @@ function requireProductionEnvironment() {
   const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
   const captchaEnabled = process.env.EXPO_PUBLIC_CAPTCHA_ENABLED;
   const captchaSiteKey = process.env.EXPO_PUBLIC_HCAPTCHA_SITE_KEY;
-  const captchaSecret = process.env.HCAPTCHA_SECRET_KEY;
 
   requireProductionUrl(
     apiBaseUrl,
@@ -118,11 +141,6 @@ function requireProductionEnvironment() {
   requireNonPlaceholder(
     captchaSiteKey,
     "EXPO_PUBLIC_HCAPTCHA_SITE_KEY"
-  );
-
-  requireNonPlaceholder(
-    captchaSecret,
-    "HCAPTCHA_SECRET_KEY"
   );
 
   return {
@@ -232,14 +250,14 @@ function validate() {
   }
 
   const productionEnv = requireProductionEnvironment();
+  const firebase = requireFirebaseConfig();
 
   const manifest = {
     easProfile: "production",
     apiBaseUrl: productionEnv.apiBaseUrl,
-    firebaseProjectId: "foodremedy-deakin",
-    firebaseStorageBucket: "foodremedy-deakin.firebasestorage.app",
+    firebaseProjectId: firebase.projectId,
+    firebaseStorageBucket: firebase.storageBucket,
     captchaSiteKey: productionEnv.captchaSiteKey,
-    captchaVerificationEndpoint: "/verify-captcha",
     captchaEnabled: true,
   };
 
@@ -253,7 +271,14 @@ function validate() {
 }
 
 try {
-  validate();
+  if (process.argv.includes("--server-captcha")) {
+    requireNonPlaceholder(process.env.HCAPTCHA_SECRET_KEY, "HCAPTCHA_SECRET_KEY");
+    console.log("Server CAPTCHA secret configuration passed.");
+  } else if (process.env.EAS_BUILD_PROFILE && process.env.EAS_BUILD_PROFILE !== "production") {
+    console.log(`Skipping production release validation for ${process.env.EAS_BUILD_PROFILE} build.`);
+  } else {
+    validate();
+  }
 } catch (error) {
   console.error(
     `Release configuration validation failed: ${error.message}`

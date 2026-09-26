@@ -15,6 +15,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "validate:release-config": "node scripts/validateReleaseConfig.js",
+    "validate:server-captcha-config": "node scripts/validateReleaseConfig.js --server-captcha",
     "eas-build-post-install": "npm run validate:release-config"
   },
   "dependencies": {
