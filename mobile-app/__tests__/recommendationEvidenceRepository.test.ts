@@ -74,10 +74,16 @@ describe('BE060 authoritative recommendation evidence', () => {
     const path = 'USERS/owner/PROFILES/child';
     rows.set(path, { status: true, relationship: 'Child', age: 9 });
     const repository = new FirestoreRecommendationEvidenceRepository(firestore, () => now);
+    await expect(repository.create('owner', {
+      profileId: 'child', originalBarcode: '12345678',
+      candidates: [{ barcode: '87654321', deterministicScore: 0.82 }],
+    })).rejects.toThrow('Profile unavailable.');
+    rows.set(path, { status: true, relationship: 'Child', age: 9, recommendationEvidenceConsent: true });
     const sessionId = await repository.create('owner', {
       profileId: 'child', originalBarcode: '12345678',
       candidates: [{ barcode: '87654321', deterministicScore: 0.82 }],
     });
+    rows.set(path, { status: true, relationship: 'Child', age: 9 });
     expect(await repository.ingest('owner', { ...input(sessionId), profileId: 'child' })).toBe('unavailable');
     rows.set(path, { status: true, relationship: 'Child', age: 9, recommendationEvidenceConsent: true });
     expect(await repository.ingest('owner', { ...input(sessionId), profileId: 'child' })).toBe('stored');

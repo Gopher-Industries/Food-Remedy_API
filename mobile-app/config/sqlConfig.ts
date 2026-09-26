@@ -260,6 +260,7 @@ export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
         if (v < 7) {
           await db.execAsync(PERSONALIZATION_MIGRATION_V7);
           await db.execAsync(`PRAGMA user_version = 7;`);
+          v = 7;
         }
         if (v < 8) {
           await db.execAsync(RECOMMENDATION_EVENT_MIGRATION_V8);

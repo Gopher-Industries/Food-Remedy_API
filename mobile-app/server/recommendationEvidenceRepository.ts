@@ -20,6 +20,12 @@ const SESSION_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 const EVENT_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
 const CLOCK_SKEW_MS = 5 * 60 * 1000;
 
+function childEvidenceNeedsConsent(profile: Record<string, unknown>): boolean {
+  const child = String(profile.relationship ?? '').toLowerCase() === 'child' ||
+    (typeof profile.age === 'number' && profile.age < 18);
+  return child && profile.recommendationEvidenceConsent !== true;
+}
+
 function stableJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stableJson).join(',')}]`;
   if (value && typeof value === 'object') {
@@ -55,6 +61,7 @@ export class FirestoreRecommendationEvidenceRepository implements Recommendation
         (profileData?.userId != null && profileData.userId !== uid)) {
       throw new Error('Profile unavailable.');
     }
+    if (profileData && childEvidenceNeedsConsent(profileData)) throw new Error('Profile unavailable.');
     if (input.candidates.length < 1 || input.candidates.length > 20) throw new Error('Invalid session.');
     const sessionId = randomUUID();
     const createdAt = this.now();
@@ -87,9 +94,7 @@ export class FirestoreRecommendationEvidenceRepository implements Recommendation
           !session.candidates.some(candidate => candidate.barcode === input.candidateBarcode)) {
         return 'unavailable';
       }
-      const child = String(profileData?.relationship ?? '').toLowerCase() === 'child' ||
-        (typeof profileData?.age === 'number' && profileData.age < 18);
-      if (child && profileData?.recommendationEvidenceConsent !== true) return 'unavailable';
+      if (profileData && childEvidenceNeedsConsent(profileData)) return 'unavailable';
       const createdAt = Date.parse(session.createdAt);
       const expiresAt = Date.parse(session.expiresAt);
       const occurredAt = Date.parse(input.occurredAt);

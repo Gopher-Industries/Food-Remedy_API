@@ -37,7 +37,8 @@ sessions and events when deployed. Firestore TTL deletion is asynchronous;
 profile/account deletion explicitly deletes child records first. Owner reads
 are allowed for export, but direct client creation or modification is denied.
 Child profiles require `recommendationEvidenceConsent=true` on the owned
-profile before ingestion; missing consent fails with the generic response.
+profile before a session is created or an event is ingested; missing consent
+fails with the generic response.
 
 ## Offline queue and privacy policy
 
@@ -57,8 +58,9 @@ pending events. The existing profile sync drains at most 20 due events per run.
 | Deterministic score and model version | Server-derived from issued session | Included in internal metadata | Not a client label | Aggregate version/outcome only |
 | `shown` impression | Retained for exposure accounting | Included | Never negative preference evidence | Aggregate count only |
 
-Thumbs feedback and confirmed purchases are stronger evidence than opens and
-list additions. A shown event alone has zero negative weight. BE062 defines
+Thumbs feedback and user-reported purchases can be stronger signals than opens
+and list additions, but this endpoint does not verify a purchase. A shown event
+alone has zero negative weight. BE062 defines
 the exact bounded summarization policy. Child consent revocation requires
 stopping ingestion and deleting retained child sessions/events; deletion code
 already removes those records with the child profile. A future consent UI must
@@ -75,7 +77,11 @@ npm --prefix mobile-app test -- --runInBand --silent recommendationEvidenceRepos
 npx firebase emulators:exec --only firestore --project demo-food-remedy-personalization 'node mobile-app/scripts/testPersonalizationRules.cjs'
 ```
 
-On 2026-09-26, the migration/cascade test passed; 22 targeted Jest tests passed;
-the emulator denied foreign and unauthenticated reads, direct event/session
+On 2026-09-26, the migration/cascade test passed; the full mobile Jest suite
+passed 344 tests with 9 skipped, TypeScript passed, and 10 contract tests plus
+7 subtests passed. The emulator denied foreign and unauthenticated reads, direct event/session
 writes, and reads after parent removal. No production data or TypeSafe calls
-were used. TTL configuration is committed but has not been deployed.
+were used. TTL configuration is committed but has not been deployed. The current
+static Expo export skips these API routes, so session issuance and ingestion
+remain unavailable until a server deployment is configured. Child consent
+revocation cleanup still needs an authoritative update path before activation.
