@@ -2,8 +2,8 @@
  * Nutritional Profile
  */
 export interface NutritionalProfile {
-  userId: string;                 // profile id (UUID)
-  profileId: string;              // owner user id
+  userId: string;                 // account owner UID
+  profileId: string;              // household profile ID
   firstName: string;
   lastName: string;
   status: boolean;
