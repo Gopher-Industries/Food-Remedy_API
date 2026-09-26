@@ -62,9 +62,17 @@ function dependencies(): ProductSubstitutionHandlerDependencies & { repository: 
     repository: {
       getProduct: jest.fn().mockResolvedValue(product()),
       getAuthoritativeProfile: jest.fn().mockResolvedValue(profile()),
+      getOwnedProfile: jest.fn().mockResolvedValue(profile({ profileId: 'child-profile', relationship: 'Child', age: 9 })),
       getCandidates: jest.fn().mockResolvedValue([
         product({ barcode: "036000291469", productName: "Safe snack", nutriments: { sugars_100g: 2 } }),
       ]),
+    },
+    contextRepository: {
+      getOwnedProfile: jest.fn().mockResolvedValue({ active: true, child: true, evidenceConsent: false }),
+      getExplicitPreferences: jest.fn().mockResolvedValue(null),
+      getSavedIntent: jest.fn().mockResolvedValue(null),
+      getRecentEvents: jest.fn().mockResolvedValue([]),
+      getProductSemantics: jest.fn().mockResolvedValue(null),
     },
   };
 }
@@ -82,7 +90,73 @@ function validBody(overrides: Record<string, unknown> = {}) {
   return { version: "1.0.0", barcode: BARCODE, ...overrides };
 }
 
+function v2Body(overrides: Record<string, unknown> = {}) {
+  return { version: '2.0.0', barcode: BARCODE, profileId: 'child-profile', ...overrides };
+}
+
 describe("POST /api/recommendations/substitutions", () => {
+  it('selects an owned child profile and emits explicit deterministic v2 score fields', async () => {
+    const deps = dependencies();
+    deps.sessionStore = { create: jest.fn().mockResolvedValue('server_session_2') };
+    const response = await createProductSubstitutionHandler(deps)(request(v2Body({ intention: 'Lunchbox snack' })));
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(deps.repository.getOwnedProfile).toHaveBeenCalledWith('verified-user', 'child-profile');
+    expect(deps.repository.getAuthoritativeProfile).not.toHaveBeenCalled();
+    expect(body.version).toBe('2.0.0');
+    expect(body.rankingMode).toBe('deterministic');
+    expect(body.substitutions[0]).toEqual(expect.objectContaining({
+      deterministicScore: expect.any(Number), semanticScore: null, semanticConfidence: null,
+      rankingMode: 'deterministic', reasonCodes: expect.arrayContaining(['SAFE_ALLERGEN_FREE']),
+    }));
+    expect(body.substitutions[0]).not.toHaveProperty('confidenceScore');
+    expect(body.recommendationSessionId).toBe('server_session_2');
+    expect(JSON.stringify(body)).not.toContain('Lunchbox snack');
+    expect(JSON.stringify(body)).not.toContain('Milk');
+  });
+
+  it('keeps omitted and empty v2 intentions deterministic with the v1 candidate order', async () => {
+    const deps = dependencies();
+    const handler = createProductSubstitutionHandler(deps);
+    const legacy = await (await handler(request(validBody()))).json();
+    const omitted = await (await handler(request(v2Body()))).json();
+    const empty = await (await handler(request(v2Body({ intention: '   ' })))).json();
+    expect(omitted.substitutions.map((item: { barcode: string }) => item.barcode))
+      .toEqual(legacy.substitutions.map((item: { barcode: string }) => item.barcode));
+    expect(empty.substitutions).toEqual(omitted.substitutions);
+    expect(omitted.substitutions[0].deterministicScore).toBe(legacy.substitutions[0].confidenceScore);
+  });
+
+  it('gives missing and foreign v2 profiles the same generic error', async () => {
+    const deps = dependencies();
+    deps.repository.getOwnedProfile = jest.fn().mockResolvedValue(null);
+    const missing = await createProductSubstitutionHandler(deps)(request(v2Body()));
+    const foreign = await createProductSubstitutionHandler(deps)(request(v2Body({ profileId: 'foreign-profile' })));
+    expect(missing.status).toBe(409);
+    expect(await missing.json()).toEqual(await foreign.json());
+    expect(deps.contextRepository?.getExplicitPreferences).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['allergies', ['milk']], ['preferences', {}], ['score', 1], ['weights', {}], ['profile', {}],
+  ])('rejects v2 caller override %s before reads', async (field, value) => {
+    const deps = dependencies();
+    const response = await createProductSubstitutionHandler(deps)(request(v2Body({ [field]: value })));
+    expect(response.status).toBe(400);
+    expect((await response.json()).error.code).toBe('UNSUPPORTED_FIELD');
+    expect(deps.repository.getProduct).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { intention: 'a'.repeat(241) }, { intention: 'bad\nline' }, { intention: '\ud800' },
+    { intention: 'x', savedIntentId: 'saved' }, { savedIntentId: '../foreign' },
+  ])('rejects malformed v2 intention or ownership input', async body => {
+    const deps = dependencies();
+    const response = await createProductSubstitutionHandler(deps)(request(v2Body(body)));
+    expect(response.status).toBe(400);
+    expect((await response.json()).version).toBe('2.0.0');
+    expect(deps.repository.getProduct).not.toHaveBeenCalled();
+  });
   it('issues a server session for feedback without changing deterministic candidates', async () => {
     const deps = dependencies();
     deps.sessionStore = { create: jest.fn().mockResolvedValue('server_session_1') };

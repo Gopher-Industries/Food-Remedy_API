@@ -47,7 +47,7 @@ export interface PersonalizationContext {
     occasion?: SavedShoppingIntent['occasion'];
     convenience?: SavedShoppingIntent['convenience'];
     provenance: 'explicit';
-    source: 'saved';
+    source: 'saved' | 'one_off';
   };
 }
 

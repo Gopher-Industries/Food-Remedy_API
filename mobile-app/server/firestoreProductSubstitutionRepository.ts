@@ -67,6 +67,14 @@ export class FirestoreProductSubstitutionRepository implements ProductSubstituti
     return toProfile(self.data(), uid, self.id);
   }
 
+  async getOwnedProfile(uid: string, profileId: string): Promise<NutritionalProfile | null> {
+    const snapshot = await this.firestore.collection('USERS').doc(uid).collection('PROFILES').doc(profileId).get();
+    const data = snapshot.data();
+    if (!snapshot.exists || !data || data.status === false ||
+        (data.userId != null && data.userId !== uid)) return null;
+    return toProfile(data, uid, profileId);
+  }
+
   async getCandidates(original: Product, maximum: number): Promise<Product[]> {
     const categories = candidateCategories(original);
     if (!categories.length) return [];
