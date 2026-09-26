@@ -15,7 +15,7 @@ const apiResponse = {
   targetProduct: { barcode: '12345678', productName: 'Target', brand: null, nutriscoreGrade: 'c', category: 'Snacks' },
   substitutions: [{
     barcode: '87654321', productName: 'Alternative', brand: null, nutriscoreGrade: 'b',
-    safetyRating: 'green', deterministicScore: 80, semanticScore: 0.91,
+    safetyRating: 'green', deterministicScore: 0.8, semanticScore: 0.91,
     semanticConfidence: 0.92, rankingMode: 'semantic', reasonCodes: ['BETTER_NUTRI_SCORE', 'SEMANTIC_FIT_APPLIED'],
   }],
   rankingMode: 'semantic', rankingReasonCode: 'SEMANTIC_CONFIDENT', emptyStateReason: null,
@@ -89,4 +89,42 @@ test('does not fabricate feedback when no server session exists', async () => {
   expect(queueRecommendationEvent).not.toHaveBeenCalled();
   result.recommendationSessionId = 'session-1';
   await expect(recordRecommendationFeedback(result, '99999999', 'opened')).rejects.toThrow('Candidate is not in this recommendation session.');
+});
+
+test('does not queue feedback under a different signed-in account', async () => {
+  const result = await getIntentAwareRecommendations({ barcode: '12345678', profileId: 'child-1' });
+  const originalUser = auth.currentUser;
+  (auth as unknown as { currentUser: unknown }).currentUser = { uid: 'other-owner' };
+  try {
+    await expect(recordRecommendationFeedback(result, '87654321', 'thumbs_up'))
+      .rejects.toThrow('Recommendation account changed.');
+    expect(queueRecommendationEvent).not.toHaveBeenCalled();
+  } finally {
+    (auth as unknown as { currentUser: unknown }).currentUser = originalUser;
+  }
+});
+
+test('rejects a non-local HTTP API before sending an auth token', async () => {
+  process.env.EXPO_PUBLIC_PERSONALIZATION_API_BASE_URL = 'http://api.example.test';
+  await expect(getIntentAwareRecommendations({ barcode: '12345678', profileId: 'child-1' }))
+    .rejects.toThrow('Recommendations are unavailable.');
+  expect(global.fetch).not.toHaveBeenCalled();
+});
+
+test('bounds a stalled auth token before making the API request', async () => {
+  const originalUser = auth.currentUser;
+  (auth as unknown as { currentUser: unknown }).currentUser = {
+    uid: 'owner', getIdToken: () => new Promise(() => undefined),
+  };
+  jest.useFakeTimers();
+  try {
+    const pending = expect(getIntentAwareRecommendations({ barcode: '12345678', profileId: 'child-1' }))
+      .rejects.toThrow('Recommendations are unavailable.');
+    await jest.advanceTimersByTimeAsync(6_000);
+    await pending;
+    expect(global.fetch).not.toHaveBeenCalled();
+  } finally {
+    jest.useRealTimers();
+    (auth as unknown as { currentUser: unknown }).currentUser = originalUser;
+  }
 });

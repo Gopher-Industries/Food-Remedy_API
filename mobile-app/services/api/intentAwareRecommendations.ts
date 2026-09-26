@@ -10,6 +10,7 @@ import type { ProductSubstitutionV2Response } from '@/server/productSubstitution
 const BARCODE = /^[0-9]{8,14}$/;
 const CONTROL = /[\u0000-\u001f\u007f-\u009f]/;
 const REQUEST_TIMEOUT_MS = 6_000;
+const resultOwners = new WeakMap<IntentAwareResult, string>();
 
 export interface IntentAwareRequest {
   barcode: string;
@@ -99,17 +100,48 @@ function mapResponse(value: unknown, input: IntentAwareRequest): IntentAwareResu
   };
 }
 
+function configuredApiBase(): string {
+  const configured = process.env.EXPO_PUBLIC_PERSONALIZATION_API_BASE_URL?.trim();
+  if (!configured) throw new Error('Recommendations are unavailable.');
+  try {
+    const url = new URL(configured);
+    const local = ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
+    if ((url.protocol !== 'https:' && !(local && url.protocol === 'http:')) ||
+        url.username || url.password || url.search || url.hash) throw new Error('Invalid API base.');
+    return url.toString().replace(/\/+$/, '');
+  } catch {
+    throw new Error('Recommendations are unavailable.');
+  }
+}
+
+function untilAborted<T>(operation: Promise<T>, signal: AbortSignal): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const abort = () => {
+      signal.removeEventListener('abort', abort);
+      reject(new Error('Recommendations are unavailable.'));
+    };
+    if (signal.aborted) return abort();
+    signal.addEventListener('abort', abort, { once: true });
+    operation.then(value => {
+      signal.removeEventListener('abort', abort);
+      resolve(value);
+    }, error => {
+      signal.removeEventListener('abort', abort);
+      reject(error);
+    });
+  });
+}
+
 /** Backend contract boundary. No local ranking or caller-supplied safety profile is accepted. */
 export async function getIntentAwareRecommendations(input: IntentAwareRequest): Promise<IntentAwareResult> {
   const body = requestBody(input);
   const currentUser = auth.currentUser;
   if (!currentUser) throw new Error('Sign in to get recommendations.');
-  const base = process.env.EXPO_PUBLIC_PERSONALIZATION_API_BASE_URL?.replace(/\/$/, '');
-  if (!base) throw new Error('Recommendations are unavailable.');
+  const base = configuredApiBase();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
-    const token = await currentUser.getIdToken();
+    const token = await untilAborted(currentUser.getIdToken(), controller.signal);
     if (auth.currentUser?.uid !== currentUser.uid) throw new Error('Sign in to get recommendations.');
     const response = await fetch(`${base}/api/recommendations/substitutions`, {
       method: 'POST',
@@ -117,7 +149,9 @@ export async function getIntentAwareRecommendations(input: IntentAwareRequest): 
       body: JSON.stringify(body), signal: controller.signal,
     });
     if (!response.ok) throw new Error('Recommendations are unavailable.');
-    return mapResponse(await response.json(), input);
+    const result = mapResponse(await response.json(), input);
+    resultOwners.set(result, currentUser.uid);
+    return result;
   } catch {
     throw new Error('Recommendations are unavailable.');
   } finally {
@@ -134,6 +168,7 @@ export async function recordRecommendationFeedback(
 ): Promise<string | null> {
   const user = auth.currentUser;
   if (!user) throw new Error('Sign in to record feedback.');
+  if (resultOwners.get(result) !== user.uid) throw new Error('Recommendation account changed.');
   if (!result.recommendationSessionId) return null;
   if (!result.substitutions.some(item => item.barcode === candidateBarcode)) {
     throw new Error('Candidate is not in this recommendation session.');
