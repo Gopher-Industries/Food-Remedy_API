@@ -21,6 +21,9 @@ jest.mock("../config/sqlConfig", () => ({
 jest.mock("../services/sync/syncPersonalization", () => ({
   syncPersonalizationForUser: jest.fn().mockResolvedValue(undefined),
 }));
+jest.mock('../services/sync/syncRecommendationEvents', () => ({
+    drainRecommendationEvents: jest.fn().mockResolvedValue({ delivered: 0, rejected: 0, deferred: 0 }),
+}));
 
 jest.mock("../services/sqlDatabase/profiles.dao", () => ({
   upsertProfile: jest.fn().mockResolvedValue(undefined),

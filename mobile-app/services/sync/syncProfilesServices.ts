@@ -12,6 +12,7 @@ import {
   listProfilesForUser,
 } from "../sqlDatabase/profiles.dao";
 import { syncPersonalizationForUser } from './syncPersonalization';
+import { drainRecommendationEvents } from './syncRecommendationEvents';
 
 type Profile = {
   profileId: string;
@@ -60,7 +61,7 @@ export const fetchProfilesFromFirebase = async (
   try {
     return await loadProfilesFromFirebase(userId);
   } catch (error) {
-    console.error("Firebase fetch error:", error);
+    console.warn('Firebase profile fetch unavailable.');
     return [];
   }
 };
@@ -73,7 +74,7 @@ export const fetchProfilesFromSQLite = async (userId: string) => {
     const db = await initialiseSQLiteDatabase();
     return await listProfilesForUser(db, userId);
   } catch (error) {
-    console.error("SQLite fetch error:", error);
+    console.warn('Local profile fetch unavailable.');
     return [];
   }
 };
@@ -99,7 +100,7 @@ export const saveProfilesToSQLite = async (profiles: any[]) => {
   await upsertProfile(db, normalizedProfile);
 }
   } catch (error) {
-    console.error("SQLite save error:", error);
+    console.warn('Local profile save unavailable.');
   }
 };
 
@@ -122,7 +123,7 @@ export const syncProfilesToCloud = async (userId: string) => {
       );
     }
   } catch (error) {
-    console.error("Firebase push error:", error);
+    console.warn('Firebase profile push unavailable.');
   }
 };
 
@@ -144,7 +145,7 @@ const resolveConflict = (local: any, cloud: any) => {
 // ==============================
 export const syncProfiles = async (userId: string) => {
   try {
-    console.log(` Starting profile sync for user: ${userId}`);
+    console.log('Starting profile sync.');
 
     let cloudProfiles: Profile[] = [];
     let localProfiles: Profile[] = [];
@@ -221,7 +222,12 @@ export const syncProfiles = async (userId: string) => {
       // A connectivity or validation failure leaves local records intact for retry.
       console.warn('Personalization sync unavailable; will retry on next profile sync.');
     }
+    try {
+      await drainRecommendationEvents(userId);
+    } catch {
+      console.warn('Recommendation feedback sync unavailable; will retry on next profile sync.');
+    }
   } catch (error) {
-    console.error("Sync error:", error);
+    console.warn('Profile sync unavailable.');
   }
 };

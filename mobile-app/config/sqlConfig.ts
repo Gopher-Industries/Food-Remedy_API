@@ -1,5 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 import { PERSONALIZATION_MIGRATION_V7 } from './personalizationMigration';
+import { RECOMMENDATION_EVENT_MIGRATION_V8 } from './recommendationEventMigration';
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -259,6 +260,10 @@ export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
         if (v < 7) {
           await db.execAsync(PERSONALIZATION_MIGRATION_V7);
           await db.execAsync(`PRAGMA user_version = 7;`);
+        }
+        if (v < 8) {
+          await db.execAsync(RECOMMENDATION_EVENT_MIGRATION_V8);
+          await db.execAsync(`PRAGMA user_version = 8;`);
         }
       });
 

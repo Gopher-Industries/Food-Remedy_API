@@ -51,6 +51,10 @@
   - `schemaVersion: "1.0.0"`, `profileId`, bounded explicit `entries`, `updatedAt`
 - `/USERS/{userId}/PROFILES/{profileId}/SAVED_INTENTS/{intentId}`
   - Versioned, explicit saved intention and optional deletion tombstone
+- `/USERS/{userId}/PROFILES/{profileId}/RECOMMENDATION_SESSIONS/{sessionId}`
+  - Server-issued candidate set and deterministic ranking metadata; seven-day TTL
+- `/USERS/{userId}/PROFILES/{profileId}/RECOMMENDATION_EVENTS/{eventId}`
+  - Validated event plus server-derived metadata; 90-day TTL
 - Firestore rules require the authenticated owner and parent profile; saved-intent
   writes require an active parent and a bounded record. Preference writes use
   the authenticated backend validator. Missing parents make children unreadable. Profile

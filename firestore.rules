@@ -42,6 +42,16 @@ service cloud.firestore {
           allow create, update: if owner(uid) && activeProfile(uid, profileId) && validIntent(profileId, intentId);
           allow delete: if owner(uid);
         }
+        match /RECOMMENDATION_SESSIONS/{sessionId} {
+          allow read: if owner(uid) && existingProfile(uid, profileId);
+          allow create, update: if false;
+          allow delete: if owner(uid);
+        }
+        match /RECOMMENDATION_EVENTS/{eventId} {
+          allow read: if owner(uid) && existingProfile(uid, profileId);
+          allow create, update: if false;
+          allow delete: if owner(uid);
+        }
       }
       match /SHOPPING_LISTS/{listId} {
         allow read, write: if owner(uid);
