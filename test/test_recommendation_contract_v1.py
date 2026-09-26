@@ -32,14 +32,15 @@ class TestRecommendationContractV1(unittest.TestCase):
         self.assertEqual(SCHEMA["title"], "RecommendationSubstitutionsV1")
 
     def test_request_barcode_and_limit_bounds(self):
-        self.assertFalse(errors("SubstitutionRequest", {"barcode": "9300601234567", "limit": 5}))
+        self.assertFalse(errors("SubstitutionRequest", {"version": "1.0.0", "barcode": "9300601234567", "limit": 5}))
         for request in (
-            {"barcode": "INVALID_BARCODE"},
-            {"barcode": "123"},
-            {"barcode": "9300601234567", "limit": 0},
-            {"barcode": "9300601234567", "limit": 21},
-            {"barcode": "9300601234567", "limit": True},
-            {"barcode": "9300601234567", "overrides": {"avoidAllergens": []}},
+            {"version": "1.0.0", "barcode": "INVALID_BARCODE"},
+            {"version": "1.0.0", "barcode": "123"},
+            {"version": "1.0.0", "barcode": "9300601234567", "limit": 0},
+            {"version": "1.0.0", "barcode": "9300601234567", "limit": 21},
+            {"version": "1.0.0", "barcode": "9300601234567", "limit": True},
+            {"version": "1.0.0", "barcode": "9300601234567", "overrides": {"avoidAllergens": []}},
+            {"version": "2.0.0", "barcode": "9300601234567"},
         ):
             with self.subTest(request=request):
                 self.assertTrue(errors("SubstitutionRequest", request))
@@ -73,6 +74,7 @@ class TestRecommendationContractV1(unittest.TestCase):
 
     def test_error_envelope_rejects_raw_error_fields(self):
         envelope = {
+            "version": "1.0.0",
             "error": {
                 "code": "INVALID_BARCODE",
                 "message": "Barcode must be numeric.",
