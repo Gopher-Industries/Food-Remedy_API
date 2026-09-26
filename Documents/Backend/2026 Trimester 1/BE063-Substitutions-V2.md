@@ -40,3 +40,8 @@ These cover malformed intent, field tampering, foreign-profile symmetry,
 owner/child profile selection, hard safety exclusions, v1 order equivalence,
 and the v2 response schema. No TypeSafe call or ranking weight change occurs
 in this ticket.
+
+On 2026-09-26, 366 mobile Jest tests passed with 11 skipped, TypeScript passed,
+the v1/v2 contract suite passed seven tests and seven subtests, and the
+Firestore emulator passed five repository tests. The current static Expo export
+skips API routes, so v2 requires a deployed server before clients can call it.
