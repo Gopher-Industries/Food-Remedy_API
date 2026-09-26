@@ -2,6 +2,8 @@ import { deleteApp, initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { FirestoreProductSubstitutionRepository } from "@/server/firestoreProductSubstitutionRepository";
 import { createProductSubstitutionResponse } from "@/server/productSubstitutionService";
+import { FirestorePersonalizationContextRepository } from '@/server/firestorePersonalizationContextRepository';
+import { resolvePersonalizationContext, PersonalizationContextUnavailableError } from '@/server/personalizationContext';
 
 const describeWithEmulator = process.env.FIRESTORE_EMULATOR_HOST ? describe : describe.skip;
 const projectId = "demo-food-remedy-be037";
@@ -35,13 +37,28 @@ describeWithEmulator("FirestoreProductSubstitutionRepository", () => {
   beforeAll(async () => {
     await Promise.all([
       firestore.collection("PRODUCTS").doc(originalBarcode).set(product(originalBarcode)),
-      firestore.collection("PRODUCTS").doc(safeBarcode).set(product(safeBarcode)),
+      firestore.collection("PRODUCTS").doc(safeBarcode).set(product(safeBarcode, { semanticAttributes: {
+        schemaVersion: '1.0.0', evidenceCompleteness: 'partial',
+        texture: { value: 'soft', source: 'manual', sourceVersion: 'fixture-v1', confidence: 1, generatedAt: '2026-09-25T00:00:00Z' },
+      } })),
       firestore.collection("PRODUCTS").doc(milkBarcode).set(product(milkBarcode, { allergens: ["milk"], traces: "sesame" })),
       firestore.collection("USERS").doc("owner").collection("PROFILES").doc("self").set({ relationship: "Self", allergies: ["Milk"], additives: [], intolerances: [], dietaryForm: [] }),
       firestore.collection("USERS").doc("other-user").collection("PROFILES").doc("self").set({ relationship: "Self", allergies: [], additives: [], intolerances: [], dietaryForm: ["Vegan"] }),
       firestore.collection("USERS").doc("inactive-user").collection("PROFILES").doc("self").set({ relationship: "Self", status: false, allergies: [] }),
       firestore.collection("USERS").doc("ambiguous-user").collection("PROFILES").doc("self-1").set({ relationship: "Self", allergies: [] }),
       firestore.collection("USERS").doc("ambiguous-user").collection("PROFILES").doc("self-2").set({ relationship: "Self", allergies: ["Milk"] }),
+      firestore.collection('USERS').doc('owner').collection('PROFILES').doc('child').set({ relationship: 'Child', age: 9, status: true, recommendationEvidenceConsent: true, allergies: ['Milk'] }),
+      firestore.collection('USERS').doc('owner').collection('PROFILES').doc('self').collection('PERSONALIZATION').doc('preferences').set({
+        schemaVersion: '1.0.0', profileId: 'self', updatedAt: '2026-09-25T00:00:00Z',
+        entries: [{ dimension: 'texture', value: 'crunchy', sentiment: 'like', provenance: 'explicit', confidence: 1, sourceVersion: 'fixture-v1', updatedAt: '2026-09-25T00:00:00Z' }],
+      }),
+      firestore.collection('USERS').doc('owner').collection('PROFILES').doc('child').collection('PERSONALIZATION').doc('preferences').set({
+        schemaVersion: '1.0.0', profileId: 'child', updatedAt: '2026-09-25T00:00:00Z',
+        entries: [{ dimension: 'texture', value: 'soft', sentiment: 'like', provenance: 'explicit', confidence: 1, sourceVersion: 'fixture-v1', updatedAt: '2026-09-25T00:00:00Z' }],
+      }),
+      firestore.collection('USERS').doc('owner').collection('PROFILES').doc('child').collection('RECOMMENDATION_EVENTS').doc('event-1').set({
+        event: { profileId: 'child', action: 'thumbs_up', candidateBarcode: safeBarcode, occurredAt: '2026-09-25T00:00:00Z', receivedAt: '2026-09-25T00:00:00Z' },
+      }),
     ]);
   });
 
@@ -80,5 +97,19 @@ describeWithEmulator("FirestoreProductSubstitutionRepository", () => {
   it("rejects inactive or ambiguous authoritative profiles", async () => {
     expect(await repository.getAuthoritativeProfile("inactive-user")).toBeNull();
     expect(await repository.getAuthoritativeProfile("ambiguous-user")).toBeNull();
+  });
+
+  it('resolves independent owner and child contexts without crossing a UID path', async () => {
+    const contextRepository = new FirestorePersonalizationContextRepository(firestore);
+    const clock = Date.parse('2026-09-26T00:00:00Z');
+    const self = await resolvePersonalizationContext(contextRepository, 'owner', 'self', undefined, clock);
+    const child = await resolvePersonalizationContext(contextRepository, 'owner', 'child', undefined, clock);
+    expect(self.explicit[0].value).toBe('crunchy');
+    expect(self.observed).toEqual([]);
+    expect(child.explicit[0].value).toBe('soft');
+    expect(child.observed).toEqual([expect.objectContaining({ value: 'soft', provenance: 'observed' })]);
+    expect(JSON.stringify(child)).not.toContain('Milk');
+    await expect(resolvePersonalizationContext(contextRepository, 'other-user', 'child', undefined, clock))
+      .rejects.toBeInstanceOf(PersonalizationContextUnavailableError);
   });
 });
