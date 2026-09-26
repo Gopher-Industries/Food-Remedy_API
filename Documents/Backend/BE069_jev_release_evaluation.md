@@ -12,6 +12,8 @@ The command is network-free and prints `BE069_EVALUATION_REPORT` as JSON. `npm r
 
 Dataset `food-jev-eval-v1` covers dip crackers, a lunchbox treat, commuting breakfast, recipe coating, mild snack, crunchy texture, a familiar shared snack and a portable snack. Each case has a cross-category positive, two plausible same-category distractors, a declared allergen conflict, and a missing-category product. The positive labels are **engineering-provisional**, not human-approved judgments.
 
+The offline and opt-in live evaluators use the same safety-checked comparison helper as the v2 endpoint. It adds eligible retrieved candidates to the deterministic display set before semantic scoring; otherwise the cross-category positives in this dataset would be silently omitted.
+
 ## Network-free baseline, 2026-09-26
 
 Pinned versions: catalogue `synthetic-catalogue-v1`, model response fixture `jev-1.13.0`, question set `food-fit-score-v1`, policy `food-composite-v1`. The recorded response fixture assigns high-confidence fit to the intended positive and low fit to distractors. It verifies policy wiring and regression behavior; it is not evidence that the live model will make those judgments.

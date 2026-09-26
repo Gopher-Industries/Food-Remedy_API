@@ -109,6 +109,22 @@ export interface ProductSubstitutionV2Execution {
   semanticFallbackReason?: CompositeFallbackReason | 'unavailable';
 }
 
+/** The same safety-checked comparison set is used by ranking and release evaluation. */
+export function semanticComparisonCandidates(
+  original: Product, eligible: RankedSubstitution[], semanticShortlist: Product[], profile: NutritionalProfile
+): RankedSubstitution[] {
+  const seen = new Set<string>();
+  return [...eligible.map(item => item.product), ...semanticShortlist]
+    .filter(product => {
+      if (seen.has(product.barcode)) return false;
+      seen.add(product.barcode);
+      return true;
+    }).slice(0, 20).flatMap(product => {
+      const result = rankSemanticCandidate(original, product, profile);
+      return result ? [result] : [];
+    });
+}
+
 /** V2 changes the authenticated selection and response contract, not ranking. */
 export async function executeProductSubstitutionV2(
   repository: ProductSubstitutionRepository,
@@ -157,17 +173,8 @@ export async function applySemanticRankingV2(
   signal?: AbortSignal
 ): Promise<ProductSubstitutionV2Execution> {
   if (!execution.response.substitutions.length || !execution.context.intention) return execution;
-  const seen = new Set<string>();
-  const comparison = [...execution.eligible.map(item => item.product), ...execution.semanticShortlist]
-    .filter(product => {
-      if (seen.has(product.barcode)) return false;
-      seen.add(product.barcode);
-      return true;
-    }).slice(0, 20);
-  const scored = comparison.flatMap(product => {
-    const result = rankSemanticCandidate(execution.original, product, execution.profile);
-    return result ? [result] : [];
-  });
+  const scored = semanticComparisonCandidates(execution.original, execution.eligible,
+    execution.semanticShortlist, execution.profile);
   const evaluations = await evaluateSemanticShortlist(client, execution.original,
     scored.map(item => item.product), execution.profile, execution.context, signal);
   if (signal?.aborted) {

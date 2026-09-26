@@ -2,6 +2,7 @@ import { buildSemanticShortlist } from '@/server/hybridCandidateRetrieval';
 import { composeSubstitutionRanking, COMPOSITE_RANKING_POLICY_VERSION } from '@/server/compositeSubstitutionRanking';
 import { evaluateSemanticShortlist, SEMANTIC_QUESTION_SET_VERSION } from '@/server/semanticFitEvaluator';
 import { createSemanticFitClientFromEnvironment } from '@/server/typesafeSemanticFitClient';
+import { semanticComparisonCandidates } from '@/server/productSubstitutionV2';
 import { rankSubstitutionCandidates } from '@/services/substitutionEligibility';
 import { jevEvaluationDataset, JEV_EVALUATION_CATALOGUE_VERSION,
   JEV_EVALUATION_DATASET_VERSION } from './fixtures/jevEvaluationDataset';
@@ -37,10 +38,12 @@ const requested = process.env.RUN_TYPESAFE_LIVE === '1';
       const baseline = rankSubstitutionCandidates(fixture.original, fixture.candidates, fixture.profile, 3);
       const shortlist = buildSemanticShortlist(fixture.original, fixture.candidates, fixture.profile, context, 2);
       report.candidateRecallAt2 += Number(shortlist.products.some(item => item.barcode === fixture.positiveBarcode));
+      const comparison = semanticComparisonCandidates(fixture.original, baseline.substitutions,
+        shortlist.products, fixture.profile);
       report.deterministicTop1Relevance += Number(baseline.substitutions[0]?.barcode === fixture.positiveBarcode);
       const evaluations = await evaluateSemanticShortlist(client, fixture.original,
-        baseline.substitutions.map(item => item.product), fixture.profile, context);
-      const composition = composeSubstitutionRanking(baseline.substitutions, evaluations, 3);
+        comparison.map(item => item.product), fixture.profile, context);
+      const composition = composeSubstitutionRanking(comparison, evaluations, 3);
       const output = composition.applied ? composition.candidates.map(item => item.candidate.barcode)
         : baseline.substitutions.map(item => item.barcode);
       report.semanticCoverage += Number(composition.applied);

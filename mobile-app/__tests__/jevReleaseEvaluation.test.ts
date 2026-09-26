@@ -3,6 +3,7 @@ import { COMPOSITE_POLICY, COMPOSITE_RANKING_POLICY_VERSION, composeSubstitution
 import { evaluateSemanticShortlist, SEMANTIC_QUESTION_SET_VERSION,
   semanticFitQuestions, type CandidateSemanticEvaluation } from '@/server/semanticFitEvaluator';
 import { MockSemanticFitClient } from '@/server/semanticFitClient';
+import { semanticComparisonCandidates } from '@/server/productSubstitutionV2';
 import { rankSubstitutionCandidates } from '@/services/substitutionEligibility';
 import { jevEvaluationDataset, JEV_EVALUATION_CATALOGUE_VERSION,
   JEV_EVALUATION_DATASET_VERSION, JEV_EVALUATION_LABEL_STATUS } from './fixtures/jevEvaluationDataset';
@@ -58,6 +59,8 @@ describe('BE069 network-free Jev release evaluation', () => {
       const context = semanticContext(fixture.intention);
       const shortlist = buildSemanticShortlist(fixture.original, fixture.candidates, fixture.profile, context, 2);
       report.candidateRecallAt2 += Number(shortlist.products.some(item => item.barcode === fixture.positiveBarcode));
+      const comparison = semanticComparisonCandidates(fixture.original, baseline.substitutions,
+        shortlist.products, fixture.profile);
       const positiveName = fixture.candidates.find(item => item.barcode === fixture.positiveBarcode)!.productName;
       const client = new MockSemanticFitClient(request => {
         const candidate = request.state.candidate as { name: string };
@@ -69,8 +72,8 @@ describe('BE069 network-free Jev release evaluation', () => {
           }])), usage: { inputTokens: 120, outputTokens: 8 }, durationMs: 12 };
       });
       const evaluations = await evaluateSemanticShortlist(client, fixture.original,
-        baseline.substitutions.map(item => item.product), fixture.profile, context);
-      const composed = composeSubstitutionRanking(baseline.substitutions, evaluations, 3);
+        comparison.map(item => item.product), fixture.profile, context);
+      const composed = composeSubstitutionRanking(comparison, evaluations, 3);
       if (!composed.applied) report.failures.policy++;
       const assistedOrder = composed.applied
         ? composed.candidates.map(item => item.candidate.barcode) : baselineOrder;
@@ -115,7 +118,8 @@ describe('BE069 network-free Jev release evaluation', () => {
     // These fixture gates are engineering defaults. QA/product label and threshold approval is still required.
     expect(report.knownConflictRecommendations).toBe(0);
     expect(report.candidateRecallAt2).toBe(1);
-    expect(report.semanticTop1Relevance).toBeGreaterThanOrEqual(report.deterministicTop1Relevance);
+    expect(report.semanticTop1Relevance).toBeGreaterThan(report.deterministicTop1Relevance);
+    expect(report.semanticMeanReciprocalRank).toBeGreaterThan(report.deterministicMeanReciprocalRank);
     expect(report.semanticCoverage).toBe(1);
     expect(report.fallbackParity).toBe(1);
     expect(report.failures.jev).toBe(0);
