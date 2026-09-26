@@ -1,6 +1,6 @@
 # BE039 — Product Substitution Quality, Observability and Controlled Rollout
 
-## Approved evaluation set and release gates
+## Synthetic evaluation set and proposed release gates
 
 The synthetic evaluation set is [substitutionQualityEvaluationFixtures.ts](../../../mobile-app/__tests__/fixtures/substitutionQualityEvaluationFixtures.ts). It covers direct milk conflict, seafood trace conflict, avoided additive, mandatory vegan label, category relevance, and missing category data. It contains no production product, user, profile, or allergy data.
 
@@ -14,20 +14,20 @@ The `substitutionQualityEvaluation.test.ts` suite enforces these release gates:
 | Empty-result rate | <= 25% | 25% |
 | Ranking latency (50 fixture runs) | < 50 ms/run | Enforced by test |
 
-The suite is a release gate, not a medical-safety claim. The test must pass before enabling a wider rollout.
+The suite is a code regression gate, not a medical-safety claim or a production acceptance result. QA and product still need to review the fixture and thresholds before a wider rollout.
 
 ## Operational metric events
 
-`POST /api/recommendations/substitutions` emits one structured `product_substitution` event per request through `ConsoleSubstitutionMetrics`. The event has only:
+When hosted and enabled, `POST /api/recommendations/substitutions` emits one structured `product_substitution` event per request through `ConsoleSubstitutionMetrics`. Each event has only bounded counts and enums:
 
 - outcome and duration in milliseconds;
 - result count and empty-state reason;
-- candidate, eligibility, exclusion, and category-data aggregate counts; and
+- candidate, eligibility, exclusion, category-mismatch, and category-data counts; and
 - reason-code frequency counts.
 
 It must never include a user ID, barcode, profile ID, profile field, matched restriction, raw allergy value, request body, exception message, or product name. The `substitutionObservability.test.ts` privacy test protects this contract.
 
-Create the **Product substitutions v1** dashboard from these event fields with panels for request outcome, p50/p95 duration, result count, empty-state rate, filtering outcome, data-quality failure count, and reason-code distribution. Backend owns event delivery and alert routing; QA owns the evaluation fixture; product owns the gate values and rollout approval; mobile owns the user-facing unavailable and empty states.
+The **Product substitutions v1** dashboard and alert routing are not yet configured. They require a deployed server and log destination. Build panels for request outcome, p50/p95 duration, result count, empty-state rate, filtering outcome, data-quality failure count, and reason-code distribution. Review per-request count logging for privacy before enabling the route. Backend owns event delivery and alert routing; QA owns the evaluation fixture; product owns the gate values and rollout approval; mobile owns the user-facing unavailable and empty states.
 
 ## Alerts and incident response
 
@@ -59,4 +59,6 @@ Set `SUBSTITUTIONS_ROLLOUT=disabled` in runtime configuration to roll back witho
 
 - Console metrics require the deployment platform’s structured-log export to back the dashboard and alerts.
 - Category candidate retrieval is limited to catalogue category tags; sparse tags can correctly produce an empty state.
+- The checked-in `database/seeding/products_enriched.json` has category tags on 477 of 5,000 products as of 2026-09-26. The synthetic coverage gate does not represent production coverage.
+- The Expo static export currently skips API routes. A deployed server and native production origin are required before the rollout flag can serve users.
 - The safety gate identifies known conflicts and insufficient evidence but does not make a medical-safety claim.

@@ -5,6 +5,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { usePreferences } from "@/components/providers/PreferencesProvider";
 import Tt from "@/components/ui/UIText";
 import { useRouter } from "expo-router";
+import Constants from "expo-constants";
 import { Pressable, ScrollView, View } from "react-native";
 import { color, spacing } from "@/app/design/token";
 import Screen from "@/components/layout/Screen";
@@ -20,6 +21,7 @@ const hcText = (on: boolean) => (on ? "text-black" : "text-hsl30 dark:text-hsl90
 export default function SettingsPage() {
   const router = useRouter();
   const { handleSignOut } = useAuth();
+  const appVersion = Constants.expoConfig?.version ?? "Unknown";
 
   // completed features
   const {
@@ -53,13 +55,13 @@ export default function SettingsPage() {
         >
           {({ pressed }) => (
             <>
-              <View className="flex-row items-center gap-x-4">
+              <View className="flex-row items-center gap-x-4 flex-1 pr-3">
                 <IconGeneral
                   type="notification-settings"
                   fill={pressed ? color.primary : highContrast ? "#000000" : color.iconDefault}
                   size={spacing.xl}
                 />
-                <View>
+                <View className="flex-1">
                   <Tt className="font-interMedium">Notification</Tt>
                   <Tt className="text-sm">Edit Notification Settings</Tt>
                 </View>
@@ -82,13 +84,13 @@ export default function SettingsPage() {
         >
           {({ pressed }) => (
             <>
-              <View className="flex-row items-center gap-x-4">
+              <View className="flex-row items-center gap-x-4 flex-1 pr-3">
                 <IconGeneral
                   type="dark-mode"
                   fill={pressed ? color.primary : highContrast ? "#000000" : color.iconDefault}
                   size={spacing.xl}
                 />
-                <View>
+                <View className="flex-1">
                   <Tt className="font-interMedium">Dark Mode</Tt>
                   <Tt className="text-sm">Toggle Dark Mode</Tt>
                 </View>
@@ -98,6 +100,7 @@ export default function SettingsPage() {
                 className={`px-2 rounded ${
                   highContrast ? "bg-white dark:bg-hsl15 border border-black" : "bg-white dark:bg-hsl15 border border-hsl90 dark:border-hsl20"
                 }`}
+                style={{ flexShrink: 0 }}
               >
                 <Tt>{darkMode ? "On" : "Off"}</Tt>
               </View>
@@ -190,13 +193,13 @@ export default function SettingsPage() {
         >
           {({ pressed }) => (
             <>
-              <View className="flex-row items-center gap-x-4">
+              <View className="flex-row items-center gap-x-4 flex-1 pr-3">
                 <IconGeneral
                   type="info"
                   fill={pressed ? color.primary : highContrast ? "#000000" : color.iconDefault}
                   size={spacing.xl}
                 />
-                <View>
+                <View className="flex-1">
                   <Tt className="font-interMedium">High Contrast</Tt>
                   <Tt className="text-sm">Improve readability</Tt>
                 </View>
@@ -206,6 +209,7 @@ export default function SettingsPage() {
                 className={`px-2 rounded ${
                   highContrast ? "bg-white dark:bg-hsl15 border border-black" : "bg-white dark:bg-hsl15 border border-hsl90 dark:border-hsl20"
                 }`}
+                style={{ flexShrink: 0 }}
               >
                 <Tt>{highContrast ? "On" : "Off"}</Tt>
               </View>
@@ -261,13 +265,13 @@ export default function SettingsPage() {
         >
           {({ pressed }) => (
             <>
-              <View className="flex-row items-center gap-x-4">
+              <View className="flex-row items-center gap-x-4 flex-1 pr-3">
                 <IconGeneral
                   type="report"
                   fill={pressed ? color.primary : highContrast ? "#000000" : color.iconDefault}
                   size={spacing.xl}
                 />
-                <View>
+                <View className="flex-1">
                   <Tt className="font-interMedium">Report Issue / Feedback</Tt>
                   <Tt className="text-sm">Let us know your thoughts</Tt>
                 </View>
@@ -290,13 +294,13 @@ export default function SettingsPage() {
         >
           {({ pressed }) => (
             <>
-              <View className="flex-row items-center gap-x-4">
+              <View className="flex-row items-center gap-x-4 flex-1 pr-3">
                 <IconGeneral
                   type="doc"
                   fill={pressed ? color.primary : highContrast ? "#000000" : color.iconDefault}
                   size={spacing.xl}
                 />
-                <View>
+                <View className="flex-1">
                   <Tt className="font-interMedium">Privacy Policy</Tt>
                   <Tt className="text-sm">Privacy & Legal Information</Tt>
                 </View>
@@ -319,13 +323,13 @@ export default function SettingsPage() {
         >
           {({ pressed }) => (
             <>
-              <View className="flex-row items-center gap-x-4">
+              <View className="flex-row items-center gap-x-4 flex-1 pr-3">
                 <IconGeneral
                   type="legal"
                   fill={pressed ? color.primary : highContrast ? "#000000" : color.iconDefault}
                   size={spacing.xl}
                 />
-                <View>
+                <View className="flex-1">
                   <Tt className="font-interMedium">Terms of Service</Tt>
                   <Tt className="text-sm">View Your Agreements</Tt>
                 </View>
@@ -348,15 +352,15 @@ export default function SettingsPage() {
         >
           {({ pressed }) => (
             <>
-              <View className="flex-row items-center gap-x-4">
+              <View className="flex-row items-center gap-x-4 flex-1 pr-3">
                 <IconGeneral
                   type="info"
                   fill={pressed ? color.primary : highContrast ? "#000000" : color.iconDefault}
                   size={spacing.xl}
                 />
-                <View>
+                <View className="flex-1">
                   <Tt className="font-interMedium">About</Tt>
-                  <Tt className="text-sm">Version {"1.0.0"}</Tt>
+                  <Tt className="text-sm">Version {appVersion}</Tt>
                 </View>
               </View>
 
@@ -368,6 +372,42 @@ export default function SettingsPage() {
             </>
           )}
         </Pressable>
+
+        {/* QA DIAGNOSTICS — dev/preview builds only */}
+        {(Constants.expoConfig?.extra?.appVariant ?? "development") !== "production" && (
+          <>
+            <View className={`px-4 py-2 ${hcSection(highContrast)}`}>
+              <Tt className={`${hcText(highContrast)} font-interMedium`}>QA</Tt>
+            </View>
+
+            <Pressable
+              onPress={() => router.push("/(app)/diagnosticsPanel" as never)}
+              className={`flex-row items-center justify-between px-4 py-3 active:bg-hsl98 dark:bg-hsl10 ${hcRow(highContrast)}`}
+            >
+              {({ pressed }) => (
+                <>
+                  <View className="flex-row items-center gap-x-4">
+                    <IconGeneral
+                      type="info"
+                      fill={pressed ? color.primary : highContrast ? "#000000" : color.iconDefault}
+                      size={spacing.xl}
+                    />
+                    <View>
+                      <Tt className="font-interMedium">QA Diagnostics</Tt>
+                      <Tt className="text-sm">Auth, DB, network & build info</Tt>
+                    </View>
+                  </View>
+
+                  <IconGeneral
+                    type="arrow-forward"
+                    fill={pressed ? color.primary : "hsl(0, 0%, 50%)"}
+                    size={spacing.xl}
+                  />
+                </>
+              )}
+            </Pressable>
+          </>
+        )}
 
         {/* Sign out */}
         <Pressable

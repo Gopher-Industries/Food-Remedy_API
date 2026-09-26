@@ -5,6 +5,7 @@ import {
   type ProductSubstitutionHandlerDependencies,
 } from "@/server/productSubstitutionHandler";
 import type { ProductSubstitutionRepository } from "@/server/productSubstitutionService";
+import { EnabledSubstitutionRollout } from "@/server/substitutionObservability";
 
 const BARCODE = "036000291452";
 
@@ -57,6 +58,7 @@ function profile(overrides: Partial<NutritionalProfile> = {}): NutritionalProfil
 function dependencies(): ProductSubstitutionHandlerDependencies & { repository: jest.Mocked<ProductSubstitutionRepository> } {
   return {
     tokenVerifier: { verifyIdToken: jest.fn().mockResolvedValue({ uid: "verified-user" }) },
+    rollout: new EnabledSubstitutionRollout(),
     repository: {
       getProduct: jest.fn().mockResolvedValue(product()),
       getAuthoritativeProfile: jest.fn().mockResolvedValue(profile()),
@@ -148,6 +150,47 @@ describe("POST /api/recommendations/substitutions", () => {
     }));
     expect(malformed.status).toBe(400);
     expect((await malformed.json()).error.code).toBe("INVALID_REQUEST");
+    expect(deps.repository.getProduct).not.toHaveBeenCalled();
+  });
+
+  it("stops reading an oversized stream without Content-Length", async () => {
+    const deps = dependencies();
+    let cancelled = false;
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode("x".repeat(1_025)));
+      },
+      cancel() { cancelled = true; },
+    });
+    const streamedRequest = new Request("http://localhost/api/recommendations/substitutions", {
+      method: "POST",
+      headers: { Authorization: "Bearer verified-token" },
+      body: stream,
+      duplex: "half",
+    } as RequestInit & { duplex: "half" });
+
+    const result = await createProductSubstitutionHandler(deps)(streamedRequest);
+    expect(result.status).toBe(413);
+    expect(cancelled).toBe(true);
+    expect(deps.repository.getProduct).not.toHaveBeenCalled();
+  });
+
+  it("times out a stalled request body before accessing Firestore", async () => {
+    const deps = dependencies();
+    let cancelled = false;
+    const stream = new ReadableStream<Uint8Array>({
+      cancel() { cancelled = true; },
+    });
+    const stalledRequest = new Request("http://localhost/api/recommendations/substitutions", {
+      method: "POST",
+      headers: { Authorization: "Bearer verified-token" },
+      body: stream,
+      duplex: "half",
+    } as RequestInit & { duplex: "half" });
+
+    const result = await createProductSubstitutionHandler({ ...deps, timeoutMs: 20 })(stalledRequest);
+    expect(result.status).toBe(503);
+    expect(cancelled).toBe(true);
     expect(deps.repository.getProduct).not.toHaveBeenCalled();
   });
 

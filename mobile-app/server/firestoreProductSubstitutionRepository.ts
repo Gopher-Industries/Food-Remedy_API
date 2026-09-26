@@ -5,7 +5,6 @@ import { normaliseFirestoreProduct } from "@/services/utils/normaliseFirestorePr
 import type { ProductSubstitutionRepository } from "@/server/productSubstitutionService";
 
 const PRODUCTS_COLLECTION = "PRODUCTS";
-const PROFILE_READ_LIMIT = 20;
 const BROAD_CATEGORIES = new Set(["food", "foods", "products", "groceries", "grocery", "meals", "meal", "dishes", "dish", "prepared-meals", "prepared-foods"]);
 
 function normaliseCategory(value: unknown): string {
@@ -58,9 +57,13 @@ export class FirestoreProductSubstitutionRepository implements ProductSubstituti
   }
 
   async getAuthoritativeProfile(uid: string): Promise<NutritionalProfile | null> {
-    const snapshot = await this.firestore.collection("USERS").doc(uid).collection("PROFILES").limit(PROFILE_READ_LIMIT).get();
-    const self = snapshot.docs.find((document) => document.data().relationship === "Self");
-    if (!self) return null;
+    const snapshot = await this.firestore.collection("USERS").doc(uid).collection("PROFILES")
+      .where("relationship", "==", "Self").limit(2).get();
+    // Multiple or inactive Self profiles are ambiguous; never choose one by
+    // query order when making profile-sensitive recommendations.
+    if (snapshot.docs.length !== 1) return null;
+    const self = snapshot.docs[0];
+    if (self.data().status === false) return null;
     return toProfile(self.data(), uid, self.id);
   }
 

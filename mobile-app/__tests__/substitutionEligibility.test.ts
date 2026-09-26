@@ -4,7 +4,7 @@ import {
   MAX_SUBSTITUTION_RESULTS,
   rankSubstitutionCandidates,
 } from "@/services/substitutionEligibility";
-import { getAlternatives } from "@/services/recommendations";
+import { getAlternatives, getRecommendationSummary } from "@/services/recommendations";
 import { rankingRegressionFixture } from "./fixtures/substitutionRankingFixtures";
 
 function product(overrides: Partial<Product> = {}): Product {
@@ -73,6 +73,8 @@ describe("substitution eligibility and ranking", () => {
     expect(result.emptyStateReason).toBeNull();
     expect(result.substitutions.map((item) => item.barcode)).toEqual(["9300000000004"]);
     expect(result.substitutions[0].reasonCodes).toContain("SAFE_ALLERGEN_FREE");
+    expect(getRecommendationSummary(product({ allergens: ["milk"] }), profile({ allergies: ["Milk"] })).safetyRating).toBe("red");
+    expect(getRecommendationSummary(product({ nutriscoreGrade: "" }), profile()).safetyRating).toBe("grey");
   });
 
   it("uses canonical matching for multi-allergen profile restrictions", () => {
@@ -152,6 +154,40 @@ describe("substitution eligibility and ranking", () => {
       .toEqual(expect.objectContaining({ substitutions: [], emptyStateReason: "INSUFFICIENT_PRODUCT_DATA" }));
     expect(rankSubstitutionCandidates(original, [product({ barcode: "9300000000002", categories: [], category: null })], profile()))
       .toEqual(expect.objectContaining({ substitutions: [], emptyStateReason: "INSUFFICIENT_PRODUCT_DATA" }));
+  });
+
+  it("does not recommend an unrelated category or infer a missing nutrient value as zero", () => {
+    const unrelated = product({ barcode: "9300000000002", categories: ["beverages"], category: "beverages" });
+    const unrelatedResult = rankSubstitutionCandidates(original, [unrelated], profile());
+    expect(unrelatedResult.substitutions).toEqual([]);
+    expect(unrelatedResult.emptyStateReason).toBe("NO_SAFE_ALTERNATIVES_IN_CATEGORY");
+    expect(unrelatedResult.metrics.excludedCategoryMismatch).toBe(1);
+    expect(unrelatedResult.metrics.categoryDataFailures).toBe(0);
+
+    const missingSugar = product({ barcode: "9300000000003", nutriments: { sugars_100g: null as unknown as number } });
+    const result = rankSubstitutionCandidates(original, [missingSugar], profile());
+    expect(result.substitutions).toHaveLength(1);
+    expect(result.substitutions[0].reasonCodes).not.toContain("LOWER_SUGAR");
+  });
+
+  it("selects the same bounded candidates regardless of input order", () => {
+    const candidates = Array.from({ length: 201 }, (_, index) => product({
+      barcode: `9300000${String(index + 100000).padStart(6, "0")}`,
+    }));
+    const forward = rankSubstitutionCandidates(original, candidates, profile());
+    const reverse = rankSubstitutionCandidates(original, [...candidates].reverse(), profile());
+    expect(forward.substitutions.map((item) => item.barcode)).toEqual(reverse.substitutions.map((item) => item.barcode));
+  });
+
+  it("compares sodium and salt using the same units", () => {
+    const saltyOriginal = product({ nutriments: { salt_100g: 1 } });
+    const lowerSodium = product({
+      barcode: "9300000000002",
+      nutriments: {},
+      nutriments_normalized: { sodium_mg: 300 },
+    });
+    const result = rankSubstitutionCandidates(saltyOriginal, [lowerSodium], profile());
+    expect(result.substitutions[0].reasonCodes).toContain("LOWER_SODIUM");
   });
 
   it("fails closed for a mandatory dietary value without a verified evidence rule", () => {

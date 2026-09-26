@@ -5,59 +5,70 @@ from typing import Any
 
 class BarcodeNormalisation:
     """
-    The BarcodeNormalisation class is responsible to standardise product
-    barcodes to GTIN-14 format.
+    The BarcodeNormalisation class is responsible for standardising product
+    barcode values to a 14-digit numeric string consistent with GTIN-14 format.
 
     It ensures:
-    - Consistent matching barcodes across regional variants like UPC/EAN.
-    - Different inptu formats to not affect the product records negatively.
+    - Consistent matching of barcodes across formats such as UPC-A and EAN-13.
+    - Different input formats do not negatively affect the product records.
 
     Methods:
-    - barcode_normalise(Any) -> str:
-        Cleans and normalises barcode to match GTIN14 standard.
+    - barcode_normalise(barcode: Any) -> str:
+        Cleans and normalises a barcode value to a 14-digit format consistent 
+        with GTIN-14.
     """
 
     @staticmethod
     def barcode_normalise(barcode: Any) -> str:
         """
-        Normalises a barcode string or number to a 14-digit GTIN string.
+        Normalises a barcode string or integer to a 14-digit numeric string
+        consistent with GTIN-14 format.
         
         Logic:
-        1. Convert input to string and handle None types.
-        2. Strip all non-numeric characters (handling spaces, dashes, or malformed scans).
-        3. Prepend leading zeros (padding) to reach exactly 14 digits.
+        1. Reject None and float inputs.
+        2. Convert accepted inputs to a string.
+        3. Strip all non-digit characters, including spaces and dashes.
+        4. Reject values with no digits or more than 14 digits.
+        5. Prepend leading zeros (padding) to reach exactly 14 digits.
         
         Args:
-            barcode: The raw barcode input (str, int, or None).
+            barcode: The raw barcode input (str, int, float, or None).
+                Strings and integers are normalised; floats and None return an empty string.
             
         Returns:
-            A 14-digit numeric string, or an empty string if input is invalid.
+            A 14-digit numeric string, or an empty string if the input is rejected.
         """
         if barcode is None:
             return ""
+
+        # reject floats because removing the decimal point can change the barcode
+        if isinstance(barcode, float):
+            return ""
         
         # strip all non-digit characters (0-9)
-        # for examples: for cases like "9300-6337-1443-7" or "9300 6337"
+        # for example: for cases like "9300-6337-1443-7" or "9300 6337"
         clean_barcode = re.sub(r'\D', '', str(barcode))
         
         if not clean_barcode:
             return ""
             
-        # Guard malformed scans that exceed GTIN-14 length.
+        # reject values that exceed 14 digits.
         if len(clean_barcode) > 14:
             return ""
 
-        # pad with leading zeros to meet the GTIN-14 standard.
-        # for examples: EAN-13 (e.g., 9300633714437) becomes "09300633714437"
+        # pad with leading zeros to reach 14 digits, consistent with GTIN-14 format
+        # for example: EAN-13 (e.g., 9300633714437) becomes "09300633714437"
         # UPC-A (12 digits) becomes "00" + 12 digits.
         return clean_barcode.zfill(14)
 
 ### Testing
 def test_barcode_normalisation():
     """
-    Unit tests to verify DB033 requirements:
-    - Consistency across regional variants (EAN-13, UPC-A).
-    - Handling of padding and edge cases (None, malformed strings).
+    Unit tests for barcode normalisation:
+    - Consistency across barcode formats (EAN-13, UPC-A).
+    - Handling of padding and edge cases, including empty strings, None,
+    mixed-character strings, and overlong values.
+    - Rejection of float inputs that could alter barcode digits.
     """
     normaliser = BarcodeNormalisation()
     
@@ -73,15 +84,16 @@ def test_barcode_normalisation():
         ("9300 6337 1443 7", "09300633714437"),
         # Edge cases: integer inputs
         (9300633714437, "09300633714437"),
-        # Edge cases: empty/invalid inputs
+        # Edge cases: empty, mixed-character, overlong, and float inputs
         ("", ""),
         (None, ""),
         ("abc-123", "00000000000123"),
         ("abc", ""),
         ("123456789012345", ""),
+        (9300633714437.0, ""),
     ]
     
-    print("Running Barcode Normalisation tests for DB033...")
+    print("Running Barcode Normalisation tests...")
     all_passed = True
 
     for i, (input, expected) in enumerate(test_cases):

@@ -4,6 +4,7 @@ import { createProductSubstitutionHandler } from "@/server/productSubstitutionHa
 import type { ProductSubstitutionRepository } from "@/server/productSubstitutionService";
 import {
   ConsoleSubstitutionMetrics,
+  EnabledSubstitutionRollout,
   EnvironmentSubstitutionRollout,
   type SubstitutionMetricEvent,
 } from "@/server/substitutionObservability";
@@ -57,6 +58,7 @@ describe("substitution rollout and observability", () => {
     const response = await createProductSubstitutionHandler({
       tokenVerifier: { verifyIdToken: jest.fn().mockResolvedValue({ uid: "user-123" }) },
       repository,
+      rollout: new EnabledSubstitutionRollout(),
       metrics: { record: (event) => events.push(event) },
     })(request());
 
@@ -92,12 +94,27 @@ describe("substitution rollout and observability", () => {
     expect(events[0]).toEqual(expect.objectContaining({ outcome: "feature_disabled", resultCount: 0 }));
   });
 
+  it("keeps a successful response when the metric sink fails", async () => {
+    const repository: jest.Mocked<ProductSubstitutionRepository> = {
+      getProduct: jest.fn().mockResolvedValue(product()),
+      getAuthoritativeProfile: jest.fn().mockResolvedValue(profile),
+      getCandidates: jest.fn().mockResolvedValue([product({ barcode: "036000291469" })]),
+    };
+    const response = await createProductSubstitutionHandler({
+      tokenVerifier: { verifyIdToken: jest.fn().mockResolvedValue({ uid: "user-123" }) },
+      repository,
+      rollout: new EnabledSubstitutionRollout(),
+      metrics: { record: () => { throw new Error("metrics unavailable"); } },
+    })(request());
+    expect(response.status).toBe(200);
+  });
+
   it("emits only a safe aggregate payload to the log metric sink", () => {
     const info = jest.spyOn(console, "info").mockImplementation();
     new ConsoleSubstitutionMetrics().record({
       event: "product_substitution", outcome: "empty", durationMs: 42, resultCount: 0,
       emptyStateReason: "NO_SAFE_ALTERNATIVES_IN_CATEGORY",
-      ranking: { candidatesExamined: 3, eligibleCandidates: 1, excludedAllergenConflict: 1, excludedAllergenEvidenceIncomplete: 0, excludedAvoidedAdditive: 1, excludedDietaryRestriction: 0, categoryDataFailures: 0, targetCategoryMissing: false, reasonCodeCounts: {} },
+      ranking: { candidatesExamined: 3, eligibleCandidates: 1, excludedAllergenConflict: 1, excludedAllergenEvidenceIncomplete: 0, excludedAvoidedAdditive: 1, excludedDietaryRestriction: 0, excludedCategoryMismatch: 0, categoryDataFailures: 0, targetCategoryMissing: false, reasonCodeCounts: {} },
     });
     const output = info.mock.calls.flat().join(" ");
     expect(output).toContain("substitution-metric");

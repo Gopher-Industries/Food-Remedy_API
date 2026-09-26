@@ -1,6 +1,6 @@
 # Recommendation Reason-Code Catalogue (v1.0.0)
 
-**Contract Version:** 1.0.0  
+**Contract Version:** 1.0.0
 **Scope:** Machine-readable reason codes returned in `substitutions[].reasonCodes` for the Food Remedy API.
 
 ---
@@ -26,7 +26,7 @@ Reason codes provide standardized, language-agnostic machine tags explaining why
 
 | Code | Description |
 | :--- | :--- |
-| `SAFE_ALLERGEN_FREE` | Candidate product is verified free from all allergens flagged in the authenticated user's profile. |
+| `SAFE_ALLERGEN_FREE` | Candidate product has no conflict with allergens in the authenticated user's profile, based on complete declarations. |
 | `ALLERGEN_EVIDENCE_INCOMPLETE` | Candidate has no active-profile allergen restriction, but its declarations are incomplete and it is returned with caution. |
 | `DIET_ALIGNED_VEGAN` | Candidate product is verified compliant with Vegan dietary restrictions. |
 | `DIET_ALIGNED_VEGETARIAN` | Candidate product is verified compliant with Vegetarian dietary restrictions. |

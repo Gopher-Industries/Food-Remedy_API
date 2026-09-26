@@ -3,6 +3,12 @@
 Canonical schema: `contracts/product_detail_v1.schema.json`  
 Legacy alias (same content): `api/contracts/product_v1.json`
 
+## 1.0.1 — 2026-08-10 (DB023)
+
+- Represent missing or empty allergen information as `["Unknown"]` instead of `[]`.
+- Preserve the existing `string[]` field shape and all known allergen values.
+- Require at least one allergen entry so missing information cannot be mistaken for no allergens.
+
 ## 1.0.0 — 2026-05-21 (DB037)
 
 - **Frozen** Product Detail v1 field list for DB → BE → FE alignment.
