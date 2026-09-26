@@ -39,6 +39,7 @@ class TestRecommendationContractV1(unittest.TestCase):
             {"barcode": "9300601234567", "limit": 0},
             {"barcode": "9300601234567", "limit": 21},
             {"barcode": "9300601234567", "limit": True},
+            {"barcode": "9300601234567", "overrides": {"avoidAllergens": []}},
         ):
             with self.subTest(request=request):
                 self.assertTrue(errors("SubstitutionRequest", request))

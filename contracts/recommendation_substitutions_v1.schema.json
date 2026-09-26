@@ -13,25 +13,6 @@
           "pattern": "^[0-9]{8,14}$",
           "description": "Scanned product GTIN / barcode (8 to 14 digits)"
         },
-        "overrides": {
-          "type": "object",
-          "properties": {
-            "avoidAllergens": {
-              "type": "array",
-              "items": { "type": "string" },
-              "default": [],
-              "description": "List of allergen codes/names to strictly avoid"
-            },
-            "dietaryRestrictions": {
-              "type": "array",
-              "items": { "type": "string" },
-              "default": [],
-              "description": "List of dietary restrictions to strictly enforce (e.g. 'vegan', 'vegetarian')"
-            }
-          },
-          "additionalProperties": false,
-          "description": "Optional request-level profile preference overrides"
-        },
         "limit": {
           "type": "integer",
           "minimum": 1,
