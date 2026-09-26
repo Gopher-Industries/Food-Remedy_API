@@ -6,6 +6,7 @@ import { ConsoleSubstitutionMetrics, EnvironmentSubstitutionRollout } from "@/se
 import { FirestoreRecommendationEvidenceRepository } from '@/server/recommendationEvidenceRepository';
 import { FirestorePersonalizationContextRepository } from '@/server/firestorePersonalizationContextRepository';
 import { createSemanticFitClientFromEnvironment } from '@/server/typesafeSemanticFitClient';
+import { FirestoreJevConfigStore, FirestoreJevRollout } from '@/server/jevRollout';
 
 // Share the adapter across requests so its concurrency cap applies per server process.
 let semanticClient: ReturnType<typeof createSemanticFitClientFromEnvironment> | undefined;
@@ -20,8 +21,7 @@ export async function POST(request: Request): Promise<Response> {
       sessionStore: new FirestoreRecommendationEvidenceRepository(firestore),
       contextRepository: new FirestorePersonalizationContextRepository(firestore),
       semanticClient: semanticClient ??= createSemanticFitClientFromEnvironment(),
-      semanticEnabled: process.env.JEV_RANKING_ENABLED === 'true' &&
-        Boolean(process.env.JEV_POLICY_APPROVAL_REFERENCE?.trim()),
+      jevRollout: new FirestoreJevRollout(new FirestoreJevConfigStore(firestore)),
       rollout: new EnvironmentSubstitutionRollout(),
       metrics: new ConsoleSubstitutionMetrics(),
     })(request);
