@@ -1,0 +1,67 @@
+{
+  "count_definition": "Unique rows passing/failing DB021 plus stored required-field checks; dataset-wide reviews are separate. Valid does not mean release approved.",
+  "current_validation": {
+    "batch_gate_passed": true,
+    "invalid_records": 0,
+    "result": {
+      "allergens": true,
+      "barcode": {
+        "duplicates": 0,
+        "empty": 0,
+        "invalid_format": 0,
+        "ok": true,
+        "total_issues": 0
+      },
+      "basic_schema": true,
+      "nutrients": true,
+      "schema_validation": {
+        "errors": [],
+        "invalid_count": 0,
+        "valid": true
+      },
+      "total_records": 5000
+    },
+    "valid_records": 5000
+  },
+  "dataset_errors": [],
+  "failed_records": [],
+  "invalid_records": 0,
+  "limitations": [
+    "No source generation/version approval is inferred from committed filenames or pipeline configuration.",
+    "DB021 validates normalised copies; this report separately checks saved barcode/name values.",
+    "Placeholder names nan/null/none/n/a require source correction or an explicit reviewed exception.",
+    "Barcode checks cover format and uniqueness, not GTIN check digits.",
+    "Missing source ingredients/categories are measured, not inferred or repaired.",
+    "This is an offline candidate check, not a Firestore, API, reproducibility or full nutrition-safety certification."
+  ],
+  "quality": {
+    "category_rule_replay_counts": {
+      "beverages": 478,
+      "breads": 162,
+      "condiments": 415,
+      "dairy": 423,
+      "meal kits": 12,
+      "noodles and pasta": 180,
+      "oils": 77,
+      "other": 1629,
+      "seafood": 131,
+      "snacks and confectionery": 1286,
+      "spreads": 207
+    },
+    "missing_categories": 0,
+    "missing_ingredient_text": 0,
+    "missing_or_empty_allergens": 0
+  },
+  "reason_counts": {},
+  "release_approved": false,
+  "required_reviews": [],
+  "status": "CHECKS_PASSED_PENDING_APPROVAL",
+  "stored_required_fields": {
+    "approved_exceptions_applied": [],
+    "missing_or_unusable_names": 0,
+    "non_string_barcodes": 0,
+    "placeholder_names": 0
+  },
+  "total_records": 5000,
+  "valid_records": 5000
+}

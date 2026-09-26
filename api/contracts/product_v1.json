@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://food-remedy.dev/schemas/product-detail/v1",
   "title": "ProductDetailV1",
-  "description": "Frozen Product Detail JSON contract v1.0.0 (DB037). DB maps enriched records via mapping/map_enriched_to_product_detail.py; BE/FE consume this shape on GET /api/products/{barcode}.",
+  "description": "Frozen Product Detail JSON contract v1.0.1 (DB037/DB023). DB maps enriched records via mapping/map_enriched_to_product_detail.py; BE/FE consume this shape on GET /api/products/{barcode}.",
   "type": "object",
   "required": ["barcode", "productName"],
   "properties": {
@@ -11,7 +11,17 @@
     "productName": { "type": "string" },
     "genericName": { "type": ["string", "null"] },
     "additives": { "type": "array", "items": { "type": "string" }, "default": [] },
-    "allergens": { "type": "array", "items": { "type": "string" }, "default": [] },
+    "allergens": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "oneOf": [
+        { "const": ["Unknown"] },
+        { "not": { "contains": { "const": "Unknown" } } }
+      ],
+      "default": ["Unknown"],
+      "description": "Known allergen names, or exactly ['Unknown'] when allergen information is missing or empty."
+    },
     "ingredients": { "type": "array", "items": { "type": "string" }, "default": [] },
     "ingredientsText": { "type": ["string", "null"] },
     "category": {

@@ -2,16 +2,18 @@ import React, { useMemo } from "react";
 import { View, Text } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { usePreferences } from "@/components/providers/PreferencesProvider";
-
-type Goal = "Lower sodium" | "Heart health" | "Lower sugar" | "High protein";
-type Allergen = "Peanuts" | "Milk" | "Soy" | "Gluten" | "Tree nuts";
+import type { AllergenSafetyAssessment } from "@/services/allergenSafety";
+import {
+  guardOverallFitForAllergenSafety,
+  presentAllergenSuitability,
+} from "@/services/profileProductSuitability";
 
 export interface UserDemographics {
   gender: string;
   ageGroup: string;
   activityLevel: string;
-  goals: Goal[];
-  allergens: Allergen[];
+  goals: string[];
+  allergens: string[];
 }
 
 export interface ProductData {
@@ -19,7 +21,7 @@ export interface ProductData {
   sugar: number;
   sodium: number;
   protein: number;
-  allergens: string[];
+  allergenSafety: AllergenSafetyAssessment;
 }
 
 interface CompareRow {
@@ -69,7 +71,10 @@ const getStatusStyles = (
   }
 };
 
-const getOverallScore = (rows: CompareRow[]) => {
+const getOverallScore = (
+  rows: CompareRow[],
+  allergenSafety: AllergenSafetyAssessment
+) => {
   let total = 0;
 
   rows.forEach((row) => {
@@ -82,6 +87,12 @@ const getOverallScore = (rows: CompareRow[]) => {
 
   let label: "Good fit" | "Moderate fit" | "Poor fit" = "Moderate fit";
   let status: "good" | "watch" | "bad" = "watch";
+
+  const allergenGuard = guardOverallFitForAllergenSafety(
+    percentage,
+    allergenSafety
+  );
+  if (allergenGuard) return allergenGuard;
 
   if (percentage >= 75) {
     label = "Good fit";
@@ -202,37 +213,19 @@ export default function ProductCompareSection({
       }
     }
 
-    const matchedAllergens = userProfile.allergens.filter((allergen) =>
-      product.allergens
-        .map((item) => item.toLowerCase())
-        .includes(allergen.toLowerCase())
+    const allergenPresentation = presentAllergenSuitability(
+      product.allergenSafety
     );
-
-    if (matchedAllergens.length === 0) {
-      rows.push({
-        id: "allergens",
-        title: "Allergen check",
-        status: "good",
-        label: "No conflict found",
-        description:
-          "No listed allergen conflict was found between your profile and this product.",
-      });
-    } else {
-      rows.push({
-        id: "allergens",
-        title: "Allergen check",
-        status: "bad",
-        label: "Contains allergen",
-        description: `This product may conflict with: ${matchedAllergens.join(
-          ", "
-        )}.`,
-      });
-    }
+    rows.push({
+      id: "allergens",
+      title: "Allergen check",
+      ...allergenPresentation,
+    });
 
     return rows;
   }, [userProfile, product]);
 
-  const overall = getOverallScore(compareRows);
+  const overall = getOverallScore(compareRows, product.allergenSafety);
   const overallStyles = getStatusStyles(overall.status, darkMode);
 
   return (

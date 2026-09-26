@@ -102,13 +102,13 @@ export default function MembersPage() {
           >
             {({ pressed }) => (
               <>
-                <View className="flex-row items-center gap-3">
+                <View className="flex-row items-center gap-3 flex-1 pr-3">
                   <IconGeneral
                     type="account"
                     fill="hsl(0, 0%, 40%)"
                     size={32}
                   />
-                  <View>
+                  <View className="flex-1">
                     <Tt className="font-interMedium">Account & Profile</Tt>
                     <Tt className="text-sm">Update Account and Profile</Tt>
                   </View>
@@ -130,13 +130,13 @@ export default function MembersPage() {
           >
             {({ pressed }) => (
               <>
-                <View className="flex-row items-center gap-3">
+                <View className="flex-row items-center gap-3 flex-1 pr-3">
                   <IconGeneral
                     type="nutrition"
                     fill="hsl(0, 0%, 40%)"
                     size={34}
                   />
-                  <View>
+                  <View className="flex-1">
                     <Tt className="font-interMedium">Nutritional Profiles</Tt>
                     <Tt className="text-sm">
                       View Member Nutritional Profiles
@@ -160,9 +160,9 @@ export default function MembersPage() {
           >
             {({ pressed }) => (
               <>
-                <View className="flex-row items-center gap-3">
+                <View className="flex-row items-center gap-3 flex-1 pr-3">
                   <IconGeneral type="person" fill="hsl(0, 0%, 40%)" size={32} />
-                  <View>
+                  <View className="flex-1">
                     <Tt className="font-interMedium">Demographics</Tt>
                     <Tt className="text-sm">Personalisation settings</Tt>
                   </View>

@@ -1,0 +1,25 @@
+{
+  "artifact_sha256": {
+    "category_audit.json": "e15c973cba39cbba7a26711c3a703fa3db67b14523b1dbebab715bf7045999be",
+    "cleaning_report.json": "607bfda076e4c536f9ac7220863f772f5eedbbc42c378605de1dc55322e45f4e",
+    "db060_validation.json": "34e218c1b3748d72cc1a6b6cd46fe6466cf6bad932f98877a43809e461b84a89",
+    "delta_v1.0_to_v1.1.json": "a0150f48563a4ec1969696d41f99f853e0eb32801b87cafe9f946e12ab104af5",
+    "enrichment_report.json": "a3857342756633fd29ee13bef06fd9016227637811850f7d87f82476d83b2ba5",
+    "exclusion_ledger.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "foodremedy_release_v1.1.json": "43b955c6837eda262b5b9afba5e8227ae7a1db3538dab110b393b8e9920791e1",
+    "inclusion_ledger.jsonl": "e0bf0123aa69949e081461aad64a9e76ca39a950a4f4a5fc711fceac2289b213",
+    "nutrition_audit.json": "bba4cbe0ffce09704efb98362d4dd4a70af27931c7fe88faad7122f2e859950e",
+    "product_alternatives_v1.1.json": "9565d58d9eaf370c5092e863f4054184d625f184c6fceedc1be62e1c5b699f0e",
+    "quality_comparison_v1.0_to_v1.1.json": "c5123e0f0372bb3403fadc1b105bd7e93eab006b41afb0fc845a6709185af3d3",
+    "unmapped_categories.json": "1423a11315a9f7a499acda89ee7ad6fd19e054f97d6b86be9cb9a6238fe26daf",
+    "validation_manifest.json": "b20e98ddacc14372f2299206397bc04decf103016f10c439220cd3f2a6b7c5ca"
+  },
+  "candidate_sha256": "ffc2d26e4cc1fdaa8e1754e209f0be0b7fe7b93784b743b47911180d52b67ced",
+  "checkpoint_policy": "ISOLATED_BUILD_NO_CHECKPOINT_REUSE",
+  "isolated_builds": 2,
+  "release_fingerprint": "d794c6ed2a7d24a6c86b7a86e40ad199f4413f30b6efac695dd1a096f7c38cbb",
+  "release_version": "v1.1",
+  "schema": "food-remedy-release-reproducibility-v1",
+  "status": "PASS_IDENTICAL_ARTIFACT_HASHES",
+  "ticket": "DB070"
+}

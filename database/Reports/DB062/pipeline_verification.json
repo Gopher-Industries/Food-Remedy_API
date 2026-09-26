@@ -1,0 +1,62 @@
+{
+  "ticket": "DB062",
+  "verified_at": "2026-09-21",
+  "input": {
+    "path": "database/seeding/products_5k_enriched.json",
+    "sha256": "fd6648f6560a37086b0399e1b7ba3615d4158efe68217bef08056fcecda9d2a7",
+    "record_count": 5000
+  },
+  "output": {
+    "sha256": "90170dac3f974f674cef13b37b08a44e34d516dc49a6cb1ef869bdf6e8352870",
+    "record_count": 5000,
+    "barcode_order_preserved": true
+  },
+  "pipeline_config_sha256": "94d0eb136a6a106aa40436e45b9317eeafdb57ed6f7c24211405eb05203e5467",
+  "modules": [
+    {
+      "name": "nutrition_enrich",
+      "status": "ok",
+      "processed": 5000,
+      "failures": null
+    },
+    {
+      "name": "allergens",
+      "status": "ok",
+      "processed": 5000,
+      "failures": 0
+    },
+    {
+      "name": "db009_personalisation_tags",
+      "status": "ok",
+      "processed": 5000,
+      "failures": 0
+    },
+    {
+      "name": "db021_mood_tags",
+      "status": "ok",
+      "processed": 5000,
+      "failures": 0
+    },
+    {
+      "name": "db019_alternative_product_mapping",
+      "status": "ok",
+      "processed": 5000,
+      "failures": 0
+    }
+  ],
+  "module_failures": 0,
+  "quality": {
+    "nutrition_enriched_records": 5000,
+    "missing_or_empty_allergens": 0,
+    "allergen_mismatches": 0,
+    "db060_status": "BLOCKED",
+    "db060_valid_records": 4731,
+    "db060_invalid_records": 269,
+    "db060_reason_counts": {
+      "barcode_invalid_format": 3,
+      "stored_product_name_missing_or_unusable": 7,
+      "stored_product_name_placeholder": 259
+    }
+  },
+  "handoff": "Pipeline generation verified; DB063 must resolve the recorded candidate-quality blockers before versioning."
+}

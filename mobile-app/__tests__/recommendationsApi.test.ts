@@ -1,13 +1,16 @@
 import { getRecommendations } from "@/services/api/recommendations";
 import { apiPost } from "@/services/apiClient";
-import { getProductById } from "@/services/api/products";
+import getProductById from "@/services/database/products/getProductById";
 import { getCandidatesForRecommendations } from "@/services/database/products/getCandidatesForRecommendations";
 import { getAlternatives } from "@/services/recommendations";
 import type { NutritionalProfile } from "@/types/NutritionalProfile";
 import type { Product } from "@/types/Product";
 
 jest.mock("@/services/apiClient", () => ({ apiPost: jest.fn() }));
-jest.mock("@/services/api/products", () => ({ getProductById: jest.fn() }));
+jest.mock("@/services/database/products/getProductById", () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
 jest.mock("@/services/database/products/getCandidatesForRecommendations", () => ({
   getCandidatesForRecommendations: jest.fn(),
 }));
@@ -158,8 +161,7 @@ describe("recommendation API source routing", () => {
     expect(mockGetCandidates).toHaveBeenCalledWith(original, 200);
     expect(mockGetAlternatives).toHaveBeenCalledWith(original, candidates, profile, 2);
     expect(consoleWarnSpy).toHaveBeenCalledWith(
-      expect.stringContaining("falling back to Firestore"),
-      expect.any(Error)
+      expect.stringContaining("falling back to Firestore")
     );
   });
 

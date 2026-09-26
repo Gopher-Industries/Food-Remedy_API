@@ -10,7 +10,7 @@ import { getAlternatives, isUnsuitableForProfile } from "@/services/recommendati
 import { apiPost } from "@/services/apiClient";
 import { normalizeError } from "@/services/errorHandler";
 import { getCandidatesForRecommendations } from "@/services/database/products/getCandidatesForRecommendations";
-import { getProductById as getProductFromFirestore } from "@/services/api/products";
+import getProductFromFirestore from "@/services/database/products/getProductById";
 
 type RecommendationSource = "auto" | "api" | "firestore";
 
@@ -89,15 +89,14 @@ export async function getRecommendations(
     } catch (err) {
       if (source === "auto") {
         console.warn(
-          "[Recommendations] API request failed in auto mode; falling back to Firestore",
-          err
+          "[Recommendations] API request failed in auto mode; falling back to Firestore"
         );
         return await getFirestoreRecommendations(productBarcode, profile, limit);
       }
       throw err;
     }
   } catch (err) {
-    console.error("[Recommendations API Error]", err);
+    console.error("[Recommendations API Error]");
     throw normalizeError(err);
   }
 }

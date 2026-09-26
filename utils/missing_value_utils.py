@@ -10,6 +10,18 @@ from database.clean_data.constants import (
 )
 
 
+UNKNOWN_ALLERGEN = "Unknown"
+_ALLERGEN_MISSING_MARKERS = MISSING_STRINGS | {
+    "[]",
+    "n/a",
+    "na",
+    "none",
+    "not available",
+    "not provided",
+    "null",
+}
+
+
 def normalize_string(value):
     """Convert missing string markers to None, otherwise strip."""
     if isinstance(value, str):
@@ -37,6 +49,34 @@ def normalize_list(value):
         return cleaned if cleaned else EMPTY_LIST
     
     return EMPTY_LIST
+
+
+def normalize_allergens(value) -> list[str]:
+    """Return the Product Detail allergen representation for ``value``.
+
+    Allergen data is safety-sensitive, so an absent or empty source must not be
+    collapsed into ``[]`` (which consumers can interpret as no allergens).
+    ``["Unknown"]`` is the canonical missing-data sentinel and keeps the
+    existing ``string[]`` contract intact. If a sentinel appears alongside
+    known values, the known values win.
+    """
+    if isinstance(value, str):
+        candidates = value.split(",")
+    elif isinstance(value, (list, tuple, set)):
+        candidates = list(value)
+    else:
+        return [UNKNOWN_ALLERGEN]
+
+    known = []
+    for item in candidates:
+        if not isinstance(item, str):
+            continue
+        cleaned = item.strip()
+        if not cleaned or cleaned.lower() in _ALLERGEN_MISSING_MARKERS:
+            continue
+        known.append(cleaned)
+
+    return known or [UNKNOWN_ALLERGEN]
 
 
 def clean_numeric(value, default=None):
