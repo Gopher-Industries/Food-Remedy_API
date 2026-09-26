@@ -107,6 +107,12 @@ export interface ProductSubstitutionV2Execution {
   semanticQuestionSetVersion?: string;
   semanticPolicyVersion?: string;
   semanticFallbackReason?: CompositeFallbackReason | 'unavailable';
+  semanticTelemetry?: {
+    candidateCount: number; questionCount: number; durationMs: number;
+    inputTokens: number; outputTokens: number;
+    confidenceBand: 'none' | 'low' | 'medium' | 'high';
+    fallbackReason?: string; rankChangeCount: number;
+  };
 }
 
 /** The same safety-checked comparison set is used by ranking and release evaluation. */
@@ -177,6 +183,20 @@ export async function applySemanticRankingV2(
     execution.semanticShortlist, execution.profile);
   const evaluations = await evaluateSemanticShortlist(client, execution.original,
     scored.map(item => item.product), execution.profile, execution.context, signal);
+  const available = evaluations.filter((item): item is Extract<typeof item, { available: true }> => item.available);
+  const confidences = available.flatMap(item => Object.values(item.dimensions).flatMap(dimension =>
+    dimension.status === 'applied' ? [dimension.confidence] : []));
+  const averageConfidence = confidences.length ? confidences.reduce((total, value) => total + value, 0) / confidences.length : 0;
+  execution.semanticTelemetry = {
+    candidateCount: scored.length,
+    questionCount: available[0] ? Object.values(available[0].dimensions).filter(item => item.status === 'applied').length : 0,
+    durationMs: Math.max(0, ...available.map(item => item.durationMs)),
+    inputTokens: available.reduce((total, item) => total + item.usage.inputTokens, 0),
+    outputTokens: available.reduce((total, item) => total + item.usage.outputTokens, 0),
+    confidenceBand: !confidences.length ? 'none' : averageConfidence >= 0.85 ? 'high' : averageConfidence >= 0.65 ? 'medium' : 'low',
+    ...(evaluations.find(item => !item.available) ? { fallbackReason: evaluations.find(item => !item.available && 'reason' in item)?.reason } : {}),
+    rankChangeCount: 0,
+  };
   if (signal?.aborted) {
     execution.response = { ...execution.response, rankingReasonCode: 'SEMANTIC_FALLBACK' };
     execution.semanticFallbackReason = 'unavailable';
@@ -186,8 +206,12 @@ export async function applySemanticRankingV2(
   if (!composition.applied) {
     execution.response = { ...execution.response, rankingReasonCode: 'SEMANTIC_FALLBACK' };
     execution.semanticFallbackReason = composition.reason;
+    execution.semanticTelemetry.fallbackReason ??= composition.reason;
     return execution;
   }
+  const baselineOrder = execution.response.substitutions.map(item => item.barcode);
+  execution.semanticTelemetry.rankChangeCount = composition.candidates.reduce((count, item, index) =>
+    count + Number(baselineOrder[index] !== item.candidate.barcode), 0);
   execution.response = {
     ...execution.response,
     substitutions: composition.candidates.map(item => v2Item(item.candidate, {

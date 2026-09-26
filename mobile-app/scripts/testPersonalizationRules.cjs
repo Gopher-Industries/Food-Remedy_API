@@ -29,6 +29,7 @@ async function main() {
       await setDoc(doc(context.firestore(), 'USERS/owner/PROFILES/child/RECOMMENDATION_SESSIONS/session_1'), { sessionId: 'session_1' });
       await setDoc(doc(context.firestore(), 'USERS/owner/PROFILES/child/RECOMMENDATION_EVENTS/event_1'), { event: { eventId: 'event_1' } });
       await setDoc(doc(context.firestore(), 'PRODUCTS/semantic-eval'), { productName: 'Evaluation product', semanticAttributes: { schemaVersion: '1.0.0' } });
+      await setDoc(doc(context.firestore(), 'SERVER_CONFIG/jev'), { schemaVersion: 1, mode: 'disabled' });
     });
     const owner = env.authenticatedContext('owner').firestore();
     const attacker = env.authenticatedContext('other').firestore();
@@ -64,6 +65,10 @@ async function main() {
     await assertFails(getDoc(doc(guest, session)));
     await assertFails(setDoc(doc(owner, session), { sessionId: 'forged' }));
     await assertFails(setDoc(doc(owner, evidence), { event: { eventId: 'forged' } }));
+    for (const client of [owner, attacker, guest]) {
+      await assertFails(getDoc(doc(client, 'SERVER_CONFIG/jev')));
+      await assertFails(setDoc(doc(client, 'SERVER_CONFIG/jev'), { mode: 'enabled' }));
+    }
 
     await env.withSecurityRulesDisabled(context => updateDoc(doc(context.firestore(), 'USERS/owner/PROFILES/child'), { status: false }));
     await assertSucceeds(getDoc(doc(owner, child)));
@@ -73,7 +78,7 @@ async function main() {
     await assertFails(getDoc(doc(owner, saved)));
     await assertFails(getDoc(doc(owner, session)));
     await assertFails(getDoc(doc(owner, evidence)));
-    console.log('BE059-BE060 Firestore rules: owner/attacker/guest, server-only writes, saved-intent shape, inactive and orphan assertions passed');
+    console.log('BE059-BE060/BE070 Firestore rules: owner/attacker/guest, server-only config and event writes, saved-intent shape, inactive and orphan assertions passed');
   } finally {
     await env.cleanup();
   }

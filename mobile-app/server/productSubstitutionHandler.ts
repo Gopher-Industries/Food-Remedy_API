@@ -21,7 +21,7 @@ import {
   FeatureDisabledError,
   NoopSubstitutionMetrics,
   type SubstitutionMetricOutcome,
-  type SubstitutionMetrics,
+  type SubstitutionMetrics, type JevMetricEvent,
   type SubstitutionRollout,
 } from "@/server/substitutionObservability";
 import type { RecommendationSessionStore } from '@/server/recommendationEvidenceRepository';
@@ -29,6 +29,8 @@ import { PersonalizationContextUnavailableError, type PersonalizationContextRepo
 import { applySemanticRankingV2, executeProductSubstitutionV2, SUBSTITUTION_CONTRACT_VERSION_V2, validateSubstitutionRequestV2,
   type ProductSubstitutionV2Execution } from './productSubstitutionV2';
 import type { SemanticFitClient } from './semanticFitClient';
+import type { JevDecision, JevRollout } from './jevRollout';
+import { assessJevRequestBudget, estimateJevCost } from './jevRequestBudget';
 
 const DEFAULT_TIMEOUT_MS = 4_000;
 
@@ -43,6 +45,13 @@ export interface ProductSubstitutionHandlerDependencies {
   /** Wired for BE066/BE067; BE065 does not evaluate or alter ordering. */
   semanticClient?: SemanticFitClient;
   semanticEnabled?: boolean;
+  jevRollout?: JevRollout;
+}
+
+function initialJevMetric(mode: JevMetricEvent['mode'], outcome: JevMetricEvent['outcome']): JevMetricEvent {
+  return { mode, outcome, candidateCount: 0, questionCount: 0, upstreamDurationMs: 0,
+    confidenceBand: 'none', rankChangeCount: 0, inputTokens: 0, outputTokens: 0,
+    estimatedCostUsd: 0, actualCostUsd: 0 };
 }
 
 function response(body: unknown, status: number): Response {
@@ -151,6 +160,7 @@ export function createProductSubstitutionHandler(dependencies: ProductSubstituti
     let emptyStateReason: Parameters<SubstitutionMetrics["record"]>[0]["emptyStateReason"];
     let ranking: Parameters<SubstitutionMetrics["record"]>[0]["ranking"];
     let responseVersion: string = SUBSTITUTION_CONTRACT_VERSION;
+    let jevMetric: JevMetricEvent | undefined;
     try {
       const identity = await withDeadline(requireVerifiedIdentity(request, dependencies.tokenVerifier), request.signal, remainingMs(deadline));
       if (!rollout.isEnabledFor(identity.uid)) throw new FeatureDisabledError("Substitutions are disabled.");
@@ -164,28 +174,104 @@ export function createProductSubstitutionHandler(dependencies: ProductSubstituti
         ? executeProductSubstitutionV2(dependencies.repository, dependencies.contextRepository!, identity.uid, input as ReturnType<typeof validateSubstitutionRequestV2>)
         : executeProductSubstitution(dependencies.repository, identity.uid, input as ReturnType<typeof validateSubstitutionRequest>),
       request.signal, remainingMs(deadline));
-      if (isV2 && 'context' in execution && dependencies.semanticEnabled && dependencies.semanticClient &&
-          execution.context.intention && execution.response.substitutions.length) {
-        const remaining = deadline - Date.now();
-        if (remaining > 100) {
-          const controller = new AbortController();
-          const abort = () => controller.abort();
-          request.signal.addEventListener('abort', abort, { once: true });
-          const timer = setTimeout(abort, remaining);
+      if (isV2 && 'context' in execution) {
+        let decision: JevDecision;
+        if (dependencies.jevRollout) {
           try {
-            await withDeadline(applySemanticRankingV2(execution, dependencies.semanticClient, controller.signal),
-              request.signal, remaining);
+            decision = await withDeadline(dependencies.jevRollout.resolve(identity.uid), request.signal,
+              Math.max(1, deadline - Date.now()));
           } catch {
             if (request.signal.aborted) throw new RequestCancelledError("Request was cancelled.");
-            execution.response = { ...execution.response, rankingReasonCode: 'SEMANTIC_FALLBACK' };
-            execution.semanticFallbackReason = 'unavailable';
-          } finally {
-            clearTimeout(timer);
-            request.signal.removeEventListener('abort', abort);
+            decision = { mode: 'disabled', reason: 'config_unavailable', runSemantic: false, applySemantic: false };
           }
         } else {
-          execution.response = { ...execution.response, rankingReasonCode: 'SEMANTIC_FALLBACK' };
-          execution.semanticFallbackReason = 'unavailable';
+          // Compatibility for in-process callers; the production route always supplies jevRollout.
+          decision = dependencies.semanticEnabled
+            ? { mode: 'enabled', reason: 'selected', runSemantic: true, applySemantic: true }
+            : { mode: 'disabled', reason: 'disabled', runSemantic: false, applySemantic: false };
+        }
+        jevMetric = initialJevMetric(decision.mode,
+          decision.reason === 'selected' ? 'no_intention' : decision.reason);
+        if (decision.runSemantic && execution.context.intention && !execution.response.substitutions.length) {
+          jevMetric.outcome = 'no_candidates';
+        }
+        if (decision.runSemantic && execution.context.intention && execution.response.substitutions.length) {
+          if (!dependencies.semanticClient) jevMetric.outcome = 'no_client';
+          else {
+            const assessment = decision.budget ? assessJevRequestBudget(execution, decision.budget) : null;
+            if (assessment) {
+              jevMetric.candidateCount = assessment.candidateCount;
+              jevMetric.questionCount = assessment.questionCount;
+              jevMetric.estimatedCostUsd = assessment.estimatedCostUsd;
+            }
+            if (assessment && !assessment.allowed) {
+              jevMetric.outcome = 'budget_exceeded';
+              jevMetric.fallbackReason = assessment.reason;
+              if (decision.applySemantic) execution.response = { ...execution.response, rankingReasonCode: 'SEMANTIC_FALLBACK' };
+            } else {
+              const remaining = deadline - Date.now();
+              const baselineResponse = execution.response;
+              if (remaining > 100) {
+                const controller = new AbortController();
+                const abort = () => controller.abort();
+                request.signal.addEventListener('abort', abort, { once: true });
+                let semanticTimedOut = false;
+                const timer = setTimeout(() => { semanticTimedOut = true; abort(); }, remaining);
+                const jevStarted = Date.now();
+                try {
+                  await withDeadline(applySemanticRankingV2(execution, dependencies.semanticClient, controller.signal),
+                    request.signal, remaining);
+                } catch (error) {
+                  if (request.signal.aborted) throw new RequestCancelledError("Request was cancelled.");
+                  execution.response = { ...baselineResponse, rankingReasonCode: 'SEMANTIC_FALLBACK' };
+                  execution.semanticFallbackReason = 'unavailable';
+                  jevMetric.fallbackReason = error instanceof SubstitutionTimeoutError || semanticTimedOut
+                    ? 'timeout' : 'unavailable';
+                } finally {
+                  clearTimeout(timer);
+                  request.signal.removeEventListener('abort', abort);
+                  jevMetric.upstreamDurationMs = Date.now() - jevStarted;
+                }
+                if (semanticTimedOut) {
+                  execution.response = { ...baselineResponse, rankingReasonCode: 'SEMANTIC_FALLBACK' };
+                  execution.semanticFallbackReason = 'unavailable';
+                  jevMetric.fallbackReason = 'timeout';
+                }
+                if (execution.semanticTelemetry) {
+                  const detail = execution.semanticTelemetry;
+                  jevMetric.candidateCount = detail.candidateCount;
+                  jevMetric.questionCount = detail.questionCount || jevMetric.questionCount;
+                  jevMetric.inputTokens = detail.inputTokens;
+                  jevMetric.outputTokens = detail.outputTokens;
+                  jevMetric.confidenceBand = detail.confidenceBand;
+                  jevMetric.rankChangeCount = detail.rankChangeCount;
+                  if (detail.fallbackReason && !semanticTimedOut) jevMetric.fallbackReason = detail.fallbackReason;
+                  jevMetric.modelVersion = execution.semanticModel ?? decision.modelVersion;
+                  if (decision.budget) {
+                    jevMetric.actualCostUsd = estimateJevCost(detail.inputTokens, detail.outputTokens, decision.budget);
+                  }
+                }
+                if (decision.budget && jevMetric.actualCostUsd > decision.budget.maxEstimatedCostUsd) {
+                  execution.response = { ...baselineResponse, rankingReasonCode: 'SEMANTIC_FALLBACK' };
+                  jevMetric.outcome = 'budget_exceeded';
+                  jevMetric.fallbackReason = 'cost_limit';
+                } else if (decision.modelVersion && execution.semanticModel && execution.semanticModel !== decision.modelVersion) {
+                  execution.response = { ...baselineResponse, rankingReasonCode: 'SEMANTIC_FALLBACK' };
+                  jevMetric.outcome = 'model_mismatch';
+                } else if (!decision.applySemantic) {
+                  jevMetric.outcome = 'shadow';
+                  execution.response = baselineResponse;
+                } else {
+                  jevMetric.outcome = execution.response.rankingMode === 'semantic' ? 'applied' : 'fallback';
+                  jevMetric.fallbackReason ??= execution.semanticFallbackReason;
+                }
+              } else {
+                jevMetric.outcome = 'fallback';
+                jevMetric.fallbackReason = 'timeout';
+                if (decision.applySemantic) execution.response = { ...baselineResponse, rankingReasonCode: 'SEMANTIC_FALLBACK' };
+              }
+            }
+          }
         }
       }
       resultCount = execution.response.substitutions.length;
@@ -250,6 +336,7 @@ export function createProductSubstitutionHandler(dependencies: ProductSubstituti
           resultCount,
           emptyStateReason,
           ranking,
+          jev: jevMetric,
         });
       } catch {
         // An unavailable metrics sink must never change the API response.

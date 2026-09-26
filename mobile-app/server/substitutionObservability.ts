@@ -56,6 +56,24 @@ export type SubstitutionMetricOutcome =
   | "profile_unavailable"
   | "unavailable";
 
+export interface JevMetricEvent {
+  mode: 'disabled' | 'shadow' | 'canary' | 'enabled';
+  outcome: 'disabled' | 'master_disabled' | 'config_unavailable' | 'config_invalid' |
+    'approval_missing' | 'model_mismatch' | 'canary_excluded' | 'no_intention' | 'no_candidates' |
+    'no_client' | 'budget_exceeded' | 'applied' | 'shadow' | 'fallback';
+  candidateCount: number;
+  questionCount: number;
+  upstreamDurationMs: number;
+  confidenceBand: 'none' | 'low' | 'medium' | 'high';
+  fallbackReason?: string;
+  rankChangeCount: number;
+  modelVersion?: string;
+  inputTokens: number;
+  outputTokens: number;
+  estimatedCostUsd: number;
+  actualCostUsd: number;
+}
+
 export interface SubstitutionMetricEvent {
   event: "product_substitution";
   outcome: SubstitutionMetricOutcome;
@@ -63,6 +81,7 @@ export interface SubstitutionMetricEvent {
   resultCount: number;
   emptyStateReason?: SubstitutionEmptyStateReason | null;
   ranking?: SubstitutionRankingMetrics;
+  jev?: JevMetricEvent;
 }
 
 export interface SubstitutionMetrics {
@@ -76,6 +95,9 @@ export class NoopSubstitutionMetrics implements SubstitutionMetrics {
 /** Emits aggregate-only structured events for a platform log-based dashboard. */
 export class ConsoleSubstitutionMetrics implements SubstitutionMetrics {
   record(event: SubstitutionMetricEvent): void {
+    const fallbackReasons = new Set(['incomplete', 'version_mismatch', 'low_confidence', 'unavailable',
+      'timeout', 'rate_limited', 'authentication', 'connection', 'upstream', 'malformed',
+      'busy', 'cancelled', 'cost_limit', 'candidate_limit', 'no_candidates']);
     const safeEvent = {
       event: event.event,
       outcome: event.outcome,
@@ -83,6 +105,23 @@ export class ConsoleSubstitutionMetrics implements SubstitutionMetrics {
       resultCount: Math.max(0, Math.floor(event.resultCount)),
       emptyStateReason: event.emptyStateReason ?? null,
       ranking: event.ranking ?? null,
+      jev: event.jev ? {
+        mode: event.jev.mode,
+        outcome: event.jev.outcome,
+        candidateCount: Math.max(0, Math.min(20, Math.floor(event.jev.candidateCount))),
+        questionCount: Math.max(0, Math.min(5, Math.floor(event.jev.questionCount))),
+        upstreamDurationMs: Math.max(0, Math.round(event.jev.upstreamDurationMs)),
+        confidenceBand: event.jev.confidenceBand,
+        fallbackReason: event.jev.fallbackReason && fallbackReasons.has(event.jev.fallbackReason)
+          ? event.jev.fallbackReason : null,
+        rankChangeCount: Math.max(0, Math.min(20, Math.floor(event.jev.rankChangeCount))),
+        modelVersion: typeof event.jev.modelVersion === 'string' &&
+          /^jev-\d+\.\d+\.\d+$/.test(event.jev.modelVersion) ? event.jev.modelVersion : null,
+        inputTokens: Math.max(0, Math.floor(event.jev.inputTokens)),
+        outputTokens: Math.max(0, Math.floor(event.jev.outputTokens)),
+        estimatedCostUsd: Math.max(0, Math.round(event.jev.estimatedCostUsd * 1_000_000) / 1_000_000),
+        actualCostUsd: Math.max(0, Math.round(event.jev.actualCostUsd * 1_000_000) / 1_000_000),
+      } : null,
     };
     console.info("[substitution-metric]", JSON.stringify(safeEvent));
   }
