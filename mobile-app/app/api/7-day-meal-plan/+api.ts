@@ -3,6 +3,7 @@
 import { collection, getDocs, limit, query } from "firebase/firestore";
 import { fdb } from "@/config/firebaseConfig";
 import { assessAllergenSafety } from "@/services/allergenSafety";
+import { logSafeError } from "@/services/backend/safeErrors";
 
 type DietType = "omnivore" | "vegetarian" | "vegan";
 
@@ -918,7 +919,7 @@ export async function POST(request: Request): Promise<Response> {
             }, 503);
         }
 
-        console.error("Error in /api/7-day-meal-plan:", error);
+        logSafeError("Error in /api/7-day-meal-plan:", error);
         return toJsonResponse({
             error: "SERVER_ERROR",
             message: "Unexpected error while generating 7-day meal plan.",
