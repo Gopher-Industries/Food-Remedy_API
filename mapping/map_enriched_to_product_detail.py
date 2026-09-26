@@ -138,6 +138,10 @@ def map_enriched_to_product_detail(product: Dict[str, Any]) -> Dict[str, Any]:
     # Metadata (always present, can be extended)
     out["metadata"] = dict(product.get("metadata") or {"source": "local-enriched"})
 
+    semantics = product.get("semanticAttributes")
+    if isinstance(semantics, dict):
+        out["semanticAttributes"] = semantics.copy()
+
     em = product.get("enrichmentMetadata")
     if isinstance(em, dict) and em:
         out["enrichmentMetadata"] = em

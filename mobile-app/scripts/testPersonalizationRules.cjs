@@ -28,6 +28,7 @@ async function main() {
       await setDoc(doc(context.firestore(), 'USERS/owner/PROFILES/child/PERSONALIZATION/preferences'), preference('child'));
       await setDoc(doc(context.firestore(), 'USERS/owner/PROFILES/child/RECOMMENDATION_SESSIONS/session_1'), { sessionId: 'session_1' });
       await setDoc(doc(context.firestore(), 'USERS/owner/PROFILES/child/RECOMMENDATION_EVENTS/event_1'), { event: { eventId: 'event_1' } });
+      await setDoc(doc(context.firestore(), 'PRODUCTS/semantic-eval'), { productName: 'Evaluation product', semanticAttributes: { schemaVersion: '1.0.0' } });
     });
     const owner = env.authenticatedContext('owner').firestore();
     const attacker = env.authenticatedContext('other').firestore();
@@ -54,6 +55,9 @@ async function main() {
     await assertFails(setDoc(doc(owner, saved), { ...intent('child'), text: 'x'.repeat(241) }));
     await assertFails(setDoc(doc(owner, saved), { ...intent('child'), deletedAt: now }));
     await assertFails(setDoc(doc(owner, 'PRODUCTS/12345678'), { productName: 'Untrusted' }));
+    await assertSucceeds(getDoc(doc(owner, 'PRODUCTS/semantic-eval')));
+    await assertFails(updateDoc(doc(owner, 'PRODUCTS/semantic-eval'), { 'semanticAttributes.texture': { value: 'crunchy' } }));
+    await assertFails(updateDoc(doc(attacker, 'PRODUCTS/semantic-eval'), { 'semanticAttributes.texture': { value: 'soft' } }));
     await assertSucceeds(getDoc(doc(owner, session)));
     await assertSucceeds(getDoc(doc(owner, evidence)));
     await assertFails(getDoc(doc(attacker, evidence)));
