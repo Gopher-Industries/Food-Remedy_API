@@ -246,10 +246,11 @@ function nutritionReasons(original: Product, candidate: Product, profile: Nutrit
   return { score, reasonCodes: codes };
 }
 
-function rankCandidate(original: Product, product: Product, profile: NutritionalProfile, safety: CandidateSafetyAssessment): RankedSubstitution | null {
+function rankCandidate(original: Product, product: Product, profile: NutritionalProfile,
+  safety: CandidateSafetyAssessment, allowCrossCategory = false): RankedSubstitution | null {
   if (!categories(product).length) return null;
   const category = categoryMatch(original, product);
-  if (!category) return null;
+  if (!category && !allowCrossCategory) return null;
   const nutrition = nutritionReasons(original, product, profile);
   const categoryScore = category === "MATCH_CATEGORY_EXACT" ? 30 : category === "MATCH_CATEGORY_SUBSTRING" ? 20 : 0;
   const safetyScore = safety.safetyRating === "green" ? 25 : 0;
@@ -259,6 +260,18 @@ function rankCandidate(original: Product, product: Product, profile: Nutritional
   const barcode = String(product.barcode || "").trim();
   if (!barcode) return null;
   return { product, barcode, score, confidenceScore: Math.round((score / 100) * 1000) / 1000, safetyRating: safety.safetyRating as "green" | "grey", reasonCodes, reasons: reasonCodes.map((code) => REASON_TEXT[code]) };
+}
+
+/** Reusable deterministic score for a single candidate; never bypasses hard gates. */
+export function rankSafeCandidate(original: Product, product: Product, profile: NutritionalProfile): RankedSubstitution | null {
+  const safety = assessCandidateSafety(product, profile);
+  return safety.eligible ? rankCandidate(original, product, profile, safety) : null;
+}
+
+/** A retrieved semantic candidate may cross categories, but must pass the same hard safety checks. */
+export function rankSemanticCandidate(original: Product, product: Product, profile: NutritionalProfile): RankedSubstitution | null {
+  const safety = assessCandidateSafety(product, profile);
+  return safety.eligible ? rankCandidate(original, product, profile, safety, true) : null;
 }
 
 function compareRanked(left: RankedSubstitution, right: RankedSubstitution): number {

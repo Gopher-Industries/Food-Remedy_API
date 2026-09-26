@@ -26,7 +26,7 @@ import {
 } from "@/server/substitutionObservability";
 import type { RecommendationSessionStore } from '@/server/recommendationEvidenceRepository';
 import { PersonalizationContextUnavailableError, type PersonalizationContextRepository } from './personalizationContext';
-import { executeProductSubstitutionV2, SUBSTITUTION_CONTRACT_VERSION_V2, validateSubstitutionRequestV2,
+import { applySemanticRankingV2, executeProductSubstitutionV2, SUBSTITUTION_CONTRACT_VERSION_V2, validateSubstitutionRequestV2,
   type ProductSubstitutionV2Execution } from './productSubstitutionV2';
 import type { SemanticFitClient } from './semanticFitClient';
 
@@ -42,6 +42,7 @@ export interface ProductSubstitutionHandlerDependencies {
   contextRepository?: PersonalizationContextRepository;
   /** Wired for BE066/BE067; BE065 does not evaluate or alter ordering. */
   semanticClient?: SemanticFitClient;
+  semanticEnabled?: boolean;
 }
 
 function response(body: unknown, status: number): Response {
@@ -163,6 +164,30 @@ export function createProductSubstitutionHandler(dependencies: ProductSubstituti
         ? executeProductSubstitutionV2(dependencies.repository, dependencies.contextRepository!, identity.uid, input as ReturnType<typeof validateSubstitutionRequestV2>)
         : executeProductSubstitution(dependencies.repository, identity.uid, input as ReturnType<typeof validateSubstitutionRequest>),
       request.signal, remainingMs(deadline));
+      if (isV2 && 'context' in execution && dependencies.semanticEnabled && dependencies.semanticClient &&
+          execution.context.intention && execution.response.substitutions.length) {
+        const remaining = deadline - Date.now();
+        if (remaining > 100) {
+          const controller = new AbortController();
+          const abort = () => controller.abort();
+          request.signal.addEventListener('abort', abort, { once: true });
+          const timer = setTimeout(abort, remaining);
+          try {
+            await withDeadline(applySemanticRankingV2(execution, dependencies.semanticClient, controller.signal),
+              request.signal, remaining);
+          } catch {
+            if (request.signal.aborted) throw new RequestCancelledError("Request was cancelled.");
+            execution.response = { ...execution.response, rankingReasonCode: 'SEMANTIC_FALLBACK' };
+            execution.semanticFallbackReason = 'unavailable';
+          } finally {
+            clearTimeout(timer);
+            request.signal.removeEventListener('abort', abort);
+          }
+        } else {
+          execution.response = { ...execution.response, rankingReasonCode: 'SEMANTIC_FALLBACK' };
+          execution.semanticFallbackReason = 'unavailable';
+        }
+      }
       resultCount = execution.response.substitutions.length;
       emptyStateReason = execution.response.emptyStateReason;
       ranking = execution.metrics;
@@ -176,7 +201,14 @@ export function createProductSubstitutionHandler(dependencies: ProductSubstituti
               originalBarcode: input.barcode,
               candidates: execution.response.substitutions.map(item => ({
                 barcode: item.barcode, deterministicScore: 'deterministicScore' in item ? Number(item.deterministicScore) : item.confidenceScore,
+                ...('semanticScore' in item && item.semanticScore !== null ? { semanticScore: Number(item.semanticScore) } : {}),
               })),
+              ...('context' in execution && execution.response.rankingMode === 'semantic' ? {
+                rankingMode: 'semantic' as const,
+                modelVersion: execution.semanticModel,
+                policyVersion: execution.semanticPolicyVersion,
+                questionSetVersion: execution.semanticQuestionSetVersion,
+              } : {}),
             }), request.signal, remainingMs);
             return response({ ...execution.response, recommendationSessionId: sessionId }, 200);
           }

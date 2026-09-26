@@ -1,7 +1,9 @@
 import type { Product } from '@/types/Product';
+import type { NutritionalProfile } from '@/types/NutritionalProfile';
 import { validPersonalizationId } from '@/services/personalizationValidation';
 import { MAX_SUBSTITUTION_CANDIDATES, rankSubstitutionCandidates, type RankedSubstitution,
   type SubstitutionRankingMetrics, type SubstitutionEmptyStateReason } from '@/services/substitutionEligibility';
+import { rankSemanticCandidate } from '@/services/substitutionEligibility';
 import { normalizeBarcodeCandidate } from './productBarcode';
 import { compactSubstitution, compactTarget, DEFAULT_SUBSTITUTION_LIMIT, MAX_API_SUBSTITUTION_LIMIT,
   ProductNotFoundError, ProfileUnavailableError, SubstitutionValidationError,
@@ -9,6 +11,9 @@ import { compactSubstitution, compactTarget, DEFAULT_SUBSTITUTION_LIMIT, MAX_API
 import { resolvePersonalizationContext, type PersonalizationContext,
   type PersonalizationContextRepository } from './personalizationContext';
 import { buildSemanticShortlist, semanticShortlistLimit, type HybridCandidatePool } from './hybridCandidateRetrieval';
+import { evaluateSemanticShortlist } from './semanticFitEvaluator';
+import { composeSubstitutionRanking, type CompositeFallbackReason } from './compositeSubstitutionRanking';
+import type { SemanticFitClient } from './semanticFitClient';
 
 export const SUBSTITUTION_CONTRACT_VERSION_V2 = '2.0.0' as const;
 const CONTROL = /[\u0000-\u001f\u007f-\u009f]/;
@@ -65,14 +70,15 @@ export function validateSubstitutionRequestV2(value: unknown): ValidatedSubstitu
   };
 }
 
-function v2Item(candidate: RankedSubstitution) {
+export function v2Item(candidate: RankedSubstitution, semantic?: { score: number; confidence: number }) {
   const { confidenceScore, reasons: _reasons, ...compact } = compactSubstitution(candidate);
   return {
     ...compact,
     deterministicScore: confidenceScore,
-    semanticScore: null,
-    semanticConfidence: null,
-    rankingMode: 'deterministic' as const,
+    semanticScore: semantic ? semantic.score : null,
+    semanticConfidence: semantic ? semantic.confidence : null,
+    rankingMode: semantic ? 'semantic' as const : 'deterministic' as const,
+    reasonCodes: semantic ? [...compact.reasonCodes, 'SEMANTIC_FIT_APPLIED' as const] : compact.reasonCodes,
   };
 }
 
@@ -81,7 +87,8 @@ export interface ProductSubstitutionV2Response {
   status: 'success' | 'no_eligible_candidates' | 'insufficient_data';
   targetProduct: ReturnType<typeof compactTarget>;
   substitutions: ReturnType<typeof v2Item>[];
-  rankingMode: 'deterministic';
+  rankingMode: 'deterministic' | 'semantic';
+  rankingReasonCode: 'DETERMINISTIC_BASELINE' | 'SEMANTIC_CONFIDENT' | 'SEMANTIC_FALLBACK';
   emptyStateReason: SubstitutionEmptyStateReason | null;
   recommendationSessionId?: string;
 }
@@ -92,9 +99,14 @@ export interface ProductSubstitutionV2Execution {
   profileId: string;
   original: Product;
   eligible: RankedSubstitution[];
+  profile: NutritionalProfile;
   semanticShortlist: Product[];
   retrieval: Pick<HybridCandidatePool, 'readCount' | 'latencyMs' | 'branchCounts'> | null;
   context: PersonalizationContext;
+  semanticModel?: string;
+  semanticQuestionSetVersion?: string;
+  semanticPolicyVersion?: string;
+  semanticFallbackReason?: CompositeFallbackReason | 'unavailable';
 }
 
 /** V2 changes the authenticated selection and response contract, not ranking. */
@@ -122,16 +134,62 @@ export async function executeProductSubstitutionV2(
       version: SUBSTITUTION_CONTRACT_VERSION_V2,
       status: ranked.substitutions.length ? 'success' : ranked.emptyStateReason === 'INSUFFICIENT_PRODUCT_DATA' ? 'insufficient_data' : 'no_eligible_candidates',
       targetProduct: compactTarget(original),
-      substitutions: ranked.substitutions.map(v2Item),
+      substitutions: ranked.substitutions.map(candidate => v2Item(candidate)),
       rankingMode: 'deterministic',
+      rankingReasonCode: 'DETERMINISTIC_BASELINE',
       emptyStateReason: ranked.emptyStateReason,
     },
     metrics: ranked.metrics,
     profileId: profile.profileId,
     original,
     eligible: ranked.substitutions,
+    profile,
     semanticShortlist,
     retrieval: hybrid ? { readCount: hybrid.readCount, latencyMs: hybrid.latencyMs, branchCounts: hybrid.branchCounts } : null,
     context,
   };
+}
+
+/** Apply model output only when the entire comparison set passes the policy. */
+export async function applySemanticRankingV2(
+  execution: ProductSubstitutionV2Execution,
+  client: SemanticFitClient,
+  signal?: AbortSignal
+): Promise<ProductSubstitutionV2Execution> {
+  if (!execution.response.substitutions.length || !execution.context.intention) return execution;
+  const seen = new Set<string>();
+  const comparison = [...execution.eligible.map(item => item.product), ...execution.semanticShortlist]
+    .filter(product => {
+      if (seen.has(product.barcode)) return false;
+      seen.add(product.barcode);
+      return true;
+    }).slice(0, 20);
+  const scored = comparison.flatMap(product => {
+    const result = rankSemanticCandidate(execution.original, product, execution.profile);
+    return result ? [result] : [];
+  });
+  const evaluations = await evaluateSemanticShortlist(client, execution.original,
+    scored.map(item => item.product), execution.profile, execution.context, signal);
+  if (signal?.aborted) {
+    execution.response = { ...execution.response, rankingReasonCode: 'SEMANTIC_FALLBACK' };
+    execution.semanticFallbackReason = 'unavailable';
+    return execution;
+  }
+  const composition = composeSubstitutionRanking(scored, evaluations, execution.response.substitutions.length);
+  if (!composition.applied) {
+    execution.response = { ...execution.response, rankingReasonCode: 'SEMANTIC_FALLBACK' };
+    execution.semanticFallbackReason = composition.reason;
+    return execution;
+  }
+  execution.response = {
+    ...execution.response,
+    substitutions: composition.candidates.map(item => v2Item(item.candidate, {
+      score: item.semanticScore, confidence: item.semanticConfidence,
+    })),
+    rankingMode: 'semantic', rankingReasonCode: 'SEMANTIC_CONFIDENT',
+  };
+  execution.semanticModel = composition.model;
+  execution.semanticQuestionSetVersion = composition.questionSetVersion;
+  execution.semanticPolicyVersion = composition.policyVersion;
+  return execution;
 }
