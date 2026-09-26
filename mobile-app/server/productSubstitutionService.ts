@@ -8,6 +8,8 @@ import {
   type SubstitutionRankingMetrics,
 } from "@/services/substitutionEligibility";
 import { normalizeBarcodeCandidate } from "@/server/productBarcode";
+import type { PersonalizationContext } from './personalizationContext';
+import type { HybridCandidatePool } from './hybridCandidateRetrieval';
 
 export const SUBSTITUTION_CONTRACT_VERSION = "1.0.0" as const;
 export const MAX_SUBSTITUTION_BODY_BYTES = 1_024;
@@ -25,6 +27,7 @@ export interface ProductSubstitutionRepository {
   /** Required by v2. The implementation must read beneath the verified UID. */
   getOwnedProfile?(uid: string, profileId: string): Promise<NutritionalProfile | null>;
   getCandidates(original: Product, maximum: number): Promise<Product[]>;
+  getHybridCandidates?(original: Product, context: PersonalizationContext, maximum: number): Promise<HybridCandidatePool>;
 }
 
 export class SubstitutionValidationError extends Error {
