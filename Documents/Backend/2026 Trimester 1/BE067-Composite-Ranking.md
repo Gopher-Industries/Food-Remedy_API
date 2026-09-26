@@ -3,9 +3,12 @@
 The v2 endpoint first runs the unchanged deterministic safety and ranking
 engine. An optional semantic stage compares at most 20 safety-eligible
 candidates, including the deterministic display set and the bounded semantic
-shortlist. Each candidate is rechecked through `rankSafeCandidate` before
-evaluation. An excluded candidate can neither reach Jev nor re-enter the
-response. V1 remains deterministic.
+shortlist. Each candidate is rechecked through `rankSemanticCandidate` before
+evaluation: hard safety eligibility and category evidence are required, while
+the deterministic same-category preference is not a safety gate. A safe
+cross-category candidate can therefore compete after semantic evaluation.
+An unsafe candidate can neither reach Jev nor re-enter the response. V1
+remains deterministic.
 
 The `food-composite-v1` policy is **provisional and disabled by default**. It
 needs the BE069 evaluation and QA/product approval before production enablement.

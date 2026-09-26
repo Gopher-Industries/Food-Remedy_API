@@ -3,7 +3,7 @@ import type { NutritionalProfile } from '@/types/NutritionalProfile';
 import { validPersonalizationId } from '@/services/personalizationValidation';
 import { MAX_SUBSTITUTION_CANDIDATES, rankSubstitutionCandidates, type RankedSubstitution,
   type SubstitutionRankingMetrics, type SubstitutionEmptyStateReason } from '@/services/substitutionEligibility';
-import { rankSafeCandidate } from '@/services/substitutionEligibility';
+import { rankSemanticCandidate } from '@/services/substitutionEligibility';
 import { normalizeBarcodeCandidate } from './productBarcode';
 import { compactSubstitution, compactTarget, DEFAULT_SUBSTITUTION_LIMIT, MAX_API_SUBSTITUTION_LIMIT,
   ProductNotFoundError, ProfileUnavailableError, SubstitutionValidationError,
@@ -165,7 +165,7 @@ export async function applySemanticRankingV2(
       return true;
     }).slice(0, 20);
   const scored = comparison.flatMap(product => {
-    const result = rankSafeCandidate(execution.original, product, execution.profile);
+    const result = rankSemanticCandidate(execution.original, product, execution.profile);
     return result ? [result] : [];
   });
   const evaluations = await evaluateSemanticShortlist(client, execution.original,

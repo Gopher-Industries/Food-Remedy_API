@@ -137,6 +137,33 @@ describe("POST /api/recommendations/substitutions", () => {
     }));
   });
 
+  it('can rank a retrieved safe cross-category candidate without relaxing allergen safety', async () => {
+    const deps = dependencies();
+    deps.semanticEnabled = true;
+    deps.repository.getCandidates.mockResolvedValue([
+      product({ barcode: '036000291469', productName: 'Same-category snack' }),
+      product({ barcode: '036000291476', productName: 'Rice cakes', categories: ['rice-cakes'] }),
+      product({ barcode: '036000291483', productName: 'Milk snack', allergens: ['milk'] }),
+    ]);
+    const mock = new MockSemanticFitClient(request => {
+      const candidate = request.state.candidate as { name: string };
+      const score = candidate.name === 'Rice cakes' ? 3 : 0;
+      return { available: true, model: 'jev-1.13.0', usage: { inputTokens: 40, outputTokens: 4 },
+        durationMs: 5, answers: Object.fromEntries(Object.keys(request.questions).map(id => [id, {
+          score, confidence: 0.95, probabilities: { '0': score === 0 ? 1 : 0,
+            '1': 0, '2': 0, '3': score === 3 ? 1 : 0 },
+        }])) };
+    });
+    deps.semanticClient = mock;
+    const response = await createProductSubstitutionHandler(deps)(request(v2Body({ intention: 'Lunchbox snack' })));
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.rankingMode).toBe('semantic');
+    expect(body.substitutions[0].barcode).toBe('036000291476');
+    expect(body.substitutions.map((item: { barcode: string }) => item.barcode)).not.toContain('036000291483');
+    expect(mock.calls).toHaveLength(2);
+  });
+
   it('returns the exact deterministic order when Jev is unavailable', async () => {
     const deps = dependencies();
     deps.repository.getCandidates.mockResolvedValue([
