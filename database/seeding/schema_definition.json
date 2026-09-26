@@ -15,10 +15,22 @@
       "description": "Primary product name (auto-filled fallback if missing)",
       "constraints": "non-empty"
     },
+    "productNameSearch": {
+      "type": "string",
+      "required": false,
+      "description": "Deterministic lowercase, NFC-normalized product name for prefix search",
+      "constraints": "lowercase, NFC normalized"
+    },
     "brand": {
       "type": "string",
       "required": false,
       "description": "Brand name (may be empty)"
+    },
+    "brandSearch": {
+      "type": "string",
+      "required": false,
+      "description": "Deterministic lowercase, NFC-normalized brand name for prefix search",
+      "constraints": "lowercase, NFC normalized"
     },
     "genericName": {
       "type": "string",
@@ -192,6 +204,9 @@
     { "fields": ["enrichment.nutrition.compositeScore"], "direction": "DESCENDING", "description": "Nutrition quality sorting" },
     { "fields": ["nutriscoreGrade"], "description": "Quick grade filter" },
     { "fields": ["enrichment.tags"], "description": "Array-contains for diet/lifestyle tags" },
-    { "fields": ["brand", "nutriscoreGrade"], "description": "Brand + quality combo" }
+    { "fields": ["brand", "nutriscoreGrade"], "description": "Brand + quality combo" },
+    { "fields": ["productNameSearch"], "description": "Prefix query index for search by product name" },
+    { "fields": ["brandSearch"], "description": "Prefix query index for search by brand" },
+    { "fields": ["brandSearch", "productNameSearch"], "description": "Compound search by brand and product name" }
   ]
 }
