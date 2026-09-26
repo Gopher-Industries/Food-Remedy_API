@@ -152,6 +152,22 @@ describe("POST /api/recommendations/substitutions", () => {
     expect(fallback.rankingReasonCode).toBe('SEMANTIC_FALLBACK');
     expect(fallback.substitutions).toEqual(baseline.substitutions);
   });
+
+  it('returns deterministic v2 results when semantic evaluation exhausts the request deadline', async () => {
+    const deps = dependencies();
+    deps.semanticEnabled = true;
+    deps.semanticClient = { evaluate: async (_request, signal) => new Promise(resolve => {
+      signal?.addEventListener('abort', () => resolve({ available: false, reason: 'cancelled' }), { once: true });
+    }) };
+    const response = await createProductSubstitutionHandler({ ...deps, timeoutMs: 250 })(
+      request(v2Body({ intention: 'Lunchbox snack' })));
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.rankingMode).toBe('deterministic');
+    expect(body.rankingReasonCode).toBe('SEMANTIC_FALLBACK');
+    expect(body.substitutions[0].semanticScore).toBeNull();
+  });
+
   it('selects an owned child profile and emits explicit deterministic v2 score fields', async () => {
     const deps = dependencies();
     deps.sessionStore = { create: jest.fn().mockResolvedValue('server_session_2') };
