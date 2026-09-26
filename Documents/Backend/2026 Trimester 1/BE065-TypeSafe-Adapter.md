@@ -3,9 +3,9 @@
 The pinned dependency is `@typesafe-ai/sdk@0.6.0`, which requires Node 20+;
 the local runtime used for verification is Node 22. The adapter uses the SDK's
 `TypeSafeClient.systemOne` and `score` primitives. The versioned model default
-is `jev-1.13.0`, not a moving alias. See the [JavaScript SDK](https://docs.typesafe.ai/sdk/javascript.md),
-[client configuration](https://docs.typesafe.ai/sdk/javascript/api/interfaces/TypeSafeClientConfig.md),
-and [model registry](https://docs.typesafe.ai/models.md).
+is `jev-1.13.0`, not a moving alias. See the [JavaScript SDK](https://docs.typesafe.ai/sdk/javascript),
+[client configuration](https://docs.typesafe.ai/sdk/javascript/api/interfaces/TypeSafeClientConfig),
+and [model registry](https://docs.typesafe.ai/models).
 
 The server environment accepts `TYPESAFE_API_KEY`, optional HTTPS
 `TYPESAFE_BASE_URL`, pinned `TYPESAFE_MODEL`, and `TYPESAFE_TIMEOUT_MS` in
@@ -24,7 +24,7 @@ probabilities, model ID, and usage. It maps failures to internal typed
 `connection`, `upstream`, `malformed`, or `busy` outcomes. The SDK receives the
 AbortSignal; an independent total deadline also bounds a transport that ignores
 cancellation. There is at most one SDK retry and three concurrent calls per
-adapter instance. Missing or invalid credentials yield a disabled client.
+server process through a shared adapter instance. Missing or invalid credentials yield a disabled client.
 
 BE065 wires the adapter into the server route but does not invoke it or change
 candidate order. BE066 supplies the food-fit questions and BE067 controls when
