@@ -6,6 +6,7 @@ import {
 } from "@/server/productSubstitutionHandler";
 import type { ProductSubstitutionRepository } from "@/server/productSubstitutionService";
 import { EnabledSubstitutionRollout } from "@/server/substitutionObservability";
+import { DisabledSemanticFitClient } from '@/server/semanticFitClient';
 
 const BARCODE = "036000291452";
 
@@ -95,6 +96,13 @@ function v2Body(overrides: Record<string, unknown> = {}) {
 }
 
 describe("POST /api/recommendations/substitutions", () => {
+  it('keeps deterministic substitutions available with semantic evaluation disabled', async () => {
+    const deps = dependencies();
+    deps.semanticClient = new DisabledSemanticFitClient();
+    const response = await createProductSubstitutionHandler(deps)(request(v2Body({ intention: 'Lunchbox snack' })));
+    expect(response.status).toBe(200);
+    expect((await response.json()).rankingMode).toBe('deterministic');
+  });
   it('selects an owned child profile and emits explicit deterministic v2 score fields', async () => {
     const deps = dependencies();
     deps.sessionStore = { create: jest.fn().mockResolvedValue('server_session_2') };
