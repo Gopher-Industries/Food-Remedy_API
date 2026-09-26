@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { useSQLiteDatabase } from "@/components/providers/SQLiteDatabaseProvider";
-import { useDeviceUserId } from "@/hooks/useDeviceUserId";
+import { useAuthUserId } from "@/hooks/useAuthUserId";
 import type { FavouriteItem } from "@/types/FavouriteItem";
 import type { Product } from "@/types/Product";
 import {
@@ -12,7 +12,8 @@ import {
 
 export function useFavourites() {
   const { db, isDbReady } = useSQLiteDatabase();
-  const userId = useDeviceUserId();
+  // Saved items are account data. Never fall back to a device/guest identity.
+  const userId = useAuthUserId();
   const [items, setItems] = useState<FavouriteItem[]>([]);
   const [loading, setLoading] = useState(false);
 

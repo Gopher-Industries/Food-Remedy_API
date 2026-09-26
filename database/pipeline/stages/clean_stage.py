@@ -18,7 +18,20 @@ from NutrientUnitNormalisation import normalize_nutriments_dict
 
 def run_clean_stage(input_path: str, output_path: str, config=None):
     """
-    Robust clean stage that never crashes on nested OFF data.
+    Clean and normalise product data before later pipeline stages.
+
+    The function loads product records from a JSON file, converts nested
+    list and dictionary values into JSON strings, applies nutrient unit
+    normalisation, and writes the cleaned records to the output file.
+
+    Args:
+        input_path: Path to the input JSON file containing product data.
+        output_path: Path where the cleaned JSON data will be written.
+        config: Optional configuration value reserved for pipeline compatibility.
+
+    Returns:
+        A dictionary containing the stage status, number of processed records,
+        failure count, and output file path.
     """
 
     with open(input_path, "r", encoding="utf-8") as f:

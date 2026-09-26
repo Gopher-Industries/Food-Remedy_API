@@ -79,7 +79,8 @@
           "description": "High-level execution status"
         },
         "targetProduct": {
-          "type": "object",
+          "type": ["object", "null"],
+          "description": "Null when the requested barcode has no catalogue product.",
           "required": ["barcode", "productName"],
           "properties": {
             "barcode": { "type": "string" },
@@ -132,7 +133,7 @@
               ]
             },
             "message": { "type": "string" },
-            "details": { "type": ["object", "array", "null"] }
+            "details": { "type": "null" }
           },
           "additionalProperties": false
         }

@@ -20,8 +20,6 @@ import {
   clearAllItemsFirestore,
   upsertItemInListFirestore,
 } from "@/services/database/user/shoppingLists";
-import { auth } from "@/config/firebaseConfig";
-import { signInAnonymously } from "firebase/auth";
 import {
   createShoppingList,
   getShoppingLists,
@@ -51,20 +49,12 @@ export function useShoppingList() {
     (ShoppingListItem & { product: Product })[]
   >([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [hasSyncedFromCloud, setHasSyncedFromCloud] = useState(false);
   const lastUserIdRef = useRef<string | null>(null);
 
   const ensureUid = useCallback(async (): Promise<string | null> => {
-    if (userId) return userId;
-    let uid = auth.currentUser?.uid ?? null;
-    if (uid) return uid;
-    try {
-      const cred = await signInAnonymously(auth);
-      uid = cred.user?.uid ?? null;
-    } catch (e) {
-      console.warn("Anonymous sign-in attempt failed:", e);
-    }
-    return uid;
+    return userId;
   }, [userId]);
 
   /**
@@ -73,9 +63,13 @@ export function useShoppingList() {
   const refreshLists = useCallback(async () => {
     if (!db || !isDbReady || !userId) return;
     setLoading(true);
+    setLoadError(null);
     try {
-      const allLists = await getShoppingLists(db, userId);
-      setLists(allLists);
+        const allLists = await getShoppingLists(db, userId);
+        setLists(allLists);
+    } catch (e) {
+        console.error("[useShoppingList] Failed to load shopping lists:", e);
+        setLoadError("We couldn't load your shopping lists.");
     } finally {
       setLoading(false);
     }
@@ -150,7 +144,7 @@ export function useShoppingList() {
    */
   const updateList = useCallback(
     async (listId: string, updates: { listName?: string; color?: string; emoji?: string }) => {
-      if (!db) return;
+      if (!db || !userId) return;
       await updateShoppingList(db, listId, updates);
       // Attempt to sync patch to Firestore
       try {
@@ -179,7 +173,7 @@ export function useShoppingList() {
    */
   const deleteList = useCallback(
     async (listId: string) => {
-      if (!db) return;
+      if (!db || !userId) return;
       await deleteShoppingList(db, listId);
       try {
         if (userId) {
@@ -202,7 +196,7 @@ export function useShoppingList() {
    */
   const loadList = useCallback(
     async (listId: string) => {
-      if (!db) return;
+      if (!db || !userId) return;
       setLoading(true);
       try {
         const list = await getShoppingList(db, listId);
@@ -215,7 +209,7 @@ export function useShoppingList() {
         setLoading(false);
       }
     },
-    [db]
+    [db, userId]
   );
 
   /**
@@ -223,7 +217,7 @@ export function useShoppingList() {
    */
   const addItem = useCallback(
     async (listId: string, product: Product, quantity: number = 1, note?: string) => {
-      if (!db) {
+      if (!db || !userId) {
         console.error('[useShoppingList] addItem called but db is not ready!', { listId, product: product.productName, quantity });
         throw new Error('Database not ready');
       }
@@ -253,7 +247,7 @@ export function useShoppingList() {
         setCurrentItems(items);
       }
     },
-    [db, currentList, lists, ensureUid]
+    [db, userId, currentList, lists, ensureUid]
   );
 
   /**
@@ -261,7 +255,7 @@ export function useShoppingList() {
    */
   const updateQuantity = useCallback(
     async (listId: string, barcode: string, quantity: number) => {
-      if (!db) {
+      if (!db || !userId) {
         console.error('[useShoppingList] updateQuantity called but db is not ready!', { listId, barcode, quantity });
         throw new Error('Database not ready');
       }
@@ -293,7 +287,7 @@ export function useShoppingList() {
         );
       }
     },
-    [db, currentList, lists, ensureUid]
+    [db, userId, currentList, lists, ensureUid]
   );
 
   /**
@@ -301,7 +295,7 @@ export function useShoppingList() {
    */
   const updateNote = useCallback(
     async (listId: string, barcode: string, note: string | null) => {
-      if (!db) return;
+      if (!db || !userId) return;
       await updateItemNote(db, listId, barcode, note ?? null);
 
       try {
@@ -319,7 +313,7 @@ export function useShoppingList() {
         );
       }
     },
-    [db, currentList]
+    [db, userId, currentList, lists, ensureUid]
   );
 
   /**
@@ -327,7 +321,7 @@ export function useShoppingList() {
    */
   const toggleChecked = useCallback(
     async (listId: string, barcode: string) => {
-      if (!db) return;
+      if (!db || !userId) return;
       const newState = await toggleItemChecked(db, listId, barcode);
 
       try {
@@ -346,7 +340,7 @@ export function useShoppingList() {
       }
       return newState;
     },
-    [db, currentList, lists, ensureUid]
+    [db, userId, currentList, lists, ensureUid]
   );
 
   /**
@@ -354,7 +348,7 @@ export function useShoppingList() {
    */
   const removeItem = useCallback(
     async (listId: string, barcode: string) => {
-      if (!db) return;
+      if (!db || !userId) return;
       await removeItemFromList(db, listId, barcode);
 
       try {
@@ -370,7 +364,7 @@ export function useShoppingList() {
         );
       }
     },
-    [db, currentList]
+    [db, userId, currentList, lists, ensureUid]
   );
 
   /**
@@ -378,7 +372,7 @@ export function useShoppingList() {
    */
   const clearChecked = useCallback(
     async (listId: string) => {
-      if (!db) return;
+      if (!db || !userId) return;
       await clearCheckedItems(db, listId);
 
       try {
@@ -392,7 +386,7 @@ export function useShoppingList() {
         setCurrentItems((prev) => prev.filter((item) => !item.isChecked));
       }
     },
-    [db, currentList]
+    [db, userId, currentList, lists, ensureUid]
   );
 
   /**
@@ -400,7 +394,7 @@ export function useShoppingList() {
    */
   const clearAll = useCallback(
     async (listId: string) => {
-      if (!db) return;
+      if (!db || !userId) return;
       await clearAllItems(db, listId);
 
       try {
@@ -414,7 +408,7 @@ export function useShoppingList() {
         setCurrentItems([]);
       }
     },
-    [db, currentList]
+    [db, userId, currentList, lists, ensureUid]
   );
 
   /**
@@ -422,10 +416,10 @@ export function useShoppingList() {
    */
   const getItemCount = useCallback(
     async (listId: string) => {
-      if (!db) return 0;
+      if (!db || !userId) return 0;
       return await getListItemCount(db, listId);
     },
-    [db]
+    [db, userId]
   );
 
   /**
@@ -433,7 +427,7 @@ export function useShoppingList() {
    */
   const getItem = useCallback(
     async (listId: string, barcode: string) => {
-      if (!db) {
+      if (!db || !userId) {
         console.warn('[useShoppingList] getItem called but db is not ready, returning null', { listId, barcode });
         return null;
       }
@@ -442,12 +436,13 @@ export function useShoppingList() {
       console.log('[useShoppingList] getItem result:', { barcode, exists: !!item, quantity: item?.quantity });
       return item;
     },
-    [db]
+    [db, userId]
   );
 
   return {
     ready: isDbReady && !!userId,
     loading,
+    loadError,
     lists,
     currentList,
     currentItems,

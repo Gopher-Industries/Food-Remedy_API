@@ -422,6 +422,8 @@ Generates a personalised 7-day meal plan for a user profile. Fetches products fr
 
 Returns bounded, profile-aware product substitutions for the authenticated user. The server verifies the Firebase bearer token and loads only that user’s `USERS/{uid}/PROFILES` profile with `relationship: "Self"`. The request cannot select a user or profile, or provide dietary/allergen overrides.
 
+**Deployment status:** This backend route is implemented but is not yet a production endpoint. The app currently uses Expo SDK 54 with `web.output: "static"`. Expo API routes require a server export and a deployed server; native production builds also need a configured server origin. Configure hosting and server-only Firebase Admin credentials before enabling callers. See [Expo API routes](https://docs.expo.dev/router/web/api-routes/).
+
 **Request headers**
 
 ```text

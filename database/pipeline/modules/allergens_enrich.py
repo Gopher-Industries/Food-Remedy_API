@@ -1,7 +1,7 @@
 import json
 import os
-from typing import Any
 from utils.detect_allergens import detect_allergens  # detection function built
+from utils.missing_value_utils import normalize_allergens
 from database.Allergens.load_allergens import load_allergens  # official config loader
 
 def run(input_path: str, output_path: str, config: dict) -> dict:
@@ -15,7 +15,7 @@ def run(input_path: str, output_path: str, config: dict) -> dict:
     # Normalize output_path: convert relative paths to absolute
     if not os.path.isabs(output_path):
         # Resolve relative to repo root if path is relative
-        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
         output_path = os.path.join(repo_root, output_path)
 
     # Ensure output directory exists
@@ -35,22 +35,21 @@ def run(input_path: str, output_path: str, config: dict) -> dict:
     # Enrich every product
     for product in data:
         try:
-            # Map camelCase fields from enriched data
+            # Pass only declarations and ingredient evidence. Product names,
+            # categories and marketing labels are not authoritative safety data.
             detection_input = {
                 "ingredients_text": product.get("ingredientsText") or product.get("ingredients_text", ""),
                 "traces": product.get("traces", ""),
                 "traces_from_ingredients": product.get("tracesFromIngredients") or product.get("traces_from_ingredients", ""),
-                "product_name": product.get("productName") or product.get("product_name", ""),
-                "generic_name": product.get("genericName") or product.get("generic_name", ""),
                 "ingredients_tags": product.get("ingredients") or product.get("ingredients_tags"),
                 "allergens_tags": product.get("allergens"),
-                "categories_tags": product.get("categories"),
-                "labels_tags": product.get("labels"),
             }
 
-            allergens = detect_allergens(
-                product=detection_input,
-                keyword_entries=allergen_config
+            allergens = normalize_allergens(
+                detect_allergens(
+                    product=detection_input,
+                    keyword_entries=allergen_config,
+                )
             )
 
             # Debug print with more useful info
@@ -59,7 +58,7 @@ def run(input_path: str, output_path: str, config: dict) -> dict:
             # print(f"Detected allergens for {barcode} ({product_name}): {allergens}") # testing line; can be uncommented for debugging
 
         except Exception as e:
-            allergens = []
+            allergens = normalize_allergens(None)
             failures += 1
             barcode = product.get("barcode", "N/A")
             print(f"Warning: Failed to detect allergens for product {barcode}: {e}")

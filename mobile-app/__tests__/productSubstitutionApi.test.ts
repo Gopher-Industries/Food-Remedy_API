@@ -151,6 +151,28 @@ describe("POST /api/recommendations/substitutions", () => {
     expect(deps.repository.getProduct).not.toHaveBeenCalled();
   });
 
+  it("stops reading an oversized stream without Content-Length", async () => {
+    const deps = dependencies();
+    let cancelled = false;
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode("x".repeat(1_025)));
+      },
+      cancel() { cancelled = true; },
+    });
+    const streamedRequest = new Request("http://localhost/api/recommendations/substitutions", {
+      method: "POST",
+      headers: { Authorization: "Bearer verified-token" },
+      body: stream,
+      duplex: "half",
+    } as RequestInit & { duplex: "half" });
+
+    const result = await createProductSubstitutionHandler(deps)(streamedRequest);
+    expect(result.status).toBe(413);
+    expect(cancelled).toBe(true);
+    expect(deps.repository.getProduct).not.toHaveBeenCalled();
+  });
+
   it("returns explicit product and profile empty/error states without leaking internals", async () => {
     const missingProduct = dependencies();
     missingProduct.repository.getProduct.mockResolvedValue(null);

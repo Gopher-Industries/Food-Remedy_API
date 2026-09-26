@@ -36,18 +36,33 @@ function errorResponse(code: string, message: string, status: number): Response 
 }
 
 async function readBoundedJson(request: Request): Promise<unknown> {
-  const contentLength = Number(request.headers.get("content-length"));
-  if (Number.isFinite(contentLength) && contentLength > MAX_SUBSTITUTION_BODY_BYTES) {
+  const contentLengthHeader = request.headers.get("content-length");
+  const contentLength = contentLengthHeader === null ? null : Number(contentLengthHeader);
+  if (contentLength !== null && Number.isFinite(contentLength) && contentLength > MAX_SUBSTITUTION_BODY_BYTES) {
     throw new SubstitutionValidationError("REQUEST_TOO_LARGE", "Request body is too large.");
   }
-  let body: string;
+  const reader = request.body?.getReader();
+  if (!reader) throw new SubstitutionValidationError("INVALID_REQUEST", "Request body must contain valid JSON.");
+  let body = "";
+  let bytes = 0;
+  const decoder = new TextDecoder();
   try {
-    body = await request.text();
-  } catch {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > MAX_SUBSTITUTION_BODY_BYTES) {
+        try { await reader.cancel(); } catch { /* The size limit still applies. */ }
+        throw new SubstitutionValidationError("REQUEST_TOO_LARGE", "Request body is too large.");
+      }
+      body += decoder.decode(value, { stream: true });
+    }
+    body += decoder.decode();
+  } catch (error) {
+    if (error instanceof SubstitutionValidationError) throw error;
     throw new SubstitutionValidationError("INVALID_REQUEST", "Request body could not be read.");
-  }
-  if (new TextEncoder().encode(body).byteLength > MAX_SUBSTITUTION_BODY_BYTES) {
-    throw new SubstitutionValidationError("REQUEST_TOO_LARGE", "Request body is too large.");
+  } finally {
+    reader.releaseLock();
   }
   try {
     return JSON.parse(body);
@@ -62,13 +77,24 @@ function withDeadline<T>(operation: Promise<T>, signal: AbortSignal, timeoutMs: 
       reject(new RequestCancelledError("Request was cancelled."));
       return;
     }
-    const timer = setTimeout(() => reject(new SubstitutionTimeoutError("Request timed out.")), timeoutMs);
-    const onAbort = () => reject(new RequestCancelledError("Request was cancelled."));
-    signal.addEventListener("abort", onAbort, { once: true });
-    operation.then(resolve, reject).finally(() => {
+    const cleanup = () => {
       clearTimeout(timer);
       signal.removeEventListener("abort", onAbort);
-    });
+    };
+    const onAbort = () => {
+      cleanup();
+      reject(new RequestCancelledError("Request was cancelled."));
+    };
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new SubstitutionTimeoutError("Request timed out."));
+    }, timeoutMs);
+    signal.addEventListener("abort", onAbort, { once: true });
+    if (signal.aborted) onAbort();
+    operation.then(
+      (value) => { cleanup(); resolve(value); },
+      (error) => { cleanup(); reject(error); }
+    );
   });
 }
 

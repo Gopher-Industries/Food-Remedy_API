@@ -39,6 +39,9 @@ describeWithEmulator("FirestoreProductSubstitutionRepository", () => {
       firestore.collection("PRODUCTS").doc(milkBarcode).set(product(milkBarcode, { allergens: ["milk"], traces: "sesame" })),
       firestore.collection("USERS").doc("owner").collection("PROFILES").doc("self").set({ relationship: "Self", allergies: ["Milk"], additives: [], intolerances: [], dietaryForm: [] }),
       firestore.collection("USERS").doc("other-user").collection("PROFILES").doc("self").set({ relationship: "Self", allergies: [], additives: [], intolerances: [], dietaryForm: ["Vegan"] }),
+      firestore.collection("USERS").doc("inactive-user").collection("PROFILES").doc("self").set({ relationship: "Self", status: false, allergies: [] }),
+      firestore.collection("USERS").doc("ambiguous-user").collection("PROFILES").doc("self-1").set({ relationship: "Self", allergies: [] }),
+      firestore.collection("USERS").doc("ambiguous-user").collection("PROFILES").doc("self-2").set({ relationship: "Self", allergies: ["Milk"] }),
     ]);
   });
 
@@ -72,5 +75,10 @@ describeWithEmulator("FirestoreProductSubstitutionRepository", () => {
     expect(response.status).toBe("success");
     expect(response.substitutions.map((item) => item.barcode)).toContain(safeBarcode);
     expect(response.substitutions.map((item) => item.barcode)).not.toContain(milkBarcode);
+  });
+
+  it("rejects inactive or ambiguous authoritative profiles", async () => {
+    expect(await repository.getAuthoritativeProfile("inactive-user")).toBeNull();
+    expect(await repository.getAuthoritativeProfile("ambiguous-user")).toBeNull();
   });
 });

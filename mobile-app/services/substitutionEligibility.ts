@@ -169,15 +169,30 @@ export function assessCandidateSafety(product: Product, profile: NutritionalProf
 function nutrient(product: Product, keys: string[], normalizedKeys: string[] = []): number | null {
   const values = product.nutriments || {};
   for (const key of keys) {
-    const value = Number(values[key]);
-    if (Number.isFinite(value)) return value;
+    const raw: unknown = values[key];
+    if (raw !== null && raw !== undefined && (typeof raw !== "string" || raw.trim() !== "")) {
+      const value = Number(raw);
+      if (Number.isFinite(value)) return value;
+    }
   }
   const normalized = product.nutriments_normalized || {};
   for (const key of normalizedKeys) {
-    const value = Number(normalized[key]);
-    if (Number.isFinite(value)) return value;
+    const raw: unknown = normalized[key];
+    if (raw !== null && raw !== undefined && (typeof raw !== "string" || raw.trim() !== "")) {
+      const value = Number(raw);
+      if (Number.isFinite(value)) return value;
+    }
   }
   return null;
+}
+
+function sodiumMg(product: Product): number | null {
+  const sodiumGrams = nutrient(product, ["sodium_100g"]);
+  if (sodiumGrams !== null) return sodiumGrams * 1000;
+  const normalizedSodiumMg = nutrient(product, [], ["sodium_mg"]);
+  if (normalizedSodiumMg !== null) return normalizedSodiumMg;
+  const saltGrams = nutrient(product, ["salt_100g"], ["salt_g"]);
+  return saltGrams === null ? null : saltGrams * 400;
 }
 
 function nutriScore(product: Product): number | null {
@@ -197,8 +212,8 @@ function nutritionReasons(original: Product, candidate: Product, profile: Nutrit
   const sugarCandidate = nutrient(candidate, ["sugars_100g"], ["sugars_g"]);
   const sugarOriginal = nutrient(original, ["sugars_100g"], ["sugars_g"]);
   if (improved(sugarCandidate, sugarOriginal, "lower")) { score += 3; codes.push("LOWER_SUGAR"); }
-  const sodiumCandidate = nutrient(candidate, ["sodium_100g", "salt_100g"], ["sodium_mg", "salt_g"]);
-  const sodiumOriginal = nutrient(original, ["sodium_100g", "salt_100g"], ["sodium_mg", "salt_g"]);
+  const sodiumCandidate = sodiumMg(candidate);
+  const sodiumOriginal = sodiumMg(original);
   if (improved(sodiumCandidate, sodiumOriginal, "lower")) { score += 3; codes.push("LOWER_SODIUM"); }
   const saturatedCandidate = nutrient(candidate, ["saturated-fat_100g"], ["saturated_fat_g"]);
   const saturatedOriginal = nutrient(original, ["saturated-fat_100g"], ["saturated_fat_g"]);
@@ -219,6 +234,7 @@ function nutritionReasons(original: Product, candidate: Product, profile: Nutrit
 function rankCandidate(original: Product, product: Product, profile: NutritionalProfile, safety: CandidateSafetyAssessment): RankedSubstitution | null {
   if (!categories(product).length) return null;
   const category = categoryMatch(original, product);
+  if (!category) return null;
   const nutrition = nutritionReasons(original, product, profile);
   const categoryScore = category === "MATCH_CATEGORY_EXACT" ? 30 : category === "MATCH_CATEGORY_SUBSTRING" ? 20 : 0;
   const safetyScore = safety.safetyRating === "green" ? 25 : 0;
@@ -242,7 +258,10 @@ function compareRanked(left: RankedSubstitution, right: RankedSubstitution): num
  */
 export function rankSubstitutionCandidates(original: Product, candidates: Product[], profile: NutritionalProfile, limit = 5): SubstitutionRankingResult {
   if (!categories(original).length) return { substitutions: [], emptyStateReason: "INSUFFICIENT_PRODUCT_DATA" };
-  const bounded = Array.isArray(candidates) ? candidates.slice(0, MAX_SUBSTITUTION_CANDIDATES) : [];
+  // Bound work without making the selected candidate set depend on input order.
+  const bounded = Array.isArray(candidates)
+    ? [...candidates].sort((left, right) => String(left?.barcode || "").localeCompare(String(right?.barcode || ""))).slice(0, MAX_SUBSTITUTION_CANDIDATES)
+    : [];
   const byBarcode = new Map<string, RankedSubstitution>();
   let categoryDataMissing = 0;
   let strictAllergenExclusions = 0;
