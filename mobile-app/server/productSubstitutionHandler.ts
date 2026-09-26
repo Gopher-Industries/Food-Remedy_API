@@ -215,19 +215,27 @@ export function createProductSubstitutionHandler(dependencies: ProductSubstituti
                 const controller = new AbortController();
                 const abort = () => controller.abort();
                 request.signal.addEventListener('abort', abort, { once: true });
-                const timer = setTimeout(abort, remaining);
+                let semanticTimedOut = false;
+                const timer = setTimeout(() => { semanticTimedOut = true; abort(); }, remaining);
                 const jevStarted = Date.now();
                 try {
                   await withDeadline(applySemanticRankingV2(execution, dependencies.semanticClient, controller.signal),
                     request.signal, remaining);
-                } catch {
+                } catch (error) {
                   if (request.signal.aborted) throw new RequestCancelledError("Request was cancelled.");
                   execution.response = { ...baselineResponse, rankingReasonCode: 'SEMANTIC_FALLBACK' };
                   execution.semanticFallbackReason = 'unavailable';
+                  jevMetric.fallbackReason = error instanceof SubstitutionTimeoutError || semanticTimedOut
+                    ? 'timeout' : 'unavailable';
                 } finally {
                   clearTimeout(timer);
                   request.signal.removeEventListener('abort', abort);
                   jevMetric.upstreamDurationMs = Date.now() - jevStarted;
+                }
+                if (semanticTimedOut) {
+                  execution.response = { ...baselineResponse, rankingReasonCode: 'SEMANTIC_FALLBACK' };
+                  execution.semanticFallbackReason = 'unavailable';
+                  jevMetric.fallbackReason = 'timeout';
                 }
                 if (execution.semanticTelemetry) {
                   const detail = execution.semanticTelemetry;
@@ -237,7 +245,7 @@ export function createProductSubstitutionHandler(dependencies: ProductSubstituti
                   jevMetric.outputTokens = detail.outputTokens;
                   jevMetric.confidenceBand = detail.confidenceBand;
                   jevMetric.rankChangeCount = detail.rankChangeCount;
-                  jevMetric.fallbackReason = detail.fallbackReason;
+                  if (detail.fallbackReason && !semanticTimedOut) jevMetric.fallbackReason = detail.fallbackReason;
                   jevMetric.modelVersion = execution.semanticModel ?? decision.modelVersion;
                   if (decision.budget) {
                     jevMetric.actualCostUsd = estimateJevCost(detail.inputTokens, detail.outputTokens, decision.budget);

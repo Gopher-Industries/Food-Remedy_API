@@ -1,6 +1,6 @@
 import type { Product } from '@/types/Product';
 import type { NutritionalProfile } from '@/types/NutritionalProfile';
-import { MockSemanticFitClient } from '@/server/semanticFitClient';
+import { MockSemanticFitClient, type SemanticFitClient } from '@/server/semanticFitClient';
 import { createProductSubstitutionHandler } from '@/server/productSubstitutionHandler';
 import { FirestoreJevRollout, type JevConfigStore } from '@/server/jevRollout';
 import { ConsoleSubstitutionMetrics, EnabledSubstitutionRollout, type SubstitutionMetricEvent } from '@/server/substitutionObservability';
@@ -34,8 +34,9 @@ function request(): Request {
   });
 }
 
-function setup(store: JevConfigStore, events: SubstitutionMetricEvent[], client: MockSemanticFitClient) {
+function setup(store: JevConfigStore, events: SubstitutionMetricEvent[], client: SemanticFitClient, timeoutMs?: number) {
   return createProductSubstitutionHandler({
+    ...(timeoutMs ? { timeoutMs } : {}),
     tokenVerifier: { verifyIdToken: jest.fn().mockResolvedValue({ uid: 'private-owner' }) },
     repository: { getProduct: async () => original, getOwnedProfile: async () => profile,
       getAuthoritativeProfile: async () => profile, getCandidates: async () => candidates },
@@ -150,6 +151,19 @@ test('upstream timeout and reported usage breach preserve deterministic order', 
   const overActualCost = await (await setup({ get: async () => config }, costEvents, costlyClient)(request())).json();
   expect(overActualCost.substitutions).toEqual(baseline.substitutions);
   expect(costEvents[0].jev).toEqual(expect.objectContaining({ outcome: 'budget_exceeded', fallbackReason: 'cost_limit' }));
+});
+
+test('a real semantic deadline records timeout and returns the deterministic response', async () => {
+  const events: SubstitutionMetricEvent[] = [];
+  const stalled: SemanticFitClient = { evaluate: async (_request, signal) => new Promise(resolve => {
+    signal?.addEventListener('abort', () => resolve({ available: false, reason: 'cancelled' }), { once: true });
+  }) };
+  const response = await setup({ get: async () => ({ ...CONFIG, mode: 'enabled' }) },
+    events, stalled, 250)(request());
+  const body = await response.json();
+  expect(response.status).toBe(200);
+  expect(body.rankingMode).toBe('deterministic');
+  expect(events[0].jev).toEqual(expect.objectContaining({ outcome: 'fallback', fallbackReason: 'timeout' }));
 });
 
 test('Jev metric sink emits only whitelisted aggregate fields', () => {

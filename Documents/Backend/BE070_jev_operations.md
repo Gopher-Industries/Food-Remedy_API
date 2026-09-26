@@ -33,7 +33,7 @@ The adapter uses a shared per-instance client with a concurrency cap of three an
 
 ## Aggregate metrics and alert queries
 
-Every v2 substitution writes a `product_substitution` log metric with a `jev` block: mode, outcome, candidate and question counts, upstream elapsed time, confidence band, fallback reason, attempted rank-change count, pinned model version, token usage and estimated/actual cost. The console sink explicitly selects these fields. It excludes UID, profile ID, barcode, intention, preferences, allergy values, request body, exception details and model state. The privacy test injects those fields and verifies they are absent from output.
+Every v2 substitution writes a `product_substitution` log metric with a `jev` block: mode, outcome, candidate and question counts, upstream elapsed time, confidence band, fallback reason, attempted rank-change count, pinned model version, token usage and estimated/actual cost. The console sink explicitly selects these fields. It excludes UID, profile ID, barcode, intention, preferences, allergy values, request body, exception details and model state. The privacy test injects those fields and verifies they are absent from output. The deadline rehearsal also checks that an actual provider timeout returns deterministic results and records `fallbackReason=timeout`.
 
 In the deployment log explorer, filter for `[substitution-metric]` and parse the attached JSON event. A Cloud Logging starting filter is:
 
