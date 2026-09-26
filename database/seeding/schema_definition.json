@@ -159,6 +159,11 @@
         "dataQualityScore": { "type": "number" }
       }
     },
+    "semanticAttributes": {
+      "type": "object",
+      "required": false,
+      "description": "Versioned contextual ranking evidence from trusted server or pipeline writers only; never safety evidence. See contracts/product_detail_v1.schema.json"
+    },
     "enrichmentMetadata": {
       "type": "object",
       "required": false,

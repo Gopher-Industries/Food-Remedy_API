@@ -72,3 +72,11 @@
 - User profiles for sync are stored under `/USERS/{userId}/PROFILES/` (uppercase).
 - The `Product` interface in your code is the source of truth for product fields.
 - No direct `/profiles` root collection is used by the frontend.
+# BE061 product semantic evidence
+
+`PRODUCTS/{barcode}.semanticAttributes` is an optional v1 block of contextual
+ranking evidence. Every populated attribute includes its source, source
+version, confidence, and generation timestamp. Missing attributes mean unknown;
+`not_applicable` is a distinct evidenced value. Firestore rules deny all client
+product writes. Only trusted Admin SDK or pipeline identities may upload a
+reviewed block. The block never changes safety, ingredient, or nutrition data.
