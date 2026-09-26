@@ -5,6 +5,7 @@ import { createProductSubstitutionResponse } from "@/server/productSubstitutionS
 import { executeProductSubstitutionV2 } from '@/server/productSubstitutionV2';
 import { FirestorePersonalizationContextRepository } from '@/server/firestorePersonalizationContextRepository';
 import { resolvePersonalizationContext, PersonalizationContextUnavailableError } from '@/server/personalizationContext';
+import { buildSemanticShortlist } from '@/server/hybridCandidateRetrieval';
 
 const describeWithEmulator = process.env.FIRESTORE_EMULATOR_HOST ? describe : describe.skip;
 const projectId = "demo-food-remedy-be037";
@@ -12,6 +13,8 @@ const category = "be037-substitution-fixture";
 const originalBarcode = "036000291452";
 const safeBarcode = "036000291469";
 const milkBarcode = "036000291476";
+const crossCategoryBarcode = '036000291483';
+const unrelatedOtherBarcode = '036000291490';
 
 function product(barcode: string, overrides: Record<string, unknown> = {}) {
   return {
@@ -43,6 +46,13 @@ describeWithEmulator("FirestoreProductSubstitutionRepository", () => {
         texture: { value: 'soft', source: 'manual', sourceVersion: 'fixture-v1', confidence: 1, generatedAt: '2026-09-25T00:00:00Z' },
       } })),
       firestore.collection("PRODUCTS").doc(milkBarcode).set(product(milkBarcode, { allergens: ["milk"], traces: "sesame" })),
+      firestore.collection('PRODUCTS').doc(crossCategoryBarcode).set(product(crossCategoryBarcode, {
+        categories: ['rice-cakes'], labels: [], semanticAttributes: {
+          schemaVersion: '1.0.0', evidenceCompleteness: 'partial',
+          occasion: { value: 'lunchbox', source: 'manual', sourceVersion: 'fixture-v1', confidence: 1, generatedAt: '2026-09-25T00:00:00Z' },
+        },
+      })),
+      firestore.collection('PRODUCTS').doc(unrelatedOtherBarcode).set(product(unrelatedOtherBarcode, { categories: ['other'], labels: [] })),
       firestore.collection("USERS").doc("owner").collection("PROFILES").doc("self").set({ relationship: "Self", allergies: ["Milk"], additives: [], intolerances: [], dietaryForm: [] }),
       firestore.collection("USERS").doc("other-user").collection("PROFILES").doc("self").set({ relationship: "Self", allergies: [], additives: [], intolerances: [], dietaryForm: ["Vegan"] }),
       firestore.collection("USERS").doc("inactive-user").collection("PROFILES").doc("self").set({ relationship: "Self", status: false, allergies: [] }),
@@ -126,5 +136,25 @@ describeWithEmulator("FirestoreProductSubstitutionRepository", () => {
     await expect(executeProductSubstitutionV2(repository, contexts, 'other-user', {
       barcode: originalBarcode, profileId: 'child', limit: 20,
     })).rejects.toThrow('Profile unavailable.');
+  });
+
+  it('recalls cross-category occasion matches within the 180-read budget', async () => {
+    const original = (await repository.getProduct(originalBarcode))!;
+    const context = await resolvePersonalizationContext(
+      new FirestorePersonalizationContextRepository(firestore), 'owner', 'child', undefined,
+      Date.parse('2026-09-26T00:00:00Z')
+    );
+    context.intention = { text: 'A lunchbox snack', provenance: 'explicit', source: 'one_off' };
+    const first = await repository.getHybridCandidates(original, context, 200);
+    const second = await repository.getHybridCandidates(original, context, 200);
+    expect(first.readCount).toBeLessThanOrEqual(180);
+    expect(first.latencyMs).toBeLessThan(4_000);
+    expect(first.candidates.map(item => item.barcode)).toContain(crossCategoryBarcode);
+    expect(first.candidates.map(item => item.barcode)).not.toContain(unrelatedOtherBarcode);
+    expect(first.candidates.map(item => item.barcode)).toEqual(second.candidates.map(item => item.barcode));
+    const profile = (await repository.getOwnedProfile('owner', 'child'))!;
+    const shortlist = buildSemanticShortlist(original, first.candidates, profile, context, 2);
+    expect(shortlist.products.map(item => item.barcode)).toContain(crossCategoryBarcode);
+    expect(shortlist.products.map(item => item.barcode)).not.toContain(milkBarcode);
   });
 });

@@ -3,6 +3,10 @@ import type { NutritionalProfile } from "@/types/NutritionalProfile";
 import type { Product } from "@/types/Product";
 import { normaliseFirestoreProduct } from "@/services/utils/normaliseFirestoreProduct";
 import type { ProductSubstitutionRepository } from "@/server/productSubstitutionService";
+import type { PersonalizationContext } from './personalizationContext';
+import { HYBRID_READ_BUDGET, intendedOccasion, meaningfulCategories, namePrefix,
+  type HybridCandidatePool } from './hybridCandidateRetrieval';
+import { normalizeBarcodeCandidate } from './productBarcode';
 
 const PRODUCTS_COLLECTION = "PRODUCTS";
 const BROAD_CATEGORIES = new Set(["food", "foods", "products", "groceries", "grocery", "meals", "meal", "dishes", "dish", "prepared-meals", "prepared-foods"]);
@@ -93,5 +97,53 @@ export class FirestoreProductSubstitutionRepository implements ProductSubstituti
       products.set(product.barcode, product);
     }
     return [...products.values()].slice(0, boundedMaximum);
+  }
+
+  /** Five bounded deterministic branches; no arbitrary broad-category scan. */
+  async getHybridCandidates(original: Product, context: PersonalizationContext, maximum: number): Promise<HybridCandidatePool> {
+    const startedAt = Date.now();
+    const collection = this.firestore.collection(PRODUCTS_COLLECTION);
+    const max = Math.max(1, Math.min(HYBRID_READ_BUDGET, Math.floor(maximum)));
+    const categories = meaningfulCategories(original);
+    const occasion = intendedOccasion(context);
+    const role = original.semanticAttributes?.foodRole;
+    const prefix = namePrefix(original);
+    const label = (Array.isArray(original.labels) ? original.labels : [])
+      .find(value => typeof value === 'string' && value.trim().length > 2);
+    const branches = [
+      categories.length ? { name: 'category' as const, budget: 60,
+        query: collection.where('categories', 'array-contains-any', categories).limit(Math.min(60, max)) } : null,
+      occasion ? { name: 'occasion' as const, budget: 36,
+        query: collection.where('semanticAttributes.occasion.value', '==', occasion).limit(Math.min(36, max)) } : null,
+      role && role.value !== 'not_applicable' && role.confidence >= 0.7 ? { name: 'role' as const, budget: 36,
+        query: collection.where('semanticAttributes.foodRole.value', '==', role.value).limit(Math.min(36, max)) } : null,
+      prefix ? { name: 'name' as const, budget: 24,
+        query: collection.orderBy('productNameSearch').startAt(prefix).endAt(`${prefix}\uf8ff`).limit(Math.min(24, max)) } : null,
+      label ? { name: 'label' as const, budget: 24,
+        query: collection.where('labels', 'array-contains', label).limit(Math.min(24, max)) } : null,
+    ].filter((item): item is NonNullable<typeof item> => item !== null);
+    const settled = await Promise.allSettled(branches.map(branch => branch.query.get()));
+    const documents = new Map<string, Product>();
+    const branchCounts: HybridCandidatePool['branchCounts'] = {};
+    let readCount = 0;
+    for (let index = 0; index < branches.length; index++) {
+      const result = settled[index];
+      if (result.status !== 'fulfilled') continue;
+      const sorted = [...result.value.docs].sort((a, b) => a.id.localeCompare(b.id));
+      branchCounts[branches[index].name] = sorted.length;
+      readCount += sorted.length;
+      for (const document of sorted) {
+        const product = toProduct(document.data(), document.id);
+        const barcode = normalizeBarcodeCandidate(product.barcode);
+        if (!barcode.ok || barcode.barcode === original.barcode || documents.has(barcode.barcode)) continue;
+        documents.set(barcode.barcode, product);
+      }
+    }
+    return {
+      candidates: [...documents.values()].sort((a, b) => a.barcode.localeCompare(b.barcode)).slice(0, max),
+      readCount,
+      latencyMs: Date.now() - startedAt,
+      branchCounts,
+    };
   }
 }

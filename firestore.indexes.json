@@ -15,6 +15,20 @@
         { "fieldPath": "brandSearch", "order": "ASCENDING" },
         { "fieldPath": "nutriscoreGrade", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "PRODUCTS",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "semanticAttributes.occasion.value", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "PRODUCTS",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "semanticAttributes.foodRole.value", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [

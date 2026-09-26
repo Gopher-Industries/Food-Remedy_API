@@ -8,6 +8,7 @@ import { compactSubstitution, compactTarget, DEFAULT_SUBSTITUTION_LIMIT, MAX_API
   type ProductSubstitutionRepository } from './productSubstitutionService';
 import { resolvePersonalizationContext, type PersonalizationContext,
   type PersonalizationContextRepository } from './personalizationContext';
+import { buildSemanticShortlist, semanticShortlistLimit, type HybridCandidatePool } from './hybridCandidateRetrieval';
 
 export const SUBSTITUTION_CONTRACT_VERSION_V2 = '2.0.0' as const;
 const CONTROL = /[\u0000-\u001f\u007f-\u009f]/;
@@ -91,6 +92,8 @@ export interface ProductSubstitutionV2Execution {
   profileId: string;
   original: Product;
   eligible: RankedSubstitution[];
+  semanticShortlist: Product[];
+  retrieval: Pick<HybridCandidatePool, 'readCount' | 'latencyMs' | 'branchCounts'> | null;
   context: PersonalizationContext;
 }
 
@@ -107,7 +110,12 @@ export async function executeProductSubstitutionV2(
   if (!profile || profile.status === false) throw new ProfileUnavailableError('Profile unavailable.');
   const context = await resolvePersonalizationContext(contextRepository, uid, request.profileId, request.savedIntentId);
   if (request.intention) context.intention = { text: request.intention, provenance: 'explicit', source: 'one_off' };
-  const candidates = await repository.getCandidates(original, MAX_SUBSTITUTION_CANDIDATES);
+  const hybrid = repository.getHybridCandidates
+    ? await repository.getHybridCandidates(original, context, MAX_SUBSTITUTION_CANDIDATES)
+    : null;
+  const candidates = hybrid?.candidates ?? await repository.getCandidates(original, MAX_SUBSTITUTION_CANDIDATES);
+  const semanticShortlist = buildSemanticShortlist(original, candidates, profile, context,
+    semanticShortlistLimit(process.env.SUBSTITUTION_SEMANTIC_TOP_K)).products;
   const ranked = rankSubstitutionCandidates(original, candidates, profile, request.limit);
   return {
     response: {
@@ -122,6 +130,8 @@ export async function executeProductSubstitutionV2(
     profileId: profile.profileId,
     original,
     eligible: ranked.substitutions,
+    semanticShortlist,
+    retrieval: hybrid ? { readCount: hybrid.readCount, latencyMs: hybrid.latencyMs, branchCounts: hybrid.branchCounts } : null,
     context,
   };
 }
