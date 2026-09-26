@@ -7,6 +7,8 @@
     "test": "jest --passWithNoTests",
     "test:storage-rules": "firebase emulators:exec --only storage \"jest --runInBand __tests__/storage.rules.test.ts\"",
     "test:semantic-live": "jest --runInBand --runTestsByPath __tests__/semanticFitLive.test.ts",
+    "test:jev-evaluation": "jest --runInBand --runTestsByPath __tests__/jevReleaseEvaluation.test.ts",
+    "test:jev-evaluation-live": "RUN_TYPESAFE_LIVE=1 jest --runInBand --runTestsByPath __tests__/jevReleaseLive.test.ts",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
