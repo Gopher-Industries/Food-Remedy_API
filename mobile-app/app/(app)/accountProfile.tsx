@@ -1,9 +1,10 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Pressable, ScrollView, View, Modal, ActivityIndicator, TextInput } from "react-native";
+import { Alert, Pressable, ScrollView, View, Modal, ActivityIndicator, TextInput } from "react-native";
 import { useEffect, useState } from "react";
 import Tt from "@/components/ui/UIText";
 import IconGeneral from "@/components/icons/IconGeneral";
-import { color, spacing } from "@/app/design/token";
+import { spacing } from "@/app/design/token";
+import { BackButton } from "@/components/shared";
 import Header from "@/components/layout/Header";
 import Screen from "@/components/layout/Screen";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -56,6 +57,17 @@ export default function AccountProfileScreen() {
       console.error("Error logging out:", error);
       addNotification("Failed to log out", "e");
     }
+  };
+
+  const confirmCloseReauth = () => {
+    if (!currentPassword.trim()) {
+      setShowReauthDialog(false);
+      return;
+    }
+    Alert.alert("Discard changes?", "You have unsaved changes that will be lost.", [
+      { text: "Stay", style: "cancel" },
+      { text: "Leave", style: "destructive", onPress: () => setShowReauthDialog(false) },
+    ]);
   };
 
   const handleOpenUpdatePassword = () => {
@@ -149,18 +161,7 @@ export default function AccountProfileScreen() {
 
       {/* Back button and Title */}
       <View className="flex-row items-center justify-between px-4 my-4">
-        <Pressable
-          onPress={() => router.back()}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          {({ pressed }) => (
-            <IconGeneral
-              type="arrow-backward-ios"
-              fill={pressed ? color.primary : "hsl(0, 0%, 50%)"}
-              size={24}
-            />
-          )}
-        </Pressable>
+        <BackButton />
 
         <Tt className="text-xl font-interBold">Account</Tt>
 
@@ -345,7 +346,7 @@ export default function AccountProfileScreen() {
         visible={showReauthDialog}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowReauthDialog(false)}
+        onRequestClose={() => confirmCloseReauth()}
       >
         <View className="flex-1 bg-black/50 flex items-center justify-center">
           <View className="bg-white rounded-2xl p-6 w-[85%] max-w-sm">
@@ -376,7 +377,7 @@ export default function AccountProfileScreen() {
 
             <View className="flex-row gap-3">
               <Pressable
-                onPress={() => setShowReauthDialog(false)}
+                onPress={() => confirmCloseReauth()}
                 disabled={reauthenticating}
                 className="flex-1 py-2 px-4 rounded-lg bg-gray-700 active:bg-gray-800"
               >

@@ -7,7 +7,8 @@ Defines deterministic normalization rules for searchable text fields
 
 import re
 import unicodedata
-from typing import Any, Dict, Optional
+import math
+from typing import Any, Dict
 
 
 def normalize_search_text(text: Any) -> str:
@@ -15,7 +16,7 @@ def normalize_search_text(text: Any) -> str:
     Normalize text for deterministic search matching.
 
     Rules applied:
-    1. Handle missing, None, or non-string values safely (return empty string "").
+    1. Treat missing values as empty; stringify other non-string values.
     2. Convert to string and normalize Unicode to NFC form.
     3. Standardize smart/curly apostrophes and quotes to standard ASCII single quote ('').
     4. Convert text to lowercase.
@@ -25,6 +26,9 @@ def normalize_search_text(text: Any) -> str:
     Original text retains punctuation and hyphens in normalized form.
     """
     if text is None:
+        return ""
+
+    if isinstance(text, float) and math.isnan(text):
         return ""
 
     if not isinstance(text, str):

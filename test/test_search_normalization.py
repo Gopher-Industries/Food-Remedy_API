@@ -3,6 +3,7 @@ Unit Test Suite for Search Normalization, Idempotent Backfill, and Coverage Stat
 """
 
 import json
+import math
 import os
 import sys
 import tempfile
@@ -22,6 +23,7 @@ from database.seeding.backfill_search_fields import (
     compute_coverage_stats,
     process_file,
 )
+from database.pipeline.modules.search_normalization_enrich import run as enrich_search_fields
 
 
 class TestSearchTextNormalization(unittest.TestCase):
@@ -50,6 +52,7 @@ class TestSearchTextNormalization(unittest.TestCase):
 
     def test_missing_and_none_values(self):
         self.assertEqual(normalize_search_text(None), "")
+        self.assertEqual(normalize_search_text(math.nan), "")
         self.assertEqual(normalize_search_text(""), "")
         self.assertEqual(normalize_search_text("   "), "")
 
@@ -130,6 +133,21 @@ class TestBackfillIdempotencyAndCoverage(unittest.TestCase):
             # Re-run file process inplace (0 modifications on second pass)
             res2 = process_file(tmp_json, inplace=True)
             self.assertEqual(res2["records_modified"], 0)
+
+    def test_pipeline_stage_writes_search_fields(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            input_path = os.path.join(tmpdir, "input.json")
+            output_path = os.path.join(tmpdir, "output.json")
+            with open(input_path, "w", encoding="utf-8") as handle:
+                json.dump(self.sample_products, handle)
+
+            result = enrich_search_fields(input_path, output_path)
+            self.assertEqual(result["processed"], 3)
+            with open(output_path, "r", encoding="utf-8") as handle:
+                enriched = json.load(handle)
+            self.assertEqual(enriched[0]["productNameSearch"], "almond milk")
+            self.assertEqual(enriched[0]["brandSearch"], "sanitarium")
+            self.assertEqual(enriched[0]["productName"], "  ALMOND MILK  ")
 
 
 if __name__ == "__main__":

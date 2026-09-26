@@ -1,6 +1,6 @@
 # Recommendation Reason-Code Catalogue (v1.0.0)
 
-**Contract Version:** 1.0.0  
+**Contract Version:** 1.0.0
 **Scope:** Machine-readable reason codes returned in `substitutions[].reasonCodes` for the Food Remedy API.
 
 ---

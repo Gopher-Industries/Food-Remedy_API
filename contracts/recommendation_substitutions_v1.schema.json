@@ -93,7 +93,8 @@
           "description": "High-level execution status"
         },
         "targetProduct": {
-          "type": "object",
+          "type": ["object", "null"],
+          "description": "Null when the requested barcode has no catalogue product.",
           "required": ["barcode", "productName"],
           "properties": {
             "barcode": { "type": "string" },
@@ -102,7 +103,7 @@
             "allergens": { "type": "array", "items": { "type": "string" } },
             "nutriscoreGrade": { "type": ["string", "null"] }
           },
-          "additionalProperties": true
+          "additionalProperties": false
         },
         "substitutions": {
           "type": "array",
