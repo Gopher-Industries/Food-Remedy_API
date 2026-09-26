@@ -5,6 +5,7 @@ import {
   rankSubstitutionCandidates,
   type RankedSubstitution,
   type SubstitutionEmptyStateReason,
+  type SubstitutionRankingMetrics,
 } from "@/services/substitutionEligibility";
 import { normalizeBarcodeCandidate } from "@/server/productBarcode";
 
@@ -105,12 +106,17 @@ export interface ProductSubstitutionResponse {
   emptyStateReason: SubstitutionEmptyStateReason | null;
 }
 
+export interface ProductSubstitutionExecution {
+  response: ProductSubstitutionResponse;
+  metrics: SubstitutionRankingMetrics;
+}
+
 /** Runs bounded catalogue retrieval and ranking against the verified user's profile. */
-export async function createProductSubstitutionResponse(
+export async function executeProductSubstitution(
   repository: ProductSubstitutionRepository,
   uid: string,
   request: ValidatedSubstitutionRequest
-): Promise<ProductSubstitutionResponse> {
+): Promise<ProductSubstitutionExecution> {
   const product = await repository.getProduct(request.barcode);
   if (!product) throw new ProductNotFoundError("Target product was not found.");
   const profile = await repository.getAuthoritativeProfile(uid);
@@ -118,10 +124,22 @@ export async function createProductSubstitutionResponse(
   const candidates = await repository.getCandidates(product, MAX_SUBSTITUTION_CANDIDATES);
   const ranked = rankSubstitutionCandidates(product, candidates, profile, request.limit);
   return {
-    version: SUBSTITUTION_CONTRACT_VERSION,
-    status: ranked.substitutions.length ? "success" : ranked.emptyStateReason === "INSUFFICIENT_PRODUCT_DATA" ? "insufficient_data" : "no_eligible_candidates",
-    targetProduct: compactTarget(product),
-    substitutions: ranked.substitutions.map(compactSubstitution),
-    emptyStateReason: ranked.emptyStateReason,
+    response: {
+      version: SUBSTITUTION_CONTRACT_VERSION,
+      status: ranked.substitutions.length ? "success" : ranked.emptyStateReason === "INSUFFICIENT_PRODUCT_DATA" ? "insufficient_data" : "no_eligible_candidates",
+      targetProduct: compactTarget(product),
+      substitutions: ranked.substitutions.map(compactSubstitution),
+      emptyStateReason: ranked.emptyStateReason,
+    },
+    metrics: ranked.metrics,
   };
+}
+
+/** Compatibility helper for consumers that need only the public response. */
+export async function createProductSubstitutionResponse(
+  repository: ProductSubstitutionRepository,
+  uid: string,
+  request: ValidatedSubstitutionRequest
+): Promise<ProductSubstitutionResponse> {
+  return (await executeProductSubstitution(repository, uid, request)).response;
 }

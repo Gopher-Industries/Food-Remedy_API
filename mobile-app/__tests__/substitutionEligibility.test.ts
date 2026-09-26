@@ -92,7 +92,8 @@ describe("substitution eligibility and ranking", () => {
       product({ barcode: "9300000000002", allergens: [], traces: "" }),
     ], profile({ allergies: ["Milk"] }));
 
-    expect(result).toEqual({ substitutions: [], emptyStateReason: "STRICT_ALLERGEN_EXCLUSION_ALL_CANDIDATES" });
+    expect(result).toEqual(expect.objectContaining({ substitutions: [], emptyStateReason: "STRICT_ALLERGEN_EXCLUSION_ALL_CANDIDATES" }));
+    expect(result.metrics.excludedAllergenEvidenceIncomplete).toBe(1);
     expect(getAlternatives(original, [product({ barcode: "9300000000002", allergens: [], traces: "" })], profile({ allergies: ["Milk"] }))).toEqual([]);
   });
 
@@ -150,14 +151,18 @@ describe("substitution eligibility and ranking", () => {
 
   it("returns an explicit insufficient-data state when category evidence is missing", () => {
     expect(rankSubstitutionCandidates(product({ categories: [], category: null }), [product({ barcode: "9300000000002" })], profile()))
-      .toEqual({ substitutions: [], emptyStateReason: "INSUFFICIENT_PRODUCT_DATA" });
+      .toEqual(expect.objectContaining({ substitutions: [], emptyStateReason: "INSUFFICIENT_PRODUCT_DATA" }));
     expect(rankSubstitutionCandidates(original, [product({ barcode: "9300000000002", categories: [], category: null })], profile()))
-      .toEqual({ substitutions: [], emptyStateReason: "INSUFFICIENT_PRODUCT_DATA" });
+      .toEqual(expect.objectContaining({ substitutions: [], emptyStateReason: "INSUFFICIENT_PRODUCT_DATA" }));
   });
 
   it("does not recommend an unrelated category or infer a missing nutrient value as zero", () => {
     const unrelated = product({ barcode: "9300000000002", categories: ["beverages"], category: "beverages" });
-    expect(rankSubstitutionCandidates(original, [unrelated], profile()).substitutions).toEqual([]);
+    const unrelatedResult = rankSubstitutionCandidates(original, [unrelated], profile());
+    expect(unrelatedResult.substitutions).toEqual([]);
+    expect(unrelatedResult.emptyStateReason).toBe("NO_SAFE_ALTERNATIVES_IN_CATEGORY");
+    expect(unrelatedResult.metrics.excludedCategoryMismatch).toBe(1);
+    expect(unrelatedResult.metrics.categoryDataFailures).toBe(0);
 
     const missingSugar = product({ barcode: "9300000000003", nutriments: { sugars_100g: null as unknown as number } });
     const result = rankSubstitutionCandidates(original, [missingSugar], profile());
@@ -187,6 +192,6 @@ describe("substitution eligibility and ranking", () => {
 
   it("fails closed for a mandatory dietary value without a verified evidence rule", () => {
     expect(rankSubstitutionCandidates(original, [product({ barcode: "9300000000002" })], profile({ dietaryForm: ["No Alcohol"] })))
-      .toEqual({ substitutions: [], emptyStateReason: "NO_SAFE_ALTERNATIVES_IN_CATEGORY" });
+      .toEqual(expect.objectContaining({ substitutions: [], emptyStateReason: "NO_SAFE_ALTERNATIVES_IN_CATEGORY" }));
   });
 });

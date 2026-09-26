@@ -5,6 +5,7 @@ import {
   type ProductSubstitutionHandlerDependencies,
 } from "@/server/productSubstitutionHandler";
 import type { ProductSubstitutionRepository } from "@/server/productSubstitutionService";
+import { EnabledSubstitutionRollout } from "@/server/substitutionObservability";
 
 const BARCODE = "036000291452";
 
@@ -57,6 +58,7 @@ function profile(overrides: Partial<NutritionalProfile> = {}): NutritionalProfil
 function dependencies(): ProductSubstitutionHandlerDependencies & { repository: jest.Mocked<ProductSubstitutionRepository> } {
   return {
     tokenVerifier: { verifyIdToken: jest.fn().mockResolvedValue({ uid: "verified-user" }) },
+    rollout: new EnabledSubstitutionRollout(),
     repository: {
       getProduct: jest.fn().mockResolvedValue(product()),
       getAuthoritativeProfile: jest.fn().mockResolvedValue(profile()),
