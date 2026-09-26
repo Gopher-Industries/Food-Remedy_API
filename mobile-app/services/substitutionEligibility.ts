@@ -261,6 +261,12 @@ function rankCandidate(original: Product, product: Product, profile: Nutritional
   return { product, barcode, score, confidenceScore: Math.round((score / 100) * 1000) / 1000, safetyRating: safety.safetyRating as "green" | "grey", reasonCodes, reasons: reasonCodes.map((code) => REASON_TEXT[code]) };
 }
 
+/** Reusable deterministic score for a single candidate; never bypasses hard gates. */
+export function rankSafeCandidate(original: Product, product: Product, profile: NutritionalProfile): RankedSubstitution | null {
+  const safety = assessCandidateSafety(product, profile);
+  return safety.eligible ? rankCandidate(original, product, profile, safety) : null;
+}
+
 function compareRanked(left: RankedSubstitution, right: RankedSubstitution): number {
   if (left.safetyRating !== right.safetyRating) return left.safetyRating === "green" ? -1 : 1;
   if (left.score !== right.score) return right.score - left.score;

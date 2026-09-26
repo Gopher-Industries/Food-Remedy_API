@@ -27,10 +27,14 @@
         "semanticScore": null,
         "semanticConfidence": null,
         "rankingMode": "deterministic",
-        "reasonCodes": ["MATCH_CATEGORY_EXACT", "SAFE_ALLERGEN_FREE"]
+        "reasonCodes": [
+          "MATCH_CATEGORY_EXACT",
+          "SAFE_ALLERGEN_FREE"
+        ]
       }
     ],
     "rankingMode": "deterministic",
-    "emptyStateReason": null
+    "emptyStateReason": null,
+    "rankingReasonCode": "DETERMINISTIC_BASELINE"
   }
 }

@@ -90,4 +90,23 @@ describe('BE060 authoritative recommendation evidence', () => {
     const later = new FirestoreRecommendationEvidenceRepository(firestore, () => now + 8 * 24 * 60 * 60 * 1000);
     expect(await later.ingest('owner', { ...input(sessionId), profileId: 'child', eventId: 'event_2' })).toBe('unavailable');
   });
+
+  it('stores semantic session metadata only when derived fields are complete', async () => {
+    const { rows, firestore } = fakeFirestore();
+    rows.set('USERS/owner/PROFILES/self', { status: true, relationship: 'Self' });
+    const repository = new FirestoreRecommendationEvidenceRepository(firestore, () => now);
+    await expect(repository.create('owner', { profileId: 'self', originalBarcode: '12345678',
+      rankingMode: 'semantic', candidates: [{ barcode: '87654321', deterministicScore: 0.7 }],
+    })).rejects.toThrow('Invalid session.');
+    const sessionId = await repository.create('owner', { profileId: 'self', originalBarcode: '12345678',
+      rankingMode: 'semantic', modelVersion: 'jev-1.13.0', policyVersion: 'food-composite-v1',
+      questionSetVersion: 'food-fit-score-v1',
+      candidates: [{ barcode: '87654321', deterministicScore: 0.7, semanticScore: 0.9 }],
+    });
+    expect(await repository.ingest('owner', input(sessionId))).toBe('stored');
+    const stored = rows.get('USERS/owner/PROFILES/self/RECOMMENDATION_EVENTS/event_1')!;
+    expect(stored.serverMetadata).toEqual({ rankingMode: 'semantic', modelVersion: 'jev-1.13.0',
+      deterministicScore: 0.7, semanticScore: 0.9, policyVersion: 'food-composite-v1',
+      questionSetVersion: 'food-fit-score-v1' });
+  });
 });

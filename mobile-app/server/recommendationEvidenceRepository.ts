@@ -5,11 +5,16 @@ import type { RecommendationEvent, RecommendationEventInput } from '@/types/Pers
 export interface SessionCandidate {
   barcode: string;
   deterministicScore: number;
+  semanticScore?: number;
 }
 export interface SessionCreation {
   profileId: string;
   originalBarcode: string;
   candidates: SessionCandidate[];
+  rankingMode?: 'deterministic' | 'semantic';
+  modelVersion?: string;
+  policyVersion?: string;
+  questionSetVersion?: string;
 }
 export interface RecommendationSessionStore {
   create(uid: string, input: SessionCreation): Promise<string>;
@@ -40,8 +45,10 @@ type StoredSession = {
   profileId: string;
   originalBarcode: string;
   candidates: SessionCandidate[];
-  rankingMode: 'deterministic';
-  modelVersion: 'deterministic-v1';
+  rankingMode: 'deterministic' | 'semantic';
+  modelVersion: string;
+  policyVersion?: string;
+  questionSetVersion?: string;
   createdAt: string;
   expiresAt: string;
   ttlAt: Timestamp;
@@ -63,11 +70,24 @@ export class FirestoreRecommendationEvidenceRepository implements Recommendation
     }
     if (profileData && childEvidenceNeedsConsent(profileData)) throw new Error('Profile unavailable.');
     if (input.candidates.length < 1 || input.candidates.length > 20) throw new Error('Invalid session.');
+    if (new Set(input.candidates.map(candidate => candidate.barcode)).size !== input.candidates.length ||
+        input.candidates.some(candidate => !candidate.barcode || !Number.isFinite(candidate.deterministicScore) ||
+          candidate.deterministicScore < 0 || candidate.deterministicScore > 1 ||
+          (candidate.semanticScore !== undefined && (!Number.isFinite(candidate.semanticScore) ||
+            candidate.semanticScore < 0 || candidate.semanticScore > 1))) ||
+        (input.rankingMode === 'semantic' && (!input.modelVersion || !/^jev-\d+\.\d+\.\d+$/.test(input.modelVersion) ||
+          !input.policyVersion || !input.questionSetVersion ||
+          input.candidates.some(candidate => candidate.semanticScore === undefined)))) {
+      throw new Error('Invalid session.');
+    }
     const sessionId = randomUUID();
     const createdAt = this.now();
     const session: StoredSession = {
       sessionId, profileId: input.profileId, originalBarcode: input.originalBarcode,
-      candidates: input.candidates, rankingMode: 'deterministic', modelVersion: 'deterministic-v1',
+      candidates: input.candidates, rankingMode: input.rankingMode ?? 'deterministic',
+      modelVersion: input.modelVersion ?? 'deterministic-v1',
+      ...(input.policyVersion ? { policyVersion: input.policyVersion } : {}),
+      ...(input.questionSetVersion ? { questionSetVersion: input.questionSetVersion } : {}),
       createdAt: new Date(createdAt).toISOString(),
       expiresAt: new Date(createdAt + SESSION_LIFETIME_MS).toISOString(),
       ttlAt: Timestamp.fromMillis(createdAt + SESSION_LIFETIME_MS),
@@ -116,6 +136,9 @@ export class FirestoreRecommendationEvidenceRepository implements Recommendation
           rankingMode: session.rankingMode,
           modelVersion: session.modelVersion,
           deterministicScore: candidate.deterministicScore,
+          ...(candidate.semanticScore !== undefined ? { semanticScore: candidate.semanticScore } : {}),
+          ...(session.policyVersion ? { policyVersion: session.policyVersion } : {}),
+          ...(session.questionSetVersion ? { questionSetVersion: session.questionSetVersion } : {}),
         },
         expiresAt: new Date(now + EVENT_RETENTION_MS).toISOString(),
         ttlAt: Timestamp.fromMillis(now + EVENT_RETENTION_MS),

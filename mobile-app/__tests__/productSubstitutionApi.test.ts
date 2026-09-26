@@ -6,7 +6,7 @@ import {
 } from "@/server/productSubstitutionHandler";
 import type { ProductSubstitutionRepository } from "@/server/productSubstitutionService";
 import { EnabledSubstitutionRollout } from "@/server/substitutionObservability";
-import { DisabledSemanticFitClient } from '@/server/semanticFitClient';
+import { DisabledSemanticFitClient, MockSemanticFitClient } from '@/server/semanticFitClient';
 
 const BARCODE = "036000291452";
 
@@ -102,6 +102,55 @@ describe("POST /api/recommendations/substitutions", () => {
     const response = await createProductSubstitutionHandler(deps)(request(v2Body({ intention: 'Lunchbox snack' })));
     expect(response.status).toBe(200);
     expect((await response.json()).rankingMode).toBe('deterministic');
+  });
+
+  it('applies semantic ranking only to safe candidates and stores server-derived model metadata', async () => {
+    const deps = dependencies();
+    deps.semanticEnabled = true;
+    const mock = new MockSemanticFitClient(request => ({
+      available: true, model: 'jev-1.13.0', usage: { inputTokens: 40, outputTokens: 4 }, durationMs: 5,
+      answers: Object.fromEntries(Object.keys(request.questions).map(id => [id, {
+        score: 3, confidence: 0.95, probabilities: { '0': 0, '1': 0, '2': 0, '3': 1 },
+      }])),
+    }));
+    deps.semanticClient = mock;
+    deps.sessionStore = { create: jest.fn().mockResolvedValue('server_session_semantic') };
+    deps.repository.getCandidates.mockResolvedValue([
+      product({ barcode: '036000291469', productName: 'Safe snack' }),
+      product({ barcode: '036000291476', productName: 'Milk conflict', allergens: ['milk'] }),
+    ]);
+    const response = await createProductSubstitutionHandler(deps)(request(v2Body({ intention: 'Lunchbox snack' })));
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body.rankingMode).toBe('semantic');
+    expect(body.rankingReasonCode).toBe('SEMANTIC_CONFIDENT');
+    expect(body.substitutions.map((item: { barcode: string }) => item.barcode)).toEqual(['036000291469']);
+    expect(body.substitutions[0]).toEqual(expect.objectContaining({
+      deterministicScore: expect.any(Number), semanticScore: 1, semanticConfidence: 0.95,
+      reasonCodes: expect.arrayContaining(['SEMANTIC_FIT_APPLIED']),
+    }));
+    expect(mock.calls).toHaveLength(1);
+    expect(JSON.stringify(mock.calls)).not.toContain('Milk conflict');
+    expect(deps.sessionStore.create).toHaveBeenCalledWith('verified-user', expect.objectContaining({
+      rankingMode: 'semantic', modelVersion: 'jev-1.13.0', policyVersion: 'food-composite-v1',
+      questionSetVersion: 'food-fit-score-v1',
+    }));
+  });
+
+  it('returns the exact deterministic order when Jev is unavailable', async () => {
+    const deps = dependencies();
+    deps.repository.getCandidates.mockResolvedValue([
+      product({ barcode: '036000291469', productName: 'Safe A' }),
+      product({ barcode: '036000291483', productName: 'Safe B' }),
+    ]);
+    const handler = createProductSubstitutionHandler(deps);
+    const baseline = await (await handler(request(v2Body({ intention: 'Lunchbox snack' })))).json();
+    deps.semanticEnabled = true;
+    deps.semanticClient = new DisabledSemanticFitClient();
+    const fallback = await (await createProductSubstitutionHandler(deps)(request(v2Body({ intention: 'Lunchbox snack' })))).json();
+    expect(fallback.rankingMode).toBe('deterministic');
+    expect(fallback.rankingReasonCode).toBe('SEMANTIC_FALLBACK');
+    expect(fallback.substitutions).toEqual(baseline.substitutions);
   });
   it('selects an owned child profile and emits explicit deterministic v2 score fields', async () => {
     const deps = dependencies();
