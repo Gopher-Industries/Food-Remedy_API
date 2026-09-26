@@ -1,0 +1,8 @@
+{
+  "dataset": "database/seeding/products_enriched.json",
+  "total_records": 5000,
+  "known_evidence_records": 268,
+  "conservative_unknown_records": 4732,
+  "missing_or_empty_records": 0,
+  "allergens_detected_mismatches": 0
+}

@@ -2,6 +2,7 @@
  * History Items
  */
 export type HistoryItem = {
+  ownerScope: string;
   barcode: string;
   productName: string;
   brand: string | null;

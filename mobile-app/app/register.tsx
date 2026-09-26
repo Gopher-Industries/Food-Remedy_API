@@ -9,7 +9,8 @@ import {
   Image,
   Pressable,
 } from "react-native";
-import { Link, useRouter } from "expo-router";
+import { router } from "expo-router";
+import { useDirtyForm } from "@/hooks/useDirtyForm";
 import Input from "@/components/ui/UIInput";
 import IconGeneral from "@/components/icons/IconGeneral";
 import Tt from "@/components/ui/UIText";
@@ -17,11 +18,13 @@ import { useNotification } from "@/components/providers/NotificationProvider";
 import { registerWithEmail } from "@/services";
 import { color } from "@/app/design/token";
 import { useTheme } from "@/theme";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const { addNotification } = useNotification();
   const theme = useTheme();
+  const { completeAuthentication } = useAuth();
+  const { markDirty, markClean, confirmLeave } = useDirtyForm();
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
@@ -88,7 +91,8 @@ export default function RegisterPage() {
       }
 
       addNotification("Registered Account!", "s");
-      router.replace("/login");
+      markClean();
+      await completeAuthentication();
     } catch (error: any) {
       console.error("Error logging in: ", error);
       setErrorMessage("Unknown Error Occured");
@@ -132,7 +136,7 @@ export default function RegisterPage() {
                 className="py-3 mt-8"
                 placeholder="First Name"
                 value={firstName}
-                onChangeText={setFirstName}
+                onChangeText={(text) => { setFirstName(text); markDirty(); }}
                 keyboardType="default"
                 autoCapitalize="none"
                 autoComplete="off"
@@ -144,7 +148,7 @@ export default function RegisterPage() {
                 className="py-3 mt-4"
                 placeholder="Last Name"
                 value={lastName}
-                onChangeText={setLastName}
+                onChangeText={(text) => { setLastName(text); markDirty(); }}
                 keyboardType="default"
                 autoCapitalize="none"
                 autoComplete="off"
@@ -156,7 +160,7 @@ export default function RegisterPage() {
                 className="py-3 mt-4"
                 placeholder="Email"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(text) => { setEmail(text); markDirty(); }}
                 keyboardType="default"
                 autoCapitalize="none"
                 autoComplete="off"
@@ -168,7 +172,7 @@ export default function RegisterPage() {
                 <Input
                   className="py-3"
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => { setPassword(text); markDirty(); }}
                   placeholder="Password"
                   secureTextEntry={showPassword}
                   autoCapitalize="none"
@@ -177,7 +181,9 @@ export default function RegisterPage() {
                 />
 
                 <Pressable
-                  onPress={() => setShowPassword(!showPassword)}
+                  onPress={() => setShowPassword((previous) => !previous)}
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? "Show password" : "Hide password"}
                   className="absolute right-4 top-1/2 -translate-y-1/2"
                   style={({ pressed }) => [
                     { borderColor: pressed ? "#FF3EB5" : "hsl(0 0% 13%)" },
@@ -185,10 +191,16 @@ export default function RegisterPage() {
                   hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
                 >
                   {({ pressed }) => (
-                    <IconGeneral
-                      type={showPassword ? "visibility" : "visibility-off"}
-                      fill={pressed ? color.primary : "hsl(0 0% 70%)}"}
-                    />
+                    <View
+                      accessible={false}
+                      importantForAccessibility="no"
+                      pointerEvents="none"
+                    >
+                      <IconGeneral
+                        type={showPassword ? "visibility" : "visibility-off"}
+                        fill={pressed ? color.primary : "hsl(0 0% 70%)}"}
+                      />
+                    </View>
                   )}
                 </Pressable>
               </View>
@@ -198,7 +210,7 @@ export default function RegisterPage() {
                 <Input
                   className="py-3"
                   value={confirmPassword}
-                  onChangeText={setConfirmPassword}
+                  onChangeText={(text) => { setConfirmPassword(text); markDirty(); }}
                   placeholder="Confirm Password"
                   secureTextEntry={showConfirmPassword}
                   autoCapitalize="none"
@@ -207,7 +219,11 @@ export default function RegisterPage() {
                 />
 
                 <Pressable
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  onPress={() => setShowConfirmPassword((previous) => !previous)}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    showConfirmPassword ? "Show password" : "Hide password"
+                  }
                   className="absolute right-4 top-1/2 -translate-y-1/2"
                   style={({ pressed }) => [
                     { borderColor: pressed ? "#FF3EB5" : "hsl(0 0% 13%)" },
@@ -215,12 +231,18 @@ export default function RegisterPage() {
                   hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
                 >
                   {({ pressed }) => (
-                    <IconGeneral
-                      type={
-                        showConfirmPassword ? "visibility" : "visibility-off"
-                      }
-                      fill={pressed ? color.primary : "hsl(0 0% 70%)}"}
-                    />
+                    <View
+                      accessible={false}
+                      importantForAccessibility="no"
+                      pointerEvents="none"
+                    >
+                      <IconGeneral
+                        type={
+                          showConfirmPassword ? "visibility" : "visibility-off"
+                        }
+                        fill={pressed ? color.primary : "hsl(0 0% 70%)}"}
+                      />
+                    </View>
                   )}
                 </Pressable>
               </View>
@@ -241,15 +263,12 @@ export default function RegisterPage() {
               </Pressable>
 
               {/* Navigating to login */}
-              <Tt className="text-sm mt-12 text-center">
-                Already have an account?{" "}
-                <Link
-                  href="/login"
-                  className="text-primary font-interSemiBold active:underline"
-                >
-                  Log in
-                </Link>
-              </Tt>
+              <View className="flex-row justify-center items-center mt-12">
+                <Tt className="text-sm">Already have an account? </Tt>
+                <Pressable onPress={() => confirmLeave(() => router.replace("/login"))}>
+                  <Tt className="text-sm text-primary font-interSemiBold">Log in</Tt>
+                </Pressable>
+              </View>
             </>
           )}
         </View>

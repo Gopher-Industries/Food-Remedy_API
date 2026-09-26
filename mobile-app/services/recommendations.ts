@@ -38,7 +38,11 @@ function classifyProductSafety(product: Product): "green" | "grey" | "red" {
 
   // Nutri-score: a/b = green, c = grey, d/e = red
   const nutriscoreGrade = String(product.nutriscoreGrade || "").toUpperCase();
-  const nutriscoreColor = nutriscoreGrade <= "B" ? "green" : nutriscoreGrade === "C" ? "grey" : "red";
+  const nutriscoreColor = nutriscoreGrade === "A" || nutriscoreGrade === "B"
+    ? "green"
+    : nutriscoreGrade === "D" || nutriscoreGrade === "E"
+      ? "red"
+      : "grey";
 
   if (redFlags >= 2) return "red";
   if (nutriscoreColor === "red") return "red";
@@ -105,14 +109,20 @@ export function getRecommendationSummary(
   reasons: string[];
 } {
   const unsafe = isUnsuitableForProfile(product, profile);
-  const safety = classifyProductSafety(product);
+  const nutritionalSafety = classifyProductSafety(product);
+  const eligibility = assessCandidateSafety(product, profile);
+  const safety = !eligibility.eligible
+    ? "red"
+    : eligibility.safetyRating === "grey" && nutritionalSafety === "green"
+      ? "grey"
+      : nutritionalSafety;
   const reasons: string[] = [];
 
   if (unsafe.unsuitable) {
     reasons.push(`⚠️ ${unsafe.reason}`);
   }
 
-  if (safety === "red") {
+  if (nutritionalSafety === "red") {
     reasons.push("⚠️ High in sugar/salt/fat (Red Nutri-score)");
   } else if (safety === "green") {
     reasons.push("✓ Good nutritional profile");

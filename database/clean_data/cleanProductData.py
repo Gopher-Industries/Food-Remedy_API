@@ -19,6 +19,7 @@ import re
 from utils.missing_value_utils import (
     normalize_string,
     normalize_list,
+    normalize_allergens,
     normalize_dict,
     clean_numeric,
     clean_completeness
@@ -67,6 +68,44 @@ def load_data(file_path: str) -> pd.DataFrame:
         df = pd.read_json(file_path, lines=True, dtype=False)
     except ValueError as e:
         raise RuntimeError(f"Failed to read JSONL file: {e}")
+    return df
+
+
+def investigate_duplicates(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    DB029: Investigate possible duplicate product records.
+
+    Reports duplicate barcodes and matching product names.
+    This check is non-destructive and does not remove records.
+    """
+    if 'code' in df.columns:
+        clean_codes = df['code'].astype(str).str.strip()
+        duplicate_codes = df[
+            clean_codes.ne('') & clean_codes.duplicated(keep=False)
+        ]
+        print(
+            f"DB029: Found {len(duplicate_codes)} records "
+            "with duplicate product codes."
+        )
+
+    if 'product_name' in df.columns:
+        clean_names = (
+            df['product_name']
+            .fillna('')
+            .astype(str)
+            .str.strip()
+            .str.lower()
+        )
+
+        duplicate_names = df[
+            clean_names.ne('') & clean_names.duplicated(keep=False)
+        ]
+
+        print(
+            f"DB029: Found {len(duplicate_names)} records "
+            "with matching product names."
+        )
+
     return df
 
 def _is_missing_value(value) -> bool:
@@ -133,7 +172,7 @@ def deduplicate_products(df: pd.DataFrame) -> pd.DataFrame:
         raise KeyError("Missing required 'code' column for deduplication.")
 
     working = df.copy()
-    working['__barcode_key'] = working['code'].astype(str).str.replace(r'\D', '', regex=True).str.strip()
+    working['__barcode_key'] = working['code'].fillna("").astype(str).str.replace(r'\D', '', regex=True).str.strip()
     working['__name_key'] = working.get('product_name', pd.Series(index=working.index, dtype=object)).apply(_normalize_text_key)
     working['__brand_key'] = working.get('brands', pd.Series(index=working.index, dtype=object)).apply(_normalize_text_key)
 
@@ -387,10 +426,24 @@ CATEGORY_RULES_ORDERED: list[tuple[str, tuple[str, ...]]] = [
         "sweetened-beverages", "evaporated-milks", "plant-milks",
         "teas", "waters", "carbonated-drinks", "fruit-juices",
     )),
-    ("snacks and confectionery", (
+        ("snacks and confectionery", (
         "snacks", "sweet-snacks", "confectioneries",
         "chocolates", "chocolate-candies", "bonbons",
     )),
+    # DB031: Dairy — added because "dairies"/"cheeses"/"yogurts" etc. were the single
+    # largest cluster of unmapped-but-unambiguous category tags found in the DB031
+    # investigation (see database/Reports/DB031_Product_Category_Consistency_Investigation.md).
+    # Placed AFTER "beverages" deliberately: drinkable dairy products (milkshakes,
+    # iced coffee) carry both dairy tags and beverages tags, and already classify correctly
+    # as "beverages" today. Putting "dairy" after preserves that existing behaviour and only
+    # catches dairy products (cheese, plain yogurt, etc.) that beverages does not claim.
+    ("dairy", (
+        "dairies", "cheeses", "yogurts",
+        "fermented-milk-products", "fermented-dairy-desserts",
+    )),
+    # DB051: Condiments added as a category
+    # Keep it last so existing category matches are not changed
+    ("condiments", ("condiments",)),
 ]
 
 # OFF slugs that look beverage-like but are umbrella paths for non-drinks — never classify as beverages alone.
@@ -465,6 +518,12 @@ def standardise_category(tags) -> str:
             for keyword in keywords:
                 if _keyword_matches_tag(tag, keyword):
                     return standard_name
+
+    # DB059: explicit beverage membership is reliable even without a recognised
+    # subtype. Use an EXACT tag fallback after every existing rule so umbrellas
+    # cannot match and established food/dairy/condiment priorities are preserved.
+    if "beverages" in cleaned_tags:
+        return "beverages"
 
     return "other"
 
@@ -695,7 +754,12 @@ def save_cleaned_data(df: pd.DataFrame, output_path: str):
 
 TYPO_FIX = {
     "citiric-acid": "citric-acid",
-    # DB002: open to adding new fix(es)
+    "sulpher-dioxide": "sulphur-dioxide",
+    "tumeric": "turmeric",
+    "cococut-oil": "coconut-oil",
+    "choclate": "chocolate",
+    # DB027: added common ingredient typo fixes
+
 }
 
 
@@ -713,17 +777,17 @@ def clean_ingredients_text(text) -> str | None:
     return str(text).strip()
 
 
-def clean_ingredients_list(tags) -> list | None: 
+def clean_ingredients_list(tags) -> list: 
     """
     DB002: Full ingredient tag cleaning:
     - Remove lang: prefixes
     - Lowercase + strip
     - Fix known typos
     - Deduplicate
-    - Return None if result is empty
+    - RDB048: Return [] (never None) if result is empty, per contract
     """
     if not tags:
-        return None
+        return []
 
     if isinstance(tags, str):
         tags = [t.strip() for t in tags.split(",") if t.strip()]
@@ -739,15 +803,35 @@ def clean_ingredients_list(tags) -> list | None:
         if tag:
             cleaned.add(tag)
     
-    return list(cleaned) if cleaned else None
+    return sorted(cleaned) if cleaned else []
+
+
+# DB032: Standard retail barcode lengths - EAN-8 (8), UPC-A (12),
+# EAN-13 (13), GTIN-14 (14). Mirrors db021_validator.BARCODE_LENGTHS so
+# the cleaning stage and the pre-seed batch validator agree on what
+# counts as a valid barcode length.
+_BARCODE_DIGIT_PATTERN = re.compile(r"^[0-9]+$")
+_BARCODE_LENGTHS = (8, 12, 13, 14)
 
 
 def validate_record(record: dict) -> list[str]:
     warnings = []
     # DB001: Fixed logic bug -> previously only warned when barcode was BOTH wrong-length 
     # AND numeric, so non-numeric/malformed barcodes silently passed validation.
-    if not (record['barcode'].isdigit() and len(record['barcode']) == 13):
-        warnings.append("Barcode must be 13 digits")
+    #
+    # DB032: This check previously accepted ONLY exactly-13-digit barcodes
+    # and used str.isdigit(), which is also true for non-ASCII "digit"
+    # characters (fullwidth digits, superscripts, Arabic-Indic digits) that
+    # are not valid barcode characters. Real seed data
+    # (database/seeding/products_enriched.json, 5000 records) contains 111
+    # legitimate 8-digit EAN-8 codes and 4 legitimate 14-digit GTIN-14 codes
+    # that were being incorrectly flagged as invalid here, even though
+    # db021_validator.py (the pre-seed batch validator) correctly accepts
+    # them. This now uses the same digit-regex + length-set check as
+    # db021_validator._is_valid_barcode_format so both validators agree.
+    barcode = record['barcode']
+    if not (bool(_BARCODE_DIGIT_PATTERN.fullmatch(barcode)) and len(barcode) in _BARCODE_LENGTHS):
+        warnings.append("Barcode must be 8, 12, 13, or 14 digits")
     if not isinstance(record['nutriments'], dict):
         warnings.append("Nutriments must be a dictionary")
     if not record['productQuantity'] >= 0:
@@ -770,6 +854,8 @@ def main(input_path: str, output_path: str):
     df = deduplicate_products(df)
     df = ensure_code_field(df)
     df = clean_text_fields(df)
+    # DB029: Investigate possible duplicate product records
+    df = investigate_duplicates(df)
     df = clean_quantity_fields(df)
     df = clean_nutriments(df)
     df = reduce_nutriments(df)
@@ -793,22 +879,25 @@ def main(input_path: str, output_path: str):
         lambda r: {"final": r["search_tags"], "removed": r["tags_removed"]},
         axis=1,
     )
-    # DB002: Enhanced ingredient cleaning
-    if 'ingredientsText' in df.columns:
-        df['ingredientsText'] = df['ingredientsText'].apply(clean_ingredients_text)
+    # DB002/DB056/DB048: Enhanced ingredient cleaning
+    if 'ingredients_text' in df.columns:
+        df['ingredients_text'] = df['ingredients_text'].apply(clean_ingredients_text)
     if 'ingredients_tags' in df.columns:
-        df['ingredients_tags'] = df['ingredients_tags'].apply(clean_ingredients_list)    
+        df['ingredients_tags'] = df['ingredients_tags'].apply(clean_ingredients_list)
 
     # Store list[str]; pandas StringDtype columns reject list assignment via .at / .loc cell writes.
     df["allergensDetected"] = pd.Series(index=df.index, dtype=object)
 
     for idx, record in df.iterrows():
         # String fields
-        record["ingredientsText"] = normalize_string(record.get("ingredientsText"))
+        record["ingredients_text"] = normalize_string(record.get("ingredients_text"))
         record["traces"] = normalize_string(record.get("traces"))
-        
+
         # List fields
-        record["ingredients"] = normalize_list(record.get("ingredients"))
+        # DB048: ensure ingredients_tags is always a list never None per contract default []
+        ingredients_raw = record.get("ingredients") or record.get("ingredients_tags")
+        record["ingredients_tags"] = normalize_list(ingredients_raw) or []
+
         # OpenFoodFacts category slugs → contract: sorted, deduped (product_v1.categories)
         record["categories_tags"] = normalize_categories(record.get("categories_tags"))
         
@@ -820,7 +909,11 @@ def main(input_path: str, output_path: str):
         record["servingQuantity"] = clean_numeric(record.get("servingQuantity"))
         record["completeness"] = clean_completeness(record.get("completeness"))
         
-        record["allergensDetected"] = detect_allergens(record)  # DB009: list[str]
+        # DB023: a failed/empty detection is unknown, never an implicit
+        # declaration that the product has no allergens.
+        allergens = normalize_allergens(detect_allergens(record))
+        record["allergens_tags"] = allergens
+        record["allergensDetected"] = allergens  # DB009 compatibility alias
         df.loc[idx] = record  # write back (includes allergensDetected)
         
     df = add_image_urls(df)

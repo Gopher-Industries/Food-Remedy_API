@@ -1,8 +1,8 @@
 # Recommendation Substitution Eligibility & Missing-Data Policy (v1.0.0)
 
-**Document Version:** 1.0.0  
-**Effective Date:** September 2026  
-**Applies To:** Backend API, Mobile Client, Scan Service Consumers  
+**Document Version:** 1.0.0
+**Effective Date:** September 2026
+**Applies To:** Backend API, Mobile Client, Scan Service Consumers
 
 ---
 
@@ -33,9 +33,14 @@ If evidence regarding a product's safety is missing, unparsed, or incomplete:
 ## 3. Privacy & Profile Non-Leakage
 
 To prevent leaking sensitive user health data (e.g., specific medical allergies or dietary conditions) via network response logs:
-- Profile matching is evaluated securely on the backend server from the authenticated user's authoritative profile. Request bodies cannot override protected restrictions.
+- Profile matching is evaluated on the backend server from the authenticated user's authoritative profile. Request bodies cannot override protected restrictions.
 - The API response payload **MUST NOT** echo back the user's full nutritional profile or sensitive allergen preferences.
 - Only non-sensitive, machine-readable reason codes (e.g., `SAFE_ALLERGEN_FREE`, `DIET_ALIGNED_VEGAN`) are returned.
+- `targetProduct` is `null` for `PRODUCT_NOT_FOUND`; no placeholder product is created.
+
+This document and the JSON schema define the API contract. They do not implement
+candidate filtering. An endpoint must use the backend's allergen and dietary
+safety checks before returning substitutions.
 
 ---
 
