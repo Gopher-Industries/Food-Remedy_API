@@ -47,3 +47,11 @@ null, placeholder, or empty input is returned as `["Unknown"]`. The sentinel is
 never mixed with known allergen names. See the
 [DB023 implementation note](../../Documents/Database/2026%20Trimester%202/DB023-Unknown-Allergen-Handling.md)
 for the pipeline and compatibility decisions.
+
+## Missing product submission contract
+
+[`product_submission_v1.schema.json`](product_submission_v1.schema.json)
+defines the request, success, and sanitized error envelopes for
+`POST /api/product-submissions`. It is a moderation boundary: its unverified
+text fields must never be copied into the product-detail contract or `PRODUCTS`
+without a separate catalogue-review decision.

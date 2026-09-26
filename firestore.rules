@@ -1,7 +1,66 @@
+rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedInOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // The catalogue remains readable by product-lookup clients, but only
+    // trusted server-side pipeline and moderation workflows may write it.
+    match /PRODUCTS/{barcode} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Account records and all nested profile/list data belong only to the
+    // authenticated account owner.
+    match /USERS/{uid} {
+      allow read, write: if isSignedInOwner(uid);
+    }
+
+    match /USERS/{uid}/{document=**} {
+      allow read, write: if isSignedInOwner(uid);
+    }
+
+    // Legacy lowercase user records retain the same owner-only boundary,
+    // including the cart subcollection used by the existing cart API.
+    match /users/{uid} {
+      allow read, write: if isSignedInOwner(uid);
+    }
+
+    match /users/{uid}/{document=**} {
+      allow read, write: if isSignedInOwner(uid);
+    }
+
+    // Feedback is write-only for its authenticated author. It is not a
+    // moderation collection and clients cannot enumerate or alter feedback.
+    match /FEEDBACK/{feedbackId} {
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+
+    // Product-submission reports are written only by the authenticated server
+    // route using the Admin SDK. User-provided details remain untrusted and
+    // cannot be read or written from a mobile client.
+    match /PRODUCT_SUBMISSIONS/{submissionId} {
+      allow read, write: if false;
+    }
+
+    // Server-maintained idempotency and rate-limit records are never client
+    // accessible. Their document IDs are opaque hashes rather than raw UIDs.
+    match /PRODUCT_SUBMISSION_REPORTERS/{reporterId} {
+      allow read, write: if false;
+    }
+
+    match /PRODUCT_SUBMISSION_RATE_LIMITS/{rateLimitId} {
+      allow read, write: if false;
+    }
+
+    // New collection paths are denied by default until they have an explicit
+    // access policy and emulator coverage.
     match /{document=**} {
-      allow read, write: if true; // Open for development, restrict for production!
+      allow read, write: if false;
     }
   }
 }

@@ -248,6 +248,31 @@ describe("Profile Firestore rules", () => {
 
 
 // ==========================================================
+// PRODUCT CATALOGUE SECURITY RULES
+// ==========================================================
+
+describe("Product catalogue Firestore rules", () => {
+  test("a client can read but cannot write the live product catalogue", async () => {
+    await seedDocument("PRODUCTS/036000291452", {
+      barcode: "036000291452",
+      productName: "Read-only catalogue fixture",
+    });
+
+    const clientDb = testEnv.authenticatedContext(OWNER_UID).firestore();
+    const productRef = doc(clientDb, "PRODUCTS", "036000291452");
+
+    await assertSucceeds(getDoc(productRef));
+    await assertFails(
+      setDoc(productRef, {
+        barcode: "036000291452",
+        productName: "Client must not modify catalogue",
+      })
+    );
+  });
+});
+
+
+// ==========================================================
 // SHOPPING LIST SECURITY RULES
 // ==========================================================
 
@@ -594,4 +619,47 @@ describe("Shopping List Item Firestore rules", () => {
     );
   });
 
+});
+
+
+// ==========================================================
+// PRODUCT SUBMISSION MODERATION BOUNDARY
+// ==========================================================
+
+describe("Product submission moderation boundary", () => {
+  const submissionPath = "PRODUCT_SUBMISSIONS/ps_036000291452";
+
+  test("an authenticated client cannot read or write untrusted product submissions", async () => {
+    await seedDocument(submissionPath, {
+      submissionId: "ps_036000291452",
+      barcode: "036000291452",
+      status: "PENDING",
+      note: "Untrusted fixture text",
+    });
+
+    const ownerDb = testEnv.authenticatedContext(OWNER_UID).firestore();
+    const submissionRef = doc(ownerDb, "PRODUCT_SUBMISSIONS", "ps_036000291452");
+
+    await assertFails(getDoc(submissionRef));
+    await assertFails(
+      setDoc(submissionRef, {
+        barcode: "036000291452",
+        status: "PENDING",
+      })
+    );
+  });
+
+  test("an unauthenticated client cannot access submission or rate-limit records", async () => {
+    const anonymousDb = testEnv.unauthenticatedContext().firestore();
+
+    await assertFails(
+      getDoc(doc(anonymousDb, "PRODUCT_SUBMISSIONS", "ps_036000291452"))
+    );
+    await assertFails(
+      setDoc(
+        doc(anonymousDb, "PRODUCT_SUBMISSION_RATE_LIMITS", "opaque-rate-limit"),
+        { count: 1 }
+      )
+    );
+  });
 });
