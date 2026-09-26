@@ -94,6 +94,25 @@ describe("substitution rollout and observability", () => {
     expect(events[0]).toEqual(expect.objectContaining({ outcome: "feature_disabled", resultCount: 0 }));
   });
 
+  it("defaults to disabled when no rollout setting is configured", async () => {
+    const previous = process.env.SUBSTITUTIONS_ROLLOUT;
+    delete process.env.SUBSTITUTIONS_ROLLOUT;
+    try {
+      const repository: jest.Mocked<ProductSubstitutionRepository> = {
+        getProduct: jest.fn(), getAuthoritativeProfile: jest.fn(), getCandidates: jest.fn(),
+      };
+      const response = await createProductSubstitutionHandler({
+        tokenVerifier: { verifyIdToken: jest.fn().mockResolvedValue({ uid: "user-123" }) },
+        repository,
+      })(request());
+      expect(response.status).toBe(503);
+      expect(repository.getProduct).not.toHaveBeenCalled();
+    } finally {
+      if (previous === undefined) delete process.env.SUBSTITUTIONS_ROLLOUT;
+      else process.env.SUBSTITUTIONS_ROLLOUT = previous;
+    }
+  });
+
   it("keeps a successful response when the metric sink fails", async () => {
     const repository: jest.Mocked<ProductSubstitutionRepository> = {
       getProduct: jest.fn().mockResolvedValue(product()),
