@@ -1,7 +1,7 @@
 // Modal Response tsx
 
 import { useState } from "react";
-import { Pressable, View, ActivityIndicator } from "react-native";
+import { Alert, Pressable, View, ActivityIndicator } from "react-native";
 import Tt from "@/components/ui/UIText";
 import Input from "../ui/UIInput";
 import { useModalManager } from "../providers/ModalManagerProvider";
@@ -11,7 +11,7 @@ interface ModalResponseProps {
   isInput: boolean;
   message: string;
   acceptLabel: string;
-  onAccept: (input: any) => void;
+  onAccept: (input: any) => void | boolean | Promise<void | boolean>;
 }
 
 const ModalResponse: React.FC<ModalResponseProps> = ({ modalKey, isInput, message, acceptLabel, onAccept }) => {
@@ -20,16 +20,32 @@ const ModalResponse: React.FC<ModalResponseProps> = ({ modalKey, isInput, messag
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
 
-  /**
-   * Handle On Accept
-   */
+  const confirmClose = () => {
+    if (input.trim()) {
+      Alert.alert("Discard changes?", "You have unsaved changes that will be lost.", [
+        { text: "Stay", style: "cancel" },
+        { text: "Leave", style: "destructive", onPress: () => closeModal(modalKey) },
+      ]);
+    } else {
+      closeModal(modalKey);
+    }
+  };
+
   const handleOnAccept = async () => {
+    if (loading) {
+      return;
+    }
+
     setErrorMessage("");
     setLoading(true);
+
     try {
-      await onAccept(input);
-      setInput("");
-      closeModal(modalKey);
+      const result = await onAccept(input);
+
+      if (result !== false) {
+        setInput("");
+        closeModal(modalKey);
+      }
     } catch (error) {
       console.log("Modal error caught:", error);
       // Error was already handled, just keep modal open
@@ -39,10 +55,20 @@ const ModalResponse: React.FC<ModalResponseProps> = ({ modalKey, isInput, messag
   }
 
   return (
-    <Pressable onPress={() => closeModal(modalKey)} className="flex-1 bg-black/50 justify-center items-center">
-      <View className="w-[80%] bg-hsl95 dark:bg-hsl10 py-6 px-6 rounded-lg" onStartShouldSetResponder={() => true}>
+    <View className="flex-1 justify-center items-center">
+      <Pressable
+        onPress={confirmClose}
+        className="absolute inset-0 bg-black/50"
+      />
 
+      <View className="w-[80%] bg-hsl95 dark:bg-hsl10 py-6 px-6 rounded-lg" onStartShouldSetResponder={() => true}>
         <Tt className="text-center text-lg mb-8">{message}</Tt>
+
+        {errorMessage && (
+          <View className="mb-4 px-3 py-2 rounded border border-red-300 bg-red-50">
+            <Tt className="text-center text-primary font-interSemiBold">{errorMessage}</Tt>
+          </View>
+        )}
 
         {isInput && (
           <>
@@ -51,7 +77,7 @@ const ModalResponse: React.FC<ModalResponseProps> = ({ modalKey, isInput, messag
         )}
 
         <View className="flex-row justify-around mt-8 mb-2">
-          <Pressable onPress={() => closeModal(modalKey)} disabled={loading}
+          <Pressable onPress={confirmClose} disabled={loading}
             className="px-4 py-2 bg-hsl100 dark:bg-hsl15 rounded border border-hsl90 dark:border-hsl20 active:bg-primary disabled:opacity-50"
           >
             {({ pressed }) => (
@@ -69,9 +95,8 @@ const ModalResponse: React.FC<ModalResponseProps> = ({ modalKey, isInput, messag
             )}
           </Pressable>
         </View>
-
       </View>
-    </Pressable>
+    </View>
   );
 };
 

@@ -12,12 +12,18 @@ export default async function searchProducts(term: string): Promise<Product[]> {
   const productsRef = collection(fdb, "PRODUCTS");
   const searchTerm = term // .trim().toLowerCase();
 
-  const results: Product[] = [];
+  const results = new Map<string, Product>();
+  const addProduct = (documentId: string, product: Product) => {
+    // The same product can turn up in both name and brand searches.
+    if (!results.has(documentId)) {
+      results.set(documentId, product);
+    }
+  };
 
   // 1. Direct barcode lookup (cheap)
   const barcodeSnap = await getDoc(doc(productsRef, searchTerm));
   if (barcodeSnap.exists()) {
-    results.push(barcodeSnap.data() as Product);
+    addProduct(barcodeSnap.id, barcodeSnap.data() as Product);
   }
 
   // 2. Search by productName
@@ -28,19 +34,23 @@ export default async function searchProducts(term: string): Promise<Product[]> {
     limit(20)
   );
   const productNameSnap = await getDocs(productNameQuery);
-  productNameSnap.forEach(doc => results.push(doc.data() as Product));
+  productNameSnap.forEach(snapshot => {
+    addProduct(snapshot.id, snapshot.data() as Product);
+  });
 
-  if (results.length >= 20) return results.slice(0, 20);
+  if (results.size >= 20) return [...results.values()].slice(0, 20);
 
   // 3. Search by brand
   const brandQuery = query(
     productsRef,
     where("brand", ">=", searchTerm),
     where("brand", "<=", searchTerm + "\uf8ff"),
-    limit(20 - results.length)
+    limit(20 - results.size)
   );
   const brandSnap = await getDocs(brandQuery);
-  brandSnap.forEach(doc => results.push(doc.data() as Product));
+  brandSnap.forEach(snapshot => {
+    addProduct(snapshot.id, snapshot.data() as Product);
+  });
 
-  return results.slice(0, 20);
+  return [...results.values()].slice(0, 20);
 }

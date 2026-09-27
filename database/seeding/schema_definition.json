@@ -6,8 +6,8 @@
     "barcode": {
       "type": "string",
       "required": true,
-      "description": "Unique GTIN/barcode (13 digits, no leading zeros)",
-      "constraints": "non-empty, alphanumeric"
+      "description": "Unique GTIN/barcode (8, 12, 13, or 14 digits)",
+      "constraints": "non-empty, numeric"
     },
     "productName": {
       "type": "string",
@@ -15,10 +15,22 @@
       "description": "Primary product name (auto-filled fallback if missing)",
       "constraints": "non-empty"
     },
+    "productNameSearch": {
+      "type": "string",
+      "required": false,
+      "description": "Deterministic lowercase, NFC-normalized product name for prefix search",
+      "constraints": "lowercase, NFC normalized"
+    },
     "brand": {
       "type": "string",
       "required": false,
       "description": "Brand name (may be empty)"
+    },
+    "brandSearch": {
+      "type": "string",
+      "required": false,
+      "description": "Deterministic lowercase, NFC-normalized brand name for prefix search",
+      "constraints": "lowercase, NFC normalized"
     },
     "genericName": {
       "type": "string",
@@ -147,6 +159,11 @@
         "dataQualityScore": { "type": "number" }
       }
     },
+    "semanticAttributes": {
+      "type": "object",
+      "required": false,
+      "description": "Versioned contextual ranking evidence from trusted server or pipeline writers only; never safety evidence. See contracts/product_detail_v1.schema.json"
+    },
     "enrichmentMetadata": {
       "type": "object",
       "required": false,
@@ -192,6 +209,9 @@
     { "fields": ["enrichment.nutrition.compositeScore"], "direction": "DESCENDING", "description": "Nutrition quality sorting" },
     { "fields": ["nutriscoreGrade"], "description": "Quick grade filter" },
     { "fields": ["enrichment.tags"], "description": "Array-contains for diet/lifestyle tags" },
-    { "fields": ["brand", "nutriscoreGrade"], "description": "Brand + quality combo" }
+    { "fields": ["brand", "nutriscoreGrade"], "description": "Brand + quality combo" },
+    { "fields": ["productNameSearch"], "description": "Prefix query index for search by product name" },
+    { "fields": ["brandSearch"], "description": "Prefix query index for search by brand" },
+    { "fields": ["brandSearch", "productNameSearch"], "description": "Compound search by brand and product name" }
   ]
 }

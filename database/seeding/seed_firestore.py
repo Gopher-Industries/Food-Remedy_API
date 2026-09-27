@@ -3,7 +3,7 @@ Enhanced Firestore seeding engine with batch writes, rate limiting, checkpointin
 and retry logic (DB025-DB028 integration).
 
 Large seeding runs complete safely and observably. Temporary database or quota
-errors do not abort the whole seeding job.
+errors are retried; an exhausted batch stops the run at a resumable checkpoint.
 """
 
 import json
@@ -11,6 +11,7 @@ import sys
 import time
 import os
 import argparse
+import hashlib
 from typing import Any, Optional
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -19,6 +20,7 @@ if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
 from database.seeding.checkpoint_manager import CheckpointManager
+from database.seeding.data_contract import PRODUCTS_COLLECTION
 from database.seeding.rate_limiter import AdaptiveRateLimiter
 from database.seeding.progress_tracker import ProgressTracker
 from database.seeding.retry_config import retry_with_backoff, DEFAULT_RETRY, ErrorCategory, categorize_error
@@ -236,6 +238,8 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
             - max_retries (int): Retry attempts per failed batch.
             - validate_before_seed (bool): Run DB012 validation first.
             - subset (int): Limit to first N documents (disables resume).
+            - checkpoint_file (str): Optional checkpoint path (mainly for isolated runs/tests).
+            - reset_checkpoint (bool): Explicitly discard prior progress before binding this run.
 
     Returns:
         dict with 'processed', 'failures', 'output', and optional 'error'.
@@ -328,14 +332,23 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
             return {"error": msg, "processed": 0, "failures": 1}
 
     total_records = len(data)
-    use_checkpoint = subset is None or subset <= 0
+    use_checkpoint = not dry_run and (subset is None or subset <= 0)
 
     # Initialize checkpoint manager
-    checkpoint_mgr = CheckpointManager(CHECKPOINT_FILE)
+    checkpoint_file = _resolve_repo_path(config.get("checkpoint_file", CHECKPOINT_FILE))
+    checkpoint_mgr = CheckpointManager(checkpoint_file)
     if use_checkpoint:
+        if config.get("reset_checkpoint"):
+            checkpoint_mgr.reset()
+        checkpoint_mgr.bind_run(
+            dataset_sha256=hashlib.sha256(raw.encode("utf-8")).hexdigest(),
+            total_records=total_records,
+            batch_size=batch_size,
+            collection=PRODUCTS_COLLECTION,
+        )
         resume_info = checkpoint_mgr.get_resume_info()
         start_batch_index = resume_info["next_batch_index"]
-        resume_offset = (start_batch_index - 1) * batch_size
+        resume_offset = start_batch_index * batch_size
         print(
             f"[CHECKPOINT] Resuming from batch {start_batch_index}. "
             f"Previously: {resume_info['documents_written']} written, "
@@ -395,28 +408,34 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
             """Closure for retryable batch commit."""
             batch = db.batch()
             docs_added = 0
-            docs_skipped = 0
+
+            missing_barcodes = [
+                i + offset for offset, product in enumerate(chunk)
+                if not product.get("barcode")
+            ]
+            if missing_barcodes:
+                for record_index in missing_barcodes:
+                    checkpoint_mgr.add_failed_document(
+                        str(record_index), "Missing barcode"
+                    )
+                raise ValueError(
+                    "Batch contains product(s) without a barcode at dataset "
+                    f"indices {missing_barcodes[:10]}"
+                )
 
             for product in chunk:
                 barcode = product.get("barcode")
-                if not barcode:
-                    docs_skipped += 1
-                    checkpoint_mgr.add_failed_document(
-                        str(i + docs_added + docs_skipped),
-                        "Missing barcode"
-                    )
-                    continue
 
                 # Rate limit before each write
                 rate_limiter.acquire(1, block=True)
 
-                doc_ref = db.collection("products").document(str(barcode))
+                doc_ref = db.collection(PRODUCTS_COLLECTION).document(str(barcode))
                 batch.set(doc_ref, product, merge=True)
                 docs_added += 1
 
             # Commit batch
             commit_batch(batch)
-            return docs_added, docs_skipped
+            return docs_added, 0
 
         # Retry logic with backoff
         try:
@@ -449,8 +468,9 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
             progress.on_batch_failure(batch_number, batch_error, batch_start_time)
             batches_failed += 1
 
-            # Continue to next batch (partial failure doesn't abort entire job)
-            print(f"[WARN] Batch {batch_number} exhausted retries. Continuing...")
+            # Do not advance past a gap. A later run resumes this exact batch.
+            print(f"[ERROR] Batch {batch_number} exhausted retries. Seeding stopped.")
+            break
 
     # Summary
     elapsed = time.time() - start_time
@@ -474,17 +494,22 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
     if dry_run:
         print("[DRY-RUN] No Firestore writes were made. Checkpoint not updated.")
 
-    # Save output
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
     out_meta = _repo_relative_for_metadata(output_path)
-    print(f"Seeded data written to: {out_meta}")
+    if not batches_failed:
+        # This file is evidence of a complete seed, so never rewrite it after a
+        # partial Firestore failure.
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        print(f"Seeded data written to: {out_meta}")
+    else:
+        print("[ERROR] Seeded-data evidence was not written because the run failed.")
 
     return {
         "processed": summary["documents"]["total"],
         "failures": summary["batches"]["failed"],
-        "output": out_meta,
+        "output": out_meta if not batches_failed else None,
+        "candidate_output": out_meta,
         "summary": summary,
     }
 
@@ -555,6 +580,14 @@ if __name__ == "__main__":
         action="store_true",
         help="Run DB012 batch validation on the input before Firestore writes",
     )
+    parser.add_argument(
+        "--reset-checkpoint",
+        action="store_true",
+        help=(
+            "Explicitly discard checkpoint progress before seeding. Required "
+            "when intentionally changing the dataset, batch size or collection."
+        ),
+    )
     args = parser.parse_args()
 
     cfg: dict[str, Any] = {
@@ -563,8 +596,10 @@ if __name__ == "__main__":
         "writes_per_second_limit": args.writes_per_second,
         "max_retries": args.max_retries,
         "validate_before_seed": args.validate,
+        "reset_checkpoint": args.reset_checkpoint,
     }
     if args.subset:
         cfg["subset"] = args.subset
 
-    run(args.input, args.output, cfg)
+    result = run(args.input, args.output, cfg)
+    raise SystemExit(1 if result.get("error") or result.get("failures") else 0)

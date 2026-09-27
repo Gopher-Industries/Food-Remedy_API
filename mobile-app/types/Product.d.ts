@@ -5,6 +5,8 @@
  * with a normalise function. This type is more strict
  */
 
+import type { ProductSemanticAttributes } from './Personalization';
+
 export type NutriScoreGrade = "A" | "B" | "C" | "D" | "E" | "UNKNOWN" | string;
 export type NutrientLevel = "low" | "moderate" | "high" | "unknown";
 
@@ -80,6 +82,8 @@ export interface Product {
 
   // Meta
   metadata?: ProductMetadata;
+  /** Versioned contextual ranking evidence; never a safety source. */
+  semanticAttributes?: ProductSemanticAttributes;
   enrichmentMetadata?: {
     recommendationScore?: number;
     reasonTags?: string[];

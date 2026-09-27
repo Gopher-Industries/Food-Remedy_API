@@ -23,7 +23,6 @@ import {
 import {
   createShoppingList,
   getShoppingLists,
-  getShoppingList,
   updateShoppingList,
   deleteShoppingList,
   addItemToList,
@@ -39,6 +38,7 @@ import {
   upsertShoppingList,
   upsertListItem,
 } from "@/services/sqlDatabase/shoppingList.dao";
+import { loadOwnedShoppingListState } from "@/services/sqlDatabase/shoppingListState";
 
 export function useShoppingList() {
   const { db, isDbReady } = useSQLiteDatabase();
@@ -49,6 +49,7 @@ export function useShoppingList() {
     (ShoppingListItem & { product: Product })[]
   >([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [hasSyncedFromCloud, setHasSyncedFromCloud] = useState(false);
   const lastUserIdRef = useRef<string | null>(null);
 
@@ -62,9 +63,13 @@ export function useShoppingList() {
   const refreshLists = useCallback(async () => {
     if (!db || !isDbReady || !userId) return;
     setLoading(true);
+    setLoadError(null);
     try {
-      const allLists = await getShoppingLists(db, userId);
-      setLists(allLists);
+        const allLists = await getShoppingLists(db, userId);
+        setLists(allLists);
+    } catch (e) {
+        console.error("[useShoppingList] Failed to load shopping lists:", e);
+        setLoadError("We couldn't load your shopping lists.");
     } finally {
       setLoading(false);
     }
@@ -84,7 +89,7 @@ export function useShoppingList() {
           const items = await getListItemsFirestore(userId, list.listId);
           for (const item of items) {
             if (cancelled) return;
-            await upsertListItem(db, {
+            await upsertListItem(db, userId, {
               ...item,
               listId: list.listId,
               productJson: item.productJson ?? JSON.stringify(item.product ?? null),
@@ -140,7 +145,8 @@ export function useShoppingList() {
   const updateList = useCallback(
     async (listId: string, updates: { listName?: string; color?: string; emoji?: string }) => {
       if (!db || !userId) return;
-      await updateShoppingList(db, listId, updates);
+      const updated = await updateShoppingList(db, userId, listId, updates);
+      if (!updated) return;
       // Attempt to sync patch to Firestore
       try {
         if (userId) {
@@ -169,7 +175,8 @@ export function useShoppingList() {
   const deleteList = useCallback(
     async (listId: string) => {
       if (!db || !userId) return;
-      await deleteShoppingList(db, listId);
+      const deleted = await deleteShoppingList(db, userId, listId);
+      if (!deleted) return;
       try {
         if (userId) {
           await deleteShoppingListFirestore(userId, listId);
@@ -194,12 +201,9 @@ export function useShoppingList() {
       if (!db || !userId) return;
       setLoading(true);
       try {
-        const list = await getShoppingList(db, listId);
-        setCurrentList(list);
-        if (list) {
-          const items = await getListItems(db, listId);
-          setCurrentItems(items);
-        }
+        await loadOwnedShoppingListState(
+          db, userId, listId, setCurrentList, setCurrentItems
+        );
       } finally {
         setLoading(false);
       }
@@ -218,7 +222,8 @@ export function useShoppingList() {
       }
       console.log('[useShoppingList] addItem called:', { listId, productName: product.productName, quantity, note });
       try {
-        await addItemToList(db, listId, product, quantity, note);
+        const added = await addItemToList(db, userId, listId, product, quantity, note);
+        if (!added) return;
         console.log('[useShoppingList] Successfully added item to database');
       } catch (err) {
         console.error('[useShoppingList] Failed to add item to database:', err);
@@ -238,7 +243,7 @@ export function useShoppingList() {
 
       // If this is the current list, refresh items
       if (currentList?.listId === listId) {
-        const items = await getListItems(db, listId);
+        const items = await getListItems(db, userId, listId);
         setCurrentItems(items);
       }
     },
@@ -257,7 +262,8 @@ export function useShoppingList() {
       console.log('[useShoppingList] updateQuantity called:', { listId, barcode, quantity });
       
       try {
-        await updateItemQuantity(db, listId, barcode, quantity);
+        const updated = await updateItemQuantity(db, userId, listId, barcode, quantity);
+        if (!updated) return;
         console.log('[useShoppingList] Successfully updated quantity in database');
       } catch (err) {
         console.error('[useShoppingList] Failed to update quantity in database:', err);
@@ -291,7 +297,8 @@ export function useShoppingList() {
   const updateNote = useCallback(
     async (listId: string, barcode: string, note: string | null) => {
       if (!db || !userId) return;
-      await updateItemNote(db, listId, barcode, note ?? null);
+      const updated = await updateItemNote(db, userId, listId, barcode, note ?? null);
+      if (!updated) return;
 
       try {
         const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
@@ -317,7 +324,8 @@ export function useShoppingList() {
   const toggleChecked = useCallback(
     async (listId: string, barcode: string) => {
       if (!db || !userId) return;
-      const newState = await toggleItemChecked(db, listId, barcode);
+      const newState = await toggleItemChecked(db, userId, listId, barcode);
+      if (newState === null) return false;
 
       try {
         const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
@@ -344,7 +352,8 @@ export function useShoppingList() {
   const removeItem = useCallback(
     async (listId: string, barcode: string) => {
       if (!db || !userId) return;
-      await removeItemFromList(db, listId, barcode);
+      const removed = await removeItemFromList(db, userId, listId, barcode);
+      if (!removed) return;
 
       try {
         const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
@@ -368,7 +377,8 @@ export function useShoppingList() {
   const clearChecked = useCallback(
     async (listId: string) => {
       if (!db || !userId) return;
-      await clearCheckedItems(db, listId);
+      const cleared = await clearCheckedItems(db, userId, listId);
+      if (!cleared) return;
 
       try {
         const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
@@ -390,7 +400,8 @@ export function useShoppingList() {
   const clearAll = useCallback(
     async (listId: string) => {
       if (!db || !userId) return;
-      await clearAllItems(db, listId);
+      const cleared = await clearAllItems(db, userId, listId);
+      if (!cleared) return;
 
       try {
         const uid = lists.find((l) => l.listId === listId)?.userId || (await ensureUid());
@@ -412,7 +423,7 @@ export function useShoppingList() {
   const getItemCount = useCallback(
     async (listId: string) => {
       if (!db || !userId) return 0;
-      return await getListItemCount(db, listId);
+      return await getListItemCount(db, userId, listId);
     },
     [db, userId]
   );
@@ -427,7 +438,7 @@ export function useShoppingList() {
         return null;
       }
       console.log('[useShoppingList] getItem called:', { listId, barcode });
-      const item = await getItemInList(db, listId, barcode);
+      const item = await getItemInList(db, userId, listId, barcode);
       console.log('[useShoppingList] getItem result:', { barcode, exists: !!item, quantity: item?.quantity });
       return item;
     },
@@ -437,6 +448,7 @@ export function useShoppingList() {
   return {
     ready: isDbReady && !!userId,
     loading,
+    loadError,
     lists,
     currentList,
     currentItems,
@@ -475,7 +487,7 @@ export function useShoppingList() {
             updatedAt: l.updatedAt,
           });
           // Push items
-          const items = await getListItems(db, l.listId);
+          const items = await getListItems(db, uid, l.listId);
           for (const it of items) {
             await upsertItemInListFirestore(uid, l.listId, {
               listId: l.listId,

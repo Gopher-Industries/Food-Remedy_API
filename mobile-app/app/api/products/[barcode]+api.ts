@@ -1,6 +1,7 @@
 import { doc, getDoc } from "firebase/firestore";
 import { fdb } from "@/config/firebaseConfig";
 import { buildProductDetailResponse } from "@/services/utils/productDetail";
+import { logSafeError } from "@/services/backend/safeErrors";
 
 function toJsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body, null, 2), {
@@ -14,7 +15,8 @@ export async function GET(
   context: { params?: { barcode?: string } }
 ): Promise<Response> {
   try {
-    const barcode = context.params?.barcode?.trim();
+    const rawBarcode = context.params?.barcode;
+    const barcode = typeof rawBarcode === "string" ? rawBarcode.trim() : "";
 
     if (!barcode) {
       return toJsonResponse(
@@ -46,7 +48,7 @@ export async function GET(
 
     return toJsonResponse(product, 200);
   } catch (err) {
-    console.error("Error in /api/products/[barcode]:", err);
+    logSafeError("Error in /api/products/[barcode]:", err);
 
     return toJsonResponse(
       {
@@ -57,4 +59,3 @@ export async function GET(
     );
   }
 }
-

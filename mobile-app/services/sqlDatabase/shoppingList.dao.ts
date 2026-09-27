@@ -16,6 +16,18 @@ function safeParseProduct(s: string): Product {
   }
 }
 
+async function ownsShoppingList(
+  db: SQLiteDatabase,
+  userId: string,
+  listId: string
+): Promise<boolean> {
+  const row = await db.getFirstAsync<{ owned: number }>(
+    `SELECT 1 AS owned FROM shopping_lists WHERE list_id = ? AND user_id = ?`,
+    [listId, userId]
+  );
+  return row?.owned === 1;
+}
+
 // ============== SHOPPING LISTS ==============
 
 /**
@@ -59,12 +71,12 @@ export async function upsertShoppingList(
     `INSERT INTO shopping_lists (list_id, user_id, list_name, color, emoji, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(list_id) DO UPDATE SET
-       user_id = excluded.user_id,
        list_name = excluded.list_name,
        color = excluded.color,
        emoji = excluded.emoji,
        created_at = excluded.created_at,
-       updated_at = excluded.updated_at`,
+       updated_at = excluded.updated_at
+     WHERE shopping_lists.user_id = excluded.user_id`,
     [
       list.listId,
       list.userId,
@@ -108,13 +120,14 @@ export async function getShoppingLists(
  */
 export async function getShoppingList(
   db: SQLiteDatabase,
+  userId: string,
   listId: string
 ): Promise<ShoppingList | null> {
   const rows = await db.getAllAsync<any>(
     `SELECT list_id, user_id, list_name, color, emoji, created_at, updated_at
      FROM shopping_lists
-     WHERE list_id = ?`,
-    [listId]
+     WHERE list_id = ? AND user_id = ?`,
+    [listId, userId]
   );
 
   if (rows.length === 0) return null;
@@ -136,31 +149,34 @@ export async function getShoppingList(
  */
 export async function updateShoppingList(
   db: SQLiteDatabase,
+  userId: string,
   listId: string,
   updates: { listName?: string; color?: string; emoji?: string }
-): Promise<void> {
+): Promise<boolean> {
+  if (!(await ownsShoppingList(db, userId, listId))) return false;
   const now = nowIso();
 
   if (updates.listName !== undefined) {
     await db.runAsync(
-      `UPDATE shopping_lists SET list_name = ?, updated_at = ? WHERE list_id = ?`,
-      [updates.listName, now, listId]
+      `UPDATE shopping_lists SET list_name = ?, updated_at = ? WHERE list_id = ? AND user_id = ?`,
+      [updates.listName, now, listId, userId]
     );
   }
 
   if (updates.color !== undefined) {
     await db.runAsync(
-      `UPDATE shopping_lists SET color = ?, updated_at = ? WHERE list_id = ?`,
-      [updates.color, now, listId]
+      `UPDATE shopping_lists SET color = ?, updated_at = ? WHERE list_id = ? AND user_id = ?`,
+      [updates.color, now, listId, userId]
     );
   }
 
   if (updates.emoji !== undefined) {
     await db.runAsync(
-      `UPDATE shopping_lists SET emoji = ?, updated_at = ? WHERE list_id = ?`,
-      [updates.emoji ?? null, now, listId]
+      `UPDATE shopping_lists SET emoji = ?, updated_at = ? WHERE list_id = ? AND user_id = ?`,
+      [updates.emoji ?? null, now, listId, userId]
     );
   }
+  return true;
 }
 
 /**
@@ -168,9 +184,26 @@ export async function updateShoppingList(
  */
 export async function deleteShoppingList(
   db: SQLiteDatabase,
+  userId: string,
   listId: string
+): Promise<boolean> {
+  if (!(await ownsShoppingList(db, userId, listId))) return false;
+  await db.runAsync(
+    `DELETE FROM shopping_lists WHERE list_id = ? AND user_id = ?`,
+    [listId, userId]
+  );
+  return true;
+}
+
+/**
+ * Delete every shopping list owned by a user. Items cascade via the
+ * shopping_list_items foreign key (ON DELETE CASCADE, foreign_keys=ON).
+ */
+export async function clearShoppingListsForUser(
+  db: SQLiteDatabase,
+  userId: string
 ): Promise<void> {
-  await db.runAsync(`DELETE FROM shopping_lists WHERE list_id = ?`, [listId]);
+  await db.runAsync(`DELETE FROM shopping_lists WHERE user_id = ?`, [userId]);
 }
 
 // ============== SHOPPING LIST ITEMS ==============
@@ -180,17 +213,22 @@ export async function deleteShoppingList(
  */
 export async function addItemToList(
   db: SQLiteDatabase,
+  userId: string,
   listId: string,
   product: Product,
   quantity: number = 1,
   note?: string
-): Promise<void> {
+): Promise<boolean> {
+  if (!(await ownsShoppingList(db, userId, listId))) return false;
   const now = nowIso();
 
   // Check if item already exists; if so, increment quantity
   const existingRows = await db.getAllAsync<any>(
-    `SELECT quantity FROM shopping_list_items WHERE list_id = ? AND barcode = ?`,
-    [listId, product.barcode]
+    `SELECT i.quantity
+     FROM shopping_list_items i
+     JOIN shopping_lists l ON l.list_id = i.list_id
+     WHERE i.list_id = ? AND i.barcode = ? AND l.user_id = ?`,
+    [listId, product.barcode, userId]
   );
 
   if (existingRows.length > 0) {
@@ -200,7 +238,8 @@ export async function addItemToList(
     await db.runAsync(
       `UPDATE shopping_list_items 
        SET quantity = ?, note = COALESCE(?, note), product_name = ?, brand = ?, product_json = ?, updated_at = ?
-       WHERE list_id = ? AND barcode = ?`,
+       WHERE list_id = ? AND barcode = ?
+         AND EXISTS (SELECT 1 FROM shopping_lists l WHERE l.list_id = shopping_list_items.list_id AND l.user_id = ?)`,
       [
         nextQty,
         note ?? null,
@@ -210,13 +249,15 @@ export async function addItemToList(
         now,
         listId,
         product.barcode,
+        userId,
       ]
     );
   } else {
     await db.runAsync(
       `INSERT INTO shopping_list_items 
        (list_id, barcode, product_name, brand, quantity, note, is_checked, product_json, added_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
+       SELECT ?, ?, ?, ?, ?, ?, 0, ?, ?, ?
+       WHERE EXISTS (SELECT 1 FROM shopping_lists WHERE list_id = ? AND user_id = ?)`,
       [
         listId,
         product.barcode,
@@ -227,15 +268,18 @@ export async function addItemToList(
         J(product),
         now,
         now,
+        listId,
+        userId,
       ]
     );
   }
 
   // Update the list's updated_at timestamp
   await db.runAsync(
-    `UPDATE shopping_lists SET updated_at = ? WHERE list_id = ?`,
-    [now, listId]
+    `UPDATE shopping_lists SET updated_at = ? WHERE list_id = ? AND user_id = ?`,
+    [now, listId, userId]
   );
+  return true;
 }
 
 /**
@@ -243,12 +287,15 @@ export async function addItemToList(
  */
 export async function upsertListItem(
   db: SQLiteDatabase,
+  userId: string,
   item: ShoppingListItem
-): Promise<void> {
+): Promise<boolean> {
+  if (!(await ownsShoppingList(db, userId, item.listId))) return false;
   await db.runAsync(
     `INSERT INTO shopping_list_items
      (list_id, barcode, product_name, brand, quantity, note, is_checked, product_json, added_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+     WHERE EXISTS (SELECT 1 FROM shopping_lists WHERE list_id = ? AND user_id = ?)
      ON CONFLICT(list_id, barcode) DO UPDATE SET
        product_name = excluded.product_name,
        brand = excluded.brand,
@@ -269,8 +316,11 @@ export async function upsertListItem(
       item.productJson ?? null,
       item.addedAt,
       item.updatedAt,
+      item.listId,
+      userId,
     ]
   );
+  return true;
 }
 
 /**
@@ -278,14 +328,17 @@ export async function upsertListItem(
  */
 export async function getListItems(
   db: SQLiteDatabase,
+  userId: string,
   listId: string
 ): Promise<(ShoppingListItem & { product: Product })[]> {
   const rows = await db.getAllAsync<any>(
-    `SELECT list_id, barcode, product_name, brand, quantity, note, is_checked, product_json, added_at, updated_at
-     FROM shopping_list_items
-     WHERE list_id = ?
-     ORDER BY is_checked ASC, added_at DESC`,
-    [listId]
+    `SELECT i.list_id, i.barcode, i.product_name, i.brand, i.quantity, i.note, i.is_checked,
+            i.product_json, i.added_at, i.updated_at
+     FROM shopping_list_items i
+     JOIN shopping_lists l ON l.list_id = i.list_id
+     WHERE i.list_id = ? AND l.user_id = ?
+     ORDER BY i.is_checked ASC, i.added_at DESC`,
+    [listId, userId]
   );
 
   return rows.map((r) => ({
@@ -308,16 +361,21 @@ export async function getListItems(
  */
 export async function updateItemQuantity(
   db: SQLiteDatabase,
+  userId: string,
   listId: string,
   barcode: string,
   quantity: number
-): Promise<void> {
+): Promise<boolean> {
+  if (!(await ownsShoppingList(db, userId, listId))) return false;
   const now = nowIso();
 
   await db.runAsync(
-    `UPDATE shopping_list_items SET quantity = ?, updated_at = ? WHERE list_id = ? AND barcode = ?`,
-    [quantity, now, listId, barcode]
+    `UPDATE shopping_list_items SET quantity = ?, updated_at = ?
+     WHERE list_id = ? AND barcode = ?
+       AND EXISTS (SELECT 1 FROM shopping_lists l WHERE l.list_id = shopping_list_items.list_id AND l.user_id = ?)`,
+    [quantity, now, listId, barcode, userId]
   );
+  return true;
 }
 
 /**
@@ -325,15 +383,20 @@ export async function updateItemQuantity(
  */
 export async function updateItemNote(
   db: SQLiteDatabase,
+  userId: string,
   listId: string,
   barcode: string,
   note: string | null
-): Promise<void> {
+): Promise<boolean> {
+  if (!(await ownsShoppingList(db, userId, listId))) return false;
   const now = nowIso();
   await db.runAsync(
-    `UPDATE shopping_list_items SET note = ?, updated_at = ? WHERE list_id = ? AND barcode = ?`,
-    [note ?? null, now, listId, barcode]
+    `UPDATE shopping_list_items SET note = ?, updated_at = ?
+     WHERE list_id = ? AND barcode = ?
+       AND EXISTS (SELECT 1 FROM shopping_lists l WHERE l.list_id = shopping_list_items.list_id AND l.user_id = ?)`,
+    [note ?? null, now, listId, barcode, userId]
   );
+  return true;
 }
 
 /**
@@ -341,24 +404,30 @@ export async function updateItemNote(
  */
 export async function toggleItemChecked(
   db: SQLiteDatabase,
+  userId: string,
   listId: string,
   barcode: string
-): Promise<boolean> {
+): Promise<boolean | null> {
   const now = nowIso();
 
   // Get current state
   const rows = await db.getAllAsync<any>(
-    `SELECT is_checked FROM shopping_list_items WHERE list_id = ? AND barcode = ?`,
-    [listId, barcode]
+    `SELECT i.is_checked
+     FROM shopping_list_items i
+     JOIN shopping_lists l ON l.list_id = i.list_id
+     WHERE i.list_id = ? AND i.barcode = ? AND l.user_id = ?`,
+    [listId, barcode, userId]
   );
 
-  if (rows.length === 0) return false;
+  if (rows.length === 0) return null;
 
   const newState = rows[0].is_checked === 0 ? 1 : 0;
 
   await db.runAsync(
-    `UPDATE shopping_list_items SET is_checked = ?, updated_at = ? WHERE list_id = ? AND barcode = ?`,
-    [newState, now, listId, barcode]
+    `UPDATE shopping_list_items SET is_checked = ?, updated_at = ?
+     WHERE list_id = ? AND barcode = ?
+       AND EXISTS (SELECT 1 FROM shopping_lists l WHERE l.list_id = shopping_list_items.list_id AND l.user_id = ?)`,
+    [newState, now, listId, barcode, userId]
   );
 
   return newState === 1;
@@ -369,13 +438,18 @@ export async function toggleItemChecked(
  */
 export async function removeItemFromList(
   db: SQLiteDatabase,
+  userId: string,
   listId: string,
   barcode: string
-): Promise<void> {
+): Promise<boolean> {
+  if (!(await ownsShoppingList(db, userId, listId))) return false;
   await db.runAsync(
-    `DELETE FROM shopping_list_items WHERE list_id = ? AND barcode = ?`,
-    [listId, barcode]
+    `DELETE FROM shopping_list_items
+     WHERE list_id = ? AND barcode = ?
+       AND EXISTS (SELECT 1 FROM shopping_lists l WHERE l.list_id = shopping_list_items.list_id AND l.user_id = ?)`,
+    [listId, barcode, userId]
   );
+  return true;
 }
 
 /**
@@ -383,12 +457,17 @@ export async function removeItemFromList(
  */
 export async function clearCheckedItems(
   db: SQLiteDatabase,
+  userId: string,
   listId: string
-): Promise<void> {
+): Promise<boolean> {
+  if (!(await ownsShoppingList(db, userId, listId))) return false;
   await db.runAsync(
-    `DELETE FROM shopping_list_items WHERE list_id = ? AND is_checked = 1`,
-    [listId]
+    `DELETE FROM shopping_list_items
+     WHERE list_id = ? AND is_checked = 1
+       AND EXISTS (SELECT 1 FROM shopping_lists l WHERE l.list_id = shopping_list_items.list_id AND l.user_id = ?)`,
+    [listId, userId]
   );
+  return true;
 }
 
 /**
@@ -396,11 +475,17 @@ export async function clearCheckedItems(
  */
 export async function clearAllItems(
   db: SQLiteDatabase,
+  userId: string,
   listId: string
-): Promise<void> {
-  await db.runAsync(`DELETE FROM shopping_list_items WHERE list_id = ?`, [
-    listId,
-  ]);
+): Promise<boolean> {
+  if (!(await ownsShoppingList(db, userId, listId))) return false;
+  await db.runAsync(
+    `DELETE FROM shopping_list_items
+     WHERE list_id = ?
+       AND EXISTS (SELECT 1 FROM shopping_lists l WHERE l.list_id = shopping_list_items.list_id AND l.user_id = ?)`,
+    [listId, userId]
+  );
+  return true;
 }
 
 /**
@@ -408,11 +493,15 @@ export async function clearAllItems(
  */
 export async function getListItemCount(
   db: SQLiteDatabase,
+  userId: string,
   listId: string
 ): Promise<number> {
   const rows = await db.getAllAsync<{ count: number }>(
-    `SELECT COUNT(*) as count FROM shopping_list_items WHERE list_id = ?`,
-    [listId]
+    `SELECT COUNT(*) as count
+     FROM shopping_list_items i
+     JOIN shopping_lists l ON l.list_id = i.list_id
+     WHERE i.list_id = ? AND l.user_id = ?`,
+    [listId, userId]
   );
 
   return rows[0]?.count ?? 0;
@@ -423,13 +512,17 @@ export async function getListItemCount(
  */
 export async function getItemInList(
   db: SQLiteDatabase,
+  userId: string,
   listId: string,
   barcode: string
 ): Promise<ShoppingListItem | null> {
   const rows = await db.getAllAsync<any>(
-    `SELECT list_id, barcode, product_name, brand, quantity, note, is_checked, product_json, added_at, updated_at
-     FROM shopping_list_items WHERE list_id = ? AND barcode = ?`,
-    [listId, barcode]
+    `SELECT i.list_id, i.barcode, i.product_name, i.brand, i.quantity, i.note, i.is_checked,
+            i.product_json, i.added_at, i.updated_at
+     FROM shopping_list_items i
+     JOIN shopping_lists l ON l.list_id = i.list_id
+     WHERE i.list_id = ? AND i.barcode = ? AND l.user_id = ?`,
+    [listId, barcode, userId]
   );
 
   if (rows.length === 0) return null;

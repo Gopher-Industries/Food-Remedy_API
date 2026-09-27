@@ -1,4 +1,6 @@
 import * as SQLite from 'expo-sqlite';
+import { PERSONALIZATION_MIGRATION_V7 } from './personalizationMigration';
+import { RECOMMENDATION_EVENT_MIGRATION_V8 } from './recommendationEventMigration';
 
 let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
@@ -57,8 +59,6 @@ export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
             last_seen_at TEXT NOT NULL,
             PRIMARY KEY (owner_scope, barcode)
           );
-          CREATE INDEX IF NOT EXISTS idx_hist_owner_last_seen ON product_history(owner_scope, last_seen_at);
-
           -- SHOPPING LISTS (aligned with DAO)
           CREATE TABLE IF NOT EXISTS shopping_lists (
             list_id TEXT PRIMARY KEY,
@@ -185,6 +185,7 @@ export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
           await db.execAsync(`ALTER TABLE profiles ADD COLUMN guardrail_level TEXT;`);
         }
 
+        if (v < 6) {
         // BE028: product history/cache snapshots must be isolated per account/guest scope.
         // Legacy rows had no reliable owner, so keep them under an unowned scope that normal
         // account/guest reads never use.
@@ -253,6 +254,18 @@ export function initialiseSQLiteDatabase(): Promise<SQLite.SQLiteDatabase> {
         await db.execAsync(`DROP INDEX IF EXISTS idx_hist_last_seen;`);
 
         await db.execAsync(`PRAGMA user_version = 6;`);
+        v = 6;
+        }
+
+        if (v < 7) {
+          await db.execAsync(PERSONALIZATION_MIGRATION_V7);
+          await db.execAsync(`PRAGMA user_version = 7;`);
+          v = 7;
+        }
+        if (v < 8) {
+          await db.execAsync(RECOMMENDATION_EVENT_MIGRATION_V8);
+          await db.execAsync(`PRAGMA user_version = 8;`);
+        }
       });
 
       return db;

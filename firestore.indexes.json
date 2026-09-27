@@ -1,0 +1,48 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "PRODUCTS",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "brandSearch", "order": "ASCENDING" },
+        { "fieldPath": "productNameSearch", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "PRODUCTS",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "brandSearch", "order": "ASCENDING" },
+        { "fieldPath": "nutriscoreGrade", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "PRODUCTS",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "semanticAttributes.occasion.value", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "PRODUCTS",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "semanticAttributes.foodRole.value", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "RECOMMENDATION_EVENTS",
+      "fieldPath": "ttlAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "RECOMMENDATION_SESSIONS",
+      "fieldPath": "ttlAt",
+      "ttl": true,
+      "indexes": []
+    }
+  ]
+}

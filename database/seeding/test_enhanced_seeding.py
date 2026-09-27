@@ -42,10 +42,17 @@ def test_checkpoint_persistence():
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         checkpoint_file = f.name
+    os.unlink(checkpoint_file)
 
     try:
         # Create checkpoint and mark batches
         cp = CheckpointManager(checkpoint_file)
+        cp.bind_run(
+            dataset_sha256="a" * 64,
+            total_records=100,
+            batch_size=50,
+            collection="PRODUCTS",
+        )
         cp.mark_batch_success(0, documents_written=50, failed_count=0)
         cp.mark_batch_success(1, documents_written=50, failed_count=2)
         cp.add_failed_document("invalid-123", "Missing barcode")
@@ -76,10 +83,17 @@ def test_checkpoint_resume():
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         checkpoint_file = f.name
+    os.unlink(checkpoint_file)
 
     try:
         # Simulate partial completion
         cp = CheckpointManager(checkpoint_file)
+        cp.bind_run(
+            dataset_sha256="a" * 64,
+            total_records=150,
+            batch_size=50,
+            collection="PRODUCTS",
+        )
         cp.mark_batch_success(0, documents_written=50, failed_count=0)
         cp.mark_batch_success(1, documents_written=50, failed_count=0)
         cp.mark_batch_success(2, documents_written=50, failed_count=0)
@@ -263,6 +277,7 @@ def test_dry_run_seeding():
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         checkpoint_file = f.name
+    os.unlink(checkpoint_file)
 
     try:
         config = {
@@ -271,6 +286,7 @@ def test_dry_run_seeding():
             "writes_per_second_limit": 100,
             "max_retries": 2,
             "validate_before_seed": False,
+            "checkpoint_file": checkpoint_file,
         }
 
         result = run(input_file, output_file, config)
@@ -278,6 +294,7 @@ def test_dry_run_seeding():
         assert result["processed"] == 50, f"Expected 50 processed, got {result['processed']}"
         assert result["failures"] == 0, f"Expected 0 failures in dry-run, got {result['failures']}"
         assert os.path.exists(output_file)
+        assert not os.path.exists(checkpoint_file), "Dry-run must not create checkpoint progress"
 
         print("✓ End-to-end dry-run seeding succeeded")
         print(f"  - Documents processed: {result['processed']}")

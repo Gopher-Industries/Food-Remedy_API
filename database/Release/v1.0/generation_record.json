@@ -1,0 +1,112 @@
+{
+  "schema": "food-remedy-versioned-dataset-generation-v1",
+  "generation_status": "CHECKS_PASSED_READY_FOR_VALIDATION_MANIFEST",
+  "release_approved": false,
+  "deployment_status": "NOT_SEEDED_OR_READ_BACK",
+  "generated_at_utc": "2026-09-21T09:34:17.390166+00:00",
+  "release_date": "2026-09-21",
+  "dataset": {
+    "version": "v1.0",
+    "file": "foodremedy_release_v1.0.json",
+    "sha256": "b36d25a591a923e69a472a64b402b34e5a4d51d1aaa3904f5b02caa92cf19d82",
+    "record_count": 4731
+  },
+  "alternatives_sidecar": {
+    "file": "product_alternatives_v1.0.json",
+    "sha256": "053b0b6991c622c7578a1a8633bd1656769a5a5aff93f752d94415fa6d4a2790",
+    "record_count": 4731
+  },
+  "source": {
+    "candidate": "database/seeding/products_enriched.json",
+    "candidate_sha256": "90170dac3f974f674cef13b37b08a44e34d516dc49a6cb1ef869bdf6e8352870",
+    "candidate_record_count": 5000,
+    "configured_enrichment_input": "database/seeding/products_5k_enriched.json",
+    "configured_enrichment_input_sha256": "fd6648f6560a37086b0399e1b7ba3615d4158efe68217bef08056fcecda9d2a7",
+    "pipeline_config": "database/pipeline/pipeline.config.json",
+    "pipeline_config_sha256": "94d0eb136a6a106aa40436e45b9317eeafdb57ed6f7c24211405eb05203e5467",
+    "generation_base_commit": "f614aab0afaad2135379449c7b23590f32e7f025"
+  },
+  "validation": {
+    "validator": "scripts/db060_release_validation.py",
+    "status": "CHECKS_PASSED_PENDING_APPROVAL",
+    "total_records": 4731,
+    "valid_records": 4731,
+    "invalid_records": 0,
+    "dataset_errors": [],
+    "required_reviews": []
+  },
+  "quality": {
+    "required_fields": {
+      "status": "PASS",
+      "invalid_records": 0,
+      "missing_or_unusable_names": 0,
+      "placeholder_names": 0,
+      "non_string_barcodes": 0,
+      "approved_exceptions_applied": []
+    },
+    "barcodes": {
+      "status": "PASS",
+      "missing": 0,
+      "invalid_format": 0,
+      "non_string": 0,
+      "duplicates": 0,
+      "validation_scope": "format and uniqueness; no GTIN check digit"
+    },
+    "ingredients": {
+      "status": "PASS_WITH_DOCUMENTED_SOURCE_LIMITATION",
+      "missing_text_records": 4391
+    },
+    "allergens": {
+      "status": "PASS",
+      "known_evidence_records": 247,
+      "conservative_unknown_records": 4484,
+      "empty_records": 0,
+      "allergens_detected_mismatches": 0
+    },
+    "categories": {
+      "status": "PASS_WITH_DOCUMENTED_SOURCE_LIMITATION",
+      "mapped_records": 233,
+      "missing_category_tags": 4346,
+      "tagged_but_unmapped": 152,
+      "stored_primary_rule_conflicts_for_review": 0
+    },
+    "alternatives": {
+      "status": "PASS",
+      "references_checked": 41529,
+      "dangling_references": 0,
+      "generation_stats": {
+        "products": 4731,
+        "categories": 47,
+        "empty_similar": 30,
+        "empty_healthier": 1051,
+        "healthier_strict_gap": 3612,
+        "healthier_any_gain": 23,
+        "healthier_sugar_proxy": 41,
+        "healthier_fiber_proxy": 4
+      }
+    }
+  },
+  "excluded_records": {
+    "count": 269,
+    "reason_counts": {
+      "barcode_invalid_format": 3,
+      "stored_product_name_missing_or_unusable": 7,
+      "stored_product_name_placeholder": 259
+    },
+    "ledger": "exclusions.json",
+    "decision": "Excluded because the product could not be reliably identified; no barcode or product-name values were guessed."
+  },
+  "known_limitations": [
+    "4391 records lack source ingredient text; no replacement text was inferred.",
+    "4484 records use the conservative Unknown allergen state and must not be presented as allergen-free.",
+    "4346 records lack source category tags and 152 tagged records remain outside the current category rules.",
+    "Barcode validation covers supported digit-only lengths and uniqueness, not GTIN check digits.",
+    "The versioned dataset passed offline generation checks; DB065 approval, production seeding and Firestore application-path readback have not yet run."
+  ],
+  "evidence": {
+    "db060_validation": "db060_validation.json",
+    "category_audit": "category_audit.json",
+    "versioned_release_report": "DB064-versioned-release.md",
+    "checksums": "SHA256SUMS"
+  }
+}

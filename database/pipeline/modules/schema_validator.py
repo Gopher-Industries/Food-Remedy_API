@@ -51,6 +51,7 @@ def run(input_path: str, output_path: str, config: dict):
     total = 0
     valid = 0
     invalid = 0
+    error_summary: Dict[str, int] = {}
     examples = []
 
     if isinstance(data, list):
@@ -66,6 +67,8 @@ def run(input_path: str, output_path: str, config: dict):
         errs = _validate_record(rec)
         if errs:
             invalid += 1
+            for err in errs:
+                error_summary[err] = error_summary.get(err, 0) + 1
             if len(examples) < 10:
                 examples.append({"barcode": rec.get("barcode"), "errors": errs})
         else:
@@ -75,6 +78,7 @@ def run(input_path: str, output_path: str, config: dict):
         "total": total,
         "valid": valid,
         "invalid": invalid,
+        "error_summary": error_summary,
         "invalid_examples": examples,
     }
 

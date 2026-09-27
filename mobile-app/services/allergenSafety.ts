@@ -1,4 +1,7 @@
-import { findRestrictionRule } from "@/services/constants/AllergenTaxonomy";
+import {
+  findRestrictionRule,
+  normalizeSafetyText,
+} from "@/services/constants/AllergenTaxonomy";
 
 export const INCOMPLETE_ALLERGEN_DATA_REASON =
   "Allergen information is incomplete; safety is unknown.";
@@ -19,55 +22,90 @@ export interface ProductAllergenFields {
   ingredientsText?: unknown;
 }
 
-function normalizeEvidence(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/^([a-z]{2,3}):/, "")
-    .replace(/[_\s]+/g, "-")
-    .replace(/[^\p{L}\p{N}-]+/gu, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
 function normalizeRawEvidence(raw: string[]): string[] {
   return raw
-    .flatMap((item) => item.split(/[;,]/))
-    .map(normalizeEvidence)
+    .flatMap((item) => item.split(/[;,|\n]+/))
+    .map(normalizeSafetyText)
     .filter(Boolean);
 }
 
-function readArrayEvidence(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return normalizeRawEvidence(
-    value.filter((item): item is string => typeof item === "string")
-  );
-}
-
-function readStringEvidence(value: unknown): string[] {
+function readEvidence(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return normalizeRawEvidence(
+      value.filter((item): item is string => typeof item === "string")
+    );
+  }
   return typeof value === "string" ? normalizeRawEvidence([value]) : [];
 }
 
-function isCompleteAllergenList(value: unknown): boolean {
-  return (
-    Array.isArray(value) &&
-    value.length > 0 &&
-    value.every(
-      (item) => typeof item === "string" && item.trim().length > 0
-    )
+function readArrayEvidence(value: unknown): string[] {
+  return Array.isArray(value) ? readEvidence(value) : [];
+}
+
+const UNKNOWN_DECLARATION_VALUES = new Set([
+  "unknown",
+  "n-a",
+  "na",
+  "not-available",
+  "not-provided",
+  "not-specified",
+  "not-declared",
+  "not-applicable",
+  "unspecified",
+  "unavailable",
+  "missing",
+  "no-data",
+  "no-information",
+  "no-known-allergens",
+  "no-known-traces",
+]);
+
+const UNRESOLVED_TRACE_DECLARATIONS = new Set([
+  "may-contain",
+  "may-contain-traces",
+  "could-contain",
+  "could-contain-traces",
+  "contains-unknown-allergens",
+  "allergens-unknown",
+]);
+
+function hasUnknownDeclaration(values: string[]): boolean {
+  return values.some(
+    (value) =>
+      UNKNOWN_DECLARATION_VALUES.has(value) ||
+      UNRESOLVED_TRACE_DECLARATIONS.has(value)
   );
 }
 
+function isCompleteAllergenList(value: unknown): boolean {
+  if (
+    !Array.isArray(value) ||
+    value.length === 0 ||
+    !value.every((item) => typeof item === "string" && item.trim().length > 0)
+  ) {
+    return false;
+  }
+
+  const values = normalizeRawEvidence(value as string[]);
+  return values.length > 0 && !hasUnknownDeclaration(values);
+}
+
 function isCompleteTraceDeclaration(value: unknown): boolean {
-  return typeof value === "string" && value.trim().length > 0;
+  if (typeof value !== "string" || !value.trim()) return false;
+  const values = normalizeRawEvidence([value]);
+  return values.length > 0 && !hasUnknownDeclaration(values);
 }
 
 function normalizeRestrictions(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
+  const raw = Array.isArray(value)
+    ? value
+    : typeof value === "string"
+      ? value.split(/[;,|]+/)
+      : [];
 
   return Array.from(
     new Set(
-      value
+      raw
         .filter((item): item is string => typeof item === "string")
         .map((item) => item.trim())
         .filter(Boolean)
@@ -76,7 +114,7 @@ function normalizeRestrictions(value: unknown): string[] {
 }
 
 function containsAlias(evidence: string, alias: string): boolean {
-  const normalizedAlias = normalizeEvidence(alias);
+  const normalizedAlias = normalizeSafetyText(alias);
   if (!normalizedAlias) return false;
   return (`-${evidence}-`).includes(`-${normalizedAlias}-`);
 }
@@ -84,11 +122,14 @@ function containsAlias(evidence: string, alias: string): boolean {
 function productEvidence(product: ProductAllergenFields): string[] {
   return Array.from(
     new Set([
+      // The contract requires allergens to be an array. A scalar allergen
+      // value is malformed and remains unknown rather than becoming trusted
+      // evidence by accident.
       ...readArrayEvidence(product.allergens),
-      ...readStringEvidence(product.traces),
-      ...readStringEvidence(product.tracesFromIngredients),
-      ...readArrayEvidence(product.ingredients),
-      ...readStringEvidence(product.ingredientsText),
+      ...readEvidence(product.traces),
+      ...readEvidence(product.tracesFromIngredients),
+      ...readEvidence(product.ingredients),
+      ...readEvidence(product.ingredientsText),
     ])
   );
 }

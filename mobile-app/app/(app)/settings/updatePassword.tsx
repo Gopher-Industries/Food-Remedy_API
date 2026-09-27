@@ -11,15 +11,18 @@ import {
   Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { useDirtyForm } from "@/hooks/useDirtyForm";
 import Tt from "@/components/ui/UIText";
 import Header from "@/components/layout/Header";
 import { useNotification } from "@/components/providers/NotificationProvider";
 import IconGeneral from "@/components/icons/IconGeneral";
 import { color } from "@/app/design/token";
+import { BackButton } from "@/components/shared";
 
 export default function UpdatePasswordPage() {
   const router = useRouter();
   const { addNotification } = useNotification();
+  const { markDirty, markClean, confirmLeave } = useDirtyForm();
 
   const [newPassword, setNewPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
@@ -93,6 +96,7 @@ export default function UpdatePasswordPage() {
       // Clear form
       setNewPassword("");
       setConfirmPassword("");
+      markClean();
 
       // Navigate back after delay
       setTimeout(() => {
@@ -115,6 +119,7 @@ export default function UpdatePasswordPage() {
     setNewPasswordError(false);
     setErrorMessage("");
     setSuccessMessage("");
+    markDirty();
   };
 
   const handleConfirmPasswordChange = (text: string) => {
@@ -122,6 +127,7 @@ export default function UpdatePasswordPage() {
     setConfirmPasswordError(false);
     setErrorMessage("");
     setSuccessMessage("");
+    markDirty();
   };
 
   return (
@@ -135,17 +141,7 @@ export default function UpdatePasswordPage() {
         <View className="w-[95%] mx-auto">
           {/* Header with back button */}
           <View className="flex-row items-center justify-between mb-6">
-            <Pressable
-              onPress={() => router.back()}
-              className="flex-row justify-center items-center px-2 py-1"
-            >
-              {({ pressed }) => (
-                <IconGeneral
-                  type="arrow-backward-ios"
-                  fill={pressed ? color.primary : color.iconDefault}
-                />
-              )}
-            </Pressable>
+            <BackButton />
             <Tt className="font-interBold text-xl">Update Password</Tt>
             {/* Invisible placeholder to center title */}
             <IconGeneral type="arrow-backward-ios" fill="transparent" />
@@ -177,13 +173,23 @@ export default function UpdatePasswordPage() {
                 cursorColor={color.primary}
               />
               <Pressable
-                onPress={() => setShowNewPassword(!showNewPassword)}
+                onPress={() => setShowNewPassword((previous) => !previous)}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  showNewPassword ? "Hide password" : "Show password"
+                }
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <IconGeneral
-                  type={showNewPassword ? "visibility" : "visibility-off"}
-                  fill="hsl(0 0% 70%)"
-                />
+                <View
+                  accessible={false}
+                  importantForAccessibility="no"
+                  pointerEvents="none"
+                >
+                  <IconGeneral
+                    type={showNewPassword ? "visibility" : "visibility-off"}
+                    fill="hsl(0 0% 70%)"
+                  />
+                </View>
               </Pressable>
             </View>
 
@@ -206,13 +212,23 @@ export default function UpdatePasswordPage() {
                 cursorColor={color.primary}
               />
               <Pressable
-                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                onPress={() => setShowConfirmPassword((previous) => !previous)}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  showConfirmPassword ? "Hide password" : "Show password"
+                }
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <IconGeneral
-                  type={showConfirmPassword ? "visibility" : "visibility-off"}
-                  fill="hsl(0 0% 70%)"
-                />
+                <View
+                  accessible={false}
+                  importantForAccessibility="no"
+                  pointerEvents="none"
+                >
+                  <IconGeneral
+                    type={showConfirmPassword ? "visibility" : "visibility-off"}
+                    fill="hsl(0 0% 70%)"
+                  />
+                </View>
               </Pressable>
             </View>
           </View>

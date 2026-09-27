@@ -59,18 +59,17 @@ const AccessibleIngredientsModal = () => {
   const { closeModal } = useModalManager();
   const { currentProduct } = useProduct();
   const insets = useSafeAreaInsets();
+  const [fontSize, setFontSize] = useState(16);
+  const minSize = 16;
+  const maxSize = 36;
 
   useEffect(() => {
     if (!currentProduct) closeModal("accessibleIngredients");
   }, [currentProduct, closeModal]);
 
-  if (!currentProduct) return null;
-
-  const [fontSize, setFontSize] = useState(16);
-  const minSize = 16;
-  const maxSize = 36;
-
   const parsedIngredients = useMemo(() => {
+    if (!currentProduct) return [];
+
     const fromText = parseIngredientsTable(currentProduct.ingredientsText);
     if (fromText.length > 0) return fromText;
     // Fallback: use array order if text missing
@@ -80,7 +79,9 @@ const AccessibleIngredientsModal = () => {
     return arr
       .map((n: string) => ({ name: (n || "").trim(), amount: undefined as string | undefined }))
       .filter((r) => r.name);
-  }, [currentProduct.ingredientsText, currentProduct.ingredients]);
+  }, [currentProduct]);
+
+  if (!currentProduct) return null;
 
   const inc = () => setFontSize((s) => Math.min(maxSize, s + 2));
   const dec = () => setFontSize((s) => Math.max(minSize, s - 2));
@@ -95,7 +96,12 @@ const AccessibleIngredientsModal = () => {
         {/* Header */}
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center justify-between gap-x-2">
-            <Pressable onPress={dec} className="flex-row items-center px-3 py-1 rounded bg-hsl98 dark:bg-hsl10  active:bg-primary border border-primary">
+            <Pressable
+              onPress={dec}
+              accessibilityRole="button"
+              accessibilityLabel="Decrease text size"
+              className="flex-row items-center px-3 py-1 rounded bg-hsl98 dark:bg-hsl10  active:bg-primary border border-primary"
+            >
               {({ pressed }) => (
                 <>
                   <Tt className={`text-xl font-interSemiBold ${pressed ? "text-white" : "text-primary"}`}>A</Tt>
@@ -103,7 +109,12 @@ const AccessibleIngredientsModal = () => {
                 </>
               )}
             </Pressable>
-            <Pressable onPress={inc} className="flex-row items-center px-3 py-1 rounded bg-hsl98 dark:bg-hsl10  active:bg-primary border border-primary">
+            <Pressable
+              onPress={inc}
+              accessibilityRole="button"
+              accessibilityLabel="Increase text size"
+              className="flex-row items-center px-3 py-1 rounded bg-hsl98 dark:bg-hsl10  active:bg-primary border border-primary"
+            >
               {({ pressed }) => (
                 <>
                   <Tt className={`text-xl font-interSemiBold ${pressed ? "text-white" : "text-primary"}`}>A</Tt>
@@ -113,7 +124,7 @@ const AccessibleIngredientsModal = () => {
             </Pressable>
           </View>
 
-          <Pressable onPress={() => closeModal("accessibleIngredients")} className="p-2 rounded-lg" >
+          <Pressable onPress={() => closeModal("accessibleIngredients")} accessibilityRole="button" accessibilityLabel="Close ingredients" className="p-2 rounded-lg" >
             {({ pressed }) => (
               <IconGeneral type="close" size={30} fill={pressed ? "#FF3F3F" : "hsl(0, 0%, 20%)"} />
             )}

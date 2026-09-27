@@ -95,6 +95,28 @@ describe("recommendation allergen safety", () => {
     );
   });
 
+  it("treats a precautionary Seafood trace as unsafe for a legacy Fish profile", () => {
+    const fishProfile = {
+      ...profile,
+      allergies: [" Fish "],
+    } as NutritionalProfile;
+    const product = {
+      ...completeProduct,
+      barcode: "fish-trace",
+      traces: "May contain: SEA/FOOD",
+    } as Product;
+
+    expect(getRecommendationSummary(product, fishProfile)).toEqual(
+      expect.objectContaining({
+        safe: false,
+        safetyRating: "red",
+        reasons: expect.arrayContaining([
+          expect.stringMatching(/contains allergen: fish/i),
+        ]),
+      })
+    );
+  });
+
   it.each(incompleteAllergenDataFixtures)(
     "returns caution instead of safe for $name",
     ({ fields }) => {
@@ -103,7 +125,7 @@ describe("recommendation allergen safety", () => {
       expect(getRecommendationSummary(product, profile)).toEqual(
         expect.objectContaining({
           safe: false,
-          safetyRating: "grey",
+          safetyRating: "red",
           reasons: expect.arrayContaining([
             expect.stringMatching(/allergen information.*incomplete/i),
           ]),
@@ -113,34 +135,24 @@ describe("recommendation allergen safety", () => {
   );
 
   it.each(incompleteAllergenDataFixtures)(
-    "does not label a recommended alternative safe for $name",
+    "excludes an alternative with incomplete allergen evidence for $name",
     ({ fields }) => {
       const candidate = {
         ...productWithFields(fields),
         barcode: `candidate-${String(fields.allergens)}-${String(fields.traces)}`,
       } as Product;
 
-      const [recommendation] = getAlternatives(
+      const recommendations = getAlternatives(
         completeProduct,
         [candidate],
         profile
       );
 
-      expect(recommendation).toEqual(
-        expect.objectContaining({ safetyRating: "grey" })
-      );
-      expect(recommendation.reasons).toEqual(
-        expect.arrayContaining([
-          expect.stringMatching(/allergen information.*incomplete/i),
-        ])
-      );
-      expect(recommendation.reasons.join(" ")).not.toMatch(
-        /safe for your allergies/i
-      );
+      expect(recommendations).toEqual([]);
     }
   );
 
-  it("preserves forbidden-additive penalties in alternative scoring", () => {
+  it("excludes alternatives with avoided additives", () => {
     const additiveProfile = {
       ...profile,
       additives: ["e621"],
@@ -151,15 +163,12 @@ describe("recommendation allergen safety", () => {
       additives: ["e621"],
     };
 
-    const [recommendation] = getAlternatives(
+    const recommendations = getAlternatives(
       completeProduct,
       [candidate],
       additiveProfile
     );
 
-    expect(recommendation.reasons).toEqual(
-      expect.arrayContaining([expect.stringMatching(/additive concern/i)])
-    );
-    expect(recommendation.reasons.join(" ")).not.toMatch(/safe for your allergies/i);
+    expect(recommendations).toEqual([]);
   });
 });

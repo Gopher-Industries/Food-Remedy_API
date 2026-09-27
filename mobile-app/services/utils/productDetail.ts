@@ -1,4 +1,6 @@
 import { normaliseAllergens } from "./allergens";
+import type { ProductSemanticAttributes } from '@/types/Personalization';
+import { validateProductSemanticAttributes } from './productSemanticAttributes';
 
 type Images = {
   root: string;
@@ -34,6 +36,7 @@ type ProductDetailV1 = {
     removed: string[];
   };
   metadata: Record<string, unknown>;
+  semanticAttributes?: ProductSemanticAttributes;
   enrichmentMetadata?: Record<string, unknown>;
   dateAdded?: string | null;
   lastUpdated?: string | null;
@@ -161,6 +164,7 @@ export function buildProductDetailResponse(
   const categories = normalizeCategories(rawProduct.categories);
   const metadata = safeRecord(rawProduct.metadata);
   const enrichmentMetadata = safeRecord(rawProduct.enrichmentMetadata);
+  const semanticAttributes = validateProductSemanticAttributes(rawProduct.semanticAttributes);
 
   const response: ProductDetailV1 = {
     barcode: String(rawProduct.barcode ?? fallbackBarcode ?? ""),
@@ -190,6 +194,7 @@ export function buildProductDetailResponse(
     images: normalizeImages(rawProduct),
     tags: normalizeTags(rawProduct.tags),
     metadata: Object.keys(metadata).length ? metadata : { source: "firestore" },
+    ...(semanticAttributes ? { semanticAttributes } : {}),
   };
 
   if (Object.keys(enrichmentMetadata).length) {

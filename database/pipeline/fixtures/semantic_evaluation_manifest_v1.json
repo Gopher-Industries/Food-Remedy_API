@@ -1,0 +1,21 @@
+[
+  {
+    "barcode": "synthetic-crackers",
+    "semanticAttributes": {
+      "schemaVersion": "1.0.0", "evidenceCompleteness": "partial",
+      "texture": {"value":"crunchy","source":"manual","sourceVersion":"fixture-v1","confidence":1,"generatedAt":"2026-09-26T00:00:00Z"},
+      "foodRole": {"value":"side","source":"manual","sourceVersion":"fixture-v1","confidence":1,"generatedAt":"2026-09-26T00:00:00Z"},
+      "preparation": {"value":"ready_to_eat","source":"manual","sourceVersion":"fixture-v1","confidence":1,"generatedAt":"2026-09-26T00:00:00Z"}
+    }
+  },
+  {
+    "barcode": "synthetic-soft-bar",
+    "semanticAttributes": {
+      "schemaVersion": "1.0.0", "evidenceCompleteness": "partial",
+      "texture": {"value":"chewy","source":"manual","sourceVersion":"fixture-v1","confidence":1,"generatedAt":"2026-09-26T00:00:00Z"},
+      "foodRole": {"value":"main","source":"manual","sourceVersion":"fixture-v1","confidence":1,"generatedAt":"2026-09-26T00:00:00Z"},
+      "preparation": {"value":"ready_to_eat","source":"manual","sourceVersion":"fixture-v1","confidence":1,"generatedAt":"2026-09-26T00:00:00Z"},
+      "portability": {"value":"portable","source":"manual","sourceVersion":"fixture-v1","confidence":1,"generatedAt":"2026-09-26T00:00:00Z"}
+    }
+  }
+]

@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, View, Image } from "react-native";
+import {
+  AccessibilityInfo,
+  Pressable,
+  ScrollView,
+  View,
+  Image,
+} from "react-native";
 import { router } from "expo-router";
 
 import Header from "@/components/layout/Header";
@@ -20,30 +26,69 @@ import {
   useScanVoiceSummary,
   speakProductSummary,
 } from "@/hooks/useScanVoiceSummary";
+import { useScanAnnouncements } from "@/hooks/useScanAnnouncements";
 
 import NutrientsTab from "./ProductTabs/NutrientsTab";
 import IngredientsTab from "./ProductTabs/IngredientsTab";
 import ForYouTab from "./ProductTabs/ForYouTab";
-// import RecommendationsTab from "./ProductTabs/RecommendationsTab";
+import RecommendationsTab from "./ProductTabs/RecommendationsTab";
+import {useFeatureFlag} from "@/hooks/useFeatureFlag";
 
 type TabKey = "Nutrients" | "Ingredients" | "For you" | "Compare";
 
 const FALLBACK_FOOD_ICON = require("../../assets/images/food_icon.png");
 
 export default function ProductTabsScreen() {
-  const { currentProduct, loading, error } = useProduct();
+  const { barcode, currentProduct, loading, error } = useProduct();
   const { openModal } = useModalManager();
   const { highContrast, ttsEnabled } = usePreferences();
   const { sessionType } = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabKey>("Nutrients");
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
+  const [screenReaderEnabled, setScreenReaderEnabled] = useState(false);
 
-  const tabs: TabKey[] = ["Nutrients", "Ingredients", "For you"];
+  useEffect(() => {
+    let mounted = true;
+
+    AccessibilityInfo.isScreenReaderEnabled().then((enabled) => {
+      if (mounted) setScreenReaderEnabled(enabled);
+    });
+
+    const subscription = AccessibilityInfo.addEventListener(
+      "screenReaderChanged",
+      setScreenReaderEnabled,
+    );
+
+    return () => {
+      mounted = false;
+      subscription.remove();
+    };
+  }, []);
+
+  // Compare tab is unfinished since RecommendationsTab is not done.
+  // RecommendationsTab will stay behind a flag and is off by default
+  const showRecommendationsTab = useFeatureFlag("recommendationsTab");
+
+  const tabs: TabKey[] = showRecommendationsTab
+      ? ["Nutrients", "Ingredients", "For you", "Compare"]
+      : ["Nutrients", "Ingredients", "For you"];
 
   useScanVoiceSummary({
     product: currentProduct ?? null,
-    enabled: ttsEnabled && !loading && !error && !!currentProduct,
+    enabled:
+      ttsEnabled &&
+      !screenReaderEnabled &&
+      !loading &&
+      !error &&
+      !!currentProduct,
+  });
+
+  useScanAnnouncements({
+    barcode,
+    loading,
+    error,
+    product: currentProduct,
   });
 
   const handleBack = () => {
@@ -160,8 +205,10 @@ export default function ProductTabsScreen() {
       case "For you":
         return <ForYouTab product={currentProduct} />;
 
-      // case "Compare":
-      //   return <RecommendationsTab product={currentProduct} />;
+       case "Compare":
+         return showRecommendationsTab ? (
+             <RecommendationsTab product={currentProduct} />
+         ) : null;
 
       default:
         return null;

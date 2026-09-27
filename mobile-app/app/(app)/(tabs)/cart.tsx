@@ -1,7 +1,7 @@
 // app/(app)/(tabs)/cart.tsx
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { View, Pressable, ScrollView, RefreshControl, FlatList } from "react-native";
+import { View, Pressable, RefreshControl, FlatList } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Tt from "@/components/ui/UIText";
 import Header from "@/components/layout/Header";
@@ -15,6 +15,8 @@ import { useModalManager } from "@/components/providers/ModalManagerProvider";
 import { useShoppingList } from "@/hooks/useShoppingList";
 import { Button } from "@/components/shared/Button";
 import FolderGraphic from "@/components/graphics/FolderGraphic";
+import { useNetInfo } from "@react-native-community/netinfo";
+import EmptyState from "@/components/ui/EmptyState";
 
 const formatCreatedDate = (iso: string | undefined) => {
   if (!iso) return "";
@@ -29,9 +31,12 @@ const formatCreatedDate = (iso: string | undefined) => {
 
 export default function ShoppingCartPage() {
   const insets = useSafeAreaInsets();
+  const netInfo = useNetInfo();
+  const isOffline = netInfo.isConnected === false;
   const {
     ready,
     lists,
+    loadError,
     refreshLists,
     createList,
     deleteList,
@@ -199,16 +204,14 @@ export default function ShoppingCartPage() {
     <Screen className="p-safe">
       <Header />
 
-      {/* Title + Add button */}
-      <View className="mt-4 px-4 flex-row items-center justify-between">
-        <View style={{ flex: 1 }}>
-          <Tt className="text-xl font-interBold text-center">Shopping Lists</Tt>
-        </View>
-        <View className="flex-row items-center">
+      {/* Title + action buttons */}
+      <View className="mt-4 px-4">
+        <Tt className="text-xl font-interBold text-center">Shopping Lists</Tt>
+        <View className="flex-row flex-wrap items-center justify-end gap-2 mt-1">
           {isSelectionMode && (
             <Pressable
               onPress={() => openModal('deleteSelectedLists')}
-              className="ml-2 px-3 py-1 rounded-lg border border-primary bg-white dark:bg-hsl15"
+              className="px-3 py-1 rounded-lg border border-primary bg-white dark:bg-hsl15"
             >
               {({ pressed }) => (
                 <Tt className={`font-interSemiBold ${pressed ? 'text-primary' : 'text-hsl30 dark:text-hsl90'}`}>
@@ -220,7 +223,6 @@ export default function ShoppingCartPage() {
           <Pressable
             onPress={() => openModal('createList')}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            className="ml-2"
           >
             {({ pressed }) => (
               <IconGeneral type="add" fill={pressed ? '#FF3F3F' : 'hsl(0, 0%, 40%)'} size={24} />
@@ -228,7 +230,7 @@ export default function ShoppingCartPage() {
           </Pressable>
           <Pressable
             onPress={async () => { await syncAllToFirestore(); }}
-            className="ml-3 px-3 py-1 rounded-lg border border-hsl90 dark:border-hsl20 bg-white dark:bg-hsl15"
+            className="px-3 py-1 rounded-lg border border-hsl90 dark:border-hsl20 bg-white dark:bg-hsl15"
           >
             {({ pressed }) => (
               <Tt className={`font-interSemiBold ${pressed ? 'text-primary' : 'text-hsl30 dark:text-hsl90'}`}>Sync</Tt>
@@ -318,44 +320,48 @@ export default function ShoppingCartPage() {
       )}
 
       {/* EMPTY / LOADING STATES */}
-      {lists.length === 0 && (
-        <View className="flex-1 w-[95%] mx-auto items-center justify-center">
-          {!ready ? (
-            <Tt className="text-hsl40 dark:text-hsl80">Preparing Shopping List…</Tt>
-          ) : lists.length === 0 ? (
-            <>
-              <Tt className="text-hsl40 dark:text-hsl80 text-center">
-                No shopping lists yet.
-              </Tt>
-              <Tt className="text-hsl40 dark:text-hsl80 text-xs mt-1 text-center">
-                Start by scanning a product to create your first list.
-              </Tt>
+      {lists.length === 0 && !ready && (
+        <EmptyState
+          title="Preparing Shopping List…"
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          accessibilityLabel="Shopping list is loading"
+        />
+      )}
 
-              <Pressable
-                onPress={() => router.push("/(app)/(tabs)/scan")}
-                className="mt-8 flex-row justify-between items-center py-3 px-4 rounded-lg 
-                  border border-hsl90 dark:border-hsl20 active:border-primary bg-white dark:bg-hsl15 self-center"
-              >
-                {({ pressed }) => (
-                  <>
-                    <Tt
-                      className={`text-lg font-interSemiBold flex-grow ${
-                        pressed ? "text-primary" : "text-hsl30 dark:text-hsl90"
-                      }`}
-                    >
-                      Scan New Product
-                    </Tt>
-                    <IconGeneral
-                      type="barcode-scan"
-                      fill={pressed ? "#FF3F3F" : "hsl(0, 0%, 30%)"}
-                      size={30}
-                    />
-                  </>
-                )}
-              </Pressable>
-            </>
-          ) : null}
-        </View>
+      {lists.length === 0 && ready && isOffline && (
+        <EmptyState
+          iconType="warning"
+          title="You're offline."
+          description="We can't load your shopping lists right now. They're safe, try again when you're back online."
+          retryLabel="Try Again"
+          onRetry={onRefresh}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          accessibilityLabel="Offline — shopping lists unavailable"
+        />
+      )}
+
+      {lists.length === 0 && ready && !isOffline && loadError && (
+        <EmptyState
+          iconType="warning"
+          title={loadError}
+          description="Check your connection and try again."
+          retryLabel="Try Again"
+          onRetry={onRefresh}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          accessibilityLabel="Error loading shopping lists"
+        />
+      )}
+
+      {lists.length === 0 && ready && !isOffline && !loadError && (
+        <EmptyState
+          title="No shopping lists yet."
+          description="Start by scanning a product to create your first list."
+          ctaLabel="Scan New Product"
+          ctaIcon="barcode-scan"
+          onCta={() => router.push("/(app)/(tabs)/scan")}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          accessibilityLabel="No shopping lists"
+        />
       )}
 
       {/* Create List Modal (visible only when plus is pressed) */}

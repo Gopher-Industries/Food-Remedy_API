@@ -1,6 +1,6 @@
 # Product Detail API contract
 
-**Version:** 1.0.1 (DB037/DB023)
+**Version:** 1.1.0 (DB037/DB023/BE061)
 
 **Canonical schema:** [`contracts/product_detail_v1.schema.json`](../../contracts/product_detail_v1.schema.json)  
 **Alias in this folder:** `product_v1.json` (must stay identical to the canonical file)
@@ -47,3 +47,9 @@ null, placeholder, or empty input is returned as `["Unknown"]`. The sentinel is
 never mixed with known allergen names. See the
 [DB023 implementation note](../../Documents/Database/2026%20Trimester%202/DB023-Unknown-Allergen-Handling.md)
 for the pipeline and compatibility decisions.
+
+## Product search contract
+
+[`product_search_v1.schema.json`](product_search_v1.schema.json) defines the
+compact response and sanitized errors for `GET /api/products/search`. Search
+uses the BE040 normalized fields; it never returns raw Firestore documents.

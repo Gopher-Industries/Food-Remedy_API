@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://food-remedy.dev/schemas/product-search/v1",
+  "title": "ProductSearchV1",
+  "description": "Response and error envelopes for GET /api/products/search (BE041). Query parameter validation and GTIN checksum validation are enforced by the server.",
+  "definitions": {
+    "productSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["barcode", "productName", "brand", "category", "nutriscoreGrade"],
+      "properties": {
+        "barcode": { "type": "string", "pattern": "^(?:\\d{8}|\\d{12}|\\d{13}|\\d{14})$" },
+        "productName": { "type": ["string", "null"] },
+        "brand": { "type": ["string", "null"] },
+        "category": { "type": ["string", "null"] },
+        "nutriscoreGrade": { "type": ["string", "null"] }
+      }
+    },
+    "success": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "results", "nextCursor"],
+      "properties": {
+        "version": { "const": "v1" },
+        "results": {
+          "type": "array",
+          "maxItems": 25,
+          "items": { "$ref": "#/definitions/productSummary" }
+        },
+        "nextCursor": { "type": ["string", "null"] }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "error"],
+      "properties": {
+        "version": { "const": "v1" },
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["code", "message"],
+          "properties": {
+            "code": { "enum": ["INVALID_QUERY", "INVALID_LIMIT", "INVALID_CURSOR", "SEARCH_UNAVAILABLE"] },
+            "message": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

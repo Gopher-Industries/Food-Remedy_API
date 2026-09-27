@@ -1,0 +1,23 @@
+{
+  "generated_at_utc": "2026-09-21T11:00:00+00:00",
+  "identical": true,
+  "method": "Two independent source loads and builds in isolated temporary directories",
+  "run_1_sha256": {
+    "db060_validation.json": "34e218c1b3748d72cc1a6b6cd46fe6466cf6bad932f98877a43809e461b84a89",
+    "exclusion_ledger.jsonl.gz": "b04183dae74ea35733d161a05cde8c232ab2426a777c1e8e341c7e12e8ad33dd",
+    "foodremedy_candidate_db069.json": "ffc2d26e4cc1fdaa8e1754e209f0be0b7fe7b93784b743b47911180d52b67ced",
+    "inclusion_ledger.jsonl": "7eb53815d8b939aa65823dcc276f9cf2fad2934c44efcad25ef721a47b6e8a2c",
+    "quality_report.json": "e25a67e9b2cd2166e9eb9930e1f451a6393fc43e46c91c1c3c22c1107dac8038",
+    "source_profile.json": "8b844e7fea7d1cc04be47a14d36ee9c0d8b9fdb94ce90976899e80e8da216fb4"
+  },
+  "run_2_sha256": {
+    "db060_validation.json": "34e218c1b3748d72cc1a6b6cd46fe6466cf6bad932f98877a43809e461b84a89",
+    "exclusion_ledger.jsonl.gz": "b04183dae74ea35733d161a05cde8c232ab2426a777c1e8e341c7e12e8ad33dd",
+    "foodremedy_candidate_db069.json": "ffc2d26e4cc1fdaa8e1754e209f0be0b7fe7b93784b743b47911180d52b67ced",
+    "inclusion_ledger.jsonl": "7eb53815d8b939aa65823dcc276f9cf2fad2934c44efcad25ef721a47b6e8a2c",
+    "quality_report.json": "e25a67e9b2cd2166e9eb9930e1f451a6393fc43e46c91c1c3c22c1107dac8038",
+    "source_profile.json": "8b844e7fea7d1cc04be47a14d36ee9c0d8b9fdb94ce90976899e80e8da216fb4"
+  },
+  "status": "PASS",
+  "ticket": "DB069"
+}

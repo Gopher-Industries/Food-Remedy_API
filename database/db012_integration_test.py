@@ -1,8 +1,8 @@
 """
 DB012 Firestore integration checks: barcode lookup, category filter, recommendation-style query.
 
-Collection name matches seed_firestore (`products`) by default.
-Override with env FIRESTORE_PRODUCTS_COLLECTION if your project uses another id (e.g. PRODUCTS).
+The default collection comes from the committed product data contract. Override
+it only when deliberately testing another environment.
 """
 from __future__ import annotations
 
@@ -19,6 +19,7 @@ from firebase_admin import credentials, firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
 
 from database.logging_system.logger import PipelineLogger
+from database.seeding.data_contract import PRODUCTS_COLLECTION
 
 logger = PipelineLogger("INTEGRATION_TEST")
 
@@ -56,7 +57,7 @@ class DB012IntegrationTest:
     """
 
     COLLECTION_ENV = "FIRESTORE_PRODUCTS_COLLECTION"
-    DEFAULT_COLLECTION = "products"
+    DEFAULT_COLLECTION = PRODUCTS_COLLECTION
 
     def __init__(self, key_path: Optional[str] = None):
         self.logger = logger

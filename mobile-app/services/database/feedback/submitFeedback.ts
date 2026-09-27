@@ -1,6 +1,10 @@
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { fdb } from "@/config/firebaseConfig";
 import type { Status } from "@/types/Status";
+import {
+  logSafeError,
+  safePublicMessage,
+} from "@/services/backend/safeErrors";
 
 export interface FeedbackPayload {
   message: string;
@@ -27,9 +31,11 @@ export default async function submitFeedback(payload: FeedbackPayload): Promise<
 
     return { success: true, id: docRef.id };
   } catch (error: any) {
+    logSafeError("Feedback submit failed:", error);
+
     return {
       success: false,
-      message: error?.message ?? "Failed to submit feedback",
+      message: safePublicMessage("Failed to submit feedback"),
     };
   }
 }

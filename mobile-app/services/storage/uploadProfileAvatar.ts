@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import { v4 as uuidv4 } from 'uuid';
 import { deleteObject, getDownloadURL, listAll, ref, uploadBytes, uploadString } from 'firebase/storage';
 import { auth, storage } from '@/config/firebaseConfig';
+import { logSafeWarn } from '@/services/backend/safeErrors';
 // Use legacy FileSystem API to avoid deprecation warning in Expo SDK 54
 import * as FileSystem from 'expo-file-system/legacy';
 
@@ -24,7 +25,7 @@ export async function uploadProfileAvatar(uid: string, profileId: string, localU
     const base64 = await FileSystem.readAsStringAsync(localUri, { encoding: 'base64' as any });
     await uploadString(r, base64, 'base64', { contentType });
   } catch (e) {
-    console.warn('[avatar-upload] base64 upload failed, falling back to blob:', e);
+    logSafeWarn('[avatar-upload] base64 upload failed, falling back to blob:', e);
     try {
       // Fallback for web or when FileSystem read fails: fetch -> blob
       const resp = await fetch(localUri);
@@ -32,7 +33,7 @@ export async function uploadProfileAvatar(uid: string, profileId: string, localU
       const blobContentType = blob.type || contentType || 'application/octet-stream';
       await uploadBytes(r, blob, { contentType: blobContentType });
     } catch (err) {
-      console.warn('[avatar-upload] blob upload failed:', err);
+      logSafeWarn('[avatar-upload] blob upload failed:', err);
       throw err;
     }
   }
@@ -95,9 +96,6 @@ async function uploadProfileAvatarViaRest(objectPath: string, localUri: string, 
     throw new Error('[avatar-upload] Not authenticated');
   }
 
-  const projectId = storage.app.options.projectId;
-  const uid = user.uid;
-
   const authToken = await user.getIdToken();
   const encodedName = encodeURIComponent(objectPath);
   const uploadUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?uploadType=media&name=${encodedName}`;
@@ -114,13 +112,9 @@ async function uploadProfileAvatarViaRest(objectPath: string, localUri: string, 
 
   if (result.status < 200 || result.status >= 300) {
     if (result.status === 402) {
-      throw new Error(
-        `[avatar-upload] Firebase Storage billing blocked (402). ` +
-          `Verify the SAME Firebase project is on Blaze and billing is active. ` +
-          `projectId=${projectId} bucket=${bucket} uid=${uid} url=${uploadUrl} body=${result.body}`
-      );
+      throw new Error('[avatar-upload] Firebase Storage billing blocked (402).');
     }
-    throw new Error(`[avatar-upload] REST upload failed (status ${result.status}) url=${uploadUrl}: ${result.body}`);
+    throw new Error(`[avatar-upload] REST upload failed (status ${result.status}).`);
   }
 
   // Firebase Storage returns metadata including downloadTokens; use it to construct a public download URL.
