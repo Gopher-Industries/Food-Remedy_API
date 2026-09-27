@@ -81,16 +81,25 @@ export async function updateShoppingListFirestore(
 }
 
 export async function deleteShoppingListFirestore(uid: string, listId: string): Promise<void> {
-  // Manually cascade delete items
+  // Manually cascade delete items; chunk to respect the Firestore batch write limit.
   const itemsSnap = await getDocs(itemsCol(uid, listId));
-  if (!itemsSnap.empty) {
+  const docs = itemsSnap.docs;
+  for (let i = 0; i < docs.length; i += 450) {
     const batch = writeBatch(fdb);
-    for (const d of itemsSnap.docs) {
+    for (const d of docs.slice(i, i + 450)) {
       batch.delete(d.ref);
     }
     await batch.commit();
   }
   await deleteDoc(listDoc(uid, listId));
+}
+
+/** Delete every shopping list (and its items) owned by uid. Safe to retry if partially completed. */
+export async function deleteAllShoppingListsFirestore(uid: string): Promise<void> {
+  const lists = await getShoppingListsFirestore(uid);
+  for (const list of lists) {
+    await deleteShoppingListFirestore(uid, list.listId);
+  }
 }
 
 // ================= SHOPPING LIST ITEMS =================
@@ -279,6 +288,7 @@ export default {
   getShoppingListFirestore,
   updateShoppingListFirestore,
   deleteShoppingListFirestore,
+  deleteAllShoppingListsFirestore,
   addItemToListFirestore,
   getListItemsFirestore,
   updateItemQuantityFirestore,

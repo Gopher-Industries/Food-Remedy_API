@@ -195,6 +195,17 @@ export async function deleteShoppingList(
   return true;
 }
 
+/**
+ * Delete every shopping list owned by a user. Items cascade via the
+ * shopping_list_items foreign key (ON DELETE CASCADE, foreign_keys=ON).
+ */
+export async function clearShoppingListsForUser(
+  db: SQLiteDatabase,
+  userId: string
+): Promise<void> {
+  await db.runAsync(`DELETE FROM shopping_lists WHERE user_id = ?`, [userId]);
+}
+
 // ============== SHOPPING LIST ITEMS ==============
 
 /**

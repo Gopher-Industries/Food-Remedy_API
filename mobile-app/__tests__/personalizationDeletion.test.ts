@@ -1,10 +1,18 @@
 jest.mock('@/config/firebaseConfig', () => ({ fdb: {}, auth: { currentUser: { uid: 'owner' } } }));
 jest.mock('@/config/sqlConfig', () => ({ initialiseSQLiteDatabase: jest.fn().mockResolvedValue({}) }));
 jest.mock('@/services/sqlDatabase/profiles.dao', () => ({ deleteProfile: jest.fn(), clearProfilesForUser: jest.fn() }));
+jest.mock('@/services/sqlDatabase/favourites.dao', () => ({ clearFavourites: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('@/services/sqlDatabase/history.dao', () => ({
+  clearHistory: jest.fn().mockResolvedValue(undefined),
+  getAuthenticatedHistoryOwnerScope: jest.fn((uid: string) => `user:${uid}`),
+}));
+jest.mock('@/services/sqlDatabase/shoppingList.dao', () => ({ clearShoppingListsForUser: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('@/services/storage/uploadProfileAvatar', () => ({
   deleteProfileAvatar: jest.fn(), deleteUserProfilesStorage: jest.fn(),
 }));
 jest.mock('@/services/database/user/personalization', () => ({ deleteCloudProfilePersonalization: jest.fn() }));
+jest.mock('@/services/database/user/shoppingLists', () => ({ deleteAllShoppingListsFirestore: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('@/services/database/user/legacyCart', () => ({ deleteLegacyCartData: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('firebase/firestore', () => ({
   collection: jest.fn(() => ({})), doc: jest.fn(() => ({})),
   deleteDoc: jest.fn(), getDocs: jest.fn(),
@@ -14,6 +22,8 @@ jest.mock('firebase/firestore', () => ({
 import { deleteUserProfile } from '@/services/database/user/profiles';
 import { deleteUserAccountData } from '@/services/database/user/deleteUserAccount';
 import { deleteCloudProfilePersonalization } from '@/services/database/user/personalization';
+import { deleteAllShoppingListsFirestore } from '@/services/database/user/shoppingLists';
+import { deleteLegacyCartData } from '@/services/database/user/legacyCart';
 import { deleteDoc, getDocs, writeBatch } from 'firebase/firestore';
 import { deleteProfile, clearProfilesForUser } from '@/services/sqlDatabase/profiles.dao';
 
@@ -21,6 +31,8 @@ describe('BE059 profile and account deletion', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (deleteCloudProfilePersonalization as jest.Mock).mockResolvedValue(undefined);
+    (deleteAllShoppingListsFirestore as jest.Mock).mockResolvedValue(undefined);
+    (deleteLegacyCartData as jest.Mock).mockResolvedValue(undefined);
     (deleteDoc as jest.Mock).mockResolvedValue(undefined);
     (getDocs as jest.Mock).mockResolvedValue({ docs: [] });
   });
@@ -42,5 +54,9 @@ describe('BE059 profile and account deletion', () => {
     expect(deleteCloudProfilePersonalization).toHaveBeenNthCalledWith(2, 'owner', 'child');
     expect(commit).toHaveBeenCalledTimes(1);
     expect(clearProfilesForUser).toHaveBeenCalledWith({}, 'owner');
+
+    // BE073: cloud shopping lists/cart and local surfaces must also be cleared for this account.
+    expect(deleteAllShoppingListsFirestore).toHaveBeenCalledWith('owner');
+    expect(deleteLegacyCartData).toHaveBeenCalledWith('owner');
   });
 });

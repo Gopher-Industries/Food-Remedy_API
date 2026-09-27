@@ -12,6 +12,7 @@ import { useNotification } from "@/components/providers/NotificationProvider";
 import { deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { deleteUserAccountData } from "@/services/database/user/deleteUserAccount";
 import { useProfile } from "@/components/providers/ProfileProvider";
+import { logSafeError } from "@/services/backend/safeErrors";
 
 /**
  * High contrast helpers (className strings)
@@ -147,7 +148,7 @@ export default function AccountProfileScreen() {
       addNotification("Account deleted", "s");
       router.replace("/login");
     } catch (error) {
-      console.error("Error deleting account:", error);
+      logSafeError("Error deleting account:", error);
       addNotification("Failed to delete account", "e");
     } finally {
       setDeletingAccount(false);
