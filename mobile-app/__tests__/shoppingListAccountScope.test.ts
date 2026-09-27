@@ -2,6 +2,7 @@ import {
   addItemToList,
   clearAllItems,
   clearCheckedItems,
+  clearShoppingListsForUser,
   deleteShoppingList,
   getItemInList,
   getListItems,
@@ -175,6 +176,18 @@ describe("BE071 account-scoped shopping-list persistence", () => {
       expect(sql).toMatch(/user_id = \?|EXISTS \(SELECT 1 FROM shopping_lists/);
       expect(params).toContain(OWNER);
     }
+  });
+
+  it("BE073: clears only the deleted account's shopping lists (items cascade via FK)", async () => {
+    const db = mockDb(true);
+
+    await clearShoppingListsForUser(db as any, OWNER);
+
+    expect(db.runAsync).toHaveBeenCalledWith(
+      expect.stringContaining("DELETE FROM shopping_lists WHERE user_id = ?"),
+      [OWNER]
+    );
+    expect(db.runAsync).not.toHaveBeenCalledWith(expect.anything(), [FOREIGN]);
   });
 
   it("clears stale React state when the requested list is foreign or missing", async () => {

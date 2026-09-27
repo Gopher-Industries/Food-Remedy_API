@@ -7,7 +7,9 @@ The account deletion process should:
 1. Delete profile storage first.
 2. Read the user's profile documents from Firestore.
 3. Delete profile documents using Firestore batches.
-4. Delete the main user document last.
+4. Delete cloud shopping lists (with their items) and legacy cart data.
+5. Delete the main user document.
+6. Clear local favourites, history, shopping lists and profiles (BE073).
 
 All Firebase and Storage functions are mocked so these tests do not
 delete any real user data.
@@ -16,6 +18,12 @@ delete any real user data.
 import { deleteUserAccountData } from '../services/database/user/deleteUserAccount';
 import { collection, deleteDoc, doc, getDocs, writeBatch } from 'firebase/firestore';
 import { deleteUserProfilesStorage } from '../services/storage/uploadProfileAvatar';
+import { deleteAllShoppingListsFirestore } from '../services/database/user/shoppingLists';
+import { deleteLegacyCartData } from '../services/database/user/legacyCart';
+import { clearProfilesForUser } from '../services/sqlDatabase/profiles.dao';
+import { clearFavourites } from '../services/sqlDatabase/favourites.dao';
+import { clearHistory, getAuthenticatedHistoryOwnerScope } from '../services/sqlDatabase/history.dao';
+import { clearShoppingListsForUser } from '../services/sqlDatabase/shoppingList.dao';
 
 // Replace Firebase config with a fake Firestore object.
 jest.mock('../config/firebaseConfig', () => ({
@@ -41,11 +49,27 @@ jest.mock('../services/storage/uploadProfileAvatar', () => ({
 jest.mock('../services/database/user/personalization', () => ({
   deleteCloudProfilePersonalization: jest.fn().mockResolvedValue(undefined),
 }));
+jest.mock('../services/database/user/shoppingLists', () => ({
+  deleteAllShoppingListsFirestore: jest.fn().mockResolvedValue(undefined),
+}));
+jest.mock('../services/database/user/legacyCart', () => ({
+  deleteLegacyCartData: jest.fn().mockResolvedValue(undefined),
+}));
 jest.mock('../config/sqlConfig', () => ({
   initialiseSQLiteDatabase: jest.fn().mockResolvedValue({}),
 }));
 jest.mock('../services/sqlDatabase/profiles.dao', () => ({
   clearProfilesForUser: jest.fn().mockResolvedValue(undefined),
+}));
+jest.mock('../services/sqlDatabase/favourites.dao', () => ({
+  clearFavourites: jest.fn().mockResolvedValue(undefined),
+}));
+jest.mock('../services/sqlDatabase/history.dao', () => ({
+  clearHistory: jest.fn().mockResolvedValue(undefined),
+  getAuthenticatedHistoryOwnerScope: jest.fn((uid: string) => `user:${uid}`),
+}));
+jest.mock('../services/sqlDatabase/shoppingList.dao', () => ({
+  clearShoppingListsForUser: jest.fn().mockResolvedValue(undefined),
 }));
 
 describe('deleteUserAccountData', () => {
@@ -323,5 +347,125 @@ describe('deleteUserAccountData', () => {
     // If the profile cleanup fails,
     // the main user document must not be deleted.
     expect(deleteDoc).not.toHaveBeenCalled();
+  });
+
+  // BE073: cloud shopping lists, legacy cart and local data surfaces.
+
+  it('deletes cloud shopping lists and the legacy cart before the main user document', async () => {
+    (getDocs as jest.Mock).mockResolvedValue({ docs: [] });
+
+    await deleteUserAccountData(uid);
+
+    expect(deleteAllShoppingListsFirestore).toHaveBeenCalledWith(uid);
+    expect(deleteLegacyCartData).toHaveBeenCalledWith(uid);
+
+    const listsCall = (deleteAllShoppingListsFirestore as jest.Mock).mock.invocationCallOrder[0];
+    const cartCall = (deleteLegacyCartData as jest.Mock).mock.invocationCallOrder[0];
+    const userDeleteCall = (deleteDoc as jest.Mock).mock.invocationCallOrder[0];
+
+    expect(listsCall).toBeLessThan(userDeleteCall);
+    expect(cartCall).toBeLessThan(userDeleteCall);
+  });
+
+  it('clears local favourites, history and shopping lists, then profiles, scoped to the deleted uid', async () => {
+    (getDocs as jest.Mock).mockResolvedValue({ docs: [] });
+
+    await deleteUserAccountData(uid);
+
+    expect(getAuthenticatedHistoryOwnerScope).toHaveBeenCalledWith(uid);
+    expect(clearFavourites).toHaveBeenCalledWith({}, uid);
+    expect(clearHistory).toHaveBeenCalledWith({}, `user:${uid}`);
+    expect(clearShoppingListsForUser).toHaveBeenCalledWith({}, uid);
+    expect(clearProfilesForUser).toHaveBeenCalledWith({}, uid);
+
+    // Local cleanup must run only after the account is fully removed from the cloud.
+    const userDeleteCall = (deleteDoc as jest.Mock).mock.invocationCallOrder[0];
+    const localFavouritesCall = (clearFavourites as jest.Mock).mock.invocationCallOrder[0];
+    const localProfilesCall = (clearProfilesForUser as jest.Mock).mock.invocationCallOrder[0];
+
+    expect(userDeleteCall).toBeLessThan(localFavouritesCall);
+    expect(localFavouritesCall).toBeLessThan(localProfilesCall);
+  });
+
+  it('does not delete the main user document when cloud shopping-list cleanup fails', async () => {
+    (getDocs as jest.Mock).mockResolvedValue({ docs: [] });
+    (deleteAllShoppingListsFirestore as jest.Mock).mockRejectedValueOnce(
+      new Error('Shopping list cleanup failed')
+    );
+
+    await expect(deleteUserAccountData(uid)).rejects.toThrow('Shopping list cleanup failed');
+
+    expect(deleteLegacyCartData).not.toHaveBeenCalled();
+    expect(deleteDoc).not.toHaveBeenCalled();
+    expect(clearFavourites).not.toHaveBeenCalled();
+    expect(clearProfilesForUser).not.toHaveBeenCalled();
+  });
+
+  it('does not delete the main user document when legacy cart cleanup fails', async () => {
+    (getDocs as jest.Mock).mockResolvedValue({ docs: [] });
+    (deleteLegacyCartData as jest.Mock).mockRejectedValueOnce(
+      new Error('Cart cleanup failed')
+    );
+
+    await expect(deleteUserAccountData(uid)).rejects.toThrow('Cart cleanup failed');
+
+    expect(deleteDoc).not.toHaveBeenCalled();
+    expect(clearFavourites).not.toHaveBeenCalled();
+  });
+
+  it('does not run local cleanup when the main user document deletion fails', async () => {
+    (getDocs as jest.Mock).mockResolvedValue({ docs: [] });
+    (deleteDoc as jest.Mock).mockRejectedValueOnce(new Error('User doc delete failed'));
+
+    await expect(deleteUserAccountData(uid)).rejects.toThrow('User doc delete failed');
+
+    expect(clearFavourites).not.toHaveBeenCalled();
+    expect(clearHistory).not.toHaveBeenCalled();
+    expect(clearShoppingListsForUser).not.toHaveBeenCalled();
+    expect(clearProfilesForUser).not.toHaveBeenCalled();
+  });
+
+  it('scopes every cleanup call to the exact uid being deleted (account isolation)', async () => {
+    (getDocs as jest.Mock).mockResolvedValue({ docs: [] });
+    const otherUid = 'user-456';
+
+    await deleteUserAccountData(uid);
+    await deleteUserAccountData(otherUid);
+
+    expect(deleteAllShoppingListsFirestore).toHaveBeenNthCalledWith(1, uid);
+    expect(deleteAllShoppingListsFirestore).toHaveBeenNthCalledWith(2, otherUid);
+    expect(deleteLegacyCartData).toHaveBeenNthCalledWith(1, uid);
+    expect(deleteLegacyCartData).toHaveBeenNthCalledWith(2, otherUid);
+    expect(clearFavourites).toHaveBeenNthCalledWith(1, {}, uid);
+    expect(clearFavourites).toHaveBeenNthCalledWith(2, {}, otherUid);
+    expect(clearProfilesForUser).toHaveBeenNthCalledWith(1, {}, uid);
+    expect(clearProfilesForUser).toHaveBeenNthCalledWith(2, {}, otherUid);
+
+    // Neither run ever mixes the two accounts' uids into the same call.
+    const favouriteUids = (clearFavourites as jest.Mock).mock.calls.map((call) => call[1]);
+    expect(favouriteUids).toEqual([uid, otherUid]);
+  });
+
+  it('can be safely retried after a fully successful run (idempotent no-op resources)', async () => {
+    (getDocs as jest.Mock).mockResolvedValue({ docs: [] });
+
+    await expect(deleteUserAccountData(uid)).resolves.toBeUndefined();
+    await expect(deleteUserAccountData(uid)).resolves.toBeUndefined();
+
+    expect(deleteAllShoppingListsFirestore).toHaveBeenCalledTimes(2);
+    expect(deleteLegacyCartData).toHaveBeenCalledTimes(2);
+    expect(clearProfilesForUser).toHaveBeenCalledTimes(2);
+  });
+
+  it('can be retried after a partial failure and complete successfully the second time', async () => {
+    (getDocs as jest.Mock).mockResolvedValue({ docs: [] });
+    (deleteLegacyCartData as jest.Mock).mockRejectedValueOnce(new Error('Cart temporarily unavailable'));
+
+    await expect(deleteUserAccountData(uid)).rejects.toThrow('Cart temporarily unavailable');
+    expect(clearProfilesForUser).not.toHaveBeenCalled();
+
+    // Retry: the previously-failing step now succeeds (e.g. cart already empty).
+    await expect(deleteUserAccountData(uid)).resolves.toBeUndefined();
+    expect(clearProfilesForUser).toHaveBeenCalledWith({}, uid);
   });
 });
