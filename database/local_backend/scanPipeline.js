@@ -1,6 +1,7 @@
 const config = require("./config");
 const { addToQueue } = require("./syncQueue");
 const { processQueue, resolveConflict } = require("./syncService");
+const { createSubstitutionService } = require("./substitutions/substitutionService");
 
 
 
@@ -21,6 +22,8 @@ const SEVERITY_WEIGHTS = {
   medium: 2,
   high: 3
 };
+
+const substitutionService = createSubstitutionService();
 
 function cleanData(raw) {
   const normalizeList = (text) =>
@@ -210,53 +213,33 @@ function calculateRecommendationScore(cleaned, userProfile, warnings) {
 
 function getAlternatives(cleaned, classification, userProfile) {
   const safeUserProfile = userProfile || {};
-
-  const base = [
-    {
-      name: "Dark Chocolate 85%",
-      brand: "Lindt",
-      barcode: "99901",
-      classification: "green",
-      tags: []
+  const response = substitutionService.getSubstitutions({
+    barcode: cleaned?.barcode,
+    profile: {
+      allergies: safeUserProfile.allergies,
+      intolerances: safeUserProfile.intolerances,
+      avoidAdditives: safeUserProfile.avoidAdditives,
+      dietaryForm: safeUserProfile.dietaryForm || safeUserProfile.dietPreferences,
+      healthGoal: safeUserProfile.healthGoal,
+      healthGoals: safeUserProfile.healthGoals
     },
-    {
-      name: "Organic Vegan Chocolate",
-      brand: "Loving Earth",
-      barcode: "99902",
-      classification: "green",
-      tags: ["vegan"]
-    },
-    {
-      name: "Cocoa Nibs (Sugar-Free)",
-      brand: "HealthyCo",
-      barcode: "99903",
-      classification: "green",
-      tags: ["vegan", "glutenFree", "lowSugar"]
-    }
-  ];
+    limit: classification === "green" ? 2 : 5
+  });
 
-  let filtered = base;
-
-  if (safeUserProfile.dietPreferences?.includes("vegan")) {
-    filtered = filtered.filter((item) => item.tags.includes("vegan"));
-  }
-
-  if (safeUserProfile.dietPreferences?.includes("glutenFree")) {
-    filtered = filtered.filter((item) => item.tags.includes("glutenFree"));
-  }
-
-  if (filtered.length === 0) {
-    filtered = base;
-  }
-
-  if (classification === "green") {
-    return filtered.slice(0, 2);
-  }
-
-  return filtered;
+  return response.substitutions.map((item) => ({
+    name: item.productName,
+    productName: item.productName,
+    brand: item.brand,
+    barcode: item.barcode,
+    classification: "green",
+    tags: item.reasons.map((entry) => entry.code),
+    reason: item.reasons.map((entry) => entry.message),
+    score: item.score
+  }));
 }
 
 function generateRecommendationReason(item, userProfile) {
+  if (Array.isArray(item.reason) && item.reason.length) return item.reason;
   const safeUserProfile = userProfile || {};
   const reasons = [];
   const tags = item.tags || [];
@@ -471,4 +454,5 @@ if (require.main === module) {
     .catch((error) => {
       console.error("Reconnect sync failed:", error.message);
     });
+}
 

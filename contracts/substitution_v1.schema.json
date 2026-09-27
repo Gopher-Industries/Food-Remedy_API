@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://foodremedy.example/contracts/substitution_v1.schema.json",
+  "title": "Profile-aware product substitution response v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contractVersion", "status", "source", "substitutions", "meta"],
+  "properties": {
+    "contractVersion": { "const": "1.0" },
+    "status": { "enum": ["ok", "empty"] },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["barcode", "productName", "categoryKeys"],
+      "properties": {
+        "barcode": { "type": "string", "minLength": 1 },
+        "productName": { "type": "string" },
+        "categoryKeys": { "type": "array", "items": { "type": "string" } },
+        "profileConflicts": { "type": "array", "items": { "$ref": "#/$defs/reason" } }
+      }
+    },
+    "substitutions": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["barcode", "productName", "brand", "score", "reasons"],
+        "properties": {
+          "barcode": { "type": "string", "minLength": 1 },
+          "productName": { "type": "string", "minLength": 1 },
+          "brand": { "type": ["string", "null"] },
+          "imageUrl": { "type": ["string", "null"] },
+          "nutriscoreGrade": { "type": ["string", "null"] },
+          "score": { "type": "number", "minimum": 0, "maximum": 100 },
+          "reasons": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/reason" }
+          }
+        }
+      }
+    },
+    "emptyState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "enum": [
+            "SOURCE_PRODUCT_NOT_FOUND",
+            "INSUFFICIENT_CATEGORY_DATA",
+            "NO_RELEVANT_CANDIDATES",
+            "INSUFFICIENT_SAFETY_DATA",
+            "NO_SAFE_SUBSTITUTES"
+          ]
+        },
+        "message": { "type": "string", "minLength": 1 }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestId", "algorithmVersion", "candidateCount", "evaluatedCount", "returnedCount"],
+      "properties": {
+        "requestId": { "type": "string", "minLength": 1 },
+        "algorithmVersion": { "const": "be033-v1" },
+        "candidateCount": { "type": "integer", "minimum": 0 },
+        "evaluatedCount": { "type": "integer", "minimum": 0 },
+        "returnedCount": { "type": "integer", "minimum": 0, "maximum": 10 }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "status": { "const": "empty" } } },
+      "then": { "required": ["emptyState"], "properties": { "substitutions": { "maxItems": 0 } } },
+      "else": { "properties": { "substitutions": { "minItems": 1 } } }
+    }
+  ],
+  "$defs": {
+    "reason": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "evidence"],
+      "properties": {
+        "code": {
+          "enum": [
+            "CATEGORY_MATCH",
+            "DB019_SIMILAR_PRODUCT",
+            "DB019_HEALTHIER_PRODUCT",
+            "ALLERGEN_DECLARATIONS_CHECKED",
+            "DIETARY_REQUIREMENT_MATCH",
+            "ADDITIVE_PREFERENCE_CHECKED",
+            "LOWER_ENERGY_FOR_GOAL",
+            "LOWER_SUGAR_FOR_GOAL",
+            "LOWER_SODIUM_FOR_GOAL",
+            "HIGHER_PROTEIN_FOR_GOAL",
+            "SOURCE_ALLERGEN_CONFLICT",
+            "SOURCE_DIETARY_CONFLICT",
+            "SOURCE_ADDITIVE_CONFLICT"
+          ]
+        },
+        "message": { "type": "string", "minLength": 1 },
+        "evidence": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      }
+    }
+  }
+}

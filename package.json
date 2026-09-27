@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "test:be033": "node database/local_backend/__tests__/substitutionService.test.js && node database/local_backend/__tests__/substitutionEndpoint.test.js",
     "test:db012:cart": "node database/db012_cart_integration.js",
     "test:db030": "node database/integration_tests/run_db030_tests.js",
     "test:db030:full": "npm run test:db030 && npm --prefix mobile-app test -- db030_api_ui_flow.test.ts"

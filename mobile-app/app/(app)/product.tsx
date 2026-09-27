@@ -24,7 +24,7 @@ import {
 import NutrientsTab from "./ProductTabs/NutrientsTab";
 import IngredientsTab from "./ProductTabs/IngredientsTab";
 import ForYouTab from "./ProductTabs/ForYouTab";
-// import RecommendationsTab from "./ProductTabs/RecommendationsTab";
+import RecommendationsTab from "./ProductTabs/RecommendationsTab";
 
 type TabKey = "Nutrients" | "Ingredients" | "For you" | "Compare";
 
@@ -39,7 +39,7 @@ export default function ProductTabsScreen() {
   const [activeTab, setActiveTab] = useState<TabKey>("Nutrients");
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
 
-  const tabs: TabKey[] = ["Nutrients", "Ingredients", "For you"];
+  const tabs: TabKey[] = ["Nutrients", "Ingredients", "For you", "Compare"];
 
   useScanVoiceSummary({
     product: currentProduct ?? null,
@@ -67,7 +67,7 @@ export default function ProductTabsScreen() {
   };
 
   const selectTab = (tab: TabKey) => {
-    if (sessionType === "guest" && tab === "For you") {
+    if (sessionType === "guest" && (tab === "For you" || tab === "Compare")) {
       router.push("/(app)/(tabs)/profiles");
       return;
     }
@@ -160,8 +160,8 @@ export default function ProductTabsScreen() {
       case "For you":
         return <ForYouTab product={currentProduct} />;
 
-      // case "Compare":
-      //   return <RecommendationsTab product={currentProduct} />;
+      case "Compare":
+        return <RecommendationsTab product={currentProduct} />;
 
       default:
         return null;

@@ -1,380 +1,134 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, Pressable, View } from "react-native";
+import { router } from "expo-router";
+
+import Tt from "@/components/ui/UIText";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { usePreferences } from "@/components/providers/PreferencesProvider";
+import { useProduct } from "@/components/providers/ProductProvider";
+import { useProfile } from "@/components/providers/ProfileProvider";
 import {
-  View,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
+  fetchSubstitutions,
+  substitutionsEnabled,
+  type SubstitutionResponse,
+} from "@/services/substitutions";
 
-import Tt from '@/components/ui/UIText';
-import RecommendationCard from '@/components/product/RecommendationCard';
-import SuggestedProductCard from '@/components/product/SuggestedProductCard';
-import IconGeneral from '@/components/icons/IconGeneral';
-
-import { useProfile } from '@/components/providers/ProfileProvider';
-import { useModalManager } from '@/components/providers/ModalManagerProvider';
-import { useRecommendationAddToList } from '@/components/providers/RecommendationAddToListProvider';
-import { usePreferences } from '@/components/providers/PreferencesProvider';
-
-import type { SuggestedProduct } from '@/types/SuggestedProduct';
-
-interface Recommendation {
-  id: string;
-  emoji: string;
-  title: string;
-  description: string;
-  tag: 'Try Instead' | 'Better Match' | 'Suggested Add';
-  tagLabel: string;
-  reason: string;
-}
-
-interface RecommendationSection {
-  heading: string;
-  description?: string;
-  cards: Recommendation[];
-}
-
-// Mock product database
-const MOCK_PRODUCTS: SuggestedProduct[] = [
-  {
-    id: 'prod_1',
-    name: 'Organic Low Sodium Bacon',
-    brand: "Nature's Choice",
-    matchPercentage: 92,
-    reason: '40% less sodium, organic certified',
-    sodium: 150,
-    isAllergenFree: true,
-  },
-  {
-    id: 'prod_2',
-    name: 'Unsalted Legume Mix',
-    brand: 'Green Valley',
-    matchPercentage: 88,
-    reason: 'High fiber, perfect for heart health',
-    sodium: 80,
-    protein: 12,
-  },
-  {
-    id: 'prod_3',
-    name: 'Sugar-Free Granola',
-    brand: 'Pure Nutrition',
-    matchPercentage: 85,
-    reason: 'Zero added sugar, high protein',
-    sugar: 2,
-    protein: 15,
-    isAllergenFree: true,
-  },
-  {
-    id: 'prod_4',
-    name: 'Low-Sodium Chicken Breast',
-    brand: 'Farm Fresh',
-    matchPercentage: 90,
-    reason: 'Lean protein, minimal sodium',
-    sodium: 65,
-    protein: 28,
-  },
-  {
-    id: 'prod_5',
-    name: 'Peanut-Free Trail Mix',
-    brand: 'Safe Snacks Co',
-    matchPercentage: 87,
-    reason: 'Certified peanut-free facility',
-    protein: 8,
-    isAllergenFree: true,
-  },
-];
-
-function normalizeArray(value: any): string[] {
-  if (!value) return [];
-
-  if (Array.isArray(value)) {
-    return value
-      .map((item) => {
-        if (typeof item === 'string') return item;
-
-        if (item && typeof item === 'object') {
-          return String(item.name ?? item.label ?? item.value ?? '');
-        }
-
-        return '';
-      })
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  if (typeof value === 'string') {
-    return value
-      .split(',')
-      .map((item) => item.trim())
-      .filter(Boolean);
-  }
-
-  return [];
-}
-
-function buildUserProfile(activeProfile: any, profiles: any[]) {
-  const selectedProfile =
-    activeProfile ||
-    (profiles && profiles.length > 0 ? profiles[0] : null);
-
-  if (!selectedProfile) {
-    return {
-      gender: 'Not specified',
-      ageGroup: 'Not specified',
-      activityLevel: 'Not specified',
-      goals: [] as string[],
-      allergens: [] as string[],
-    };
-  }
-
-  const age =
-    Number(selectedProfile.age) ||
-    Number(selectedProfile.ageYears) ||
-    Number(selectedProfile.userAge) ||
-    0;
-
-  let ageGroup = 'Not specified';
-
-  if (age > 0 && age <= 18) ageGroup = '0–18';
-  else if (age <= 35) ageGroup = '19–35';
-  else if (age <= 50) ageGroup = '36–50';
-  else if (age > 50) ageGroup = '50+';
-
-  const gender =
-    String(
-      selectedProfile.gender ??
-        selectedProfile.sex ??
-        selectedProfile.userGender ??
-        'Not specified'
-    ).trim() || 'Not specified';
-
-  const activityLevel =
-    String(
-      selectedProfile.activityLevel ??
-        selectedProfile.activity ??
-        selectedProfile.exerciseLevel ??
-        'Not specified'
-    ).trim() || 'Not specified';
-
-  return {
-    gender,
-    ageGroup,
-    activityLevel,
-    goals: [],
-    allergens: [],
-  };
-}
-
-type Props = {
-  product: any;
-};
+type Props = { product: any };
 
 export default function RecommendationsTab({ product }: Props) {
-  const { profiles, activeProfile } = useProfile();
-
-  const { openModal } = useModalManager();
-
-  const { addProducts } =
-    useRecommendationAddToList();
-
+  const { user, sessionType } = useAuth();
+  const { profiles, activeProfile, isHydrated } = useProfile();
   const { darkMode } = usePreferences();
+  const { setBarcode } = useProduct();
+  const [result, setResult] = useState<SubstitutionResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [selectedProducts, setSelectedProducts] =
-    useState<string[]>([]);
+  const selectedProfile = useMemo(
+    () => activeProfile || profiles.find((profile) => profile.status) || profiles[0] || null,
+    [activeProfile, profiles]
+  );
+  const selectedProfileId = selectedProfile?.profileId;
 
-  const userProfile = useMemo(() => {
-    return buildUserProfile(activeProfile, profiles || []);
-  }, [activeProfile, profiles]);
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    setResult(null);
+    setError(null);
+    setLoading(false);
+    if (!substitutionsEnabled() || sessionType !== "authenticated" || !user || !selectedProfileId || !product?.barcode) return () => controller.abort();
 
-  const suggestedProducts = useMemo(() => {
-    return MOCK_PRODUCTS;
-  }, []);
+    setLoading(true);
+    user.getIdToken()
+      .then((idToken) => fetchSubstitutions({
+        barcode: product.barcode,
+        profileId: selectedProfileId,
+        idToken,
+        limit: 5,
+        signal: controller.signal,
+      }))
+      .then((response) => {
+        if (active) setResult(response);
+      })
+      .catch((requestError) => {
+        if (active && requestError?.name !== "AbortError") setError(requestError?.message || "Substitutions could not be loaded safely.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [product?.barcode, selectedProfileId, sessionType, user]);
 
-  const profileTags = useMemo(() => {
-    const tags = [];
+  const panel = darkMode ? "border-hsl30 bg-hsl20" : "border-gray-200 bg-white";
+  const secondary = darkMode ? "text-hsl70" : "text-gray-600";
 
-    if (
-      userProfile.gender &&
-      userProfile.gender !== 'Not specified'
-    ) {
-      tags.push(
-        `Based on ${userProfile.gender.toLowerCase()}`
-      );
-    }
-
-    if (
-      userProfile.ageGroup &&
-      userProfile.ageGroup !== 'Not specified'
-    ) {
-      tags.push(userProfile.ageGroup);
-    }
-
-    if (
-      userProfile.activityLevel &&
-      userProfile.activityLevel !== 'Not specified'
-    ) {
-      tags.push(userProfile.activityLevel);
-    }
-
-    return tags;
-  }, [userProfile]);
-
-  if (!product) {
-    return (
-      <View
-        className={`mt-6 items-center justify-center py-8 ${
-          darkMode ? 'bg-hsl15' : 'bg-white'
-        }`}
-      >
-        <Tt
-          className={`${
-            darkMode ? 'text-hsl70' : 'text-gray-500'
-          }`}
-        >
-          No product data available
-        </Tt>
-      </View>
-    );
+  if (!substitutionsEnabled()) {
+    return <EmptyPanel message="Profile-aware substitutions are currently unavailable." panel={panel} secondary={secondary} />;
+  }
+  if (sessionType !== "authenticated") {
+    return <EmptyPanel message="Sign in to receive substitutions checked against your profile." panel={panel} secondary={secondary} />;
+  }
+  if (!isHydrated) {
+    return <View className="items-center py-10"><ActivityIndicator /></View>;
+  }
+  if (!selectedProfile) {
+    return <EmptyPanel message="Select or create a nutritional profile before requesting substitutions." panel={panel} secondary={secondary} />;
+  }
+  if (loading) {
+    return <View className="items-center py-10"><ActivityIndicator /><Tt className={`mt-3 text-sm ${secondary}`}>Checking relevant products against your profile...</Tt></View>;
+  }
+  if (error) {
+    return <EmptyPanel message={error} panel={panel} secondary={secondary} />;
+  }
+  if (!result || result.status === "empty") {
+    return <EmptyPanel message={result?.emptyState?.message || "No substitution result is available."} panel={panel} secondary={secondary} />;
   }
 
-  const toggleProductSelection = (productId: string) => {
-    setSelectedProducts((prev) =>
-      prev.includes(productId)
-        ? prev.filter((id) => id !== productId)
-        : [...prev, productId]
-    );
-  };
-
-  const handleAddSelectedToList = () => {
-    if (selectedProducts.length > 0) {
-      const productsToAdd = suggestedProducts.filter((p) =>
-        selectedProducts.includes(p.id)
-      );
-
-      addProducts(productsToAdd);
-
-      setSelectedProducts([]);
-
-      openModal('addToList');
-    } else {
-      Alert.alert(
-        'Select Products',
-        'Please select at least one product to add.'
-      );
-    }
-  };
-
   return (
-    <ScrollView
-      showsVerticalScrollIndicator={false}
-      className={`mt-6 flex-1 ${
-        darkMode ? 'bg-hsl15' : 'bg-white'
-      }`}
-    >
-      <View
-        className={`flex-1 px-4 ${
-          darkMode ? 'bg-hsl15' : 'bg-white'
-        }`}
-      >
-        {/* PROFILE TAGS */}
-        <View className="mb-6">
-          <Tt
-            className={`mb-3 text-xs font-interBold tracking-wider ${
-              darkMode ? 'text-hsl70' : 'text-gray-500'
-            }`}
-          >
-            YOUR PROFILE
-          </Tt>
+    <View className="mt-6 mb-8">
+      <View className={`mb-4 rounded-xl border p-4 ${panel}`}>
+        <Tt className="font-interBold text-base text-hsl20 dark:text-white">Checked for {selectedProfile.firstName || "active profile"}</Tt>
+        <Tt className={`mt-1 text-xs ${secondary}`}>Only category-relevant products that passed the active profile checks are shown.</Tt>
+      </View>
 
-          <View className="flex-row flex-wrap gap-2">
-            {profileTags.map((tag, idx) => (
-              <View
-                key={idx}
-                className={`rounded-full px-3 py-1.5 ${
-                  darkMode
-                    ? 'border border-hsl30 bg-hsl20'
-                    : 'border border-gray-300 bg-white'
-                }`}
-              >
-                <Tt
-                  className={`text-xs font-interSemiBold ${
-                    darkMode
-                      ? 'text-white'
-                      : 'text-gray-700'
-                  }`}
-                >
-                  {tag}
-                </Tt>
-              </View>
+      {result.substitutions.map((substitution) => (
+        <Pressable
+          key={substitution.barcode}
+          onPress={() => {
+            setBarcode(substitution.barcode);
+            router.push("/(app)/product");
+          }}
+          className={`mb-3 rounded-xl border p-4 active:opacity-70 ${panel}`}
+        >
+          <View className="flex-row items-start justify-between">
+            <View className="flex-1 pr-3">
+              <Tt className="font-interBold text-base text-hsl20 dark:text-white">{substitution.productName}</Tt>
+              {substitution.brand ? <Tt className={`mt-1 text-xs ${secondary}`}>{substitution.brand}</Tt> : null}
+            </View>
+            <View className="rounded-full bg-green-100 px-3 py-1">
+              <Tt className="font-interBold text-xs text-green-800">{Math.round(substitution.score)} match</Tt>
+            </View>
+          </View>
+          <View className="mt-3 gap-y-1">
+            {substitution.reasons.slice(0, 4).map((item) => (
+              <Tt key={item.code} className={`text-xs ${secondary}`}>• {item.message}</Tt>
             ))}
           </View>
-        </View>
+        </Pressable>
+      ))}
+      <Tt className={`mt-2 text-xs ${secondary}`}>Recommendations use available product declarations and are not medical advice. Always check the package.</Tt>
+    </View>
+  );
+}
 
-        {/* SUGGESTED PRODUCTS */}
-        <View className="mb-6">
-          <Tt
-            className={`mb-3 text-xs font-interBold tracking-wider ${
-              darkMode ? 'text-hsl70' : 'text-gray-500'
-            }`}
-          >
-            SIMILAR PRODUCTS TO TRY
-          </Tt>
-
-          <Tt
-            className={`mb-4 text-xs ${
-              darkMode ? 'text-hsl80' : 'text-gray-600'
-            }`}
-          >
-            Other great options based on:{' '}
-            {userProfile.gender} • {userProfile.ageGroup} •{' '}
-            {userProfile.activityLevel}
-          </Tt>
-
-          {suggestedProducts.map((suggestedProduct) => (
-            <SuggestedProductCard
-              key={suggestedProduct.id}
-              product={suggestedProduct}
-              isSelected={selectedProducts.includes(
-                suggestedProduct.id
-              )}
-              onCheckboxPress={() =>
-                toggleProductSelection(
-                  suggestedProduct.id
-                )
-              }
-              onPress={() =>
-                toggleProductSelection(
-                  suggestedProduct.id
-                )
-              }
-            />
-          ))}
-        </View>
-
-        {/* ADD BUTTON */}
-        {selectedProducts.length > 0 && (
-          <View className="mb-6 gap-2">
-            <TouchableOpacity
-              onPress={handleAddSelectedToList}
-              className="flex-row items-center justify-center rounded-lg bg-red-500 px-6 py-4 active:bg-red-600"
-            >
-              <IconGeneral
-                type="cart-add"
-                fill="white"
-                size={24}
-              />
-
-              <Tt className="ml-3 font-interSemiBold text-lg text-white">
-                Add {selectedProducts.length}{' '}
-                {selectedProducts.length === 1
-                  ? 'Product'
-                  : 'Products'}{' '}
-                to List
-              </Tt>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-    </ScrollView>
+function EmptyPanel({ message, panel, secondary }: { message: string; panel: string; secondary: string }) {
+  return (
+    <View className={`mt-6 rounded-xl border p-5 ${panel}`}>
+      <Tt className="font-interBold text-base text-hsl20 dark:text-white">No safe substitute shown</Tt>
+      <Tt className={`mt-2 text-sm ${secondary}`}>{message}</Tt>
+    </View>
   );
 }

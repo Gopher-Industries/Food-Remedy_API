@@ -1,18 +1,21 @@
 const express = require("express");
 
 const authRoutes = require("./routes/authRoutes");
+const { createSubstitutionRouter } = require("./routes/substitutionRoutes");
 
-const app = express();
+function createApp(options = {}) {
+  const app = express();
+  app.disable("x-powered-by");
+  app.use(express.json({ limit: "16kb" }));
+  app.use(express.urlencoded({ extended: true, limit: "16kb" }));
+  app.use("/api/auth", authRoutes);
+  app.use("/api/v1/scan/substitutions", createSubstitutionRouter(options.substitutions));
+  return app;
+}
 
-// Middleware MUST come before routes
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+if (require.main === module) {
+  const port = Number(process.env.PORT || 3000);
+  createApp().listen(port, () => console.log(`Server running on port ${port}`));
+}
 
-// Routes
-app.use("/api/auth", authRoutes);
-
-const PORT = 3000;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+module.exports = { createApp };

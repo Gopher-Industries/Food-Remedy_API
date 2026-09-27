@@ -99,6 +99,7 @@ Expo reads public environment variables from `.env`:
 - `EXPO_PUBLIC_API_BASE_URL` — Backend base URL (e.g. `http://127.0.0.1:8000`)
 - `EXPO_PUBLIC_API_SOURCE` — `backend` (default via auto) or `firestore` to force Firestore-only data access.
 - `EXPO_PUBLIC_RECOMMENDATION_SOURCE` — `backend` (default) or `firestore` to switch recommendation logic.
+- `EXPO_PUBLIC_SUBSTITUTIONS_ENABLED` — set to `false` to disable the Compare substitution flow during rollback (enabled by default).
 
 Example `.env`:
 
@@ -106,6 +107,7 @@ Example `.env`:
 EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
 EXPO_PUBLIC_API_SOURCE=firestore
 EXPO_PUBLIC_RECOMMENDATION_SOURCE=firestore
+EXPO_PUBLIC_SUBSTITUTIONS_ENABLED=true
 ```
 
 ### Firestore Recommendation Mode
@@ -116,7 +118,7 @@ When `EXPO_PUBLIC_RECOMMENDATION_SOURCE=firestore`:
 - Candidate products are fetched from Firestore `PRODUCTS` using category-based queries (see `services/database/products/getCandidatesForRecommendations.ts`).
 - Ensure `PRODUCTS` documents have `categories: string[]` and create indexes when Firestore prompts for `array-contains-any` queries.
 
-Backend mode remains available by default. The app will use server-provided alternatives from `POST /scan/alternatives` and only fall back to Firestore when needed.
+The authenticated Compare flow uses the canonical `POST /api/v1/scan/substitutions` endpoint. It fails closed when the backend, selected profile, category data, or candidate safety evidence is unavailable; it does not fall back to unchecked products. See `docs/backend/BE033-profile-aware-product-substitutions.md` for the contract and rollout plan.
 
 ## Finished
 Begin contributing to the project.  
