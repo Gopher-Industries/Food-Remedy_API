@@ -55,6 +55,18 @@ const ProductBanner: React.FC<ProductBannerProps> = ({
       hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
       className="w-full flex-row gap-x-2 items-center py-3 px-4 my-2 rounded-lg border active:border-primary overflow-hidden"
       style={{ borderColor: theme.colors.border, backgroundColor: theme.colors.surface }}
+      // FE031: the row is one accessible element, so the screen reader reads
+      // "<name>, <brand>, <tags>, button" instead of stopping on each child.
+      accessible
+      accessibilityRole="button"
+      accessibilityLabel={[
+        product.productName,
+        product.brand,
+        productTags.map((tag) => tag.label).join(", "),
+      ]
+        .filter(Boolean)
+        .join(", ")}
+      accessibilityHint="Opens the product details"
     >
       {({ pressed }) => (
         <>

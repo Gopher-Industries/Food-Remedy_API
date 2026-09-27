@@ -1,6 +1,6 @@
 // Forgot Password Page tsx
 
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { router } from "expo-router";
 import { useDirtyForm } from "@/hooks/useDirtyForm";
 import {
@@ -15,6 +15,7 @@ import {
 import Input from "@/components/ui/UIInput";
 import Tt from "@/components/ui/UIText";
 import { useTheme } from "@/theme";
+import { useAccessibilityAnnouncement } from "@/hooks/useAccessibilityAnnouncement";
 import { sendPasswordReset } from "@/services";
 import {
   createInitialForgotPasswordState,
@@ -28,8 +29,20 @@ export default function ForgotPasswordPage() {
     forgotPasswordReducer,
     forgotPasswordMemoryState || createInitialForgotPasswordState()
   );
+  const [submissionAttempt, setSubmissionAttempt] = useState(0);
   const theme = useTheme();
   const { markDirty, markClean, confirmLeave } = useDirtyForm();
+
+  const statusAnnouncement = state.status === "error" && state.errorMessage
+    ? `Error. ${state.errorMessage}`
+    : state.status === "success"
+      ? state.successMessage
+      : null;
+
+  useAccessibilityAnnouncement(statusAnnouncement, {
+    announceOnAndroid: true,
+    eventKey: submissionAttempt,
+  });
 
   useEffect(() => {
     syncForgotPasswordMemory(state);
@@ -40,6 +53,7 @@ export default function ForgotPasswordPage() {
       return;
     }
 
+    setSubmissionAttempt((attempt) => attempt + 1);
     const email = state.email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -89,20 +103,31 @@ export default function ForgotPasswordPage() {
               source={require("../assets/images/FoodRemedyLogo.png")}
               className="w-[50%] aspect-[3/1] max-w-[300px] h-auto"
               resizeMode="contain"
+              accessible
+              accessibilityRole="image"
+              accessibilityLabel="Food Remedy"
             />
           </View>
 
-          <Tt className="text-xl font-bold text-center mt-8">
+          <Tt
+            className="text-xl font-bold text-center mt-8"
+            accessibilityRole="header"
+          >
             Forgot Password?
           </Tt>
 
           <Tt className="text-center mb-4 italic text-balance text-sm">
-            Enter your email address and we'll send you a link to reset your
+            Enter your email address and we&apos;ll send you a link to reset your
             password.
           </Tt>
 
           {state.status === "success" && state.successMessage && (
-            <View className="bg-green-50 border border-emerald-500 rounded-md px-4 py-2 mt-8">
+            <View
+              className="bg-green-50 border border-emerald-500 rounded-md px-4 py-2 mt-8"
+              accessible
+              accessibilityRole="text"
+              accessibilityLabel={state.successMessage}
+            >
               <Tt className="text-center text-emerald-700 font-interSemiBold">
                 {state.successMessage}
               </Tt>
@@ -110,7 +135,12 @@ export default function ForgotPasswordPage() {
           )}
 
           {state.status === "error" && state.errorMessage && (
-            <View className="bg-[#FCCACA] border border-primary rounded-md px-4 py-2 mt-8">
+            <View
+              className="bg-[#FCCACA] border border-primary rounded-md px-4 py-2 mt-8"
+              accessible
+              accessibilityRole="alert"
+              accessibilityLabel={`Error. ${state.errorMessage}`}
+            >
               <Tt className="text-center text-primary font-interSemiBold">
                 {state.errorMessage}
               </Tt>
@@ -121,6 +151,8 @@ export default function ForgotPasswordPage() {
           <Input
             className="py-3 mt-8 "
             placeholder="Email"
+            accessibilityLabel="Email address"
+            textContentType="emailAddress"
             value={state.email}
             onChangeText={(nextEmail) => {
               dispatch({ type: "SET_EMAIL", email: nextEmail });
@@ -135,6 +167,10 @@ export default function ForgotPasswordPage() {
           {/* Reset Button */}
           <Pressable
             onPress={handleResetLink}
+            accessibilityRole="button"
+            accessibilityLabel="Send reset link"
+            accessibilityHint="Emails you a link to reset your password"
+            accessibilityState={{ disabled: isSubmitting, busy: isSubmitting }}
             disabled={isSubmitting}
             className="bg-primary rounded-lg py-3 mt-4 border border-primary active:bg-transparent disabled:opacity-60"
           >
@@ -161,7 +197,12 @@ export default function ForgotPasswordPage() {
 
           <View className="flex-row justify-center items-center mt-12">
             <Tt className="font-interMedium">Go Back to </Tt>
-            <Pressable onPress={() => confirmLeave(() => router.replace("/login"))}>
+            <Pressable
+              onPress={() => confirmLeave(() => router.replace("/login"))}
+              accessibilityRole="link"
+              accessibilityLabel="Login"
+              accessibilityHint="Goes back to the login screen"
+            >
               <Tt className="text-primary font-interSemiBold">Login</Tt>
             </Pressable>
           </View>

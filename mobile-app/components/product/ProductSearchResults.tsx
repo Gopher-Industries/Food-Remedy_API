@@ -19,7 +19,6 @@ export default function ProductSearchResults() {
     recentQueries,
     clearRecentQueries,
     setQuery,
-    setLastQuery,
   } = useSearchProduct();
 
   const renderItem = useCallback(
@@ -62,6 +61,8 @@ export default function ProductSearchResults() {
             {suggestions.map((suggestion) => (
               <Pressable
                 key={suggestion.action}
+                accessibilityRole="button"
+                accessibilityLabel={suggestion.label}
                 onPress={() => {
                   if (suggestion.action === "scan") {
                     router.push("/(app)/(tabs)/scan");
@@ -90,9 +91,11 @@ export default function ProductSearchResults() {
               {recentQueries.map((item) => (
                 <Pressable
                   key={item}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Use recent query: ${item}`}
+                  accessibilityHint="Fills the search field with this query"
                   onPress={() => {
                     setQuery(item);
-                    setLastQuery(item);
                   }}
                   className="mt-2 rounded-lg bg-hsl95 px-3 py-2"
                 >
@@ -100,7 +103,10 @@ export default function ProductSearchResults() {
                 </Pressable>
               ))}
 
-              <Pressable onPress={clearRecentQueries} className="mt-3">
+              <Pressable onPress={clearRecentQueries} className="mt-3"
+                accessibilityRole="button"
+                accessibilityLabel="Clear recent queries"
+              >
                 <Tt className="text-primary">Clear recent queries</Tt>
               </Pressable>
             </View>
@@ -110,7 +116,17 @@ export default function ProductSearchResults() {
     }
 
     if (productResults.length > 0) {
-      return <Tt className="mt-6 -mb-2 font-interSemiBold text-hsl20">Results</Tt>;
+      return (
+        <Tt
+          className="mt-6 -mb-2 font-interSemiBold text-hsl20"
+          accessibilityRole="header"
+          accessibilityLabel={`Results, ${productResults.length} ${
+            productResults.length === 1 ? "product" : "products"
+          } found`}
+        >
+          Results
+        </Tt>
+      );
     }
 
     return null;
@@ -122,7 +138,6 @@ export default function ProductSearchResults() {
     productResults.length,
     queryInvalid,
     recentQueries,
-    setLastQuery,
     setQuery,
   ]);
 

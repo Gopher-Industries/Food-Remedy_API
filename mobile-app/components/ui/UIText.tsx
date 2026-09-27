@@ -1,9 +1,15 @@
 import React from "react";
-import { Text, StyleProp, TextStyle } from "react-native";
+import { Text, StyleProp, TextStyle, TextProps } from "react-native";
 import { usePreferences, FontSizeOption } from "@/components/providers/PreferencesProvider";
 import { useTheme } from "@/theme";
 
-interface TtProps {
+/**
+ * FE031: extend TextProps so callers can pass accessibility props
+ * (accessibilityRole, accessibilityLabel, accessibilityLiveRegion, ...) and
+ * font-scaling props. They were already forwarded to <Text> at runtime but the
+ * type did not allow them, so screens could not mark up headings or live text.
+ */
+interface TtProps extends TextProps {
   onPress?: () => void;
   className?: string;
   style?: StyleProp<TextStyle>;

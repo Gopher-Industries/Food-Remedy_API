@@ -17,6 +17,8 @@ export const BackButton: React.FC<BackButtonProps> = ({ onPress }) => {
     <Pressable
       onPress={onPress ?? (() => router.back())}
       hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel="Go back"
     >
       {({ pressed }) => (
         <IconGeneral

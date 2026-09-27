@@ -10,6 +10,8 @@ import Input from "./UIInput";
 import { useSearchProduct } from "../providers/SearchProductProvider";
 import { getEmptySearchSuggestions } from "@/services/search/emptySearchSuggestions";
 import { router } from "expo-router";
+import { useIsFocused } from "@react-navigation/native";
+import { useAccessibilityAnnouncement } from "@/hooks/useAccessibilityAnnouncement";
 
 interface ProductSearchTabProps {
   collapsed?: boolean;
@@ -17,12 +19,33 @@ interface ProductSearchTabProps {
 
 const ProductSearchTab = ({ collapsed }: ProductSearchTabProps) => {
   const {
-    query, setQuery, lastQuery, setLastQuery, hasSearched, queryInvalid, loading,
-    productResults, recentQueries, clearRecentQueries, handleSearchProducts
+    query, setQuery, lastQuery, hasSearched, queryInvalid, loading,
+    productResults, recentQueries, clearRecentQueries, handleSearchProducts, searchAttempt
   } = useSearchProduct();
 
   const emptySearchSuggestions = getEmptySearchSuggestions(lastQuery);
 
+
+  const isFocused = useIsFocused();
+  const searchDisabled = query.trim().length < 2;
+  const searchAnnouncement = !hasSearched
+    ? null
+    : queryInvalid
+      ? "Type at least 2 characters to search"
+      : loading
+        ? "Searching…"
+        : productResults.length === 0
+          ? `No results${lastQuery ? ` for ${lastQuery}` : ""}`
+          : `${productResults.length} ${
+              productResults.length === 1 ? "product" : "products"
+            } found`;
+
+  // Both search screens stay mounted, so only the focused screen announces.
+  useAccessibilityAnnouncement(searchAnnouncement, {
+    enabled: isFocused,
+    announceOnAndroid: true,
+    eventKey: searchAttempt,
+  });
 
   // Bottom sheet
   const sheetRef = useRef<BottomSheet>(null);
@@ -62,7 +85,8 @@ const ProductSearchTab = ({ collapsed }: ProductSearchTabProps) => {
           <View className="flex-row items-center gap-x-2">
             <Input
               placeholder="Search Products..."
-              placeholderTextColor="hsl(0, 0%, 60%)"
+              accessibilityLabel="Search products"
+              accessibilityHint="Enter at least 2 characters, then activate the search button"
               value={query}
               onChangeText={setQuery}
               onSubmitEditing={handleSearchProducts}
@@ -74,9 +98,13 @@ const ProductSearchTab = ({ collapsed }: ProductSearchTabProps) => {
             />
             <Pressable onPress={handleSearchProducts}
               className={`rounded px-4 py-2 border 
-             ${query.length >= 2 ? "bg-primary border-primary active:bg-white dark:bg-hsl15 active:border-primary " : "bg-hsl80 border-hsl80"} `}>
+             ${!searchDisabled ? "bg-primary border-primary active:bg-white dark:bg-hsl15 active:border-primary " : "bg-hsl80 border-hsl80"} `}
+              accessibilityRole="button"
+              accessibilityLabel="Search"
+              accessibilityState={{ disabled: searchDisabled }}
+              disabled={searchDisabled}>
               {({ pressed }) => (
-                <IconGeneral type="search" fill={query.length < 2 ? "hsl(0, 0%, 40%)" : pressed ? "#FF3D3D" : "white"} size={24} />
+                <IconGeneral type="search" fill={searchDisabled ? "hsl(0, 0%, 40%)" : pressed ? "#FF3D3D" : "white"} size={24} />
               )}
             </Pressable>
           </View>
@@ -101,6 +129,8 @@ const ProductSearchTab = ({ collapsed }: ProductSearchTabProps) => {
                   {emptySearchSuggestions.map((suggestion) => (
                     <Pressable
                       key={suggestion.action}
+                      accessibilityRole="button"
+                      accessibilityLabel={suggestion.label}
                       onPress={() => {
                         if (suggestion.action === "scan") {
                           router.push("/(app)/(tabs)/scan");
@@ -130,9 +160,11 @@ const ProductSearchTab = ({ collapsed }: ProductSearchTabProps) => {
                     {recentQueries.map((item) => (
                       <Pressable
                         key={item}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Use recent query: ${item}`}
+                        accessibilityHint="Fills the search field with this query"
                         onPress={() => {
                           setQuery(item);
-                          setLastQuery(item);
                         }}
                         className="mt-2 rounded-lg bg-hsl95 px-3 py-2"
                       >
@@ -140,7 +172,10 @@ const ProductSearchTab = ({ collapsed }: ProductSearchTabProps) => {
                       </Pressable>
                     ))}
 
-                    <Pressable onPress={clearRecentQueries} className="mt-3">
+                    <Pressable onPress={clearRecentQueries} className="mt-3"
+                      accessibilityRole="button"
+                      accessibilityLabel="Clear recent queries"
+                    >
                       <Tt className="text-primary">Clear recent queries</Tt>
                     </Pressable>
                   </View>
@@ -150,7 +185,16 @@ const ProductSearchTab = ({ collapsed }: ProductSearchTabProps) => {
 
             {!loading && productResults.length > 0 && (
               <>
-                <Tt className="mt-6 -mb-2 font-interSemiBold text-hsl20">Results</Tt>
+                <Tt
+                  className="mt-6 -mb-2 font-interSemiBold text-hsl20"
+                  accessibilityRole="header"
+                  accessibilityLabel={`Results, showing ${Math.min(
+                    productResults.length,
+                    3
+                  )} of ${productResults.length}`}
+                >
+                  Results
+                </Tt>
                 {productResults.slice(0, 3).map((p) => (
                   <ProductBanner key={p.barcode} product={p} />
                 ))}
@@ -158,6 +202,9 @@ const ProductSearchTab = ({ collapsed }: ProductSearchTabProps) => {
                 {productResults.length > 3 && (
                   <Pressable onPress={() => router.push("/search")}
                     className="mt-4 p-3 bg-hsl90 dark:bg-hsl15 rounded-lg items-center"
+                    accessibilityRole="button"
+                    accessibilityLabel={`See all ${productResults.length} results`}
+                    accessibilityHint="Opens the full search results screen"
                   >
                     <Tt className="font-interSemiBold text-hsl20">
                       See all {productResults.length} results

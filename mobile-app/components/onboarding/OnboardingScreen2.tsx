@@ -23,6 +23,9 @@ export default function OnboardingScreen2({
         <Pressable
           onPress={onSkip}
           className="py-1 px-3 mr-[10px] bg-gray-300 rounded-lg"
+          accessibilityRole="button"
+          accessibilityLabel="Skip introduction"
+          accessibilityHint="Goes straight to the login screen"
         >
           <Tt className="text-black text-base font-interMedium">Skip</Tt>
         </Pressable>
@@ -65,7 +68,10 @@ export default function OnboardingScreen2({
         </View>
 
         {/* Title */}
-        <Tt className="text-3xl font-interBold text-hsl20 text-center mb-6">
+        <Tt
+          className="text-3xl font-interBold text-hsl20 text-center mb-6"
+          accessibilityRole="header"
+        >
           Understand{"\n"}What&apos;s in Your Food
         </Tt>
 
@@ -104,6 +110,9 @@ export default function OnboardingScreen2({
         <Pressable
           onPress={onNext}
           className="bg-primary rounded-xl py-4 active:opacity-80"
+          accessibilityRole="button"
+          accessibilityLabel="Next"
+          accessibilityHint="Continues to the last introduction screen"
         >
           {({ pressed }) => (
             <View className="flex-row items-center justify-center">

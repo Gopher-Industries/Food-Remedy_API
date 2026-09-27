@@ -4,7 +4,7 @@ import { ActivityIndicator, Linking, Pressable, ScrollView, View } from "react-n
 import IconCameraPermission from "../icons/IconCameraPermission";
 import Tt from "./UIText";
 import { router } from "expo-router";
-import { PermissionResponse, useCameraPermissions } from "expo-camera";
+import { PermissionResponse } from "expo-camera";
 import { useEffect, useState } from "react";
 
 interface CameraPermissionProps {
@@ -50,10 +50,20 @@ const CameraPermission = ({ permission, requestPermission }: CameraPermissionPro
         style={{ flex: 1, width: "90%", alignSelf: "center" }}
         contentContainerStyle={{ flexGrow: 1, justifyContent: "center", alignItems: "center" }}
       >
-        <IconCameraPermission width={150} height={150} />
+        <IconCameraPermission
+          width={150}
+          height={150}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        />
 
         <View className="w-full mt-8">
-          <Tt className="text-2xl text-center font-drukWide">ALLOW CAMERA</Tt>
+          <Tt
+            className="text-2xl text-center font-drukWide"
+            accessibilityRole="header"
+          >
+            ALLOW CAMERA
+          </Tt>
           <Tt className="my-2 mb-4 text-sm text-center text-hsl20">Allow Food Remedy to use the camera to scan barcodes</Tt>
 
           {/* Primary action varies by state */}
@@ -63,6 +73,9 @@ const CameraPermission = ({ permission, requestPermission }: CameraPermissionPro
               disabled={requesting}
               hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
               className={`px-4 py-3 my-4 border rounded-md ${requesting ? "bg-primary/70" : "bg-primary"} border-primary`}
+              accessibilityRole="button"
+              accessibilityLabel="Allow camera access"
+              accessibilityState={{ disabled: requesting, busy: requesting }}
             >
               {requesting ? (
                 <View className="flex-row justify-center items-center gap-x-2">
@@ -81,6 +94,9 @@ const CameraPermission = ({ permission, requestPermission }: CameraPermissionPro
               onPress={openSettings}
               hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
               className="px-4 py-3 my-4 border rounded-md bg-primary border-primary active:bg-primary/80"
+              accessibilityRole="button"
+              accessibilityLabel="Open settings"
+              accessibilityHint="Opens the system settings so you can enable camera access"
             >
               <Tt className="text-lg text-center text-white">Open Settings</Tt>
             </Pressable>
@@ -91,10 +107,13 @@ const CameraPermission = ({ permission, requestPermission }: CameraPermissionPro
             onPress={() => router.replace("/(app)/(tabs)")}
             hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
             className="w-full px-4 py-3 my-2 border rounded-md border-hsl10 active:bg-hsl10"
+            accessibilityRole="button"
+            accessibilityLabel="Don't allow"
+            accessibilityHint="Continues without camera access and opens your scan history"
           >
             {({ pressed }) => (
               <Tt className={`text-lg text-center text-black ${pressed && "text-white"}`}>
-                Don't Allow
+                Don&apos;t Allow
               </Tt>
             )}
           </Pressable>

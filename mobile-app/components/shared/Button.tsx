@@ -11,6 +11,10 @@ interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   fullWidth?: boolean;
+  /** FE031: optional spoken label when the visible title is not descriptive enough */
+  accessibilityLabel?: string;
+  /** FE031: optional spoken hint describing the outcome of pressing the button */
+  accessibilityHint?: string;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -20,13 +24,17 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   loading = false,
   fullWidth = true,
+  accessibilityLabel,
+  accessibilityHint,
 }) => {
   const theme = useTheme();
   const widthClasses = fullWidth ? "w-full" : "";
   const disabledClasses = disabled || loading ? "opacity-50" : "";
 
+  // FE031: min-h instead of a fixed height so the label is not clipped
+  // when the user raises the OS text size.
   const baseClasses =
-    "flex-row items-center justify-center rounded-xl h-12";
+    "flex-row items-center justify-center rounded-xl min-h-12 px-4 py-3";
 
   const variantClasses = {
     primary: "bg-[#FF3F3F]",
@@ -47,13 +55,21 @@ export const Button: React.FC<ButtonProps> = ({
     <Pressable
       className={`${baseClasses} ${variantClasses} ${widthClasses} ${disabledClasses}`}
       onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? title}
+      accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
+      disabled={disabled || loading}
     >
       {loading ? (
-        <ActivityIndicator color={textColor} />
+        <ActivityIndicator
+          color={textColor}
+          accessibilityLabel={`${title} in progress`}
+        />
       ) : (
         <Text
-          className="text-sm font-interMedium"
-          style={{ color: textColor }}
+          className="text-sm font-interMedium text-center"
+          style={{ color: textColor, flexShrink: 1 }}
         >
           {title}
         </Text>
