@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Modal, View, Pressable } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import Tt from '@/components/ui/UIText';
@@ -67,7 +67,6 @@ const CaptchaModal: React.FC<CaptchaModalProps> = ({ visible, siteKey, onVerifie
   const onMessage = (event: WebViewMessageEvent) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
-      console.log('[CaptchaModal] message:', data);
       if (data.type === 'success' && data.token) {
         onVerified(data.token);
       } else if (data.type === 'error' || data.type === 'expired') {
