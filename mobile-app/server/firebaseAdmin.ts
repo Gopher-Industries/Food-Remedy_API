@@ -10,14 +10,10 @@ import { getFirestore } from "firebase-admin/firestore";
 
 function serviceAccountCredential() {
   const rawServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-
   if (!rawServiceAccount) return applicationDefault();
-
   try {
     return cert(JSON.parse(rawServiceAccount));
   } catch {
-    // Do not include configuration contents in an error or a log. The route
-    // converts startup failures to a sanitized service-unavailable response.
     throw new Error("Firebase Admin credentials are invalid.");
   }
 }

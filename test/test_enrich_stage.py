@@ -1,4 +1,5 @@
 import json
+import pytest
 
 from database.pipeline.run_pipeline import runPipeline
 from database.pipeline.stages.enrich_stage import run_enrich_stage
@@ -87,28 +88,29 @@ def test_pipeline_metadata_records_recovered_enrichment_failure(tmp_path):
         tmp_path
     )
 
-    runPipeline(
-        config={
-            "pipeline": {
-                "fail_on_error": True,
-                "outputs": {
-                    "checkpoints": str(checkpoint_path),
-                    "metadata": str(metadata_path),
-                },
-                "clean": {"enabled": False},
-                "enrich": {
-                    "enabled": True,
-                    "input": str(input_path),
-                    "output": str(output_path),
-                    "modules": [
-                        {"name": "failing", "path": str(failing_module_path)},
-                        {"name": "recovery", "path": str(recovery_module_path)},
-                    ],
-                },
-                "seed": {"enabled": False},
+    with pytest.raises(RuntimeError, match="enrich stage reported 1 failure"):
+        runPipeline(
+            config={
+                "pipeline": {
+                    "fail_on_error": True,
+                    "outputs": {
+                        "checkpoints": str(checkpoint_path),
+                        "metadata": str(metadata_path),
+                    },
+                    "clean": {"enabled": False},
+                    "enrich": {
+                        "enabled": True,
+                        "input": str(input_path),
+                        "output": str(output_path),
+                        "modules": [
+                            {"name": "failing", "path": str(failing_module_path)},
+                            {"name": "recovery", "path": str(recovery_module_path)},
+                        ],
+                    },
+                    "seed": {"enabled": False},
+                }
             }
-        }
-    )
+        )
 
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     enrich_result = metadata["stages"]["enrich"]

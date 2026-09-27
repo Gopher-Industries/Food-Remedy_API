@@ -18,21 +18,22 @@ const AccessibleNutrientsModal = () => {
   const { closeModal } = useModalManager();
   const { currentProduct } = useProduct();
   const insets = useSafeAreaInsets();
+  const [fontSize, setFontSize] = useState(16);
+  const minSize = 16;
+  const maxSize = 36;
 
   useEffect(() => {
     if (!currentProduct) closeModal("accessibleNutrients");
   }, [currentProduct, closeModal]);
 
-  if (!currentProduct) return null;
-
-  const [fontSize, setFontSize] = useState(16);
-  const minSize = 16;
-  const maxSize = 36;
-
   const rows = useMemo(() => {
+    if (!currentProduct) return [];
+
     const r = nutrimentsToRows(currentProduct.nutriments || {});
     return filterEmpty(r);
-  }, [currentProduct.nutriments]);
+  }, [currentProduct]);
+
+  if (!currentProduct) return null;
 
   const inc = () => setFontSize(s => Math.min(maxSize, s + 2));
   const dec = () => setFontSize(s => Math.max(minSize, s - 2));

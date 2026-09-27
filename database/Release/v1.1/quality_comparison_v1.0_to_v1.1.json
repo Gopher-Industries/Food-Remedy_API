@@ -1,0 +1,78 @@
+{
+  "baseline": {
+    "records": 4731,
+    "version": "v1.0"
+  },
+  "metrics": {
+    "brands": {
+      "rate_delta": 0.181991,
+      "v1.0_count": 3870,
+      "v1.0_rate": 0.818009,
+      "v1.1_count": 5000,
+      "v1.1_rate": 1.0
+    },
+    "categories": {
+      "rate_delta": 0.918622,
+      "v1.0_count": 385,
+      "v1.0_rate": 0.081378,
+      "v1.1_count": 5000,
+      "v1.1_rate": 1.0
+    },
+    "images": {
+      "rate_delta": 0.0,
+      "v1.0_count": 4731,
+      "v1.0_rate": 1.0,
+      "v1.1_count": 5000,
+      "v1.1_rate": 1.0
+    },
+    "ingredients": {
+      "rate_delta": 0.928134,
+      "v1.0_count": 340,
+      "v1.0_rate": 0.071866,
+      "v1.1_count": 5000,
+      "v1.1_rate": 1.0
+    },
+    "known_allergen_evidence": {
+      "rate_delta": 0.758791,
+      "v1.0_count": 247,
+      "v1.0_rate": 0.052209,
+      "v1.1_count": 4055,
+      "v1.1_rate": 0.811
+    },
+    "nutrition_all_core": {
+      "rate_delta": 0.432069,
+      "v1.0_count": 2421,
+      "v1.0_rate": 0.511731,
+      "v1.1_count": 4719,
+      "v1.1_rate": 0.9438
+    },
+    "nutrition_any_core": {
+      "rate_delta": 0.216445,
+      "v1.0_count": 3707,
+      "v1.0_rate": 0.783555,
+      "v1.1_count": 5000,
+      "v1.1_rate": 1.0
+    },
+    "valid_identity": {
+      "rate_delta": 0.0,
+      "v1.0_count": 4731,
+      "v1.0_rate": 1.0,
+      "v1.1_count": 5000,
+      "v1.1_rate": 1.0
+    }
+  },
+  "release": {
+    "records": 5000,
+    "version": "v1.1"
+  },
+  "schema": "food-remedy-quality-comparison-v1",
+  "v1.0_quality_tiers": {
+    "Basic": 933,
+    "Bronze": 1223,
+    "Gold": 289,
+    "Silver": 2286
+  },
+  "v1.1_quality_tiers": {
+    "Gold": 5000
+  }
+}

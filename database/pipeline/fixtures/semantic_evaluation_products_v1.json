@@ -1,0 +1,5 @@
+[
+  {"barcode":"synthetic-crackers","productName":"Plain crackers","categories":["crackers"],"allergens":[],"nutriments":{}},
+  {"barcode":"synthetic-soft-bar","productName":"Soft breakfast bar","categories":["breakfast-bars"],"allergens":[],"nutriments":{}},
+  {"barcode":"synthetic-unknown","productName":"Unclassified evaluation food","categories":["other"],"allergens":[],"nutriments":{}}
+]

@@ -149,6 +149,62 @@ End-to-end flow:
 
 Optional **Investigation** (e.g. `data_investigation/`) validates quality and accuracy outside the main pipeline. Run the configured pipeline stages via `pipeline/run_pipeline.py` and `pipeline/pipeline.config.json`.
 
+### DB069 quality-first candidate
+
+DB069 replaces arbitrary source slicing with a deterministic candidate-selection
+step across all six committed Australian product chunks. It profiles and hashes
+every source, keeps the most complete record for duplicate barcodes, scores
+source-data completeness, limits brand/category concentration, preserves
+unknown allergen states, and records every source row in an inclusion or
+exclusion ledger.
+
+Run the audited build from the repository root:
+
+```bash
+python scripts/db069_build_quality_candidate.py \
+  --config database/Candidates/db069_candidate_config.json \
+  --output-dir /tmp/db069-candidate-review \
+  --verify-reproducibility
+```
+
+The reviewed DB069 artifacts are in `database/Candidates/DB069/`. The exclusion
+ledger is deterministic gzip-compressed JSON Lines; inspect it with
+`gzip -dc database/Candidates/DB069/exclusion_ledger.jsonl.gz`. Verify every
+artifact with:
+
+```bash
+cd database/Candidates/DB069
+sha256sum -c SHA256SUMS
+```
+
+DB069 does not run enrichment, seed Firestore, or alter production deployment.
+The candidate is the reviewed input for the separate DB070 release workflow.
+
+### DB070 quality-first release v1.1
+
+DB070 turns the checksum-bound DB069 candidate into the versioned v1.1
+database release. It removes stale derived fields, runs all five configured
+enrichment modules, reruns DB060 and semantic audits, rebuilds alternatives
+against the final catalogue, and records the v1.0-to-v1.1 quality comparison
+and barcode-level delta. Two isolated builds must produce identical hashes.
+
+Run the release build from the repository root with a deliberate timestamp:
+
+```bash
+python scripts/db070_generate_quality_release.py \
+  --output-dir database/Release/v1.1 \
+  --release-date 2026-09-21 \
+  --generated-at 2026-09-21T12:30:00+00:00
+```
+
+The command refuses to overwrite an existing release directory or accept a
+candidate whose SHA-256 differs from the reviewed DB069 artifact. Verify the
+committed package with `sha256sum -c database/Release/v1.1/SHA256SUMS`.
+
+DB070 is database-only. It does not change Backend/API or mobile code,
+Firestore rules, production seeding, deployment configuration, or claim a
+credentialed live readback.
+
 ---
 
 ## Root files in database/

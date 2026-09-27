@@ -1,0 +1,882 @@
+{
+  "allergen_selection_bias": {
+    "eligible_allergen_mentions": {
+      "alcohol": 1,
+      "apple": 209,
+      "asam-askorbat": 1,
+      "avoine": 1,
+      "b12": 1,
+      "banana": 38,
+      "barley-bran": 1,
+      "beef": 133,
+      "bran": 1,
+      "breadcrumbs": 1,
+      "butterfat": 1,
+      "caffeine": 9,
+      "caramel": 1,
+      "caramel-e150d": 1,
+      "cashew-nuts": 1,
+      "celery": 238,
+      "cereals": 2,
+      "chicken": 148,
+      "coconut": 1,
+      "contains-gluten-containing-ingredients": 1,
+      "contains-milk-and-egg": 1,
+      "contains-soy": 1,
+      "crustacea": 1,
+      "crustaceans": 140,
+      "e223": 1,
+      "e322": 1,
+      "e420": 1,
+      "edamer": 1,
+      "eggs": 791,
+      "emulsifier": 2,
+      "emulsifiers": 1,
+      "expired-cocaine": 1,
+      "fenilalanina": 1,
+      "fibre": 1,
+      "fish": 345,
+      "flavours": 1,
+      "flour": 1,
+      "garlic": 2,
+      "gelatin": 47,
+      "glucose-syrup": 1,
+      "gluten": 2811,
+      "guarana-extract": 1,
+      "hoki": 3,
+      "honey": 1,
+      "kase": 1,
+      "kiwi": 8,
+      "lactic-culture": 1,
+      "lait": 1,
+      "lemon": 2,
+      "lime": 1,
+      "lupin": 93,
+      "lysozyme": 1,
+      "macadamia-oil": 1,
+      "magemilchpulver": 1,
+      "may-contain-traces-of-milk": 1,
+      "metabisulphite": 1,
+      "milk": 3621,
+      "milk-soy": 1,
+      "mlik": 1,
+      "molluscs": 45,
+      "mustard": 290,
+      "nil": 1,
+      "none-specified": 1,
+      "not-indicated": 1,
+      "nut-tree": 1,
+      "nuts": 955,
+      "oat-bran": 1,
+      "onion": 1,
+      "orange": 82,
+      "organic-whole-oats": 1,
+      "palm": 1,
+      "paprika": 1,
+      "peach": 31,
+      "peanuts": 522,
+      "phenylalanine": 4,
+      "pistache": 1,
+      "pistaches": 1,
+      "pork": 115,
+      "rolled-barley": 1,
+      "sesame-seeds": 536,
+      "soybeans": 2814,
+      "sulphur-dioxide-and-sulphites": 396,
+      "suplhites": 1,
+      "tomatoes": 1,
+      "tree-nuts-and-soy-as-indicated-in-bold-type": 1,
+      "triticale": 1,
+      "wallnuts": 1,
+      "water": 1,
+      "weizenmehl": 1,
+      "wheat-derivatives": 2,
+      "wheat-gluten": 1,
+      "wheaten": 2,
+      "xanthan": 1,
+      "yeast": 1,
+      "大-豆": 1,
+      "小-麦": 1
+    },
+    "eligible_known_evidence": {
+      "count": 7305,
+      "rate": 0.123331
+    },
+    "interpretation": "Selection is quality-first and may increase known allergen evidence because ingredient and declaration coverage contribute to completeness. Unknown remains explicit and is never treated as allergen-free.",
+    "review_status": "REVIEW_REQUIRED",
+    "review_threshold_absolute_rate_delta": 0.1,
+    "selected_allergen_mentions": {
+      "alcohol": 1,
+      "apple": 108,
+      "asam-askorbat": 1,
+      "avoine": 1,
+      "b12": 1,
+      "banana": 21,
+      "barley-bran": 1,
+      "beef": 57,
+      "bran": 1,
+      "butterfat": 1,
+      "caffeine": 6,
+      "caramel": 1,
+      "caramel-e150d": 1,
+      "celery": 115,
+      "cereals": 2,
+      "chicken": 67,
+      "coconut": 1,
+      "contains-milk-and-egg": 1,
+      "crustaceans": 87,
+      "e223": 1,
+      "e322": 1,
+      "e420": 1,
+      "edamer": 1,
+      "eggs": 415,
+      "emulsifier": 2,
+      "emulsifiers": 1,
+      "fenilalanina": 1,
+      "fibre": 1,
+      "fish": 195,
+      "flavours": 1,
+      "flour": 1,
+      "garlic": 2,
+      "gelatin": 22,
+      "glucose-syrup": 1,
+      "gluten": 1672,
+      "guarana-extract": 1,
+      "hoki": 3,
+      "honey": 1,
+      "kase": 1,
+      "kiwi": 6,
+      "lactic-culture": 1,
+      "lait": 1,
+      "lemon": 1,
+      "lime": 1,
+      "lupin": 49,
+      "lysozyme": 1,
+      "macadamia-oil": 1,
+      "magemilchpulver": 1,
+      "may-contain-traces-of-milk": 1,
+      "metabisulphite": 1,
+      "milk": 2015,
+      "milk-soy": 1,
+      "mlik": 1,
+      "molluscs": 28,
+      "mustard": 148,
+      "nut-tree": 1,
+      "nuts": 559,
+      "oat-bran": 1,
+      "onion": 1,
+      "orange": 35,
+      "organic-whole-oats": 1,
+      "palm": 1,
+      "paprika": 1,
+      "peach": 12,
+      "peanuts": 301,
+      "phenylalanine": 1,
+      "pistache": 1,
+      "pistaches": 1,
+      "pork": 50,
+      "rolled-barley": 1,
+      "sesame-seeds": 303,
+      "soybeans": 1576,
+      "sulphur-dioxide-and-sulphites": 177,
+      "tomatoes": 1,
+      "triticale": 1,
+      "wallnuts": 1,
+      "water": 1,
+      "weizenmehl": 1,
+      "wheat-derivatives": 2,
+      "wheaten": 1,
+      "xanthan": 1,
+      "yeast": 1
+    },
+    "selected_known_evidence": {
+      "count": 3969,
+      "rate": 0.7938
+    },
+    "selected_minus_eligible_rate": 0.670469
+  },
+  "deduplication": {
+    "duplicate_barcode_groups": 8,
+    "duplicate_rows_removed": 8,
+    "input_records": 61373,
+    "invalid_barcode_records": 67,
+    "unique_valid_barcodes": 61298,
+    "valid_barcode_records": 61306
+  },
+  "eligibility": {
+    "identity_eligible_unique_records": 59231,
+    "identity_ineligible_unique_records": 2067
+  },
+  "existing_database_validation": {
+    "dataset_errors": [],
+    "invalid_records": 0,
+    "required_reviews": [],
+    "status": "CHECKS_PASSED_PENDING_APPROVAL",
+    "total_records": 5000,
+    "valid_records": 5000,
+    "validator": "scripts/db060_release_validation.py"
+  },
+  "generated_at_utc": "2026-09-21T11:00:00+00:00",
+  "ledgers": {
+    "complete_source_accounting": true,
+    "excluded_source_records": 56373,
+    "included_records": 5000
+  },
+  "limitations": [
+    "Barcode validation checks ASCII digits and supported GTIN lengths; it does not validate check digits.",
+    "Quality scores measure source completeness, not whether a product is healthy.",
+    "Known-allergen evidence reflects source declarations and does not prove absence of undeclared allergens.",
+    "DB070 owns clean/enrich/release generation and final release validation."
+  ],
+  "missing_value_policy": {
+    "allergen_policy": "Missing allergen evidence is represented as [\"Unknown\"], never as allergen-free.",
+    "nutrient_values_imputed_as_zero": 0,
+    "policy": "Source nutrient values are preserved. Missing values are not converted to zero."
+  },
+  "scope": "Database artifacts only; no Backend/API, mobile, Firestore rules, seeding, or deployment changes.",
+  "selection": {
+    "candidate_sha256": "ffc2d26e4cc1fdaa8e1754e209f0be0b7fe7b93784b743b47911180d52b67ced",
+    "candidate_size": 5000,
+    "quality": {
+      "brands": {
+        "count": 5000,
+        "rate": 1.0
+      },
+      "categories": {
+        "count": 5000,
+        "rate": 1.0
+      },
+      "images": {
+        "count": 5000,
+        "rate": 1.0
+      },
+      "ingredients": {
+        "count": 5000,
+        "rate": 1.0
+      },
+      "known_allergen_evidence": {
+        "count": 3969,
+        "rate": 0.7938
+      },
+      "nutrition_all_core": {
+        "count": 4719,
+        "rate": 0.9438
+      },
+      "nutrition_any_core": {
+        "count": 5000,
+        "rate": 1.0
+      },
+      "quality_tiers": {
+        "Gold": 5000
+      },
+      "records": 5000,
+      "valid_identity": {
+        "count": 5000,
+        "rate": 1.0
+      }
+    },
+    "representation": {
+      "brands": {
+        "distinct_groups": 1807,
+        "largest_group": {
+          "count": 100,
+          "name": "cadbury",
+          "share": 0.02
+        },
+        "top_20": [
+          {
+            "count": 100,
+            "name": "cadbury",
+            "share": 0.02
+          },
+          {
+            "count": 100,
+            "name": "coles",
+            "share": 0.02
+          },
+          {
+            "count": 100,
+            "name": "woolworths",
+            "share": 0.02
+          },
+          {
+            "count": 60,
+            "name": "aldi",
+            "share": 0.012
+          },
+          {
+            "count": 57,
+            "name": "arnott's",
+            "share": 0.0114
+          },
+          {
+            "count": 50,
+            "name": "heinz",
+            "share": 0.01
+          },
+          {
+            "count": 49,
+            "name": "lindt",
+            "share": 0.0098
+          },
+          {
+            "count": 48,
+            "name": "kellogg's",
+            "share": 0.0096
+          },
+          {
+            "count": 47,
+            "name": "carman's",
+            "share": 0.0094
+          },
+          {
+            "count": 45,
+            "name": "sanitarium",
+            "share": 0.009
+          },
+          {
+            "count": 45,
+            "name": "uncle tobys",
+            "share": 0.009
+          },
+          {
+            "count": 40,
+            "name": "chobani",
+            "share": 0.008
+          },
+          {
+            "count": 37,
+            "name": "macro",
+            "share": 0.0074
+          },
+          {
+            "count": 37,
+            "name": "nestle",
+            "share": 0.0074
+          },
+          {
+            "count": 33,
+            "name": "nestlé",
+            "share": 0.0066
+          },
+          {
+            "count": 30,
+            "name": "bega",
+            "share": 0.006
+          },
+          {
+            "count": 28,
+            "name": "divella",
+            "share": 0.0056
+          },
+          {
+            "count": 28,
+            "name": "john west",
+            "share": 0.0056
+          },
+          {
+            "count": 27,
+            "name": "ayam",
+            "share": 0.0054
+          },
+          {
+            "count": 26,
+            "name": "vitasoy",
+            "share": 0.0052
+          }
+        ]
+      },
+      "limits": {
+        "brand": {
+          "max_brand_count": 100,
+          "max_unbranded_count": 250
+        },
+        "category": {
+          "max_primary_category_count": 150,
+          "max_uncategorized_count": 250
+        }
+      },
+      "primary_categories": {
+        "distinct_groups": 1604,
+        "largest_group": {
+          "count": 150,
+          "name": "groceries",
+          "share": 0.03
+        },
+        "top_20": [
+          {
+            "count": 150,
+            "name": "groceries",
+            "share": 0.03
+          },
+          {
+            "count": 78,
+            "name": "crackers-appetizers",
+            "share": 0.0156
+          },
+          {
+            "count": 74,
+            "name": "breakfast-cereals",
+            "share": 0.0148
+          },
+          {
+            "count": 66,
+            "name": "sweetened-beverages",
+            "share": 0.0132
+          },
+          {
+            "count": 65,
+            "name": "biscuits",
+            "share": 0.013
+          },
+          {
+            "count": 59,
+            "name": "greek-style-yogurts",
+            "share": 0.0118
+          },
+          {
+            "count": 55,
+            "name": "yogurts",
+            "share": 0.011
+          },
+          {
+            "count": 50,
+            "name": "peanut-butters",
+            "share": 0.01
+          },
+          {
+            "count": 50,
+            "name": "protein-bars",
+            "share": 0.01
+          },
+          {
+            "count": 47,
+            "name": "bars-covered-with-chocolate",
+            "share": 0.0094
+          },
+          {
+            "count": 47,
+            "name": "candies",
+            "share": 0.0094
+          },
+          {
+            "count": 46,
+            "name": "baking",
+            "share": 0.0092
+          },
+          {
+            "count": 44,
+            "name": "cereal-bars",
+            "share": 0.0088
+          },
+          {
+            "count": 44,
+            "name": "crisps",
+            "share": 0.0088
+          },
+          {
+            "count": 43,
+            "name": "instant-noodles",
+            "share": 0.0086
+          },
+          {
+            "count": 38,
+            "name": "cheeses",
+            "share": 0.0076
+          },
+          {
+            "count": 37,
+            "name": "breads",
+            "share": 0.0074
+          },
+          {
+            "count": 34,
+            "name": "chocolate-biscuits",
+            "share": 0.0068
+          },
+          {
+            "count": 34,
+            "name": "ice-creams",
+            "share": 0.0068
+          },
+          {
+            "count": 31,
+            "name": "bars",
+            "share": 0.0062
+          }
+        ]
+      }
+    }
+  },
+  "source_profile": {
+    "file_count": 6,
+    "files": [
+      {
+        "brands": {
+          "count": 8244,
+          "rate": 0.8244
+        },
+        "categories": {
+          "count": 6992,
+          "rate": 0.6992
+        },
+        "file": "database/seeding/products_0k_10k.json",
+        "images": {
+          "count": 10000,
+          "rate": 1.0
+        },
+        "ingredients": {
+          "count": 5582,
+          "rate": 0.5582
+        },
+        "known_allergen_evidence": {
+          "count": 3534,
+          "rate": 0.3534
+        },
+        "nutrition_all_core": {
+          "count": 5979,
+          "rate": 0.5979
+        },
+        "nutrition_any_core": {
+          "count": 7312,
+          "rate": 0.7312
+        },
+        "quality_tiers": {
+          "Basic": 809,
+          "Bronze": 1809,
+          "Gold": 4637,
+          "Silver": 2745
+        },
+        "records": 10000,
+        "sha256": "89cf7ef71f5b4e69bad996c6119b8266d23d09aac9329c07d19d47d4fdcc82c1",
+        "valid_identity": {
+          "count": 9374,
+          "rate": 0.9374
+        }
+      },
+      {
+        "brands": {
+          "count": 6584,
+          "rate": 0.658334
+        },
+        "categories": {
+          "count": 3674,
+          "rate": 0.367363
+        },
+        "file": "database/seeding/products_10k_20k.json",
+        "images": {
+          "count": 10001,
+          "rate": 1.0
+        },
+        "ingredients": {
+          "count": 2760,
+          "rate": 0.275972
+        },
+        "known_allergen_evidence": {
+          "count": 1659,
+          "rate": 0.165883
+        },
+        "nutrition_all_core": {
+          "count": 5882,
+          "rate": 0.588141
+        },
+        "nutrition_any_core": {
+          "count": 8614,
+          "rate": 0.861314
+        },
+        "quality_tiers": {
+          "Basic": 617,
+          "Bronze": 3577,
+          "Gold": 2028,
+          "Silver": 3779
+        },
+        "records": 10001,
+        "sha256": "2caff32f89361f4c960252a9d9314a3732d162530684cdbdf1298f747d9f84e0",
+        "valid_identity": {
+          "count": 9742,
+          "rate": 0.974103
+        }
+      },
+      {
+        "brands": {
+          "count": 4283,
+          "rate": 0.428257
+        },
+        "categories": {
+          "count": 2184,
+          "rate": 0.218378
+        },
+        "file": "database/seeding/products_20k_30k.json",
+        "images": {
+          "count": 10001,
+          "rate": 1.0
+        },
+        "ingredients": {
+          "count": 1267,
+          "rate": 0.126687
+        },
+        "known_allergen_evidence": {
+          "count": 785,
+          "rate": 0.078492
+        },
+        "nutrition_all_core": {
+          "count": 6150,
+          "rate": 0.614939
+        },
+        "nutrition_any_core": {
+          "count": 8946,
+          "rate": 0.894511
+        },
+        "quality_tiers": {
+          "Basic": 844,
+          "Bronze": 5182,
+          "Gold": 988,
+          "Silver": 2987
+        },
+        "records": 10001,
+        "sha256": "c36f7f44d00357e89242d02fb992ff153c93141ff8aa87defc91ca0e7d2add6f",
+        "valid_identity": {
+          "count": 9860,
+          "rate": 0.985901
+        }
+      },
+      {
+        "brands": {
+          "count": 3982,
+          "rate": 0.39812
+        },
+        "categories": {
+          "count": 1807,
+          "rate": 0.180664
+        },
+        "file": "database/seeding/products_30k_40k.json",
+        "images": {
+          "count": 10002,
+          "rate": 1.0
+        },
+        "ingredients": {
+          "count": 1164,
+          "rate": 0.116377
+        },
+        "known_allergen_evidence": {
+          "count": 738,
+          "rate": 0.073785
+        },
+        "nutrition_all_core": {
+          "count": 5231,
+          "rate": 0.522995
+        },
+        "nutrition_any_core": {
+          "count": 7891,
+          "rate": 0.788942
+        },
+        "quality_tiers": {
+          "Basic": 1653,
+          "Bronze": 5146,
+          "Gold": 791,
+          "Silver": 2412
+        },
+        "records": 10002,
+        "sha256": "4a3734c6e7f37223fef8c407f1ba7f5036667e2a100609d032ed111b0bfb7d1d",
+        "valid_identity": {
+          "count": 9580,
+          "rate": 0.957808
+        }
+      },
+      {
+        "brands": {
+          "count": 8332,
+          "rate": 0.833033
+        },
+        "categories": {
+          "count": 715,
+          "rate": 0.071486
+        },
+        "file": "database/seeding/products_40k_50k.json",
+        "images": {
+          "count": 10002,
+          "rate": 1.0
+        },
+        "ingredients": {
+          "count": 659,
+          "rate": 0.065887
+        },
+        "known_allergen_evidence": {
+          "count": 442,
+          "rate": 0.044191
+        },
+        "nutrition_all_core": {
+          "count": 5796,
+          "rate": 0.579484
+        },
+        "nutrition_any_core": {
+          "count": 8288,
+          "rate": 0.828634
+        },
+        "quality_tiers": {
+          "Basic": 1584,
+          "Bronze": 2525,
+          "Gold": 525,
+          "Silver": 5368
+        },
+        "records": 10002,
+        "sha256": "9349b49016be078a77851cfa923cb704c19f33aa14c8df0026cfd5ef78e9ff9a",
+        "valid_identity": {
+          "count": 9531,
+          "rate": 0.952909
+        }
+      },
+      {
+        "brands": {
+          "count": 10677,
+          "rate": 0.939298
+        },
+        "categories": {
+          "count": 401,
+          "rate": 0.035278
+        },
+        "file": "database/seeding/products_50k+.json",
+        "images": {
+          "count": 11367,
+          "rate": 1.0
+        },
+        "ingredients": {
+          "count": 597,
+          "rate": 0.05252
+        },
+        "known_allergen_evidence": {
+          "count": 354,
+          "rate": 0.031143
+        },
+        "nutrition_all_core": {
+          "count": 7904,
+          "rate": 0.695346
+        },
+        "nutrition_any_core": {
+          "count": 10282,
+          "rate": 0.904548
+        },
+        "quality_tiers": {
+          "Basic": 884,
+          "Bronze": 2433,
+          "Gold": 398,
+          "Silver": 7652
+        },
+        "records": 11367,
+        "sha256": "8fef4dc31b895ed5221a95980179aba27358890b983c80853045f3921450714a",
+        "valid_identity": {
+          "count": 11152,
+          "rate": 0.981086
+        }
+      }
+    ],
+    "record_count": 61373
+  },
+  "status": "CHECKS_PASSED_CANDIDATE_READY_FOR_DB070",
+  "ticket": "DB069",
+  "v1_0_comparison": {
+    "baseline": {
+      "file": "database/Release/v1.0/foodremedy_release_v1.0.json",
+      "metrics": {
+        "brands": {
+          "count": 3870,
+          "rate": 0.818009
+        },
+        "categories": {
+          "count": 385,
+          "rate": 0.081378
+        },
+        "images": {
+          "count": 4731,
+          "rate": 1.0
+        },
+        "ingredients": {
+          "count": 340,
+          "rate": 0.071866
+        },
+        "known_allergen_evidence": {
+          "count": 247,
+          "rate": 0.052209
+        },
+        "nutrition_all_core": {
+          "count": 2421,
+          "rate": 0.511731
+        },
+        "nutrition_any_core": {
+          "count": 3707,
+          "rate": 0.783555
+        },
+        "quality_tiers": {
+          "Basic": 933,
+          "Bronze": 1223,
+          "Gold": 289,
+          "Silver": 2286
+        },
+        "records": 4731,
+        "valid_identity": {
+          "count": 4731,
+          "rate": 1.0
+        }
+      },
+      "sha256": "b36d25a591a923e69a472a64b402b34e5a4d51d1aaa3904f5b02caa92cf19d82"
+    },
+    "coverage": {
+      "brands": {
+        "db069_count": 5000,
+        "db069_rate": 1.0,
+        "rate_delta": 0.181991,
+        "v1_0_count": 3870,
+        "v1_0_rate": 0.818009
+      },
+      "categories": {
+        "db069_count": 5000,
+        "db069_rate": 1.0,
+        "rate_delta": 0.918622,
+        "v1_0_count": 385,
+        "v1_0_rate": 0.081378
+      },
+      "images": {
+        "db069_count": 5000,
+        "db069_rate": 1.0,
+        "rate_delta": 0.0,
+        "v1_0_count": 4731,
+        "v1_0_rate": 1.0
+      },
+      "ingredients": {
+        "db069_count": 5000,
+        "db069_rate": 1.0,
+        "rate_delta": 0.928134,
+        "v1_0_count": 340,
+        "v1_0_rate": 0.071866
+      },
+      "known_allergen_evidence": {
+        "db069_count": 3969,
+        "db069_rate": 0.7938,
+        "rate_delta": 0.741591,
+        "v1_0_count": 247,
+        "v1_0_rate": 0.052209
+      },
+      "nutrition_all_core": {
+        "db069_count": 4719,
+        "db069_rate": 0.9438,
+        "rate_delta": 0.432069,
+        "v1_0_count": 2421,
+        "v1_0_rate": 0.511731
+      },
+      "nutrition_any_core": {
+        "db069_count": 5000,
+        "db069_rate": 1.0,
+        "rate_delta": 0.216445,
+        "v1_0_count": 3707,
+        "v1_0_rate": 0.783555
+      },
+      "valid_identity": {
+        "db069_count": 5000,
+        "db069_rate": 1.0,
+        "rate_delta": 0.0,
+        "v1_0_count": 4731,
+        "v1_0_rate": 1.0
+      }
+    }
+  }
+}

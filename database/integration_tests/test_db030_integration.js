@@ -38,7 +38,7 @@ async function testShoppingListPersistence() {
     id: "shopping-item-001",
     userId: "db030-user-001",
     productName: "Dark Chocolate",
-    barcode: "99901",
+    barcode: "12345678",
     quantity: 2,
     checked: false,
     addedAt: new Date().toISOString()
@@ -107,6 +107,11 @@ async function testScanPipelineIntegration() {
   assert(result.product);
   assert(result.warnings.length > 0);
   assert(result.classification === "red");
+  assert.deepStrictEqual(result.alternatives, []);
+  assert.deepStrictEqual(result.alternativesStatus, {
+    status: "requires_authenticated_request",
+    endpoint: "/api/recommendations/substitutions"
+  });
 
   assert(
     result.warnings.some(

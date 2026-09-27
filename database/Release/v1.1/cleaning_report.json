@@ -1,0 +1,11 @@
+{
+  "conservative_unknown_allergen_records": 1031,
+  "excluded_records": 0,
+  "input_records": 5000,
+  "leading_zero_barcodes_preserved": 256,
+  "missing_value_policy": "Source nulls and absent nutrient keys are preserved; numeric zero is never substituted for missing evidence. Only a genuinely absent allergen state may be normalised to the conservative ['Unknown'] value.",
+  "output_records": 5000,
+  "removed_stale_derived_fields": {},
+  "status": "PASS",
+  "unique_valid_barcodes": 5000
+}

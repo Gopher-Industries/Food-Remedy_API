@@ -208,80 +208,6 @@ function calculateRecommendationScore(cleaned, userProfile, warnings) {
   return Math.max(0, Math.min(100, score));
 }
 
-function getAlternatives(cleaned, classification, userProfile) {
-  const safeUserProfile = userProfile || {};
-
-  const base = [
-    {
-      name: "Dark Chocolate 85%",
-      brand: "Lindt",
-      barcode: "99901",
-      classification: "green",
-      tags: []
-    },
-    {
-      name: "Organic Vegan Chocolate",
-      brand: "Loving Earth",
-      barcode: "99902",
-      classification: "green",
-      tags: ["vegan"]
-    },
-    {
-      name: "Cocoa Nibs (Sugar-Free)",
-      brand: "HealthyCo",
-      barcode: "99903",
-      classification: "green",
-      tags: ["vegan", "glutenFree", "lowSugar"]
-    }
-  ];
-
-  let filtered = base;
-
-  if (safeUserProfile.dietPreferences?.includes("vegan")) {
-    filtered = filtered.filter((item) => item.tags.includes("vegan"));
-  }
-
-  if (safeUserProfile.dietPreferences?.includes("glutenFree")) {
-    filtered = filtered.filter((item) => item.tags.includes("glutenFree"));
-  }
-
-  if (filtered.length === 0) {
-    filtered = base;
-  }
-
-  if (classification === "green") {
-    return filtered.slice(0, 2);
-  }
-
-  return filtered;
-}
-
-function generateRecommendationReason(item, userProfile) {
-  const safeUserProfile = userProfile || {};
-  const reasons = [];
-  const tags = item.tags || [];
-
-  if (
-    safeUserProfile.dietPreferences?.includes("vegan") &&
-    tags.includes("vegan")
-  ) {
-    reasons.push("Matches vegan preference");
-  }
-
-  if (
-    safeUserProfile.dietPreferences?.includes("glutenFree") &&
-    tags.includes("glutenFree")
-  ) {
-    reasons.push("Matches gluten-free preference");
-  }
-
-  if (tags.includes("lowSugar")) {
-    reasons.push("Low sugar alternative");
-  }
-
-  return reasons.length ? reasons : ["General healthier alternative"];
-}
-
 function buildScanResult(rawData, userProfile) {
   const safeUserProfile = userProfile || {};
   const cleaned = cleanData(rawData || {});
@@ -316,15 +242,6 @@ function buildScanResult(rawData, userProfile) {
     warnings
   );
 
-  const alternatives = getAlternatives(
-    cleaned,
-    classification,
-    safeUserProfile
-  ).map((item) => ({
-    ...item,
-    reason: generateRecommendationReason(item, safeUserProfile)
-  }));
-
   return {
     product: cleaned,
 
@@ -348,7 +265,14 @@ function buildScanResult(rawData, userProfile) {
       matchedPreferences: safeUserProfile.dietPreferences || []
     },
 
-    alternatives,
+    // Alternatives require the authenticated, profile-owned API request made by
+    // the mobile product lifecycle. This local pipeline must never fabricate a
+    // fallback catalogue when that request is unavailable.
+    alternatives: [],
+    alternativesStatus: {
+      status: "requires_authenticated_request",
+      endpoint: "/api/recommendations/substitutions"
+    },
 
     metadata: {
       processedAt: new Date().toISOString(),
@@ -417,8 +341,6 @@ module.exports = {
   classifyProduct,
   calculateRiskScore,
   calculateRecommendationScore,
-  getAlternatives,
-  generateRecommendationReason,
   buildScanResult,
   mergeScanResultWithRemote,
   saveScanResult,
@@ -471,4 +393,5 @@ if (require.main === module) {
     .catch((error) => {
       console.error("Reconnect sync failed:", error.message);
     });
+}
 

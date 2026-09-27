@@ -1,0 +1,263 @@
+{
+  "files": [
+    {
+      "brands": {
+        "count": 8244,
+        "rate": 0.8244
+      },
+      "categories": {
+        "count": 6992,
+        "rate": 0.6992
+      },
+      "file": "database/seeding/products_0k_10k.json",
+      "images": {
+        "count": 10000,
+        "rate": 1.0
+      },
+      "ingredients": {
+        "count": 5582,
+        "rate": 0.5582
+      },
+      "known_allergen_evidence": {
+        "count": 3534,
+        "rate": 0.3534
+      },
+      "nutrition_all_core": {
+        "count": 5979,
+        "rate": 0.5979
+      },
+      "nutrition_any_core": {
+        "count": 7312,
+        "rate": 0.7312
+      },
+      "quality_tiers": {
+        "Basic": 809,
+        "Bronze": 1809,
+        "Gold": 4637,
+        "Silver": 2745
+      },
+      "records": 10000,
+      "sha256": "89cf7ef71f5b4e69bad996c6119b8266d23d09aac9329c07d19d47d4fdcc82c1",
+      "valid_identity": {
+        "count": 9374,
+        "rate": 0.9374
+      }
+    },
+    {
+      "brands": {
+        "count": 6584,
+        "rate": 0.658334
+      },
+      "categories": {
+        "count": 3674,
+        "rate": 0.367363
+      },
+      "file": "database/seeding/products_10k_20k.json",
+      "images": {
+        "count": 10001,
+        "rate": 1.0
+      },
+      "ingredients": {
+        "count": 2760,
+        "rate": 0.275972
+      },
+      "known_allergen_evidence": {
+        "count": 1659,
+        "rate": 0.165883
+      },
+      "nutrition_all_core": {
+        "count": 5882,
+        "rate": 0.588141
+      },
+      "nutrition_any_core": {
+        "count": 8614,
+        "rate": 0.861314
+      },
+      "quality_tiers": {
+        "Basic": 617,
+        "Bronze": 3577,
+        "Gold": 2028,
+        "Silver": 3779
+      },
+      "records": 10001,
+      "sha256": "2caff32f89361f4c960252a9d9314a3732d162530684cdbdf1298f747d9f84e0",
+      "valid_identity": {
+        "count": 9742,
+        "rate": 0.974103
+      }
+    },
+    {
+      "brands": {
+        "count": 4283,
+        "rate": 0.428257
+      },
+      "categories": {
+        "count": 2184,
+        "rate": 0.218378
+      },
+      "file": "database/seeding/products_20k_30k.json",
+      "images": {
+        "count": 10001,
+        "rate": 1.0
+      },
+      "ingredients": {
+        "count": 1267,
+        "rate": 0.126687
+      },
+      "known_allergen_evidence": {
+        "count": 785,
+        "rate": 0.078492
+      },
+      "nutrition_all_core": {
+        "count": 6150,
+        "rate": 0.614939
+      },
+      "nutrition_any_core": {
+        "count": 8946,
+        "rate": 0.894511
+      },
+      "quality_tiers": {
+        "Basic": 844,
+        "Bronze": 5182,
+        "Gold": 988,
+        "Silver": 2987
+      },
+      "records": 10001,
+      "sha256": "c36f7f44d00357e89242d02fb992ff153c93141ff8aa87defc91ca0e7d2add6f",
+      "valid_identity": {
+        "count": 9860,
+        "rate": 0.985901
+      }
+    },
+    {
+      "brands": {
+        "count": 3982,
+        "rate": 0.39812
+      },
+      "categories": {
+        "count": 1807,
+        "rate": 0.180664
+      },
+      "file": "database/seeding/products_30k_40k.json",
+      "images": {
+        "count": 10002,
+        "rate": 1.0
+      },
+      "ingredients": {
+        "count": 1164,
+        "rate": 0.116377
+      },
+      "known_allergen_evidence": {
+        "count": 738,
+        "rate": 0.073785
+      },
+      "nutrition_all_core": {
+        "count": 5231,
+        "rate": 0.522995
+      },
+      "nutrition_any_core": {
+        "count": 7891,
+        "rate": 0.788942
+      },
+      "quality_tiers": {
+        "Basic": 1653,
+        "Bronze": 5146,
+        "Gold": 791,
+        "Silver": 2412
+      },
+      "records": 10002,
+      "sha256": "4a3734c6e7f37223fef8c407f1ba7f5036667e2a100609d032ed111b0bfb7d1d",
+      "valid_identity": {
+        "count": 9580,
+        "rate": 0.957808
+      }
+    },
+    {
+      "brands": {
+        "count": 8332,
+        "rate": 0.833033
+      },
+      "categories": {
+        "count": 715,
+        "rate": 0.071486
+      },
+      "file": "database/seeding/products_40k_50k.json",
+      "images": {
+        "count": 10002,
+        "rate": 1.0
+      },
+      "ingredients": {
+        "count": 659,
+        "rate": 0.065887
+      },
+      "known_allergen_evidence": {
+        "count": 442,
+        "rate": 0.044191
+      },
+      "nutrition_all_core": {
+        "count": 5796,
+        "rate": 0.579484
+      },
+      "nutrition_any_core": {
+        "count": 8288,
+        "rate": 0.828634
+      },
+      "quality_tiers": {
+        "Basic": 1584,
+        "Bronze": 2525,
+        "Gold": 525,
+        "Silver": 5368
+      },
+      "records": 10002,
+      "sha256": "9349b49016be078a77851cfa923cb704c19f33aa14c8df0026cfd5ef78e9ff9a",
+      "valid_identity": {
+        "count": 9531,
+        "rate": 0.952909
+      }
+    },
+    {
+      "brands": {
+        "count": 10677,
+        "rate": 0.939298
+      },
+      "categories": {
+        "count": 401,
+        "rate": 0.035278
+      },
+      "file": "database/seeding/products_50k+.json",
+      "images": {
+        "count": 11367,
+        "rate": 1.0
+      },
+      "ingredients": {
+        "count": 597,
+        "rate": 0.05252
+      },
+      "known_allergen_evidence": {
+        "count": 354,
+        "rate": 0.031143
+      },
+      "nutrition_all_core": {
+        "count": 7904,
+        "rate": 0.695346
+      },
+      "nutrition_any_core": {
+        "count": 10282,
+        "rate": 0.904548
+      },
+      "quality_tiers": {
+        "Basic": 884,
+        "Bronze": 2433,
+        "Gold": 398,
+        "Silver": 7652
+      },
+      "records": 11367,
+      "sha256": "8fef4dc31b895ed5221a95980179aba27358890b983c80853045f3921450714a",
+      "valid_identity": {
+        "count": 11152,
+        "rate": 0.981086
+      }
+    }
+  ],
+  "ticket": "DB069"
+}

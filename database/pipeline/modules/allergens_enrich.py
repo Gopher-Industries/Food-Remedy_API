@@ -15,7 +15,7 @@ def run(input_path: str, output_path: str, config: dict) -> dict:
     # Normalize output_path: convert relative paths to absolute
     if not os.path.isabs(output_path):
         # Resolve relative to repo root if path is relative
-        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
         output_path = os.path.join(repo_root, output_path)
 
     # Ensure output directory exists

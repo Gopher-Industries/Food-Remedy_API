@@ -10,15 +10,15 @@ import {
   ScrollView,
   Alert,
   AccessibilityInfo,
+  Image,
 } from "react-native";
 import { Link } from "expo-router";
 import Input from "@/components/ui/UIInput";
 import IconGeneral from "@/components/icons/IconGeneral";
 import * as Speech from 'expo-speech';
 import Tt from "@/components/ui/UIText";
-import { Image } from "react-native";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { sendPasswordReset, signInWithEmail } from "@/services";
+import { sendPasswordReset } from "@/services";
 import { useNotification } from "@/components/providers/NotificationProvider";
 import ModalWrapper from "@/components/modals/ModalAWrapper";
 import ModalResponse from "@/components/modals/ModalResponse";
@@ -27,6 +27,9 @@ import { color } from "@/app/design/token";
 import CaptchaModal from "@/components/security/CaptchaModal";
 import { CAPTCHA_ENABLED, HCAPTCHA_SITE_KEY } from "@/config/captchaConfig";
 import { useTheme } from "@/theme";
+import { handleLoginFieldChange } from "@/app/loginErrorState";
+import { signInWithCaptchaGate } from "@/services/authentication/captchaLogin";
+import { CaptchaVerificationError } from "@/services/security/verifyCaptchaToken";
 
 
 export default function LoginPage() {
@@ -40,27 +43,34 @@ export default function LoginPage() {
   const [loadingLogin, setLoadingLogin] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [captchaVisible, setCaptchaVisible] = useState<boolean>(false);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   /**
    * Handle Log In
    * @returns
    */
-  const proceedLogin = async () => {
+  const proceedLogin = async (captchaToken?: string) => {
     try {
       setLoadingLogin(true);
       setErrorMessage("");
 
-      const response = await handleSignIn(email, password);
+      const response = await signInWithCaptchaGate({
+        captchaEnabled: CAPTCHA_ENABLED,
+        captchaToken,
+        email,
+        password,
+        signIn: handleSignIn,
+      });
 
       if (response.trim().length > 0) {
         setErrorMessage(response);
-        // Require captcha again for the next attempt
-        setCaptchaToken(null);
       }
     } catch (error) {
-      console.error("Error Logging in: ", error);
-      addNotification("Login Error Occured", "e");
+      if (error instanceof CaptchaVerificationError) {
+        setErrorMessage("Captcha verification failed. Please try again.");
+      } else {
+        console.error("Login failed");
+        addNotification("Login Error Occurred", "e");
+      }
     } finally {
       setLoadingLogin(false);
     }
@@ -69,7 +79,7 @@ export default function LoginPage() {
   const handleLogin = async () => {
     // Only show captcha on user-initiated login
     setErrorMessage("");
-    if (CAPTCHA_ENABLED && !captchaToken) {
+    if (CAPTCHA_ENABLED) {
       setCaptchaVisible(true);
       return;
     }
@@ -77,13 +87,8 @@ export default function LoginPage() {
   };
 
   const onCaptchaVerified = async (token: string) => {
-    console.log('[Login] Captcha verified token:', token);
-    setCaptchaToken(token);
     setCaptchaVisible(false);
-    addNotification('Captcha verified', 's');
-    // Note: Proper security requires server-side verification of the token
-    // Proceed with login after captcha success
-    await proceedLogin();
+    await proceedLogin(token);
   };
 
   /**
@@ -164,7 +169,9 @@ export default function LoginPage() {
                 className="py-3 mt-8 "
                 placeholder="Email or Username"
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(nextEmail) =>
+                  handleLoginFieldChange("email", nextEmail, setEmail, setErrorMessage)
+                }
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="off"
@@ -176,7 +183,9 @@ export default function LoginPage() {
                 <Input
                   className="py-3"
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(nextPassword) =>
+                    handleLoginFieldChange("password", nextPassword, setPassword, setErrorMessage)
+                  }
                   placeholder="Password"
                   secureTextEntry={showPassword}
                   autoCapitalize="none"
@@ -189,13 +198,11 @@ export default function LoginPage() {
                   onPress={() =>
                     setShowPassword((previous) => {
                       const next = !previous;
-                      // Announce and speak a clear status for the NEW state
                       const msg = next ? "Password hidden" : "Password visible";
                       AccessibilityInfo.announceForAccessibility(msg);
-                      // Fallback: speak the message in case screen reader announcements are not audible
                       try {
                         Speech.speak(msg);
-                      } catch (e) {
+                      } catch {
                         // swallow any errors from speech API
                       }
                       return next;
@@ -206,7 +213,7 @@ export default function LoginPage() {
                   accessibilityLabel={showPassword ? "Show password" : "Hide password"}
                   accessibilityState={{ checked: !showPassword }}
                   accessibilityLiveRegion="polite"
-                  className="absolute right-12 top-1/2 -translate-y-1/2"
+                  className="absolute right-4 top-1/2 -translate-y-1/2"
                   style={({ pressed }) => [
                     { borderColor: pressed ? "#FF3EB5" : "hsl(0 0% 13%)" },
                   ]}
@@ -242,7 +249,7 @@ export default function LoginPage() {
               </Pressable>
 
               <Tt className="text-sm mt-12 text-center">
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "}
                 <Link
                   href="/register"
                   className="text-primary font-interSemiBold active:underline"
@@ -290,7 +297,6 @@ export default function LoginPage() {
         onVerified={onCaptchaVerified}
         onCancel={() => {
           setCaptchaVisible(false);
-          setCaptchaToken(null);
           setLoadingLogin(false);
           setErrorMessage("Please complete the captcha to continue");
         }}

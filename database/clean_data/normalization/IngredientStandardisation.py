@@ -202,7 +202,7 @@ class IngredientStandardisation:
         Returns:
             dict: Updated product with 'standardisedIngredients'
         """
-        ingredients_list = product.get("ingredients", [])
+        ingredients_list = product.get("ingredients") or []
 
         standardised = self.standardise(ingredients_list)
 

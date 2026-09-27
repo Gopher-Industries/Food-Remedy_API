@@ -8,12 +8,11 @@ import {
   presentAllergenSuitability,
 } from "@/services/profileProductSuitability";
 
-type Goal = "Lower sodium" | "Heart health" | "Lower sugar" | "High protein";
 export interface UserDemographics {
   gender: string;
   ageGroup: string;
   activityLevel: string;
-  goals: Goal[];
+  goals: string[];
   allergens: string[];
 }
 

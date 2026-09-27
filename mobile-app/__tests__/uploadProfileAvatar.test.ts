@@ -124,13 +124,19 @@ describe('native uploadProfileAvatarViaRest behaviour', () => {
   });
 
   it('throws a billing-specific error for REST status 402', async () => {
-    mockedFileSystem.uploadAsync.mockResolvedValueOnce({ status: 402, body: 'billing blocked' } as any);
+    mockedFileSystem.uploadAsync.mockResolvedValueOnce({
+      status: 402,
+      body: 'billing blocked token=secret-token https://provider.example/raw',
+    } as any);
 
     await expect(uploadProfileAvatar('user-1', 'profile-1', 'file:///avatar.jpg')).rejects.toThrow('Firebase Storage billing blocked (402)');
   });
 
   it('throws for other REST failures', async () => {
-    mockedFileSystem.uploadAsync.mockResolvedValueOnce({ status: 500, body: 'server down' } as any);
+    mockedFileSystem.uploadAsync.mockResolvedValueOnce({
+      status: 500,
+      body: 'server down body={"provider":"raw"}',
+    } as any);
 
     await expect(uploadProfileAvatar('user-1', 'profile-1', 'file:///avatar.jpg')).rejects.toThrow('REST upload failed (status 500)');
   });

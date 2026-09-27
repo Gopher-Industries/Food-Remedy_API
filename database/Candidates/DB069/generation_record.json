@@ -1,0 +1,62 @@
+{
+  "artifacts": {
+    "db060_validation.json": "34e218c1b3748d72cc1a6b6cd46fe6466cf6bad932f98877a43809e461b84a89",
+    "exclusion_ledger.jsonl.gz": "b04183dae74ea35733d161a05cde8c232ab2426a777c1e8e341c7e12e8ad33dd",
+    "foodremedy_candidate_db069.json": "ffc2d26e4cc1fdaa8e1754e209f0be0b7fe7b93784b743b47911180d52b67ced",
+    "inclusion_ledger.jsonl": "7eb53815d8b939aa65823dcc276f9cf2fad2934c44efcad25ef721a47b6e8a2c",
+    "quality_report.json": "e25a67e9b2cd2166e9eb9930e1f451a6393fc43e46c91c1c3c22c1107dac8038",
+    "reproducibility_verification.json": "3d464ff2b25693753447133515a7365a874c902d05157f28d281c3da6fac4036",
+    "source_profile.json": "8b844e7fea7d1cc04be47a14d36ee9c0d8b9fdb94ce90976899e80e8da216fb4"
+  },
+  "candidate": {
+    "file": "foodremedy_candidate_db069.json",
+    "records": 5000,
+    "sha256": "ffc2d26e4cc1fdaa8e1754e209f0be0b7fe7b93784b743b47911180d52b67ced"
+  },
+  "checkout_commit": "3a16feab524fff8619f0521bbcdffd7794caee98",
+  "config": {
+    "file": "database/Candidates/db069_candidate_config.json",
+    "sha256": "28a69f48e8e4393563f7e612f988fc3fef18168ab1dc63bbf20d15c37533bd81"
+  },
+  "generated_at_utc": "2026-09-21T11:00:00+00:00",
+  "generator": {
+    "file": "scripts/db069_build_quality_candidate.py",
+    "sha256": "d0612c9c4681f4cfdbb41d05fc721233c8ba0c2a31d9b07d1dc6eb567ed26c2d"
+  },
+  "next_owner": "DB070",
+  "production_seeded": false,
+  "source_files": [
+    {
+      "file": "database/seeding/products_0k_10k.json",
+      "records": 10000,
+      "sha256": "89cf7ef71f5b4e69bad996c6119b8266d23d09aac9329c07d19d47d4fdcc82c1"
+    },
+    {
+      "file": "database/seeding/products_10k_20k.json",
+      "records": 10001,
+      "sha256": "2caff32f89361f4c960252a9d9314a3732d162530684cdbdf1298f747d9f84e0"
+    },
+    {
+      "file": "database/seeding/products_20k_30k.json",
+      "records": 10001,
+      "sha256": "c36f7f44d00357e89242d02fb992ff153c93141ff8aa87defc91ca0e7d2add6f"
+    },
+    {
+      "file": "database/seeding/products_30k_40k.json",
+      "records": 10002,
+      "sha256": "4a3734c6e7f37223fef8c407f1ba7f5036667e2a100609d032ed111b0bfb7d1d"
+    },
+    {
+      "file": "database/seeding/products_40k_50k.json",
+      "records": 10002,
+      "sha256": "9349b49016be078a77851cfa923cb704c19f33aa14c8df0026cfd5ef78e9ff9a"
+    },
+    {
+      "file": "database/seeding/products_50k+.json",
+      "records": 11367,
+      "sha256": "8fef4dc31b895ed5221a95980179aba27358890b983c80853045f3921450714a"
+    }
+  ],
+  "status": "CHECKS_PASSED_CANDIDATE_READY_FOR_DB070",
+  "ticket": "DB069"
+}

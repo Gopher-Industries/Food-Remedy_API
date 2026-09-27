@@ -18,9 +18,10 @@ This document covers all backend API endpoints for the Food Remedy mobile applic
 - [Shopping Cart - POST](#2-post-apishopping-cart-api)
 - [Shopping Cart - PATCH](#3-patch-apishopping-cart-api)
 - [Shopping Cart - DELETE](#4-delete-apishopping-cart-api)
-- [Product Classification - POST](#5-post-apiproductsclassify)
-- [Missing Product Submission - POST](#6-post-apiproduct-submissions)
+- [Product Search - GET](#5-get-apiproductssearch)
+- [Product Classification - POST](#6-post-apiproductsclassify)
 - [7-Day Meal Plan - POST](#7-post-api7-day-meal-plan)
+- [Authenticated Product Substitutions - POST](#8-post-apirecommendationssubstitutions)
 
 ---
 
@@ -199,6 +200,83 @@ Removes an item completely from the user's cart.
 
 ---
 
+## Product Search
+
+**Route:** `/api/products/search`
+**Contract version:** `v1`
+**Data source:** Firestore `PRODUCTS` using BE040 `productNameSearch` and `brandSearch` fields
+
+The machine-readable response contract is in
+[`api/contracts/product_search_v1.schema.json`](../../../api/contracts/product_search_v1.schema.json).
+
+### 5. GET /api/products/search
+
+Returns compact, deduplicated product summaries for a barcode or normalized
+product-name and brand prefix. It does not return raw Firestore documents.
+
+| Parameter | Type | Required | Constraints |
+|---|---|---:|---|
+| `q` | string | Yes | NFC-normalized, curly quotes normalized, lowercased, and whitespace-collapsed using BE040. At least 2 characters and at most 80 characters, except a valid exact GTIN is permitted. |
+| `limit` | integer | No | Default 20; between 1 and 25. |
+| `cursor` | string | No | Opaque cursor returned by the previous response for the same normalized query. |
+
+Valid EAN-8, UPC-A, EAN-13, and GTIN-14 queries use an exact document lookup
+and preserve leading zeroes. Other valid queries make at most two prefix reads,
+one each against `productNameSearch` and `brandSearch`, with 50 source documents
+per read. The route produces at most 101 ranked candidates before applying the
+page limit.
+
+**Relevance order**
+
+1. Exact barcode
+2. Exact product name
+3. Product-name prefix
+4. Exact brand
+5. Brand prefix
+6. Canonical barcode, ascending, to break every remaining tie
+
+**Example request**
+
+```http
+GET /api/products/search?q=%20Oat%20Milk%20&limit=2
+```
+
+**Example response — 200 OK**
+
+```json
+{
+  "version": "v1",
+  "results": [
+    {
+      "barcode": "036000291452",
+      "productName": "Oat Milk",
+      "brand": "Example Brand",
+      "category": "Plant milks",
+      "nutriscoreGrade": "B"
+    }
+  ],
+  "nextCursor": null
+}
+```
+
+For an unchanged catalogue, callers pass `nextCursor` unchanged with the same
+`q` and `limit` to obtain the adjacent page without repeated or skipped
+barcodes. A cursor is invalid for another normalized query.
+
+The route emits only request duration, outcome, and result count metrics. It
+does not log raw search terms, profile information, or Firestore exceptions.
+
+**Error responses**
+
+| Status | Error code | Meaning |
+|---:|---|---|
+| 400 | `INVALID_QUERY` | Missing, empty, too-short, malformed, or oversized `q`. |
+| 400 | `INVALID_LIMIT` | `limit` is not an integer between 1 and 25. |
+| 400 | `INVALID_CURSOR` | Cursor is malformed or does not belong to the normalized query. |
+| 503 | `SEARCH_UNAVAILABLE` | Firestore timed out or did not return a safe response. |
+
+---
+
 ## Product Classification
 
 **Route:** `/api/products/classify`  
@@ -206,7 +284,7 @@ Removes an item completely from the user's cart.
 
 ---
 
-### 5. POST /api/products/classify
+### 6. POST /api/products/classify
 
 Classifies a product as `green`, `grey`, or `red` based on its nutritional content and the user's dietary profile. Used by other endpoints such as the meal plan generator.
 
@@ -287,123 +365,6 @@ Scoring starts at 100 and applies penalties for high fat, saturated fat, sugars,
 | 400    | INVALID_REQUEST   | Missing or invalid `barcode`        |
 | 404    | PRODUCT_NOT_FOUND | No product found for this barcode   |
 | 500    | SERVER_ERROR      | Unexpected server error             |
-
----
-
-## Missing Product Submission
-
-**Route:** `/api/product-submissions`
-**Contract version:** `v1`
-**Data source:** Admin Firestore only — `PRODUCT_SUBMISSIONS/{submissionId}`
-
-The machine-readable request, success, and error envelopes are in
-[`api/contracts/product_submission_v1.schema.json`](../../../api/contracts/product_submission_v1.schema.json).
-
-### 6. POST /api/product-submissions
-
-Creates an untrusted, moderation-only report for a barcode that is missing from
-the live catalogue. The endpoint requires a verified Firebase ID token in the
-`Authorization: Bearer <token>` header. It derives the reporter from that token;
-`userId` and every other unknown request field are rejected.
-
-The route validates the checksum and canonical digits for EAN-8, UPC-A,
-EAN-13, and GTIN-14 values. It preserves leading zeroes and checks
-`PRODUCTS/{barcode}` inside the write transaction before creating a moderation
-record. It never writes to `PRODUCTS`.
-
-**Request body**
-
-| Field | Type | Required | Constraints |
-|---|---|---:|---|
-| `version` | string | Yes | Must be `"v1"`. |
-| `barcode` | string | Yes | Valid EAN-8, UPC-A, EAN-13, or GTIN-14 with a valid check digit. |
-| `productName` | string | No | Normalized non-empty text without control characters, maximum 140 characters. |
-| `brand` | string | No | Normalized non-empty text without control characters, maximum 100 characters. |
-| `retailer` | string | No | Normalized non-empty text without control characters, maximum 100 characters. |
-| `note` | string | No | Normalized non-empty text without control characters, maximum 500 characters. |
-
-The complete JSON request is limited to 2,048 bytes. Submitted text is
-unverified, never returned by this API, and must be escaped by any future
-moderation UI.
-
-**Example request**
-
-```http
-POST /api/product-submissions
-Authorization: Bearer <Firebase ID token>
-Content-Type: application/json
-
-{
-  "version": "v1",
-  "barcode": "036000291452",
-  "productName": "Example Sparkling Water",
-  "brand": "Example Brand",
-  "retailer": "Example Retailer",
-  "note": "Not found on the store shelf."
-}
-```
-
-**Example response — 201 Created**
-
-```json
-{
-  "version": "v1",
-  "submissionId": "ps_036000291452",
-  "barcode": "036000291452",
-  "status": "PENDING",
-  "idempotent": false
-}
-```
-
-Submitting the same barcode again as the same authenticated user returns the
-existing pending report instead of creating another one:
-
-```json
-{
-  "version": "v1",
-  "submissionId": "ps_036000291452",
-  "barcode": "036000291452",
-  "status": "PENDING",
-  "idempotent": true
-}
-```
-
-One `PRODUCT_SUBMISSIONS` queue document is maintained per barcode. An opaque,
-capped server-only reporter ledger provides idempotency and a non-identifying
-`reportCount`; it is not readable or writable by Firestore clients.
-
-**Error responses**
-
-| Status | Error code | Meaning |
-|---:|---|---|
-| 400 | `INVALID_REQUEST` | Invalid JSON, version, or field value. |
-| 400 | `INVALID_BARCODE` | Unsupported, malformed, or check-digit-invalid barcode. |
-| 400 | `UNSUPPORTED_FIELD` | The request includes an unknown field, including `userId`. |
-| 401 | `UNAUTHENTICATED` | Missing, invalid, or revoked Firebase ID token. |
-| 409 | `PRODUCT_ALREADY_EXISTS` | The barcode is now present in `PRODUCTS`. |
-| 413 | `REQUEST_TOO_LARGE` | The JSON body exceeds the request bound. |
-| 429 | `RATE_LIMITED` | The authenticated reporter has exhausted the hourly submission allowance. |
-| 503 | `SUBMISSION_UNAVAILABLE` | Firestore timed out or could not safely persist the report. |
-
-Every error uses the sanitized envelope below and does not include a raw note,
-email address, token, profile data, or internal Firestore error.
-
-```json
-{
-  "version": "v1",
-  "error": {
-    "code": "PRODUCT_ALREADY_EXISTS",
-    "message": "This barcode is already available in the product catalogue."
-  }
-}
-```
-
-**Server configuration**
-
-The deployment that serves Expo API routes must provide Firebase Admin
-credentials through Application Default Credentials or the `FIREBASE_SERVICE_ACCOUNT_JSON`
-secret. This value is server-only: do not prefix it with `EXPO_PUBLIC_`, commit
-it, or expose it to the mobile application.
 
 ---
 
@@ -530,6 +491,117 @@ Generates a personalised 7-day meal plan for a user profile. Fetches products fr
 | Status | Error Code   | Reason                                    |
 |--------|--------------|-------------------------------------------|
 | 500    | SERVER_ERROR | Firestore fetch failed or classifier error |
+
+---
+
+## Authenticated Product Substitutions
+
+### 8. POST /api/recommendations/substitutions
+
+Returns bounded, profile-aware product substitutions for the authenticated user. The server verifies the Firebase bearer token and loads only that user’s unique active `USERS/{uid}/PROFILES` profile with `relationship: "Self"`. The request cannot select a user or profile, or provide dietary/allergen overrides.
+
+**Deployment status:** This backend route is implemented but is not yet a production endpoint. The app currently uses Expo SDK 54 with `web.output: "static"`. Expo API routes require a server export and a deployed server; native production builds also need a configured server origin. Configure hosting and server-only Firebase Admin credentials before enabling callers. See [Expo API routes](https://docs.expo.dev/router/web/api-routes/).
+
+**Request headers**
+
+```text
+Authorization: Bearer <Firebase ID token>
+Content-Type: application/json
+```
+
+**Request body**
+
+```json
+{
+  "version": "1.0.0",
+  "barcode": "036000291452",
+  "limit": 5
+}
+```
+
+`barcode` must be a check-digit-valid EAN-8, UPC-A, EAN-13, or GTIN-14. Leading zeroes are preserved. `limit` defaults to 5 and is capped at 20. The request body permits only `version`, `barcode`, and `limit`.
+
+**Example response**
+
+```json
+{
+  "version": "1.0.0",
+  "status": "success",
+  "targetProduct": {
+    "barcode": "036000291452",
+    "productName": "Original snack",
+    "brand": "Example Foods",
+    "category": "snacks",
+    "nutriscoreGrade": "c"
+  },
+  "substitutions": [
+    {
+      "barcode": "036000291469",
+      "productName": "Alternative snack",
+      "brand": "Example Foods",
+      "nutriscoreGrade": "b",
+      "safetyRating": "green",
+      "confidenceScore": 0.68,
+      "reasonCodes": ["MATCH_CATEGORY_EXACT", "SAFE_ALLERGEN_FREE", "BETTER_NUTRI_SCORE"],
+      "reasons": ["Matches the product category.", "Allergen and trace declarations show no profile conflict.", "Has a better Nutri-Score."]
+    }
+  ],
+  "emptyStateReason": null
+}
+```
+
+The response omits profile values, matched restrictions, and raw Firestore documents. `emptyStateReason` is one of `INSUFFICIENT_PRODUCT_DATA`, `NO_SAFE_ALTERNATIVES_IN_CATEGORY`, or `STRICT_ALLERGEN_EXCLUSION_ALL_CANDIDATES` when there are no results.
+
+| Status | Error code | Meaning |
+| --- | --- | --- |
+| 401 | `UNAUTHENTICATED` | Missing, invalid, or revoked Firebase token. |
+| 400 | `INVALID_REQUEST`, `INVALID_BARCODE`, `INVALID_LIMIT`, `UNSUPPORTED_FIELD` | Malformed or unsupported caller input. |
+| 404 | `PRODUCT_NOT_FOUND` | The target barcode is not in `PRODUCTS`. |
+| 409 | `PROFILE_UNAVAILABLE` | The verified user has no `Self` profile. |
+| 413 | `REQUEST_TOO_LARGE` | Body exceeds 1 KiB. |
+| 503 | `SUBSTITUTIONS_UNAVAILABLE` | The request timed out, was cancelled, or Firestore was unavailable. |
+
+---
+
+## Missing Product Submission
+
+**Route:** `POST /api/product-submissions`
+**Contract:** `v1`; see [`product_submission_v1.schema.json`](../../../api/contracts/product_submission_v1.schema.json)
+
+Creates an unverified report for a missing catalogue product. The caller must
+provide a verified Firebase ID token using `Authorization: Bearer <token>`.
+Reporter identity comes from that token; caller-supplied `userId` and other
+unknown fields are rejected. Valid EAN-8, UPC-A, EAN-13, and GTIN-14 values
+retain leading zeroes and must pass check-digit validation. The service checks
+`PRODUCTS/{barcode}` inside its transaction and never writes to `PRODUCTS`.
+
+The request requires `version: "v1"` and `barcode`. Optional `productName`,
+`brand`, `retailer`, and `note` fields are normalized, bounded text. The body
+is limited to 2,048 bytes. Submitted text is unverified and is not returned by
+the API.
+
+Success returns `201` for a new report and `200` for an idempotent repeat:
+
+```json
+{
+  "version": "v1",
+  "submissionId": "ps_036000291452",
+  "barcode": "036000291452",
+  "status": "PENDING",
+  "idempotent": false
+}
+```
+
+Errors use sanitized `version` and `error: { code, message }` fields. Statuses
+include `400` for invalid input, `401` for unauthenticated requests, `409` when
+the product already exists, `413` for oversized requests, `429` for rate
+limits, and `503` for unavailable storage. Moderation submissions and their
+opaque idempotency/rate-limit records are server-only Firestore data.
+
+**Server configuration:** the API deployment must provide Firebase Admin
+Application Default Credentials or the server-only
+`FIREBASE_SERVICE_ACCOUNT_JSON` secret. Never expose it through an
+`EXPO_PUBLIC_` variable or commit it.
 
 ---
 
