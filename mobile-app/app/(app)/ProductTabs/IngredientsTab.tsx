@@ -1,10 +1,9 @@
 import React, { useMemo } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
-import IngredientSearch from "@/components/product/IngredientSearch";
 import { useProduct } from "@/components/providers/ProductProvider";
 import { usePreferences } from "@/components/providers/PreferencesProvider";
 
-export default function IngredientsTab() {
+function IngredientsTab() {
   const { currentProduct } = useProduct();
 
   // Get dark mode value from preferences provider
@@ -234,3 +233,5 @@ const styles = StyleSheet.create({
     color: "#333333",
   },
 });
+
+export default React.memo(IngredientsTab);

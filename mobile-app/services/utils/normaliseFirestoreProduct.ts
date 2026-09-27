@@ -1,5 +1,6 @@
 import type { Product } from "@/types/Product";
 import { normaliseAllergens } from "@/services/utils/allergens";
+import { validateProductSemanticAttributes } from './productSemanticAttributes';
 
 const nullIfEmpty = (v: unknown) =>
   typeof v === "string" ? (v.trim() === "" ? null : v) : v ?? null;
@@ -30,6 +31,7 @@ const safeImages = (raw: any) =>
  */
 export function normaliseFirestoreProduct(raw: any): Product {
   const now = new Date().toISOString();
+  const semanticAttributes = validateProductSemanticAttributes(raw.semanticAttributes);
 
   return {
     id: raw.id ?? raw.barcode, // fallback id
@@ -78,6 +80,7 @@ export function normaliseFirestoreProduct(raw: any): Product {
     lastUpdated: raw.lastUpdated ?? now,
     completeness: raw.completeness ?? 0,
     metadata: raw.metadata ?? {},
+    ...(semanticAttributes ? { semanticAttributes } : {}),
     enrichmentMetadata: raw.enrichmentMetadata,
     imageURL: raw.imageURL,
     tags: raw.tags ?? { final: [], removed: [] },

@@ -1,0 +1,47 @@
+{
+  "failures": 0,
+  "modules": [
+    {
+      "failures": 0,
+      "module": "nutrition_enrich",
+      "processed": 5000,
+      "status": "ok"
+    },
+    {
+      "failures": 0,
+      "module": "allergens",
+      "processed": 5000,
+      "status": "ok"
+    },
+    {
+      "failures": 0,
+      "module": "db009_personalisation_tags",
+      "processed": 5000,
+      "status": "ok"
+    },
+    {
+      "failures": 0,
+      "module": "db021_mood_tags",
+      "processed": 5000,
+      "status": "ok"
+    },
+    {
+      "failures": 0,
+      "module": "db019_alternative_product_mapping",
+      "processed": 5000,
+      "stats": {
+        "categories": 238,
+        "empty_healthier": 202,
+        "empty_similar": 186,
+        "healthier_any_gain": 8,
+        "healthier_fiber_proxy": 2,
+        "healthier_strict_gap": 4734,
+        "healthier_sugar_proxy": 54,
+        "products": 5000
+      },
+      "status": "ok"
+    }
+  ],
+  "processed": 5000,
+  "status": "PASS"
+}

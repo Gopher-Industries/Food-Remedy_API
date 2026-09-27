@@ -1,0 +1,311 @@
+{
+  "artifact_sha256": {
+    "category_audit.json": "e15c973cba39cbba7a26711c3a703fa3db67b14523b1dbebab715bf7045999be",
+    "cleaning_report.json": "607bfda076e4c536f9ac7220863f772f5eedbbc42c378605de1dc55322e45f4e",
+    "db060_validation.json": "34e218c1b3748d72cc1a6b6cd46fe6466cf6bad932f98877a43809e461b84a89",
+    "delta_v1.0_to_v1.1.json": "a0150f48563a4ec1969696d41f99f853e0eb32801b87cafe9f946e12ab104af5",
+    "enrichment_report.json": "a3857342756633fd29ee13bef06fd9016227637811850f7d87f82476d83b2ba5",
+    "exclusion_ledger.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "foodremedy_release_v1.1.json": "43b955c6837eda262b5b9afba5e8227ae7a1db3538dab110b393b8e9920791e1",
+    "inclusion_ledger.jsonl": "e0bf0123aa69949e081461aad64a9e76ca39a950a4f4a5fc711fceac2289b213",
+    "nutrition_audit.json": "bba4cbe0ffce09704efb98362d4dd4a70af27931c7fe88faad7122f2e859950e",
+    "product_alternatives_v1.1.json": "9565d58d9eaf370c5092e863f4054184d625f184c6fceedc1be62e1c5b699f0e",
+    "quality_comparison_v1.0_to_v1.1.json": "c5123e0f0372bb3403fadc1b105bd7e93eab006b41afb0fc845a6709185af3d3",
+    "unmapped_categories.json": "1423a11315a9f7a499acda89ee7ad6fd19e054f97d6b86be9cb9a6238fe26daf"
+  },
+  "configuration": {
+    "checkpoint_policy": "ISOLATED_BUILD_NO_CHECKPOINT_REUSE",
+    "modules": [
+      {
+        "config": {},
+        "enabled": true,
+        "name": "nutrition_enrich",
+        "path": "database/pipeline/modules/nutrition_enrich.py",
+        "sha256": "9dc2bd9281f692bf3d395d3523262b777ec3855a764acb54e7afa4fc73a4fe1f"
+      },
+      {
+        "config": {},
+        "enabled": true,
+        "name": "allergens",
+        "path": "database/pipeline/modules/allergens_enrich.py",
+        "sha256": "a0e6f197f89520956b309206a2ee584c0607a38ed9c274551aa17ce4a9608a88"
+      },
+      {
+        "config": {},
+        "enabled": true,
+        "name": "db009_personalisation_tags",
+        "path": "database/pipeline/modules/db009_personalisation_tags.py",
+        "sha256": "27e9b1bbe2254f14a1ad4730fb66d9a3114ad535d73ff9f698d3c8fbe39e4918"
+      },
+      {
+        "config": {},
+        "enabled": true,
+        "name": "db021_mood_tags",
+        "path": "database/pipeline/modules/db021_mood_tags.py",
+        "sha256": "f47579570cf3df20f4934142afe17de458c98bddf9278f677812b02247a6a012"
+      },
+      {
+        "config": {
+          "healthier_allow_any_score_gain": true,
+          "healthier_min_score_delta": 2,
+          "healthier_use_fiber_proxy": true,
+          "healthier_use_sugar_proxy": true,
+          "max_healthier": 5,
+          "max_nutrient_distance_healthier": 0.55,
+          "max_peers_scan": 400,
+          "max_similar": 5,
+          "rng_seed": 20260419,
+          "sidecar_index_path": "database/seeding/product_alternatives_index.json"
+        },
+        "enabled": true,
+        "name": "db019_alternative_product_mapping",
+        "path": "database/pipeline/modules/db019_alternative_product_mapping.py",
+        "sha256": "c4de54fb78781e128ea883f1d8dd9df85148614c6a236cc864ab9185a5d1b66c"
+      }
+    ],
+    "pipeline_config": "database/pipeline/pipeline.config.json",
+    "pipeline_config_sha256": "a363f2dc6c6c95bc4694fe7e8a952a732aba21b97a1db5a2651343c4cc38ac07",
+    "quality_config": "database/Candidates/db069_candidate_config.json",
+    "quality_config_sha256": "28a69f48e8e4393563f7e612f988fc3fef18168ab1dc63bbf20d15c37533bd81",
+    "release_fingerprint": "d794c6ed2a7d24a6c86b7a86e40ad199f4413f30b6efac695dd1a096f7c38cbb"
+  },
+  "database_release_validated": true,
+  "dataset": {
+    "file": "foodremedy_release_v1.1.json",
+    "records": 5000,
+    "sha256": "43b955c6837eda262b5b9afba5e8227ae7a1db3538dab110b393b8e9920791e1"
+  },
+  "delta_summary": {
+    "added": 4878,
+    "removed": 4609,
+    "unchanged": 9,
+    "updated": 113,
+    "v1.0_records": 4731,
+    "v1.1_records": 5000
+  },
+  "generated_at_utc": "2026-09-21T12:30:00+00:00",
+  "generation_base_commit": "a2592da301c670443259235a7f1097fa361c3f99",
+  "known_limitations": [
+    "945 records use conservative Unknown allergen evidence and must not be described as allergen-free.",
+    "1629 records have category tags outside the current deterministic category rules; all tags are listed in unmapped_categories.json.",
+    "Barcode validation covers supported digit-only lengths and uniqueness, not GTIN check digits.",
+    "The release is an offline database artifact. Backend/API work, Firestore rules, production seeding, deployment, and credentialed live readback are outside DB070 and have not been claimed."
+  ],
+  "production_release_approved": false,
+  "production_seeded": false,
+  "quality_comparison": {
+    "baseline": {
+      "records": 4731,
+      "version": "v1.0"
+    },
+    "metrics": {
+      "brands": {
+        "rate_delta": 0.181991,
+        "v1.0_count": 3870,
+        "v1.0_rate": 0.818009,
+        "v1.1_count": 5000,
+        "v1.1_rate": 1.0
+      },
+      "categories": {
+        "rate_delta": 0.918622,
+        "v1.0_count": 385,
+        "v1.0_rate": 0.081378,
+        "v1.1_count": 5000,
+        "v1.1_rate": 1.0
+      },
+      "images": {
+        "rate_delta": 0.0,
+        "v1.0_count": 4731,
+        "v1.0_rate": 1.0,
+        "v1.1_count": 5000,
+        "v1.1_rate": 1.0
+      },
+      "ingredients": {
+        "rate_delta": 0.928134,
+        "v1.0_count": 340,
+        "v1.0_rate": 0.071866,
+        "v1.1_count": 5000,
+        "v1.1_rate": 1.0
+      },
+      "known_allergen_evidence": {
+        "rate_delta": 0.758791,
+        "v1.0_count": 247,
+        "v1.0_rate": 0.052209,
+        "v1.1_count": 4055,
+        "v1.1_rate": 0.811
+      },
+      "nutrition_all_core": {
+        "rate_delta": 0.432069,
+        "v1.0_count": 2421,
+        "v1.0_rate": 0.511731,
+        "v1.1_count": 4719,
+        "v1.1_rate": 0.9438
+      },
+      "nutrition_any_core": {
+        "rate_delta": 0.216445,
+        "v1.0_count": 3707,
+        "v1.0_rate": 0.783555,
+        "v1.1_count": 5000,
+        "v1.1_rate": 1.0
+      },
+      "valid_identity": {
+        "rate_delta": 0.0,
+        "v1.0_count": 4731,
+        "v1.0_rate": 1.0,
+        "v1.1_count": 5000,
+        "v1.1_rate": 1.0
+      }
+    },
+    "release": {
+      "records": 5000,
+      "version": "v1.1"
+    },
+    "schema": "food-remedy-quality-comparison-v1",
+    "v1.0_quality_tiers": {
+      "Basic": 933,
+      "Bronze": 1223,
+      "Gold": 289,
+      "Silver": 2286
+    },
+    "v1.1_quality_tiers": {
+      "Gold": 5000
+    }
+  },
+  "release_date": "2026-09-21",
+  "release_version": "v1.1",
+  "schema": "food-remedy-database-release-manifest-v1",
+  "source": {
+    "baseline_release": "database/Release/v1.0/foodremedy_release_v1.0.json",
+    "baseline_release_sha256": "b36d25a591a923e69a472a64b402b34e5a4d51d1aaa3904f5b02caa92cf19d82",
+    "candidate": "database/Candidates/DB069/foodremedy_candidate_db069.json",
+    "candidate_generation_record_sha256": "4fc07ff6e8d7785a0c3efa36048f49eddec38f76b34c2daea7ac9a019708f35f",
+    "candidate_records": 5000,
+    "candidate_sha256": "ffc2d26e4cc1fdaa8e1754e209f0be0b7fe7b93784b743b47911180d52b67ced"
+  },
+  "status": "CHECKS_PASSED_DATABASE_RELEASE_READY_FOR_HANDOFF",
+  "ticket": "DB070",
+  "validation": {
+    "allergens": {
+      "compatibility_field_mismatches": 0,
+      "conservative_unknown_records": 945,
+      "empty_records": 0,
+      "known_evidence_records": 4055,
+      "status": "PASS"
+    },
+    "alternatives": {
+      "dangling_references": 0,
+      "records_without_healthier": 202,
+      "records_without_similar": 186,
+      "references_checked": 47127,
+      "self_references": 0,
+      "status": "PASS"
+    },
+    "categories": {
+      "mapped_records": 3371,
+      "missing_category_tags": 0,
+      "status": "PASS_WITH_REPORTED_UNMAPPED_VALUES",
+      "tagged_but_unmapped": 1629
+    },
+    "dataset_errors": [],
+    "db060_status": "CHECKS_PASSED_PENDING_APPROVAL",
+    "identity": {
+      "candidate_identity_and_order_preserved": true,
+      "leading_zero_barcodes": 256,
+      "record_count": 5000,
+      "status": "PASS",
+      "usable_product_names": 5000,
+      "valid_unique_barcodes": 5000
+    },
+    "invalid_records": 0,
+    "nutrition": {
+      "insufficient_data_records_with_scores_withheld": 0,
+      "known_core_field_distribution": {
+        "5": 6,
+        "6": 112,
+        "7": 695,
+        "8": 2235,
+        "9": 1952
+      },
+      "missing_field_counts": {
+        "carbohydrates": 3,
+        "energy_kcal": 1023,
+        "fat": 1,
+        "fibre": 2542,
+        "protein": 29,
+        "salt": 146,
+        "saturated_fat": 52,
+        "sodium": 146,
+        "sugars": 43
+      },
+      "negative_or_nonfinite_values": 0,
+      "null_semantics": "Candidate nutrient objects are byte-for-value preserved through enrichment; missing/null evidence is not converted to numeric zero.",
+      "nutriment_objects_preserved": 5000,
+      "nutriment_preservation_failures": 0,
+      "status": "PASS"
+    },
+    "required_reviews": [],
+    "valid_records": 5000
+  },
+  "workflow": {
+    "cleaning": {
+      "conservative_unknown_allergen_records": 1031,
+      "excluded_records": 0,
+      "input_records": 5000,
+      "leading_zero_barcodes_preserved": 256,
+      "missing_value_policy": "Source nulls and absent nutrient keys are preserved; numeric zero is never substituted for missing evidence. Only a genuinely absent allergen state may be normalised to the conservative ['Unknown'] value.",
+      "output_records": 5000,
+      "removed_stale_derived_fields": {},
+      "status": "PASS",
+      "unique_valid_barcodes": 5000
+    },
+    "enrichment": {
+      "failures": 0,
+      "modules": [
+        {
+          "failures": 0,
+          "module": "nutrition_enrich",
+          "processed": 5000,
+          "status": "ok"
+        },
+        {
+          "failures": 0,
+          "module": "allergens",
+          "processed": 5000,
+          "status": "ok"
+        },
+        {
+          "failures": 0,
+          "module": "db009_personalisation_tags",
+          "processed": 5000,
+          "status": "ok"
+        },
+        {
+          "failures": 0,
+          "module": "db021_mood_tags",
+          "processed": 5000,
+          "status": "ok"
+        },
+        {
+          "failures": 0,
+          "module": "db019_alternative_product_mapping",
+          "processed": 5000,
+          "stats": {
+            "categories": 238,
+            "empty_healthier": 202,
+            "empty_similar": 186,
+            "healthier_any_gain": 8,
+            "healthier_fiber_proxy": 2,
+            "healthier_strict_gap": 4734,
+            "healthier_sugar_proxy": 54,
+            "products": 5000
+          },
+          "status": "ok"
+        }
+      ],
+      "processed": 5000,
+      "status": "PASS"
+    },
+    "exclusion_count": 0,
+    "inclusion_count": 5000
+  }
+}

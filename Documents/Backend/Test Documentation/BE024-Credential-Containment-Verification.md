@@ -72,3 +72,12 @@ Credential rotation/revocation: **Pending authorised owner verification.**
 Replacement access verification: **Pending if rotation is required.**
 
 Secret scan: **Pending.**
+
+## Follow-up implementation
+
+See [BE024 scan runbook](BE024-Secret-Scan-Runbook.md) for reproducible terminal
+commands, sanitised reporting, the synthetic-token CI failure probe, coverage
+limits, and the required owner attestation. Scanner approval, finding disposition,
+provider revocation, replacement access and hosted CI enforcement remain pending.
+The earlier containment status above is the original record, not proof of current
+provider-side credential validity.

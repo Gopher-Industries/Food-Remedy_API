@@ -7,6 +7,7 @@ export interface SyncUser {
 
 import { doc, getDoc } from "firebase/firestore";
 import { fdb } from "../../config/firebaseConfig";
+import { logSafeError } from "@/services/backend/safeErrors";
 
 export const fetchUserFromFirebase = async (userId: string) => {
   try {
@@ -20,7 +21,7 @@ export const fetchUserFromFirebase = async (userId: string) => {
       ...snapshot.data(),
     };
   } catch (error) {
-    console.error("Firebase fetch error:", error);
+    logSafeError("Firebase fetch error:", error);
     return null;
   }
 };

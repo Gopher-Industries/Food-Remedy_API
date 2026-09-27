@@ -39,13 +39,23 @@ def test_cleaner_writes_category_and_preserves_source_tags(tmp_path):
 
 
 def test_release_replay_preserves_every_previously_mapped_record():
-    baseline = json.loads((ROOT / "database/Reports/DB059/category_before.json").read_text())
-    report = audit(ROOT / "database/seeding/products_enriched.json", baseline)
-    assert report["comparison"]["previously_mapped_records_changed"] == 0
-    assert report["comparison"]["changed_records"] == 30
-    assert report["missing_category_tags"] == baseline["missing_category_tags"] == 4523
-    assert all(c["before"] == "other" and c["bucket"] == "beverages"
-               and "beverages" in c["source_tags"] for c in report["comparison"]["changes"])
+    previous = json.loads(
+        (ROOT / "database/Reports/DB059/category_after.json").read_text()
+    )
+    report = audit(ROOT / "database/seeding/products_enriched.json")
+    previous_by_identity = {
+        (item["index"], item["barcode"]): item["bucket"]
+        for item in previous["classified_records"]
+    }
+    current_by_identity = {
+        (item["index"], item["barcode"]): item["bucket"]
+        for item in report["classified_records"]
+    }
+    # Regenerating allergen and personalisation fields changes the whole-file
+    # hash, but must not change any category source evidence or classification.
+    assert current_by_identity == previous_by_identity
+    assert report["missing_category_tags"] == previous["missing_category_tags"] == 4523
+    assert report["mapped_records"] == previous["mapped_records"] == 279
 
 
 def test_audit_refuses_comparison_with_another_dataset(tmp_path):

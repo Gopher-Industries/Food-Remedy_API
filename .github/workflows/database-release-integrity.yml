@@ -1,4 +1,4 @@
-name: Database Release Integrity
+name: DB068 - Database Release Integrity
 
 on:
   pull_request:
@@ -37,6 +37,7 @@ jobs:
         run: >-
           python -m pytest
           database/test_database_release_gate.py
+          database/test_db065_release_manifest.py
           database/seeding/test_enhanced_seeding.py
           database/test_db057_allergen_safety.py
           database/test_db060_release_validation.py
@@ -89,6 +90,7 @@ jobs:
         run: >-
           python scripts/database_release_gate.py
           --mode release
+          --dataset database/Release/v1.0/foodremedy_release_v1.0.json
           --with-firestore
           --json-output "${RUNNER_TEMP}/database-release-integrity.json"
           --markdown-output "${RUNNER_TEMP}/database-release-integrity.md"

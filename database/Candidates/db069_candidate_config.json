@@ -1,0 +1,38 @@
+{
+  "ticket": "DB069",
+  "source_files": [
+    "database/seeding/products_0k_10k.json",
+    "database/seeding/products_10k_20k.json",
+    "database/seeding/products_20k_30k.json",
+    "database/seeding/products_30k_40k.json",
+    "database/seeding/products_40k_50k.json",
+    "database/seeding/products_50k+.json"
+  ],
+  "baseline_release": "database/Release/v1.0/foodremedy_release_v1.0.json",
+  "valid_barcode_lengths": [8, 12, 13, 14],
+  "quality_weights": {
+    "barcode": 20,
+    "product_name": 20,
+    "ingredients": 18,
+    "nutrition": 18,
+    "categories": 10,
+    "brand": 6,
+    "allergens": 5,
+    "image": 3
+  },
+  "quality_tiers": [
+    {"name": "Gold", "minimum_score": 80},
+    {"name": "Silver", "minimum_score": 65},
+    {"name": "Bronze", "minimum_score": 50},
+    {"name": "Basic", "minimum_score": 0}
+  ],
+  "selection": {
+    "candidate_size": 5000,
+    "minimum_quality_score": 65,
+    "max_brand_share": 0.02,
+    "max_unbranded_share": 0.05,
+    "max_primary_category_share": 0.03,
+    "max_uncategorized_share": 0.05
+  },
+  "allergen_bias_review_threshold": 0.1
+}

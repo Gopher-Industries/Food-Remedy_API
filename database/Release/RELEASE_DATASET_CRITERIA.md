@@ -170,3 +170,19 @@ The intended workflow is:
 6. Freeze and hand over the approved release dataset.
 
 Any new Database work should directly support release readiness, validation, safety or release evidence.
+
+## 13. Current Versioned Release
+
+DB064 generated the immutable offline v1.0 dataset and DB065 approved its final
+validation manifest on 2026-09-21:
+
+- Dataset: `database/Release/v1.0/foodremedy_release_v1.0.json`
+- Version: `v1.0`
+- Records: 4,731
+- SHA-256: `b36d25a591a923e69a472a64b402b34e5a4d51d1aaa3904f5b02caa92cf19d82`
+- Generation record: `database/Release/v1.0/generation_record.json`
+- Final manifest: `database/seeding/release_validation_manifest.json`
+
+The artifact is approved for release handoff. Production seeding and Firestore
+application-path readback remain deployment controls and are not claimed by the
+offline approval.

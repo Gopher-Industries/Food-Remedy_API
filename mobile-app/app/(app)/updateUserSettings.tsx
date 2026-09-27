@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Tt from "@/components/ui/UIText";
 import Input from "@/components/ui/UIInput";
 import IconGeneral from "@/components/icons/IconGeneral";
-import { color, spacing } from "@/app/design/token";
+import { BackButton } from "@/components/shared";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useNotification } from "@/components/providers/NotificationProvider";
 import { useProfile } from "@/components/providers/ProfileProvider";
@@ -13,6 +13,7 @@ import updateUserValue from "@/services/database/user/updateUserValue";
 import { listUserProfiles } from "@/services/database/user/profiles";
 import getUserValue from "@/services/database/user/getUserValue";
 import { getProfileAvatarDownloadUrl } from "@/services/storage/uploadProfileAvatar";
+import { useDirtyForm } from "@/hooks/useDirtyForm";
 import ProfilePhotoEditModal from "../../components/modals/profilePhotoEditModal";
 
 export default function UpdateUserSettingsScreen() {
@@ -40,6 +41,19 @@ export default function UpdateUserSettingsScreen() {
     dietaryPreference: "",
     linkedAccounts: { facebook: "", instagram: "", x: "" }
   });
+
+  const { markDirty, markClean } = useDirtyForm();
+  const hasChanges =
+    isEditing &&
+    (name !== originalData.name ||
+      dietaryPreference !== originalData.dietaryPreference ||
+      linkedAccounts.facebook !== originalData.linkedAccounts.facebook ||
+      linkedAccounts.instagram !== originalData.linkedAccounts.instagram ||
+      linkedAccounts.x !== originalData.linkedAccounts.x);
+  useEffect(() => {
+    if (hasChanges) markDirty();
+    else markClean();
+  }, [hasChanges, markDirty, markClean]);
 
   // Fetch user data from Firebase
   useEffect(() => {
@@ -182,18 +196,7 @@ export default function UpdateUserSettingsScreen() {
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         {/* Back button on top left */}
         <View className="flex-row items-center px-4 mb-8 mt-4">
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            {({ pressed }) => (
-              <IconGeneral
-                type="arrow-backward-ios"
-                fill={pressed ? color.primary : "hsl(0, 0%, 50%)"}
-                size={spacing.lg}
-              />
-            )}
-          </Pressable>
+          <BackButton />
         </View>
 
         {/* Profile Avatar with Edit Icon */}
@@ -297,7 +300,7 @@ export default function UpdateUserSettingsScreen() {
           </View>
 
           {/* Buttons on Right Side */}
-          <View className="flex-row justify-end gap-2 mt-4">
+          <View className="flex-row flex-wrap justify-end gap-2 mt-4">
             {isEditing ? (
               <>
                 {/* Cancel Button */}
@@ -414,7 +417,7 @@ export default function UpdateUserSettingsScreen() {
           </View>
         
           {/* Buttons on Right Side */}
-          <View className="flex-row justify-end gap-2 mt-4">
+          <View className="flex-row flex-wrap justify-end gap-2 mt-4">
             {/* Sync Button */}
             <Pressable
               onPress={handleSync}

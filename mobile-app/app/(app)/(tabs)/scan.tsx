@@ -5,7 +5,13 @@ import Screen from "@/components/layout/Screen";
 import IconGeneral from "@/components/icons/IconGeneral";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
-import { Platform, Pressable, ScrollView, View } from "react-native";
+import {
+  AccessibilityInfo,
+  Platform,
+  Pressable,
+  ScrollView,
+  View,
+} from "react-native";
 import {
   Camera,
   CameraType,
@@ -44,7 +50,7 @@ export default function ScanPage() {
 
   const isFocused = useIsFocused();
   const cameraRef = useRef<CameraView>(null);
-
+  const scanAnnouncementRef = useRef(false);
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
 
@@ -109,11 +115,17 @@ export default function ScanPage() {
     type: string;
     data: string;
   }) => {
+    if (!scanAnnouncementRef.current) {
+      scanAnnouncementRef.current = true;
+      AccessibilityInfo.announceForAccessibility("Scanning");
+    }
     setScanned(true);
     setBarcode(data);
     router.push("/(app)/product");
-
-    setTimeout(() => setScanned(false), 800);
+    setTimeout(() => {
+      scanAnnouncementRef.current = false;
+      setScanned(false);
+    }, 800);
   };
 
   /**

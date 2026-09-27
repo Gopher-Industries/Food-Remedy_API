@@ -3,6 +3,9 @@ import { collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, deleteF
 import { fdb } from '@/config/firebaseConfig';
 import type { NutritionalProfile } from '@/types/NutritionalProfile';
 import { deleteProfileAvatar } from '@/services/storage/uploadProfileAvatar';
+import { deleteCloudProfilePersonalization } from '@/services/database/user/personalization';
+import { initialiseSQLiteDatabase } from '@/config/sqlConfig';
+import { deleteProfile as deleteLocalProfile } from '@/services/sqlDatabase/profiles.dao';
 
 const usersCol = (uid: string) => doc(fdb, `USERS/${uid}`);
 const profilesCol = (uid: string) => collection(fdb, `USERS/${uid}/PROFILES`);
@@ -102,7 +105,10 @@ export async function deleteUserProfile(uid: string, profileId: string): Promise
   } catch (e) {
     console.warn('Failed to delete profile avatar in Storage:', e);
   }
+  await deleteCloudProfilePersonalization(uid, profileId);
   await deleteDoc(profileDoc(uid, profileId));
+  const db = await initialiseSQLiteDatabase();
+  await deleteLocalProfile(db, uid, profileId);
 }
 
 export default {

@@ -30,6 +30,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from database.pipeline.stages.enrich_stage import run_enrich_stage
+from database.pipeline.release_artifact import verify_approved_release_artifact
 from database.seeding.checkpoint_manager import (
     CheckpointCompatibilityError,
     CheckpointManager,
@@ -39,6 +40,9 @@ from database.seeding.data_contract import (
     PRODUCTS_COLLECTION,
     SCHEMA_DEFINITION,
 )
+
+
+GATE_TICKET = "DB068"
 
 
 @dataclass
@@ -188,7 +192,20 @@ def check_pipeline_handoff(root: Path = REPO_ROOT) -> CheckResult:
     ]
     problems: list[str] = []
     if enrich.get("output") != seed.get("input"):
-        problems.append("configured seed input differs from configured enrichment output")
+        try:
+            verified = verify_approved_release_artifact(config, root)
+            evidence.extend(
+                [
+                    f"approved release version={verified['version']}",
+                    f"approved release sha256={verified['dataset_sha256']}",
+                    f"release manifest={verified['manifest']}",
+                ]
+            )
+        except Exception as exc:
+            problems.append(
+                "configured seed input differs from enrichment output without a "
+                f"valid approved release binding: {exc}"
+            )
 
     for module in enrich.get("modules", []):
         if not module.get("enabled", True):
@@ -562,6 +579,7 @@ def run_gate(
     except Exception:
         commit = None
     return {
+        "ticket": GATE_TICKET,
         "gate": "food-remedy-database-release-integrity",
         "mode": mode,
         "status": status,
@@ -573,8 +591,9 @@ def run_gate(
 
 def report_markdown(report: dict[str, object]) -> str:
     lines = [
-        "# Database Release Integrity Gate",
+        f"# {report['ticket']} - Database Release Integrity Gate",
         "",
+        f"**Ticket:** `{report['ticket']}`",
         f"**Overall:** {report['status']}",
         f"**Mode:** {report['mode']}",
         f"**Commit:** `{report.get('commit') or 'unavailable'}`",
@@ -632,7 +651,7 @@ def main(argv: list[str] | None = None) -> int:
 
     for check in report["checks"]:
         print(f"[{check['status']}] {check['check_id']}: {check['summary']}")
-    print(f"DATABASE RELEASE GATE: {report['status']}")
+    print(f"{report['ticket']} DATABASE RELEASE GATE: {report['status']}")
     return 0 if report["status"] == "PASS" else 1
 
 

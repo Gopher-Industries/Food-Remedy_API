@@ -19,6 +19,7 @@ import ModalWrapper from "@/components/modals/ModalAWrapper";
 import ModalResponse from "@/components/modals/ModalResponse";
 import { useModalManager } from "@/components/providers/ModalManagerProvider";
 import { Button } from "@/components/shared/Button";
+import { BackButton } from "@/components/shared";
 import Input from "@/components/ui/UIInput";
 import ShoppingListPlannedDateModal from "@/components/modals/ShoppingListPlannedDateModal";
 
@@ -319,13 +320,7 @@ export default function ShoppingListDetailPage() {
       <Header />
 
       <View className="w-[95%] self-center mt-3 mb-2 flex-row items-center justify-between">
-        <Pressable onPress={() => router.back()} className="p-2">
-          <IconGeneral
-            type="arrow-backward-ios"
-            fill="hsl(0,0%,30%)"
-            size={20}
-          />
-        </Pressable>
+        <BackButton />
 
         <Tt className="text-xl font-interBold flex-1 text-center">
           {currentList?.listName ?? "Shopping List"}

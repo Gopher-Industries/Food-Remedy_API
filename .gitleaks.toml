@@ -1,0 +1,3 @@
+title = "BE024 secret detection"
+[extend]
+useDefault = true

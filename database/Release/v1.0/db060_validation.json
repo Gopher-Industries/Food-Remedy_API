@@ -1,0 +1,77 @@
+{
+  "status": "CHECKS_PASSED_PENDING_APPROVAL",
+  "release_approved": false,
+  "total_records": 4731,
+  "valid_records": 4731,
+  "invalid_records": 0,
+  "count_definition": "Unique rows passing/failing DB021 plus stored required-field checks; dataset-wide reviews are separate. Valid does not mean release approved.",
+  "dataset_errors": [],
+  "current_validation": {
+    "batch_gate_passed": true,
+    "valid_records": 4731,
+    "invalid_records": 0,
+    "result": {
+      "total_records": 4731,
+      "basic_schema": true,
+      "nutrients": true,
+      "allergens": true,
+      "barcode": {
+        "ok": true,
+        "empty": 0,
+        "invalid_format": 0,
+        "duplicates": 0,
+        "total_issues": 0
+      },
+      "schema_validation": {
+        "valid": true,
+        "invalid_count": 0,
+        "errors": []
+      }
+    }
+  },
+  "stored_required_fields": {
+    "missing_or_unusable_names": 0,
+    "placeholder_names": 0,
+    "non_string_barcodes": 0,
+    "approved_exceptions_applied": []
+  },
+  "quality": {
+    "missing_ingredient_text": 4391,
+    "missing_or_empty_allergens": 0,
+    "missing_categories": 4346,
+    "category_rule_replay_counts": {
+      "beverages": 45,
+      "breads": 12,
+      "condiments": 16,
+      "dairy": 48,
+      "noodles and pasta": 8,
+      "oils": 3,
+      "other": 4498,
+      "seafood": 10,
+      "snacks and confectionery": 74,
+      "spreads": 17
+    }
+  },
+  "reason_counts": {},
+  "failed_records": [],
+  "required_reviews": [],
+  "limitations": [
+    "No source generation/version approval is inferred from committed filenames or pipeline configuration.",
+    "DB021 validates normalised copies; this report separately checks saved barcode/name values.",
+    "Placeholder names nan/null/none/n/a require source correction or an explicit reviewed exception.",
+    "Barcode checks cover format and uniqueness, not GTIN check digits.",
+    "Missing source ingredients/categories are measured, not inferred or repaired.",
+    "This is an offline candidate check, not a Firestore, API, reproducibility or full nutrition-safety certification."
+  ],
+  "provenance": {
+    "dataset": "foodremedy_release_v1.0.json",
+    "dataset_sha256": "b36d25a591a923e69a472a64b402b34e5a4d51d1aaa3904f5b02caa92cf19d82",
+    "dataset_version": "v1.0",
+    "release_date": "2026-09-21",
+    "generated_at_utc": "2026-09-21T09:34:17.390166+00:00",
+    "generation_base_commit": "f614aab0afaad2135379449c7b23590f32e7f025",
+    "source_candidate": "database/seeding/products_enriched.json",
+    "source_candidate_sha256": "90170dac3f974f674cef13b37b08a44e34d516dc49a6cb1ef869bdf6e8352870",
+    "pipeline_config_sha256": "94d0eb136a6a106aa40436e45b9317eeafdb57ed6f7c24211405eb05203e5467"
+  }
+}
