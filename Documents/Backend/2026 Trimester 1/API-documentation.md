@@ -563,6 +563,48 @@ The response omits profile values, matched restrictions, and raw Firestore docum
 
 ---
 
+## Missing Product Submission
+
+**Route:** `POST /api/product-submissions`
+**Contract:** `v1`; see [`product_submission_v1.schema.json`](../../../api/contracts/product_submission_v1.schema.json)
+
+Creates an unverified report for a missing catalogue product. The caller must
+provide a verified Firebase ID token using `Authorization: Bearer <token>`.
+Reporter identity comes from that token; caller-supplied `userId` and other
+unknown fields are rejected. Valid EAN-8, UPC-A, EAN-13, and GTIN-14 values
+retain leading zeroes and must pass check-digit validation. The service checks
+`PRODUCTS/{barcode}` inside its transaction and never writes to `PRODUCTS`.
+
+The request requires `version: "v1"` and `barcode`. Optional `productName`,
+`brand`, `retailer`, and `note` fields are normalized, bounded text. The body
+is limited to 2,048 bytes. Submitted text is unverified and is not returned by
+the API.
+
+Success returns `201` for a new report and `200` for an idempotent repeat:
+
+```json
+{
+  "version": "v1",
+  "submissionId": "ps_036000291452",
+  "barcode": "036000291452",
+  "status": "PENDING",
+  "idempotent": false
+}
+```
+
+Errors use sanitized `version` and `error: { code, message }` fields. Statuses
+include `400` for invalid input, `401` for unauthenticated requests, `409` when
+the product already exists, `413` for oversized requests, `429` for rate
+limits, and `503` for unavailable storage. Moderation submissions and their
+opaque idempotency/rate-limit records are server-only Firestore data.
+
+**Server configuration:** the API deployment must provide Firebase Admin
+Application Default Credentials or the server-only
+`FIREBASE_SERVICE_ACCOUNT_JSON` secret. Never expose it through an
+`EXPO_PUBLIC_` variable or commit it.
+
+---
+
 ## Notes
 
 - All Firestore timestamps (`addedAt`, `updatedAt`) are server-generated using `serverTimestamp()` and will appear as ISO 8601 strings in responses.

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Modal, View, Pressable } from "react-native";
-import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { HCaptcha } from "@hcaptcha/react-hcaptcha";
 import Tt from "@/components/ui/UIText";
 
 export type CaptchaModalProps = {
@@ -52,8 +52,8 @@ const CaptchaModal: React.FC<CaptchaModalProps> = ({
             <HCaptcha
               sitekey={siteKey}
               onVerify={(token) => onVerified(token)}
-              onError={(e) => {
-                console.warn("[CaptchaModal] hCaptcha error:", e);
+              onError={() => {
+                console.warn("[CaptchaModal] hCaptcha failed to load");
                 setLoadError(
                   "Captcha could not load. On localhost, add this host in the hCaptcha dashboard for your site key, or run with EXPO_PUBLIC_CAPTCHA_ENABLED=false. In dev, captcha is off by default unless EXPO_PUBLIC_CAPTCHA_ENABLED=true."
                 );
