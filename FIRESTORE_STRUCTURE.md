@@ -80,3 +80,16 @@ version, confidence, and generation timestamp. Missing attributes mean unknown;
 `not_applicable` is a distinct evidenced value. Firestore rules deny all client
 product writes. Only trusted Admin SDK or pipeline identities may upload a
 reviewed block. The block never changes safety, ingredient, or nutrition data.
+
+## Product submission moderation boundary
+
+- `/PRODUCT_SUBMISSIONS/ps_{normalizedBarcode}` stores one unverified pending
+  report per barcode, with bounded reporter text and a non-identifying capped
+  report count.
+- `/PRODUCT_SUBMISSION_REPORTERS/{opaqueHash}` stores server-only
+  per-reporter idempotency records.
+- `/PRODUCT_SUBMISSION_RATE_LIMITS/{opaqueHash}` stores server-only hourly
+  rate-limit counters. These records use opaque IDs and are inaccessible to
+  Firestore clients.
+- Product submissions never write to `PRODUCTS`; a separate moderation review
+  is required before catalogue changes.

@@ -53,3 +53,10 @@ for the pipeline and compatibility decisions.
 [`product_search_v1.schema.json`](product_search_v1.schema.json) defines the
 compact response and sanitized errors for `GET /api/products/search`. Search
 uses the BE040 normalized fields; it never returns raw Firestore documents.
+
+## Missing product submission contract
+
+[`product_submission_v1.schema.json`](product_submission_v1.schema.json)
+defines the request, success, and sanitized error envelopes for
+`POST /api/product-submissions`. It is a moderation boundary: submitted text is
+unverified and must not be copied into `PRODUCTS` without a separate review.

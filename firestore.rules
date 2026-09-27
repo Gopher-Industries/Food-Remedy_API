@@ -75,6 +75,15 @@ service cloud.firestore {
       allow read: if true;
       allow write: if false;
     }
+    match /PRODUCT_SUBMISSIONS/{submissionId} {
+      allow read, write: if false;
+    }
+    match /PRODUCT_SUBMISSION_REPORTERS/{reporterId} {
+      allow read, write: if false;
+    }
+    match /PRODUCT_SUBMISSION_RATE_LIMITS/{rateLimitId} {
+      allow read, write: if false;
+    }
     match /{document=**} {
       allow read, write: if false;
     }
