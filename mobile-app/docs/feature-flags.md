@@ -39,3 +39,22 @@ Locally, add the variable to `mobile-app/.env` and restart with
 
 For a build, set it in the EAS build profile in `eas.json` so the same commit
 can produce a preview build with a feature on and a production build with it off.
+
+### Recommendations release gate
+
+`recommendationsTab` remains off by default in development and production. Turn
+it on only after the authenticated `/api/recommendations/substitutions` route is
+deployed, its server rollout is enabled for the test account, and these device
+checks pass:
+
+1. Scan products from at least two unrelated categories and confirm every result
+   stays category relevant.
+2. Change the active profile and rapidly scan another barcode; no response from
+   the old barcode/profile/account may remain visible.
+3. Confirm loading, no-eligible-result, incomplete-data, offline, timeout and
+   server-failure states do not show static or cached alternatives.
+4. Open an alternative and confirm the product screen loads its barcode.
+
+For rollback, set `EXPO_PUBLIC_FEATURE_RECOMMENDATIONS_TAB=false` in the next
+build and set the server `SUBSTITUTIONS_ROLLOUT=disabled`. Product scanning and
+the product detail screen continue to work without alternatives.

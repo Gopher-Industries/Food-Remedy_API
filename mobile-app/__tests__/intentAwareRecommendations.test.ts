@@ -1,4 +1,8 @@
-import { getIntentAwareRecommendations, recordRecommendationFeedback } from '@/services/api/intentAwareRecommendations';
+import {
+  getIntentAwareRecommendations,
+  RecommendationRequestError,
+  recordRecommendationFeedback,
+} from '@/services/api/intentAwareRecommendations';
 import { auth } from '@/config/firebaseConfig';
 import { initialiseSQLiteDatabase } from '@/config/sqlConfig';
 import { queueRecommendationEvent } from '@/services/sqlDatabase/recommendationEvents.dao';
@@ -25,6 +29,7 @@ const apiResponse = {
 beforeEach(() => {
   jest.clearAllMocks();
   process.env.EXPO_PUBLIC_PERSONALIZATION_API_BASE_URL = 'https://api.example.test/';
+  delete process.env.EXPO_PUBLIC_API_BASE_URL;
   global.fetch = jest.fn(async () => ({ ok: true, json: async () => apiResponse })) as unknown as typeof fetch;
 });
 
@@ -111,6 +116,37 @@ test('rejects a non-local HTTP API before sending an auth token', async () => {
   expect(global.fetch).not.toHaveBeenCalled();
 });
 
+test('uses the canonical API base when no personalization-specific base is configured', async () => {
+  delete process.env.EXPO_PUBLIC_PERSONALIZATION_API_BASE_URL;
+  process.env.EXPO_PUBLIC_API_BASE_URL = 'https://canonical.example.test';
+  await getIntentAwareRecommendations({ barcode: '12345678', profileId: 'child-1' });
+  expect(global.fetch).toHaveBeenCalledWith(
+    'https://canonical.example.test/api/recommendations/substitutions',
+    expect.any(Object),
+  );
+});
+
+test('supports lifecycle cancellation while authentication is pending', async () => {
+  const originalUser = auth.currentUser;
+  (auth as unknown as { currentUser: unknown }).currentUser = {
+    uid: 'owner', getIdToken: () => new Promise(() => undefined),
+  };
+  const controller = new AbortController();
+  try {
+    const pending = getIntentAwareRecommendations(
+      { barcode: '12345678', profileId: 'child-1' },
+      { signal: controller.signal },
+    );
+    controller.abort();
+    await expect(pending).rejects.toEqual(expect.objectContaining({
+      name: 'RecommendationRequestError', code: 'cancelled',
+    }));
+    expect(global.fetch).not.toHaveBeenCalled();
+  } finally {
+    (auth as unknown as { currentUser: unknown }).currentUser = originalUser;
+  }
+});
+
 test('bounds a stalled auth token before making the API request', async () => {
   const originalUser = auth.currentUser;
   (auth as unknown as { currentUser: unknown }).currentUser = {
@@ -118,8 +154,10 @@ test('bounds a stalled auth token before making the API request', async () => {
   };
   jest.useFakeTimers();
   try {
-    const pending = expect(getIntentAwareRecommendations({ barcode: '12345678', profileId: 'child-1' }))
-      .rejects.toThrow('Recommendations are unavailable.');
+    const request = getIntentAwareRecommendations({ barcode: '12345678', profileId: 'child-1' });
+    const pending = expect(request).rejects.toEqual(expect.objectContaining({
+      name: 'RecommendationRequestError', code: 'timeout',
+    } satisfies Partial<RecommendationRequestError>));
     await jest.advanceTimersByTimeAsync(6_000);
     await pending;
     expect(global.fetch).not.toHaveBeenCalled();

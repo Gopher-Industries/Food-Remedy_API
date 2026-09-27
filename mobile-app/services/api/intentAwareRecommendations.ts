@@ -12,6 +12,25 @@ const CONTROL = /[\u0000-\u001f\u007f-\u009f]/;
 const REQUEST_TIMEOUT_MS = 6_000;
 const resultOwners = new WeakMap<IntentAwareResult, string>();
 
+export type RecommendationRequestErrorCode =
+  | 'cancelled'
+  | 'offline'
+  | 'signed_out'
+  | 'timeout'
+  | 'unavailable';
+
+export class RecommendationRequestError extends Error {
+  constructor(public readonly code: RecommendationRequestErrorCode, message: string) {
+    super(message);
+    this.name = 'RecommendationRequestError';
+  }
+}
+
+export interface RecommendationRequestOptions {
+  signal?: AbortSignal;
+  timeoutMs?: number;
+}
+
 export interface IntentAwareRequest {
   barcode: string;
   profileId: string;
@@ -101,8 +120,11 @@ function mapResponse(value: unknown, input: IntentAwareRequest): IntentAwareResu
 }
 
 function configuredApiBase(): string {
-  const configured = process.env.EXPO_PUBLIC_PERSONALIZATION_API_BASE_URL?.trim();
-  if (!configured) throw new Error('Recommendations are unavailable.');
+  const configured = (
+    process.env.EXPO_PUBLIC_PERSONALIZATION_API_BASE_URL ??
+    process.env.EXPO_PUBLIC_API_BASE_URL
+  )?.trim();
+  if (!configured) throw new RecommendationRequestError('unavailable', 'Recommendations are unavailable.');
   try {
     const url = new URL(configured);
     const local = ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
@@ -110,7 +132,7 @@ function configuredApiBase(): string {
         url.username || url.password || url.search || url.hash) throw new Error('Invalid API base.');
     return url.toString().replace(/\/+$/, '');
   } catch {
-    throw new Error('Recommendations are unavailable.');
+    throw new RecommendationRequestError('unavailable', 'Recommendations are unavailable.');
   }
 }
 
@@ -133,16 +155,28 @@ function untilAborted<T>(operation: Promise<T>, signal: AbortSignal): Promise<T>
 }
 
 /** Backend contract boundary. No local ranking or caller-supplied safety profile is accepted. */
-export async function getIntentAwareRecommendations(input: IntentAwareRequest): Promise<IntentAwareResult> {
+export async function getIntentAwareRecommendations(
+  input: IntentAwareRequest,
+  options: RecommendationRequestOptions = {},
+): Promise<IntentAwareResult> {
   const body = requestBody(input);
   const currentUser = auth.currentUser;
-  if (!currentUser) throw new Error('Sign in to get recommendations.');
+  if (!currentUser) throw new RecommendationRequestError('signed_out', 'Sign in to get recommendations.');
   const base = configuredApiBase();
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  let timedOut = false;
+  const cancelFromCaller = () => controller.abort();
+  options.signal?.addEventListener('abort', cancelFromCaller, { once: true });
+  if (options.signal?.aborted) controller.abort();
+  const timer = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, options.timeoutMs ?? REQUEST_TIMEOUT_MS);
   try {
     const token = await untilAborted(currentUser.getIdToken(), controller.signal);
-    if (auth.currentUser?.uid !== currentUser.uid) throw new Error('Sign in to get recommendations.');
+    if (auth.currentUser?.uid !== currentUser.uid) {
+      throw new RecommendationRequestError('signed_out', 'Sign in to get recommendations.');
+    }
     const response = await fetch(`${base}/api/recommendations/substitutions`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -152,10 +186,18 @@ export async function getIntentAwareRecommendations(input: IntentAwareRequest): 
     const result = mapResponse(await response.json(), input);
     resultOwners.set(result, currentUser.uid);
     return result;
-  } catch {
-    throw new Error('Recommendations are unavailable.');
+  } catch (error) {
+    if (error instanceof RecommendationRequestError) throw error;
+    if (options.signal?.aborted) {
+      throw new RecommendationRequestError('cancelled', 'Recommendation request was cancelled.');
+    }
+    if (timedOut) {
+      throw new RecommendationRequestError('timeout', 'Recommendations took too long to load.');
+    }
+    throw new RecommendationRequestError('unavailable', 'Recommendations are unavailable.');
   } finally {
     clearTimeout(timer);
+    options.signal?.removeEventListener('abort', cancelFromCaller);
   }
 }
 

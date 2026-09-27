@@ -17,7 +17,7 @@ export type FeatureFlagDefinition = {
 export const FEATURE_FLAGS = {
     recommendationsTab: {
         description:
-            "Compare tab on the product screen. Off until recommendations tab is ready",
+            "Authenticated profile-aware alternatives after a scan. Keep off until API deployment and device smoke tests pass",
         envVar: "EXPO_PUBLIC_FEATURE_RECOMMENDATIONS_TAB",
         prodDefault: false,
         devDefault: false,
