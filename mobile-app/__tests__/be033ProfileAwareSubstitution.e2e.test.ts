@@ -149,6 +149,39 @@ describe("BE033 profile-aware substitution end-to-end", () => {
     expect(JSON.stringify(body).toLowerCase()).not.toContain("e621");
   });
 
+  it("re-evaluates the same category for two distinct profiles", async () => {
+    const products = new Map([[CEREAL, product(CEREAL, "breakfast-cereals")]]);
+    const candidates = new Map([[CEREAL, [
+      product("036000291476", "breakfast-cereals", {
+        productName: "Dairy cereal",
+        allergens: ["milk"],
+        labels: ["vegetarian"],
+      }),
+      product("036000291483", "breakfast-cereals", { productName: "Plant cereal" }),
+    ]] ]);
+
+    const restrictedHandler = createProductSubstitutionHandler(dependencies(products, candidates));
+    const flexibleHandler = createProductSubstitutionHandler(dependencies(
+      products,
+      candidates,
+      profile({
+        profileId: "flexible-profile",
+        allergies: [],
+        additives: [],
+        dietaryForm: [],
+        healthGoal: undefined,
+      }),
+    ));
+
+    const restricted = await (await restrictedHandler(request(CEREAL))).json();
+    const flexible = await (await flexibleHandler(request(CEREAL))).json();
+
+    expect(restricted.substitutions.map((item: { barcode: string }) => item.barcode))
+      .toEqual(["036000291483"]);
+    expect(flexible.substitutions.map((item: { barcode: string }) => item.barcode))
+      .toEqual(expect.arrayContaining(["036000291476", "036000291483"]));
+  });
+
   it("fails closed for incomplete evidence and missing category data", async () => {
     const products = new Map([
       [CEREAL, product(CEREAL, "breakfast-cereals")],
