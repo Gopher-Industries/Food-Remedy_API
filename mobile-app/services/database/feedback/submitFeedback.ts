@@ -12,14 +12,26 @@ export interface FeedbackPayload {
 
 export interface SubmitFeedbackResult extends Status {
   id?: string;
+  errorCode?: string;
 }
 
-export default async function submitFeedback(payload: FeedbackPayload): Promise<SubmitFeedbackResult> {
+export default async function submitFeedback(
+  payload: FeedbackPayload,
+  callerUid?: string | null
+): Promise<SubmitFeedbackResult> {
   try {
+    if (callerUid && payload.uid && callerUid !== payload.uid) {
+      return {
+        success: false,
+        message: "Access denied.",
+        errorCode: "FORBIDDEN",
+      };
+    }
+
     const docRef = await addDoc(collection(fdb, "FEEDBACK"), {
       message: payload.message,
       email: payload.email ?? null,
-      uid: payload.uid ?? null,
+      uid: payload.uid ?? callerUid ?? null,
       platform: payload.platform ?? null,
       appVersion: payload.appVersion ?? null,
       createdAt: serverTimestamp(),

@@ -21,19 +21,29 @@ import type { Product } from '@/types/Product';
 
 const nowIso = () => new Date().toISOString();
 
+function checkOwnership(uid: string, callerUid?: string | null): void {
+  if (callerUid && callerUid !== uid) {
+    const error: any = new Error("Access denied.");
+    error.status = 403;
+    error.code = "FORBIDDEN";
+    throw error;
+  }
+}
+
 // Paths
 const listsCol = (uid: string) => collection(fdb, `USERS/${uid}/SHOPPING_LISTS`);
 const listDoc = (uid: string, listId: string) => doc(fdb, `USERS/${uid}/SHOPPING_LISTS/${listId}`);
 const itemsCol = (uid: string, listId: string) => collection(fdb, `USERS/${uid}/SHOPPING_LISTS/${listId}/ITEMS`);
-// Use barcode as item doc id for uniqueness within a list
 const itemDoc = (uid: string, listId: string, barcode: string) => doc(fdb, `USERS/${uid}/SHOPPING_LISTS/${listId}/ITEMS/${barcode}`);
 
 // ================= SHOPPING LISTS =================
 
 export async function createShoppingListFirestore(
   uid: string,
-  list: ShoppingList
+  list: ShoppingList,
+  callerUid?: string | null
 ): Promise<void> {
+  checkOwnership(uid, callerUid);
   const payload: any = {
     listId: list.listId,
     userId: uid,
@@ -46,8 +56,11 @@ export async function createShoppingListFirestore(
   await setDoc(listDoc(uid, list.listId), payload);
 }
 
-export async function getShoppingListsFirestore(uid: string): Promise<ShoppingList[]> {
-  // Avoid orderBy on fields that may be missing (older docs), which would exclude them.
+export async function getShoppingListsFirestore(
+  uid: string,
+  callerUid?: string | null
+): Promise<ShoppingList[]> {
+  checkOwnership(uid, callerUid);
   let snap;
   try {
     snap = await getDocsFromServer(listsCol(uid));
@@ -62,7 +75,12 @@ export async function getShoppingListsFirestore(uid: string): Promise<ShoppingLi
   });
 }
 
-export async function getShoppingListFirestore(uid: string, listId: string): Promise<ShoppingList | null> {
+export async function getShoppingListFirestore(
+  uid: string,
+  listId: string,
+  callerUid?: string | null
+): Promise<ShoppingList | null> {
+  checkOwnership(uid, callerUid);
   const snap = await getDoc(listDoc(uid, listId));
   return snap.exists() ? (snap.data() as ShoppingList) : null;
 }
@@ -70,8 +88,10 @@ export async function getShoppingListFirestore(uid: string, listId: string): Pro
 export async function updateShoppingListFirestore(
   uid: string,
   listId: string,
-  updates: { listName?: string; color?: string; emoji?: string }
+  updates: { listName?: string; color?: string; emoji?: string },
+  callerUid?: string | null
 ): Promise<void> {
+  checkOwnership(uid, callerUid);
   const now = nowIso();
   const patch: any = { updatedAt: now };
   if (updates.listName !== undefined) patch.listName = updates.listName;
@@ -80,8 +100,12 @@ export async function updateShoppingListFirestore(
   await updateDoc(listDoc(uid, listId), patch);
 }
 
-export async function deleteShoppingListFirestore(uid: string, listId: string): Promise<void> {
-  // Manually cascade delete items
+export async function deleteShoppingListFirestore(
+  uid: string,
+  listId: string,
+  callerUid?: string | null
+): Promise<void> {
+  checkOwnership(uid, callerUid);
   const itemsSnap = await getDocs(itemsCol(uid, listId));
   if (!itemsSnap.empty) {
     const batch = writeBatch(fdb);
@@ -100,8 +124,10 @@ export async function addItemToListFirestore(
   listId: string,
   product: Product,
   quantity: number = 1,
-  note?: string
+  note?: string,
+  callerUid?: string | null
 ): Promise<void> {
+  checkOwnership(uid, callerUid);
   const now = nowIso();
   const ref = itemDoc(uid, listId, product.barcode);
   try {
@@ -134,7 +160,6 @@ export async function addItemToListFirestore(
       await setDoc(ref, payload);
     }
   } catch (e) {
-    // Fallback: write without reading (in case of temporary read issues)
     const payload: any = {
       listId,
       barcode: product.barcode,
@@ -149,15 +174,15 @@ export async function addItemToListFirestore(
     };
     await setDoc(ref, payload, { merge: true });
   }
-  // Update parent list updatedAt
   await updateDoc(listDoc(uid, listId), { updatedAt: now } as any);
 }
 
 export async function getListItemsFirestore(
   uid: string,
-  listId: string
+  listId: string,
+  callerUid?: string | null
 ): Promise<(ShoppingListItem & { product: Product })[]> {
-  // Ordered query needs a composite index; fallback to unordered for sync if missing.
+  checkOwnership(uid, callerUid);
   const q = query(itemsCol(uid, listId), orderBy('isChecked', 'asc'), orderBy('addedAt', 'desc'));
   let snap;
   try {
@@ -189,8 +214,10 @@ export async function updateItemQuantityFirestore(
   uid: string,
   listId: string,
   barcode: string,
-  quantity: number
+  quantity: number,
+  callerUid?: string | null
 ): Promise<void> {
+  checkOwnership(uid, callerUid);
   const now = nowIso();
   await updateDoc(itemDoc(uid, listId, barcode), { quantity, updatedAt: now } as any);
 }
@@ -199,8 +226,10 @@ export async function updateItemNoteFirestore(
   uid: string,
   listId: string,
   barcode: string,
-  note: string | null
+  note: string | null,
+  callerUid?: string | null
 ): Promise<void> {
+  checkOwnership(uid, callerUid);
   const now = nowIso();
   await updateDoc(itemDoc(uid, listId, barcode), { note: note ?? null, updatedAt: now } as any);
 }
@@ -208,8 +237,10 @@ export async function updateItemNoteFirestore(
 export async function toggleItemCheckedFirestore(
   uid: string,
   listId: string,
-  barcode: string
+  barcode: string,
+  callerUid?: string | null
 ): Promise<boolean> {
+  checkOwnership(uid, callerUid);
   const now = nowIso();
   const ref = itemDoc(uid, listId, barcode);
   const snap = await getDoc(ref);
@@ -223,12 +254,19 @@ export async function toggleItemCheckedFirestore(
 export async function removeItemFromListFirestore(
   uid: string,
   listId: string,
-  barcode: string
+  barcode: string,
+  callerUid?: string | null
 ): Promise<void> {
+  checkOwnership(uid, callerUid);
   await deleteDoc(itemDoc(uid, listId, barcode));
 }
 
-export async function clearCheckedItemsFirestore(uid: string, listId: string): Promise<void> {
+export async function clearCheckedItemsFirestore(
+  uid: string,
+  listId: string,
+  callerUid?: string | null
+): Promise<void> {
+  checkOwnership(uid, callerUid);
   const q = query(itemsCol(uid, listId), where('isChecked', '==', true));
   const snap = await getDocs(q);
   if (snap.empty) return;
@@ -237,7 +275,12 @@ export async function clearCheckedItemsFirestore(uid: string, listId: string): P
   await batch.commit();
 }
 
-export async function clearAllItemsFirestore(uid: string, listId: string): Promise<void> {
+export async function clearAllItemsFirestore(
+  uid: string,
+  listId: string,
+  callerUid?: string | null
+): Promise<void> {
+  checkOwnership(uid, callerUid);
   const snap = await getDocs(itemsCol(uid, listId));
   if (snap.empty) return;
   const batch = writeBatch(fdb);
@@ -245,18 +288,23 @@ export async function clearAllItemsFirestore(uid: string, listId: string): Promi
   await batch.commit();
 }
 
-export async function getListItemCountFirestore(uid: string, listId: string): Promise<number> {
+export async function getListItemCountFirestore(
+  uid: string,
+  listId: string,
+  callerUid?: string | null
+): Promise<number> {
+  checkOwnership(uid, callerUid);
   const snap = await getDocs(itemsCol(uid, listId));
   return snap.size;
 }
 
-// ================= BACKFILL / UPSERT =================
-
 export async function upsertItemInListFirestore(
   uid: string,
   listId: string,
-  item: ShoppingListItem
+  item: ShoppingListItem,
+  callerUid?: string | null
 ): Promise<void> {
+  checkOwnership(uid, callerUid);
   const ref = itemDoc(uid, listId, item.barcode);
   const payload: any = {
     listId,
