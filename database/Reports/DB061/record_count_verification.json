@@ -1,0 +1,85 @@
+{
+  "ticket": "DB061",
+  "verified_dataset": "v1.1",
+  "counts": {
+    "input": {
+      "file": "database/seeding/products_5k_enriched.json",
+      "records": 5000,
+      "source": "DB062 pipeline_verification.json (input.record_count)"
+    },
+    "enriched": {
+      "file": "database/seeding/products_enriched.json",
+      "records": 5000,
+      "source": "counted directly"
+    },
+    "validated": {
+      "file": "database/Release/v1.1/db060_validation.json",
+      "total_records": 5000,
+      "valid_records": 5000,
+      "invalid_records": 0
+    },
+    "included": {
+      "file": "database/Release/v1.1/inclusion_ledger.jsonl",
+      "records": 5000
+    },
+    "excluded": {
+      "file": "database/Release/v1.1/exclusion_ledger.jsonl",
+      "records": 0
+    },
+    "final_output": {
+      "file": "database/Release/v1.1/foodremedy_release_v1.1.json",
+      "records": 5000
+    },
+    "unique_barcodes": 5000,
+    "duplicate_barcodes": 0
+  },
+  "manifest_cross_check": {
+    "source": "database/Release/v1.1/validation_manifest.json",
+    "cleaning": {
+      "input_records": 5000,
+      "output_records": 5000,
+      "excluded_records": 0,
+      "unique_valid_barcodes": 5000
+    },
+    "enrichment": {
+      "processed": 5000,
+      "failures": 0
+    },
+    "inclusion_count": 5000,
+    "exclusion_count": 0,
+    "identity": {
+      "record_count": 5000,
+      "valid_unique_barcodes": 5000,
+      "candidate_identity_and_order_preserved": true
+    }
+  },
+  "flags": {
+    "database_release_validated": true,
+    "production_seeded": false,
+    "production_release_approved": false
+  },
+  "comparison_to_pre_release_candidate": {
+    "invalid_records": {"sept_12": 269, "v1_1": 0},
+    "missing_ingredient_text": {"sept_12": 4627, "v1_1": 0},
+    "missing_or_empty_allergens": {"sept_12": 4750, "v1_1": 0},
+    "missing_categories": {"sept_12": 4523, "v1_1": 0}
+  },
+  "differences_found": [
+    {
+      "description": "Raw SHA-256 of local foodremedy_release_v1.1.json did not initially match the manifest's stated hash",
+      "root_cause": "Git on Windows (core.autocrlf=true) converts LF line endings to CRLF on checkout, changing the file's raw bytes without changing its content",
+      "resolution": "Hash recomputed with line endings normalised back to LF matches the manifest exactly - confirms no data loss or corruption, purely a line-ending artifact of the Windows checkout",
+      "impact": "None on record counts or data integrity. Worth flagging to the team: any Windows-checked-out copy will fail a naive raw-byte hash comparison against DB068's integrity gate for this reason alone."
+    }
+  ],
+  "result": "PASS - no unexplained record loss across input, enriched, validated, or final output stages",
+  "provenance": {
+    "verified_at_utc": "2026-09-29T04:31:13.352507+00:00",
+    "final_release_file_sha256_local_raw": "a1635e222b9e5fbec2ca07fee16bbed1f275a168dc98945744ba1d5f49351949",
+    "final_release_file_sha256_manifest": "43b955c6837eda262b5b9afba5e8227ae7a1db3538dab110b393b8e9920791e1",
+    "final_release_file_sha256_normalized_match": true,
+    "note": "Raw/manifest hash mismatch is a Windows line-ending (core.autocrlf) artifact, not data loss - see differences_found"
+  },
+  "reproduce": "scripts/db061_verify_release_counts.ipynb",
+  "verified_by": "Bhavya Bali"
+}
