@@ -1,7 +1,32 @@
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // User-scoped data isolation for lowercase collection path
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // User-scoped data isolation for uppercase collection path
+    match /USERS/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Feedback submission isolation
+    match /FEEDBACK/{feedbackId} {
+      allow create: if request.auth != null && (request.resource.data.uid == null || request.resource.data.uid == request.auth.uid);
+      allow read, update, delete: if false;
+    }
+
+    // Public Product Catalog (Read-Only)
+    match /PRODUCTS/{productId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Default deny for all unspecified collections
     match /{document=**} {
-      allow read, write: if true; // Open for development, restrict for production!
+      allow read, write: if false;
     }
   }
 }
