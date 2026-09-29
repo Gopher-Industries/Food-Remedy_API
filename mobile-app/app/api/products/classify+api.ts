@@ -1,9 +1,11 @@
 import { doc, getDoc } from "firebase/firestore";
 import { fdb } from "@/config/firebaseConfig";
+import { authenticateRequest } from "@/services/authMiddleware";
 
 type ClassificationColour = "red" | "green" | "grey";
 
 interface UserProfile {
+  userId?: string;
   allergies?: string[];
   intolerances?: string[];
   dietaryPreferences?: string[];
@@ -129,6 +131,23 @@ export async function POST(request: Request): Promise<Response> {
 
     const barcode: unknown = body?.barcode;
     const profile: UserProfile = body?.profile || {};
+    const targetUserId = body?.userId || profile?.userId;
+
+    const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
+
+    // Enforce auth when targetUserId is specified or auth header is passed
+    if (targetUserId || authHeader) {
+      const auth = authenticateRequest(request, targetUserId || undefined);
+      if (!auth.success) {
+        return new Response(
+          JSON.stringify({
+            error: auth.error,
+            message: auth.message,
+          }),
+          { status: auth.status, headers: { "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     if (typeof barcode !== "string" || !barcode.trim()) {
       return new Response(
@@ -154,7 +173,6 @@ export async function POST(request: Request): Promise<Response> {
         { status: 404, headers: { "Content-Type": "application/json" } }
       );
     }
-
 
     const product = productSnap.data() as ProductDoc;
 

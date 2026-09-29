@@ -10,9 +10,16 @@ const profileDoc = (uid: string, profileId: string) => doc(fdb, `USERS/${uid}/PR
 
 const nowIso = () => new Date().toISOString();
 
+function checkOwnership(uid: string, callerUid?: string | null): void {
+  if (callerUid && callerUid !== uid) {
+    const error: any = new Error("Access denied.");
+    error.status = 403;
+    error.code = "FORBIDDEN";
+    throw error;
+  }
+}
+
 const withoutNames = <T extends Partial<NutritionalProfile>>(data: T) => {
-  // Only strip firstName/lastName for Self profiles (they come from USERS doc)
-  // Keep them for non-Self profiles (Child, Sibling, etc.)
   if (data.relationship === 'Self') {
     const { firstName, lastName, ...rest } = data as any;
     return rest as Omit<T, "firstName" | "lastName">;
@@ -22,16 +29,16 @@ const withoutNames = <T extends Partial<NutritionalProfile>>(data: T) => {
 
 const withEmptyNames = (data: Partial<NutritionalProfile>): NutritionalProfile => ({
   ...(data as NutritionalProfile),
-  // For Self profiles, firstName/lastName come from USERS doc, so use empty strings
-  // For non-Self profiles, use what's stored in the PROFILES subcollection
   firstName: data.relationship === 'Self' ? "" : (data.firstName ?? ""),
   lastName: data.relationship === 'Self' ? "" : (data.lastName ?? ""),
 });
 
 export async function createUserProfile(
   uid: string,
-  input: Omit<NutritionalProfile, 'profileId' | 'userId'>
+  input: Omit<NutritionalProfile, 'profileId' | 'userId'>,
+  callerUid?: string | null
 ): Promise<NutritionalProfile> {
+  checkOwnership(uid, callerUid);
   const profileId = uuidv4();
   const payload: NutritionalProfile & { createdAt: string; updatedAt: string } = {
     ...(withoutNames(input) as any),
@@ -42,15 +49,24 @@ export async function createUserProfile(
   } as any;
 
   await setDoc(profileDoc(uid, profileId), payload);
-  return (await getUserProfile(uid, profileId))!;
+  return (await getUserProfile(uid, profileId, callerUid))!;
 }
 
-export async function getUserProfile(uid: string, profileId: string): Promise<NutritionalProfile | null> {
+export async function getUserProfile(
+  uid: string,
+  profileId: string,
+  callerUid?: string | null
+): Promise<NutritionalProfile | null> {
+  checkOwnership(uid, callerUid);
   const snap = await getDoc(profileDoc(uid, profileId));
   return snap.exists() ? withEmptyNames(snap.data() as NutritionalProfile) : null;
 }
 
-export async function listUserProfiles(uid: string): Promise<NutritionalProfile[]> {
+export async function listUserProfiles(
+  uid: string,
+  callerUid?: string | null
+): Promise<NutritionalProfile[]> {
+  checkOwnership(uid, callerUid);
   const snap = await getDocs(profilesCol(uid));
   return snap.docs.map(d => withEmptyNames(d.data() as NutritionalProfile));
 }
@@ -58,14 +74,15 @@ export async function listUserProfiles(uid: string): Promise<NutritionalProfile[
 export async function updateUserProfile(
   uid: string,
   profileId: string,
-  patch: Partial<NutritionalProfile>
+  patch: Partial<NutritionalProfile>,
+  callerUid?: string | null
 ): Promise<void> {
+  checkOwnership(uid, callerUid);
   const payload: any = {
     ...withoutNames(patch),
     updatedAt: nowIso(),
   };
   
-  // Only delete firstName/lastName fields for Self profiles
   if (patch.relationship === 'Self') {
     payload.firstName = deleteField();
     payload.lastName = deleteField();
@@ -74,12 +91,13 @@ export async function updateUserProfile(
   await updateDoc(profileDoc(uid, profileId), payload);
 }
 
-// Create or update a profile by a specific id (used by edit/save flow)
 export async function upsertUserProfile(
   uid: string,
   profileId: string,
-  data: NutritionalProfile
+  data: NutritionalProfile,
+  callerUid?: string | null
 ): Promise<void> {
+  checkOwnership(uid, callerUid);
   const payload: any = {
     ...(withoutNames(data) as any),
     userId: uid,
@@ -87,7 +105,6 @@ export async function upsertUserProfile(
     updatedAt: nowIso(),
   };
   
-  // Only delete firstName/lastName fields for Self profiles
   if (data.relationship === 'Self') {
     payload.firstName = deleteField();
     payload.lastName = deleteField();
@@ -96,7 +113,12 @@ export async function upsertUserProfile(
   await setDoc(profileDoc(uid, profileId), payload, { merge: true });
 }
 
-export async function deleteUserProfile(uid: string, profileId: string): Promise<void> {
+export async function deleteUserProfile(
+  uid: string,
+  profileId: string,
+  callerUid?: string | null
+): Promise<void> {
+  checkOwnership(uid, callerUid);
   try {
     await deleteProfileAvatar(uid, profileId);
   } catch (e) {
