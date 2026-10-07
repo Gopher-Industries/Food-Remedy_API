@@ -1,85 +1,125 @@
 {
   "ticket": "DB061",
   "verified_dataset": "v1.1",
-  "counts": {
-    "input": {
-      "file": "database/seeding/products_5k_enriched.json",
-      "records": 5000,
-      "source": "DB062 pipeline_verification.json (input.record_count)"
+  "lineage": {
+    "raw_source_pool": {
+      "file": "database/Candidates/DB069/generation_record.json",
+      "field": "source_files",
+      "source_file_count": 6,
+      "records": 61373
     },
-    "enriched": {
-      "file": "database/seeding/products_enriched.json",
-      "records": 5000,
-      "source": "counted directly"
+    "db069_selection": {
+      "included": {
+        "file": "database/Candidates/DB069/inclusion_ledger.jsonl",
+        "records": 5000
+      },
+      "excluded": {
+        "file": "database/Candidates/DB069/exclusion_ledger.jsonl.gz",
+        "records": 56373
+      },
+      "reconciliation": "5000 + 56373 == 61373 (exact match to raw_source_pool.records)"
     },
-    "validated": {
+    "db069_candidate": {
+      "file": "database/Candidates/DB069/foodremedy_candidate_db069.json",
+      "records": 5000,
+      "sha256": "ffc2d26e...",
+      "sha256_note": "truncated here; notebook asserts the full hash directly against generation_record.json and validation_manifest.json source.candidate_sha256 at run time",
+      "next_owner": "DB070"
+    },
+    "db070_cleaning_enrichment": {
+      "source": "database/Release/v1.1/validation_manifest.json -> workflow",
+      "cleaning": {"input_records": 5000, "output_records": 5000, "excluded_records": 0},
+      "enrichment": {"processed": 5000, "failures": 0},
+      "note": "Operates on the already-selected 5000-record DB069 candidate, not the raw 61,373 - excluded_records here answers a different question than db069_selection.excluded above"
+    },
+    "db070_validation": {
       "file": "database/Release/v1.1/db060_validation.json",
       "total_records": 5000,
       "valid_records": 5000,
-      "invalid_records": 0
+      "invalid_records": 0,
+      "status": "CHECKS_PASSED_PENDING_APPROVAL"
     },
-    "included": {
-      "file": "database/Release/v1.1/inclusion_ledger.jsonl",
-      "records": 5000
-    },
-    "excluded": {
-      "file": "database/Release/v1.1/exclusion_ledger.jsonl",
-      "records": 0
-    },
-    "final_output": {
+    "final_release": {
       "file": "database/Release/v1.1/foodremedy_release_v1.1.json",
-      "records": 5000
-    },
-    "unique_barcodes": 5000,
-    "duplicate_barcodes": 0
-  },
-  "manifest_cross_check": {
-    "source": "database/Release/v1.1/validation_manifest.json",
-    "cleaning": {
-      "input_records": 5000,
-      "output_records": 5000,
-      "excluded_records": 0,
-      "unique_valid_barcodes": 5000
-    },
-    "enrichment": {
-      "processed": 5000,
-      "failures": 0
-    },
-    "inclusion_count": 5000,
-    "exclusion_count": 0,
-    "identity": {
-      "record_count": 5000,
-      "valid_unique_barcodes": 5000,
-      "candidate_identity_and_order_preserved": true
+      "records": 5000,
+      "unique_barcodes": 5000,
+      "duplicate_barcodes": 0
     }
   },
+  "manifest_cross_check": {
+    "source_file": "database/Release/v1.1/validation_manifest.json",
+    "source": {
+      "candidate_sha256_matches_db069_candidate": true,
+      "candidate_records": 5000
+    },
+    "workflow": {
+      "cleaning": {
+        "input_records": 5000,
+        "output_records": 5000,
+        "excluded_records": 0,
+        "unique_valid_barcodes": 5000
+      },
+      "enrichment": {
+        "processed": 5000,
+        "failures": 0
+      },
+      "inclusion_count": 5000,
+      "exclusion_count": 0
+    },
+    "validation": {
+      "identity": {
+        "record_count": 5000,
+        "valid_unique_barcodes": 5000,
+        "candidate_identity_and_order_preserved": true
+      }
+    },
+    "dataset": {
+      "records": 5000,
+      "sha256_matches_final_release_normalized_hash": true
+    }
+  },
+  "ruled_out_pipeline": {
+    "description": "database/seeding/products_5k_enriched.json -> products_enriched.json is v1.0's pipeline, not v1.1's",
+    "evidence": "database/Reports/DB062/pipeline_verification.json (input sha fd6648f6..., output sha 90170dac..., 5000 -> 5000, 0 failures)",
+    "why_ruled_out": "validation_manifest.json's source field never references this chain; it references the DB069 candidate instead. v1.0 went on to release 4731 records after 269 exclusions per the original database/Reports/DB060/release_validation.json, which is a different release than v1.1.",
+    "corrective_note": "An earlier draft of this verification incorrectly traced this chain and reported it as v1.1's lineage; this was caught in review and corrected."
+  },
+  "methodology": "All comparisons in this file are computed in scripts/db061_verify_release_counts.ipynb using a check() helper that asserts equality and raises AssertionError on any mismatch, rather than relying on manual/printed comparison.",
   "flags": {
     "database_release_validated": true,
     "production_seeded": false,
     "production_release_approved": false
   },
   "comparison_to_pre_release_candidate": {
-    "invalid_records": {"sept_12": 269, "v1_1": 0},
-    "missing_ingredient_text": {"sept_12": 4627, "v1_1": 0},
-    "missing_or_empty_allergens": {"sept_12": 4750, "v1_1": 0},
-    "missing_categories": {"sept_12": 4523, "v1_1": 0}
+    "caveat": "Compares two different pipelines' output quality (v1.0's Sept-12 candidate vs. v1.1), not the same lineage measured twice",
+    "invalid_records": {"sept_12_v1_0": 269, "v1_1": 0},
+    "missing_ingredient_text": {"sept_12_v1_0": 4627, "v1_1": 0},
+    "missing_or_empty_allergens": {"sept_12_v1_0": 4750, "v1_1": 0},
+    "missing_categories": {"sept_12_v1_0": 4523, "v1_1": 0}
   },
   "differences_found": [
     {
-      "description": "Raw SHA-256 of local foodremedy_release_v1.1.json did not initially match the manifest's stated hash",
+      "description": "Wrong lineage traced in the first draft of this verification",
+      "root_cause": "products_5k_enriched.json -> products_enriched.json also reconciles cleanly at 5000, which made it look like a plausible match, but it is v1.0's pipeline",
+      "resolution": "Caught in review; corrected to trace the real DB069 -> DB070 lineage named by validation_manifest.json's source field",
+      "impact": "None on the final counts reported here, which now reflect the real v1.1 chain end to end"
+    },
+    {
+      "description": "Raw SHA-256 of local foodremedy_release_v1.1.json does not match the manifest's stated hash on a Windows checkout",
       "root_cause": "Git on Windows (core.autocrlf=true) converts LF line endings to CRLF on checkout, changing the file's raw bytes without changing its content",
-      "resolution": "Hash recomputed with line endings normalised back to LF matches the manifest exactly - confirms no data loss or corruption, purely a line-ending artifact of the Windows checkout",
-      "impact": "None on record counts or data integrity. Worth flagging to the team: any Windows-checked-out copy will fail a naive raw-byte hash comparison against DB068's integrity gate for this reason alone."
+      "resolution": "Hash recomputed with line endings normalised back to LF matches the manifest and DB070's README exactly, confirming content identity",
+      "corrected_framing": "This is not a false DB068 failure. The integrity gate is correct to reject the raw, as-checked-out file, because its raw bytes genuinely differ from the approved artifact until normalised. The actionable gap is the repository's missing .gitattributes enforcing LF line endings for release JSON files - that is the fix, not a change to DB068's gate.",
+      "impact": "None on record counts or data integrity. Every Windows checkout will keep failing raw-hash verification, correctly, until .gitattributes is added."
     }
   ],
-  "result": "PASS - no unexplained record loss across input, enriched, validated, or final output stages",
+  "result": "PASS - raw 61,373 -> DB069 selection (5,000 included / 56,373 excluded) -> DB069 candidate (5,000) -> DB070 cleaning/enrichment (5,000) -> DB070 validation (5,000 valid, 0 invalid) -> final release (5,000) reconciles exactly at every stage, with zero unaccounted records",
   "provenance": {
     "verified_at_utc": "2026-09-29T04:31:13.352507+00:00",
     "final_release_file_sha256_local_raw": "a1635e222b9e5fbec2ca07fee16bbed1f275a168dc98945744ba1d5f49351949",
-    "final_release_file_sha256_manifest": "43b955c6837eda262b5b9afba5e8227ae7a1db3538dab110b393b8e9920791e1",
+    "final_release_file_sha256_manifest_and_db070_readme": "43b955c6837eda262b5b9afba5e8227ae7a1db3538dab110b393b8e9920791e1",
     "final_release_file_sha256_normalized_match": true,
-    "note": "Raw/manifest hash mismatch is a Windows line-ending (core.autocrlf) artifact, not data loss - see differences_found"
+    "note": "Raw/approved hash mismatch is a Windows line-ending (core.autocrlf) artifact; see differences_found for why this is not treated as a false integrity-gate failure"
   },
   "reproduce": "scripts/db061_verify_release_counts.ipynb",
-  "verified_by": "Bhavya Bali"
+  "verified_by": "Bhavya"
 }
