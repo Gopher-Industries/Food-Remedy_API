@@ -41,6 +41,7 @@ jobs:
           database/seeding/test_enhanced_seeding.py
           database/test_db057_allergen_safety.py
           database/test_db060_release_validation.py
+          database/test_db074_seeded_contract_integration.py
           -q
 
       - name: Generate structural integrity evidence
