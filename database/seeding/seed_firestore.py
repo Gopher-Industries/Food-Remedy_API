@@ -24,6 +24,7 @@ from database.seeding.data_contract import PRODUCTS_COLLECTION
 from database.seeding.rate_limiter import AdaptiveRateLimiter
 from database.seeding.progress_tracker import ProgressTracker
 from database.seeding.retry_config import retry_with_backoff, DEFAULT_RETRY, ErrorCategory, categorize_error
+from mapping.map_enriched_to_product_detail import map_enriched_to_product_detail
 
 CHECKPOINT_FILE = os.path.join(BASE_DIR, "checkpoint.json")
 
@@ -314,6 +315,19 @@ def run(input_path: str, output_path: str, config: dict[str, Any]) -> dict[str, 
     if not data:
         print("[INFO] Input JSON is empty — nothing to seed.")
         return {"processed": 0, "failures": 0, "output": _repo_relative_for_metadata(output_path)}
+    # DB071: route every record through the ProductDetail contract mapper
+    # before any validation or Firestore write, so seeded documents match
+    # contracts/product_detail_v1.schema.json (fixes DB066 integration blocker).
+    print("[MAPPING] Applying ProductDetail contract mapping (DB071)...")
+    mapped_data = []
+    for idx, record in enumerate(data):
+        try:
+            mapped_data.append(map_enriched_to_product_detail(record))
+        except Exception as e:
+            msg = f"Contract mapping failed at record index {idx}: {e}"
+            print(f"[ERROR] {msg}")
+            return {"error": msg, "processed": 0, "failures": 1}
+    data = mapped_data
 
     # Optional pre-seed validation
     if config.get("validate_before_seed"):
