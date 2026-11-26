@@ -24,6 +24,22 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def utf8_lf_bytes(text: str) -> bytes:
+    """Encode text as UTF-8 with deterministic LF line endings.
+
+    Release hashes are byte-sensitive. Writing text with the platform default
+    newline handling can turn LF into CRLF on Windows and change the approved
+    SHA-256 without changing the logical content.
+    """
+    return text.replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
+
+
+def write_utf8_lf(path: Path, text: str) -> None:
+    """Write a release text artifact with platform-independent LF bytes."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(utf8_lf_bytes(text))
+
+
 def verify_approved_release_artifact(
     pipeline: dict[str, Any],
     root: Path,

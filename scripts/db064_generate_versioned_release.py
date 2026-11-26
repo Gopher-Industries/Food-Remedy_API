@@ -33,6 +33,7 @@ if str(ROOT) not in sys.path:
 from database.pipeline.modules.db019_alternative_product_mapping import (
     build_alternatives_for_catalog,
 )
+from database.pipeline.release_artifact import write_utf8_lf
 from scripts.db059_category_audit import audit as category_audit
 from scripts.db060_release_validation import validate
 
@@ -61,10 +62,7 @@ def display_path(path: Path) -> str:
 
 
 def write_json(path: Path, value: Any) -> None:
-    path.write_text(
-        json.dumps(value, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
+    write_utf8_lf(path, json.dumps(value, indent=2, ensure_ascii=False) + "\n")
 
 
 def quiet_validate(records: list[dict[str, Any]]) -> dict[str, Any]:
@@ -456,8 +454,9 @@ def prepare_release(
             },
         }
         write_json(stage / "generation_record.json", generation_record)
-        (stage / "DB064-versioned-release.md").write_text(
-            generation_report_markdown(generation_record), encoding="utf-8"
+        write_utf8_lf(
+            stage / "DB064-versioned-release.md",
+            generation_report_markdown(generation_record),
         )
 
         checksum_files = [
@@ -469,9 +468,9 @@ def prepare_release(
             "exclusions.json",
             "DB064-versioned-release.md",
         ]
-        (stage / "SHA256SUMS").write_text(
+        write_utf8_lf(
+            stage / "SHA256SUMS",
             "".join(f"{sha256_file(stage / name)}  {name}\n" for name in checksum_files),
-            encoding="utf-8",
         )
         stage.rename(output_dir)
         return generation_record
