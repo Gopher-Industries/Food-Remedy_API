@@ -33,6 +33,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from database.pipeline.release_artifact import write_utf8_lf
 from database.pipeline.stages.enrich_stage import run_enrich_stage
 from scripts.db059_category_audit import audit as category_audit
 from scripts.db060_release_validation import validate as db060_validate
@@ -842,16 +843,17 @@ def generate_release(
         }
         write_json(first / "reproducibility_verification.json", reproducibility)
         manifest = json.loads((first / "validation_manifest.json").read_text(encoding="utf-8"))
-        (first / "DB070-quality-first-release-v1.1.md").write_text(
-            report_markdown(manifest, reproducibility), encoding="utf-8"
+        write_utf8_lf(
+            first / "DB070-quality-first-release-v1.1.md",
+            report_markdown(manifest, reproducibility),
         )
         checksum_names = sorted(
             path.name for path in first.iterdir()
             if path.is_file() and path.name != "SHA256SUMS"
         )
-        (first / "SHA256SUMS").write_text(
+        write_utf8_lf(
+            first / "SHA256SUMS",
             "".join(f"{sha256_file(first / name)}  {name}\n" for name in checksum_names),
-            encoding="utf-8",
         )
         first.rename(output_dir.resolve())
         return {

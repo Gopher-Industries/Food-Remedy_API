@@ -1,0 +1,6 @@
+# DB072: release hashes are byte-sensitive; keep committed release text as LF.
+database/Release/**/*.json text eol=lf
+database/Release/**/*.jsonl text eol=lf
+database/Release/**/*.md text eol=lf
+database/Release/**/*.txt text eol=lf
+database/Release/**/SHA256SUMS text eol=lf
