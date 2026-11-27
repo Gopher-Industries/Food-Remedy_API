@@ -17,6 +17,7 @@ const Input = ({
   placeholderTextColor,
   className = "", style,
   onFocus, onBlur,
+  accessibilityLabel,
   ...props
 }: InputProps) => {
   const [isFocused, setIsFocused] = useState(false);
@@ -27,6 +28,10 @@ const Input = ({
   return (
     <TextInput
       value={value}
+      // FE031: every field is announced, falling back to its placeholder when the
+      // caller has not supplied an explicit label.
+      accessible
+      accessibilityLabel={accessibilityLabel ?? props.placeholder}
       placeholderTextColor={placeholderTextColor ?? theme.colors.textMuted}
       onChangeText={onChangeText}
       className={`text-base font-inter px-4 py-2 border rounded ${className}`}

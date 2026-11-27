@@ -87,6 +87,9 @@ export default function OnboardingScreen1({ onGetStarted, onContinueAsGuest }: O
             source={require("@/assets/images/FoodRemedyLogo.png")}
             className="w-80 h-32 mb-8"
             resizeMode="contain"
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel="Food Remedy"
           />
         </Animated.View>
         
@@ -106,6 +109,9 @@ export default function OnboardingScreen1({ onGetStarted, onContinueAsGuest }: O
         <Pressable
           onPress={onGetStarted}
           className="bg-primary rounded-xl py-4 active:opacity-80 mb-3"
+          accessibilityRole="button"
+          accessibilityLabel="Get started"
+          accessibilityHint="Continues to the next introduction screen"
         >
           <Tt className="text-white text-lg font-interSemiBold text-center">
             Get Started
@@ -115,6 +121,9 @@ export default function OnboardingScreen1({ onGetStarted, onContinueAsGuest }: O
         <Pressable
           onPress={onContinueAsGuest}
           className="bg-transparent border-2 border-primary rounded-xl py-4 active:bg-pink-50"
+          accessibilityRole="button"
+          accessibilityLabel="Continue as guest"
+          accessibilityHint="Skips sign in and opens the scanner"
         >
           <Tt className="text-primary text-lg font-interSemiBold text-center">
             Continue as guest

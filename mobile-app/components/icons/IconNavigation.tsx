@@ -42,6 +42,9 @@ const IconNavigation: React.FC<IconNavigationProps> = ({ type, fill = "hsl(0 0% 
       viewBox="0 -960 960 960"
       fill={fill}
       style={{ transform: [{ rotateX: rotate + 'deg' }] }}
+      // FE031: tab bar icons are decorative - the tab itself carries the label
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
     >
       <Path d={svgContent} />
     </Svg>

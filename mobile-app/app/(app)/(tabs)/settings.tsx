@@ -40,11 +40,21 @@ export default function SettingsPage() {
       <Header />
 
       <ScrollView>
-        <Tt className="text-xl font-interBold text-center my-4">Settings</Tt>
+        <Tt
+          className="text-xl font-interBold text-center my-4"
+          accessibilityRole="header"
+        >
+          Settings
+        </Tt>
 
         {/* App Settings */}
         <View className={`px-4 py-2 ${hcSection(highContrast)}`}>
-          <Tt className={`${hcText(highContrast)} font-interMedium`}>App Settings</Tt>
+          <Tt
+            className={`${hcText(highContrast)} font-interMedium`}
+            accessibilityRole="header"
+          >
+            App Settings
+          </Tt>
         </View>
 
         <Pressable
@@ -52,6 +62,9 @@ export default function SettingsPage() {
           className={`flex-row justify-between items-center px-4 py-3 active:bg-hsl98 dark:bg-hsl10 ${hcRow(
             highContrast
           )}`}
+          accessibilityRole="button"
+          accessibilityLabel="Notification"
+          accessibilityHint="Opens notification settings"
         >
           {({ pressed }) => (
             <>
@@ -81,6 +94,9 @@ export default function SettingsPage() {
           className={`flex-row justify-between items-center px-4 py-3 active:bg-hsl98 dark:bg-hsl10 ${
             highContrast ? "bg-white dark:bg-hsl15" : ""
           }`}
+          accessibilityRole="switch"
+          accessibilityLabel="Dark mode"
+          accessibilityState={{ checked: darkMode }}
         >
           {({ pressed }) => (
             <>
@@ -110,17 +126,28 @@ export default function SettingsPage() {
 
         {/* Accessibility */}
         <View className={`px-4 py-2 ${hcSection(highContrast)}`}>
-          <Tt className={`${hcText(highContrast)} font-interMedium`}>Accessibility</Tt>
+          <Tt
+            className={`${hcText(highContrast)} font-interMedium`}
+            accessibilityRole="header"
+          >
+            Accessibility
+          </Tt>
         </View>
 
         {/* Font size selector */}
         <View className={`px-4 py-3 ${hcRow(highContrast)} bg-hs198 dark:bg-hsl15`}>
-          <Tt className="font-interMedium">Font Size</Tt>
+          <Tt className="font-interMedium" accessibilityRole="header">
+            Font Size
+          </Tt>
           <Tt className="text-sm">Small / Medium / Large</Tt>
 
+          {/* Each font-size button carries its own label and selection state. */}
           <View className="flex-row gap-x-2 mt-3">
             <Pressable
               onPress={() => setFontSize("small")}
+              accessibilityRole="button"
+              accessibilityLabel="Small"
+              accessibilityState={{ checked: fontSize === "small", selected: fontSize === "small" }}
               className={`flex-1 py-2 rounded border ${
                 fontSize === "small"
                   ? highContrast
@@ -142,6 +169,9 @@ export default function SettingsPage() {
 
             <Pressable
               onPress={() => setFontSize("medium")}
+              accessibilityRole="button"
+              accessibilityLabel="Medium"
+              accessibilityState={{ checked: fontSize === "medium", selected: fontSize === "medium" }}
               className={`flex-1 py-2 rounded border ${
                 fontSize === "medium"
                   ? highContrast
@@ -163,6 +193,9 @@ export default function SettingsPage() {
 
             <Pressable
               onPress={() => setFontSize("large")}
+              accessibilityRole="button"
+              accessibilityLabel="Large"
+              accessibilityState={{ checked: fontSize === "large", selected: fontSize === "large" }}
               className={`flex-1 py-2 rounded border ${
                 fontSize === "large"
                   ? highContrast
@@ -190,6 +223,10 @@ export default function SettingsPage() {
           className={`flex-row justify-between items-center px-4 py-3 active:bg-hs198 dark:bg-hsl10 ${hcRow(
             highContrast
           )} bg-hs198 dark:bg-hsl15`}
+          accessibilityRole="switch"
+          accessibilityLabel="High contrast"
+          accessibilityHint="Improves readability with stronger contrast"
+          accessibilityState={{ checked: highContrast }}
         >
           {({ pressed }) => (
             <>
@@ -223,6 +260,10 @@ export default function SettingsPage() {
           className={`flex-row justify-between items-center px-4 py-3 active:bg-hs198 dark:bg-hsl10 ${hcRow(
             highContrast
           )} ${highContrast ? "bg-white dark:bg-hsl15" : ""}`}
+          accessibilityRole="switch"
+          accessibilityLabel="Voice summary autoplay"
+          accessibilityHint="Controls auto-play only. Manual play is still available."
+          accessibilityState={{ checked: ttsEnabled }}
         >
           {({ pressed }) => (
             <>
@@ -254,7 +295,12 @@ export default function SettingsPage() {
 
         {/* Support */}
         <View className={`px-4 py-2 ${hcSection(highContrast)}`}>
-          <Tt className={`${hcText(highContrast)} font-interMedium`}>Support & Feedback</Tt>
+          <Tt
+            className={`${hcText(highContrast)} font-interMedium`}
+            accessibilityRole="header"
+          >
+            Support & Feedback
+          </Tt>
         </View>
 
         <Pressable
@@ -262,6 +308,9 @@ export default function SettingsPage() {
           className={`flex-row items-center justify-between px-4 py-3 active:bg-hsl98 dark:bg-hsl10 ${hcRow(
             highContrast
           )}`}
+          accessibilityRole="button"
+          accessibilityLabel="Report issue or feedback"
+          accessibilityHint="Opens the feedback form"
         >
           {({ pressed }) => (
             <>
@@ -291,6 +340,9 @@ export default function SettingsPage() {
           className={`flex-row items-center justify-between px-4 py-3 active:bg-hsl98 dark:bg-hsl10 ${hcRow(
             highContrast
           )}`}
+          accessibilityRole="button"
+          accessibilityLabel="Privacy policy"
+          accessibilityHint="Opens the privacy policy"
         >
           {({ pressed }) => (
             <>
@@ -320,6 +372,9 @@ export default function SettingsPage() {
           className={`flex-row items-center justify-between px-4 py-3 active:bg-hsl98 dark:bg-hsl10 ${hcRow(
             highContrast
           )}`}
+          accessibilityRole="button"
+          accessibilityLabel="Terms of service"
+          accessibilityHint="Opens the terms of service"
         >
           {({ pressed }) => (
             <>
@@ -349,6 +404,9 @@ export default function SettingsPage() {
           className={`flex-row items-center justify-between px-4 py-3 active:bg-hsl98 dark:bg-hsl10 ${hcRow(
             highContrast
           )}`}
+          accessibilityRole="button"
+          accessibilityLabel="About"
+          accessibilityHint="Shows app version and information"
         >
           {({ pressed }) => (
             <>
@@ -377,22 +435,25 @@ export default function SettingsPage() {
         {(Constants.expoConfig?.extra?.appVariant ?? "development") !== "production" && (
           <>
             <View className={`px-4 py-2 ${hcSection(highContrast)}`}>
-              <Tt className={`${hcText(highContrast)} font-interMedium`}>QA</Tt>
+              <Tt className={`${hcText(highContrast)} font-interMedium`} accessibilityRole="header">QA</Tt>
             </View>
 
             <Pressable
               onPress={() => router.push("/(app)/diagnosticsPanel" as never)}
               className={`flex-row items-center justify-between px-4 py-3 active:bg-hsl98 dark:bg-hsl10 ${hcRow(highContrast)}`}
+              accessibilityRole="button"
+              accessibilityLabel="QA Diagnostics"
+              accessibilityHint="Opens authentication, database, network and build information"
             >
               {({ pressed }) => (
                 <>
-                  <View className="flex-row items-center gap-x-4">
+                  <View className="flex-row items-center gap-x-4 flex-1 pr-3">
                     <IconGeneral
                       type="info"
                       fill={pressed ? color.primary : highContrast ? "#000000" : color.iconDefault}
                       size={spacing.xl}
                     />
-                    <View>
+                    <View className="flex-1">
                       <Tt className="font-interMedium">QA Diagnostics</Tt>
                       <Tt className="text-sm">Auth, DB, network & build info</Tt>
                     </View>
@@ -412,6 +473,9 @@ export default function SettingsPage() {
         {/* Sign out */}
         <Pressable
           onPress={handleSignOut}
+          accessibilityRole="button"
+          accessibilityLabel="Sign out"
+          accessibilityHint="Signs you out of your Food Remedy account"
           hitSlop={{ top: 5, bottom: 5, left: 5, right: 5 }}
           className={`mt-8 w-[95%] self-center py-3 px-4 my-4 rounded-lg border active:border-primary active:bg-primary ${
             highContrast ? "bg-white dark:bg-hsl15 border-black" : "bg-white dark:bg-hsl15 border-hsl90 dark:border-hsl20"

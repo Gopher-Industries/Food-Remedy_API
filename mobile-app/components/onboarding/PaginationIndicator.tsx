@@ -17,7 +17,16 @@ export default function PaginationIndicator({
   onDotPress,
 }: PaginationIndicatorProps) {
   return (
-    <View className="flex-row items-center justify-center gap-x-2">
+    // FE031: the dots are a progress indicator, so they are announced once as
+    // "Step 2 of 3" instead of as several unlabelled controls.
+    <View
+      className="flex-row items-center justify-center gap-x-2"
+      accessible={!onDotPress}
+      accessibilityRole={onDotPress ? undefined : "progressbar"}
+      accessibilityLabel={
+        onDotPress ? undefined : `Step ${currentIndex + 1} of ${totalPages}`
+      }
+    >
       {Array.from({ length: totalPages }).map((_, index) => {
         const isActive = index === currentIndex;
         return (
@@ -28,6 +37,13 @@ export default function PaginationIndicator({
             className={`rounded-full ${
               isActive ? `w-8 h-2 ${activeColor}` : `w-2 h-2 ${inactiveColor}`
             }`}
+            accessible={!!onDotPress}
+            accessibilityRole={onDotPress ? "button" : undefined}
+            accessibilityLabel={
+              onDotPress ? `Go to step ${index + 1} of ${totalPages}` : undefined
+            }
+            accessibilityState={onDotPress ? { selected: isActive } : undefined}
+            importantForAccessibility={onDotPress ? "yes" : "no-hide-descendants"}
           />
         );
       })}
